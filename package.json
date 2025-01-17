@@ -6,7 +6,12 @@
   "type": "module",
   "scripts": {
     "start": "node src/server.js",
-    "dev": "nodemon src/server.js"
+    "dev": "nodemon src/server.js",
+    "seq-mig": "npx sequelize-cli db:migrate",
+    "seq-undo": "npx sequelize-cli db:migrate:undo",
+    "seq-undo-name": "npx sequelize-cli db:migrate:undo --name",
+    "seq-undo-all": "npx sequelize-cli db:migrate:undo:all",
+    "seq-mig-gen": "npx sequelize-cli migration:generate --name"
   },
   "repository": {
     "type": "git",
@@ -19,7 +24,8 @@
   },
   "homepage": "https://github.com/sahilshivekar/wiet-backend#readme",
   "devDependencies": {
-    "nodemon": "^3.1.9"
+    "nodemon": "^3.1.9",
+    "sequelize-cli": "^6.6.2"
   },
   "dependencies": {
     "bcrypt": "^5.1.1",
@@ -28,6 +34,7 @@
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
     "jsonwebtoken": "^9.0.2",
-    "pg": "^8.13.1"
+    "pg": "^8.13.1",
+    "sequelize": "^6.37.5"
   }
 }
