@@ -1,0 +1,37 @@
+'use strict';
+
+/** @type {import('sequelize-cli').Migration} */
+
+const bcrypt = require('bcrypt');
+
+module.exports = {
+    async up(queryInterface, Sequelize) {
+
+        // the password won't be hashed in bulkInsert
+        const password = await bcrypt.hash(
+            process.env.ADMIN_PASSWORD,
+            Number(process.env.BCRYPT_SALT))
+
+        await queryInterface.bulkInsert(
+            "admins",
+            [
+                {
+                    admin_email: process.env.ADMIN_EMAIL,
+                    admin_username: process.env.ADMIN_USERNAME,
+                    admin_password: password,
+                    created_at: new Date(), // necessary to add manually as the bulkinsert won't automatically add the current datetime
+                    updated_at: new Date()
+                }
+            ],
+            {}
+        )
+    },
+
+    async down(queryInterface, Sequelize) {
+        await queryInterface.bulkDelete(
+            "admins",
+            null,
+            {}
+        )
+    }
+};
