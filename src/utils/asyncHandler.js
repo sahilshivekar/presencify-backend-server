@@ -2,9 +2,18 @@ const asyncHandler = (fn) => async (req, res, next) => {
     try {
         await fn(req, res, next)
     } catch (err) {
-        res.status(err.code || 500).json(
-            success = false,
-            message = err.message
-        )
+        console.log(err)
+        // for direclty adding the validate error message in the err.message 
+        // avoiding the multiple validation error messages in one message and als avoiding the "validation_error" prefix
+        if (err?.errors?.length > 0 && err?.errors[0]?.type == "Validation error") {
+            err.message = err.errors[0].message
+        }
+
+        res.status(err.statusCode || 500).json({
+            success: false,
+            message: err?.message
+        })
     }
 }
+
+export { asyncHandler }
