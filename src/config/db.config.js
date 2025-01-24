@@ -9,6 +9,11 @@ export default {
         host: process.env.PG_DEV_DB_HOST,
         port: process.env.PG_DEV_DB_PORT,
         dialect: "postgres",
+        dialectOptions: { 
+            ssl: {
+                require: true
+            }
+        },
     },
     test: {
         username: process.env.PG_TEST_DB_USER,
@@ -25,5 +30,10 @@ export default {
         host: process.env.PG_PROD_DB_HOST,
         port: process.env.PG_PROD_DB_PORT,
         dialect: "postgres",
+        dialectOptions: { 
+            ssl: {
+                require: true
+            }
+        },
     }
 }
