@@ -9,7 +9,8 @@ const asyncHandler = (fn) => async (req, res, next) => {
             err.message = err.errors[0].message
         }
 
-        res.status(err.statusCode || 500).json({
+        res.status(err?.statusCode || 500).json({
+            statusCode: err?.statusCode || 500,
             success: false,
             message: err?.message
         })
