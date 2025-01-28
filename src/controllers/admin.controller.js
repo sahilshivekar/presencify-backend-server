@@ -28,10 +28,10 @@ const options = {
 //* generate access and refresh tokens for admins at the time of login 
 const generateAccessAndRefreshTokens = async (admin) => {
     try {
-        const accessToken = await admin.generateAccessToken();
-        const refreshToken = await admin.generateRefreshToken();
+        const newAccessToken = await admin.generateAccessToken();
+        const newRefreshToken = await admin.generateRefreshToken();
 
-        return { accessToken, refreshToken }
+        return { newAccessToken, newRefreshToken }
     } catch (err) {
         throw new ApiError(500, "Something went wrong while generating tokens")
     }
@@ -60,7 +60,7 @@ const getAccessToken = asyncHandler(async (req, res) => {
         }
     });
 
-    const { newAccessToken, newRefreshToken } = generateAccessAndRefreshTokens(admin)
+    const { newAccessToken, newRefreshToken } = await generateAccessAndRefreshTokens(admin)
 
     admin.refreshToken = newRefreshToken;
 
@@ -81,8 +81,8 @@ const getAccessToken = asyncHandler(async (req, res) => {
                 200,
                 "Access token refreshed successfully",
                 {
-                    adminAccessToken: newAccessToken,
-                    adminRefreshToken: newRefreshToken
+                    accessToken: newAccessToken,
+                    refreshToken: newRefreshToken
                 })
         )
 
@@ -116,10 +116,10 @@ const loginAdmin = asyncHandler(async (req, res) => {
         throw new ApiError(400, "Password didn't match")
     }
 
-    const { accessToken, refreshToken } = await generateAccessAndRefreshTokens(admin);
+    const { newAccessToken, newRefreshToken } = await generateAccessAndRefreshTokens(admin);
 
     // avoiding the database request for saving time and manually adding the tokens
-    admin.refreshToken = refreshToken;
+    admin.refreshToken = newRefreshToken;
 
     await admin.save();
 
@@ -128,11 +128,11 @@ const loginAdmin = asyncHandler(async (req, res) => {
 
     res
         .status(200)
-        .cookie("adminAccessToken", accessToken, {
+        .cookie("adminAccessToken", newAccessToken, {
             ...options,
             maxAge: 86400000 /** bcz access token expiray is 1 day  */
         })
-        .cookie("adminRefreshToken", refreshToken, {
+        .cookie("adminRefreshToken", newRefreshToken, {
             ...options,
             maxAge: 1296000000 /** bcz refresh token expiray is 15 day  */
         })
@@ -141,7 +141,7 @@ const loginAdmin = asyncHandler(async (req, res) => {
                 200,
                 "Login Successful",
                 {
-                    admin: admin, accessToken, refreshToken
+                    admin: admin, accessToken: newAccessToken, refreshToken: newRefreshToken
                 }
             )
         )
@@ -473,14 +473,14 @@ const verifyCode = asyncHandler(async (req, res) => {
             [Op.and]: [{ email }, { code }]
         }
     })
-    
+
     if (!codeRecord) {
         throw new ApiError(400, "Invalid verification code")
     }
 
     const admin = await Admin.findOne({ where: { email } })
 
-    if(!admin.isVerified){
+    if (!admin.isVerified) {
         admin.isVerified = true;
         await admin.save()
     }
