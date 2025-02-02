@@ -93,7 +93,7 @@ const loginAdmin = asyncHandler(async (req, res) => {
     const { emailOrUsername, password } = req.body;
 
     if (!emailOrUsername) {
-        throw new ApiError(404, "Username or Email is needed")
+        throw new ApiError(400, "Username or Email is needed")
     }
 
     const admin = await Admin.scope('withPassword').findOne({
@@ -229,7 +229,7 @@ const verifyPassword = asyncHandler(async (req, res) => {
     const isPasswordMatching = await admin.isPasswordMatching(password);
 
     if (!isPasswordMatching) {
-        throw new ApiError(401, "Password is incorrect");
+        throw new ApiError(400, "Password is incorrect");
     }
 
     res.status(200).json(
@@ -262,7 +262,7 @@ const updateAdminPassword = asyncHandler(async (req, res) => {
     const isPasswordMatching = await admin.isPasswordMatching(password);
 
     if (isPasswordMatching) {
-        throw new ApiError(404, "New password can't be same as old password.")
+        throw new ApiError(400, "New password can't be same as old password.")
     }
 
     admin.password = password;
@@ -478,7 +478,7 @@ const verifyCode = asyncHandler(async (req, res) => {
         throw new ApiError(400, "Invalid verification code")
     }
 
-    const admin = await Admin.findOne({ where: { email } })
+    const admin = await Admin.scope('withPassword').findOne({ where: { email } })
 
     if (!admin.isVerified) {
         admin.isVerified = true;
@@ -487,12 +487,34 @@ const verifyCode = asyncHandler(async (req, res) => {
 
     await VerificationCode.destroy({ where: { email } })
 
+    const { newAccessToken, newRefreshToken } = await generateAccessAndRefreshTokens(admin);
+
+    // avoiding the database request for saving time and manually adding the tokens
+    admin.refreshToken = newRefreshToken;
+
+    await admin.save();
+
+    delete admin.dataValues.password;
+    delete admin.dataValues.refreshToken;
+
+
     res
         .status(200)
+        .cookie("adminAccessToken", newAccessToken, {
+            ...options,
+            maxAge: 86400000 /** bcz access token expiray is 1 day  */
+        })
+        .cookie("adminRefreshToken", newRefreshToken, {
+            ...options,
+            maxAge: 1296000000 /** bcz refresh token expiray is 15 day  */
+        })
         .json(
             new ApiResponse(
                 200,
-                "Verification successful!"
+                "Verification successful!",
+                {
+                    accessToken: newAccessToken, refreshToken: newRefreshToken
+                }
             )
         )
 })
