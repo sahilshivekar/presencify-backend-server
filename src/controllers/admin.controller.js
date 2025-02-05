@@ -521,7 +521,7 @@ const verifyCode = asyncHandler(async (req, res) => {
 
 const getAdminDetails = asyncHandler(async (req, res) => {
 
-    const admin = await Admin.findByPk(req.admin.id);
+    const admin = await Admin.scope("withPassword").findByPk(req.admin.id);
 
     if (!admin) {
         throw new ApiError(400, "Admin not found")
