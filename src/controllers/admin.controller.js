@@ -45,20 +45,21 @@ const getAccessToken = asyncHandler(async (req, res) => {
         throw new ApiError(401, "Refresh token is required")
     }
 
-    const admin = await Admin.findOne({ where: { refreshToken } });
-
-    if (!admin) {
-        throw new ApiError(401, "Invalid refresh token")
-    }
-
-    await jwt.verify(refreshToken, process.env.JWT_REFRESH_TOKEN_SECRET, (err, decoded) => {
+    let adminId;
+    jwt.verify(refreshToken, process.env.JWT_REFRESH_TOKEN_SECRET, (err, decoded) => {
         if (err) {
             throw new ApiError(401, "Invalid refresh token") // Token invalid or expired
         }
-        if (admin.id !== decoded.id) {
-            throw new ApiError(401, "Invalid refresh token")
-        }
+        adminId = decoded.id;
     });
+    
+
+    const admin = await Admin.findByPk(adminId);
+
+    if (!admin) {
+        throw new ApiError(401, "Admin with this refresh token doesn't exist")
+    }
+
 
     const { newAccessToken, newRefreshToken } = await generateAccessAndRefreshTokens(admin)
 
