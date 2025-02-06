@@ -45,15 +45,17 @@ const getAccessToken = asyncHandler(async (req, res) => {
         throw new ApiError(401, "Refresh token is required")
     }
 
+    const actualRefreshToken = refreshToken.replace("Bearer ", "");
+
     let adminId;
-    jwt.verify(refreshToken, process.env.JWT_REFRESH_TOKEN_SECRET, (err, decoded) => {
+    jwt.verify(actualRefreshToken, process.env.JWT_REFRESH_TOKEN_SECRET, (err, decoded) => {
         if (err) {
             throw new ApiError(401, "Invalid refresh token") // Token invalid or expired
         }
         adminId = decoded.id;
     });
     
-
+    console.log(adminId)
     const admin = await Admin.findByPk(adminId);
 
     if (!admin) {
