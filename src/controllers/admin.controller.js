@@ -98,11 +98,12 @@ const loginAdmin = asyncHandler(async (req, res) => {
     if (!emailOrUsername) {
         throw new ApiError(400, "Username or Email is needed")
     }
+    
 
     const admin = await Admin.scope('withPassword').findOne({
         where: {
             [Op.or]: {
-                email: emailOrUsername,
+                email: emailOrUsername.tolowerCase(),
                 username: emailOrUsername
             }
         }
@@ -199,7 +200,7 @@ const updateAdminDetails = asyncHandler(async (req, res) => {
     const admin = await Admin.findByPk(req.admin.id);
 
     admin.username = username;
-    admin.email = email;
+    admin.email = email.tolowerCase();
 
     await admin.save();
 
@@ -404,7 +405,7 @@ const sendVerificationCodeToEmail = asyncHandler(async (req, res) => {
         throw new ApiError(400, "Email is required");
     }
 
-    email = email || req?.admin?.email;
+    email = email.tolowerCase() || req?.admin?.email.tolowerCase();
 
     const admin = await Admin.findOne({ where: { email } })
 
@@ -473,7 +474,7 @@ const verifyCode = asyncHandler(async (req, res) => {
 
     const codeRecord = await VerificationCode.findOne({
         where: {
-            [Op.and]: [{ email }, { code }]
+            [Op.and]: [{ email:email.tolowerCase() }, { code }]
         }
     })
 
@@ -481,14 +482,14 @@ const verifyCode = asyncHandler(async (req, res) => {
         throw new ApiError(400, "Invalid verification code")
     }
 
-    const admin = await Admin.scope('withPassword').findOne({ where: { email } })
+    const admin = await Admin.scope('withPassword').findOne({ where: { email:email.tolowerCase() } })
 
     if (!admin.isVerified) {
         admin.isVerified = true;
         await admin.save()
     }
 
-    await VerificationCode.destroy({ where: { email } })
+    await VerificationCode.destroy({ where: { email:email.tolowerCase() } })
 
     const { newAccessToken, newRefreshToken } = await generateAccessAndRefreshTokens(admin);
 

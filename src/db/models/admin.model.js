@@ -136,7 +136,8 @@ Admin.beforeUpdate(async (admin) => {
         admin.password = await bcrypt.hash(admin.password, Number(process.env.BCRYPT_SALT))
     }
     if(admin.changed('email')){
-        admin.isVerified = false;
+        admin.email = admin.email.toLowerCase();
+        admin.isVerified = false;   
     }
 })
 
