@@ -400,13 +400,17 @@ const sendVerificationCodeToEmail = asyncHandler(async (req, res) => {
     let { email } = req.body;
 
     await emailSchema.validateAsync(req.body)
-
+    
     // check the routers file if didn't get why we are taking emails this way
     if (!email && !req?.admin?.email) {
         throw new ApiError(400, "Email is required");
     }
 
-    email = email.toLowerCase() || req?.admin?.email.toLowerCase();
+    if(email) {
+        email = email.toLowerCase()
+    } else {
+        email = req?.admin?.email.toLowerCase()
+    }
 
     const admin = await Admin.findOne({ where: { email } })
 
