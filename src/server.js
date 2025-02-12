@@ -11,15 +11,13 @@ app.get("/api/v1/self-ping", async (req, res) => {
     res.status(200).send(null);
 })
 
-console.log(process.env.SERVER_ADDRESS + "/api/v1/self-ping")
-
 setInterval(() => {
     https.get(process.env.SERVER_ADDRESS + "/api/v1/self-ping", (res) => {
         console.log("Self-ping: ", res.statusCode)
     }).on('error', (err) => {
         console.log("Error during self-ping: ", err.message)
     })
-}, 1000 * 60 * 5) // 5 minutes
+}, 1000 * 60 * 3) // 3 minutes
 
 
 app.listen(port, () => {
