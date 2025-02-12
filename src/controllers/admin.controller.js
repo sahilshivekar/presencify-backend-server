@@ -8,6 +8,7 @@ import { sendVerificationCode } from '../utils/email.js';
 import { getAdminsSchema, emailSchema } from '../validators/admin.validators.js';
 import crypto from 'crypto';
 import jwt from 'jsonwebtoken'
+import { type } from 'os';
 
 
 //* generate verfication code for verifying email and forgot password
@@ -103,7 +104,8 @@ const loginAdmin = asyncHandler(async (req, res) => {
     const admin = await Admin.scope('withPassword').findOne({
         where: {
             [Op.or]: {
-                email: emailOrUsername.tolowerCase(),
+
+                email: emailOrUsername.toLowerCase(),
                 username: emailOrUsername
             }
         }
@@ -200,8 +202,7 @@ const updateAdminDetails = asyncHandler(async (req, res) => {
     const admin = await Admin.findByPk(req.admin.id);
 
     admin.username = username;
-    admin.email = email.tolowerCase();
-
+    admin.email = email.toLowerCase();
     await admin.save();
 
     res
@@ -405,7 +406,7 @@ const sendVerificationCodeToEmail = asyncHandler(async (req, res) => {
         throw new ApiError(400, "Email is required");
     }
 
-    email = email.tolowerCase() || req?.admin?.email.tolowerCase();
+    email = email.toLowerCase() || req?.admin?.email.toLowerCase();
 
     const admin = await Admin.findOne({ where: { email } })
 
@@ -474,7 +475,7 @@ const verifyCode = asyncHandler(async (req, res) => {
 
     const codeRecord = await VerificationCode.findOne({
         where: {
-            [Op.and]: [{ email:email.tolowerCase() }, { code }]
+            [Op.and]: [{ email:email.toLowerCase() }, { code }]
         }
     })
 
@@ -482,14 +483,14 @@ const verifyCode = asyncHandler(async (req, res) => {
         throw new ApiError(400, "Invalid verification code")
     }
 
-    const admin = await Admin.scope('withPassword').findOne({ where: { email:email.tolowerCase() } })
+    const admin = await Admin.scope('withPassword').findOne({ where: { email:email.toLowerCase() } })
 
     if (!admin.isVerified) {
         admin.isVerified = true;
         await admin.save()
     }
 
-    await VerificationCode.destroy({ where: { email:email.tolowerCase() } })
+    await VerificationCode.destroy({ where: { email:email.toLowerCase() } })
 
     const { newAccessToken, newRefreshToken } = await generateAccessAndRefreshTokens(admin);
 
