@@ -1,0 +1,189 @@
+import { Sequelize, Model } from 'sequelize';
+import sequelize from '../../config/db.connection.js';
+
+class Student extends Model { }
+
+Student.init(
+    {
+        id: {
+            type: Sequelize.INTEGER,
+            primaryKey: true,
+            allowNull: false,
+            autoIncrement: true,
+            field: 'student_id'
+        },
+        prn: {
+            type: Sequelize.STRING,
+            allowNull: false,
+            unique: {
+                name: 'student_prn_unique',
+                msg: 'PRN already exists'
+            },
+            field: 'student_prn',
+            validate: {
+                notEmpty: {
+                    msg: 'PRN cannot be empty'
+                }
+            }
+        },
+        firstName: {
+            type: Sequelize.STRING,
+            allowNull: false,
+            field: 'first_name',
+            validate: {
+                notEmpty: {
+                    msg: 'First name cannot be empty'
+                }
+            }
+        },
+        lastName: {
+            type: Sequelize.STRING,
+            allowNull: false,
+            field: 'last_name',
+            validate: {
+                notEmpty: {
+                    msg: 'Last name cannot be empty'
+                }
+            }
+        },
+        middleName: {
+            type: Sequelize.STRING,
+            allowNull: true,
+            field: 'middle_name'
+        },
+        dob: {
+            type: Sequelize.DATE,
+            allowNull: false,
+            field: 'dob',
+            validate: {
+                notNull: {
+                    msg: 'Date of birth cannot be null'
+                },
+                isDate: {
+                    msg: 'Invalid date format for Date of birth'
+                }
+            }
+        },
+        gender: {
+            type: Sequelize.STRING, // No ENUM provided in migration
+            allowNull: false,
+            field: 'gender',
+            validate: {
+                notEmpty: {
+                    msg: 'Gender cannot be empty'
+                }
+            }
+        },
+        email: {
+            type: Sequelize.STRING,
+            allowNull: false,
+            field: 'email',
+            unique: {
+                name: 'student_email_unique',
+                msg: 'Email already exists'
+            },
+            validate: {
+                notEmpty: {
+                    msg: 'Email cannot be empty'
+                },
+                isEmail: {
+                    msg: 'Invalid email format'
+                }
+            }
+        },
+        phoneNumber: {
+            type: Sequelize.STRING,
+            allowNull: false,
+            field: 'phone_number',
+            unique: {
+                name: 'student_phone_number_unique',
+                msg: 'Phone number already exists'
+            },
+            validate: {
+                notEmpty: {
+                    msg: 'Phone number cannot be empty'
+                }
+            }
+        },
+        enrollmentDate: {
+            type: Sequelize.DATE,
+            allowNull: false,
+            field: 'enrollment_date',
+            validate: {
+                notNull: {
+                    msg: 'Enrollment date cannot be null'
+                },
+                isDate: {
+                    msg: 'Invalid date format for Enrollment date'
+                }
+            }
+        },
+        academicStatus: {
+            type: Sequelize.ENUM('Active', 'Drop out', 'Graduated'),
+            allowNull: false,
+            field: 'academic_status',
+            validate: {
+                notNull: {
+                    msg: 'Academic status cannot be null'
+                }
+            }
+        },
+        password: {
+            type: Sequelize.STRING,
+            allowNull: false,
+            field: 'password',
+            validate: {
+                notEmpty: {
+                    msg: 'Password cannot be empty'
+                }
+            }
+        },
+        studentImgUrl: {
+            type: Sequelize.STRING,
+            allowNull: true,
+            field: 'student_img_url'
+        },
+        schemeId: {
+            type: Sequelize.INTEGER,
+            allowNull: false,
+            field: 'scheme_id',
+            references: {
+                model: 'schemes',
+                key: 'scheme_id',
+            },
+            validate: {
+                notNull: {
+                    msg: 'Scheme ID cannot be null'
+                }
+            }
+        },
+        createdAt: {
+            type: Sequelize.DATE,
+            allowNull: false,
+            field: 'created_at',
+            validate: {
+                notNull: {
+                    msg: 'Created At cannot be null'
+                }
+            }
+        },
+        updatedAt: {
+            type: Sequelize.DATE,
+            allowNull: false,
+            field: 'updated_at',
+            validate: {
+                notNull: {
+                    msg: 'Updated At cannot be null'
+                }
+            }
+        },
+    },
+    {
+        sequelize,
+        timestamps: true,
+        modelName: 'Student',
+        tableName: 'students',
+    }
+);
+
+export default Student;

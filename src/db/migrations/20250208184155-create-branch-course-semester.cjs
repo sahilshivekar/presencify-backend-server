@@ -6,7 +6,7 @@ module.exports = {
         await queryInterface.createTable(
             'branch_course_semesters',
             {
-                branchCourseSemesterId: {
+                id: {
                     type: Sequelize.INTEGER,
                     primaryKey: true,
                     allowNull: false,
