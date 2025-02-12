@@ -24,6 +24,7 @@ VerificationCode.init(
                     msg: 'Must be a valid email address',
                 }
             },
+            field: 'admin_email'
         },
         code: {
             type: Sequelize.STRING,
