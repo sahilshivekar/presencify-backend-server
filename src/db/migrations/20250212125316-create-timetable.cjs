@@ -1,0 +1,54 @@
+'use strict';
+
+/** @type {import('sequelize-cli').Migration} */
+module.exports = {
+    async up(queryInterface, Sequelize) {
+        await queryInterface.createTable(
+            'timetables',
+            {
+                id: {
+                    type: Sequelize.INTEGER,
+                    primaryKey: true,
+                    allowNull: false,
+                    autoIncrement: true,
+                    field: 'timetable_id'
+                },
+                divisionId: {
+                    type: Sequelize.INTEGER, 
+                    allowNull: false,
+                    field: 'division_id',
+                    references: {
+                        model: 'divisions',
+                        key: 'division_id' 
+                    },
+                    onUpdate: 'CASCADE',
+                    onDelete: 'CASCADE'
+                },
+                timetableVersion: {
+                    type: Sequelize.INTEGER,
+                    allowNull: false,
+                    field: 'timetable_version',
+                    defaultValue: 1 
+                },
+                createdAt: {
+                    type: Sequelize.DATE,
+                    allowNull: false,
+                    field: 'created_at'
+                },
+                updatedAt: {
+                    type: Sequelize.DATE,
+                    allowNull: false,
+                    field: 'updated_at'
+                }
+            },
+            {
+                timestamps: true,
+                freezeTableName: true
+            }
+        );
+    },
+
+    async down(queryInterface, Sequelize) {
+        await queryInterface.dropTable('timetables');
+    }
+};

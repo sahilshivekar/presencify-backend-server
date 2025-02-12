@@ -1,0 +1,76 @@
+'use strict';
+
+/** @type {import('sequelize-cli').Migration} */
+module.exports = {
+    async up(queryInterface, Sequelize) {
+        await queryInterface.createTable('students_semesters_batches', {
+            id: {
+                type: Sequelize.INTEGER,
+                primaryKey: true,
+                allowNull: false,
+                autoIncrement: true,
+                field: 'students_semesters_batches_id'
+            },
+            studentId: {
+                type: Sequelize.INTEGER,
+                allowNull: false,
+                field: 'student_id',
+                references: {
+                    model: 'students', // Name of the students table
+                    key: 'student_id' // Primary key of the students table
+                },
+                onUpdate: 'CASCADE',
+                onDelete: 'CASCADE'
+            },
+            semesterId: {
+                type: Sequelize.INTEGER,
+                allowNull: false,
+                field: 'semester_id',
+                references: {
+                    model: 'semesters', // Name of the semesters table
+                    key: 'semester_id' // Primary key of the semesters table
+                },
+                onUpdate: 'CASCADE',
+                onDelete: 'CASCADE'
+            },
+            batchId: {
+                type: Sequelize.INTEGER,  // Changed to INTEGER to match batches table
+                allowNull: false,
+                field: 'batch_id',
+                references: {
+                    model: 'batches', // Name of the batches table
+                    key: 'batch_id' // Primary key of the batches table
+                },
+                onUpdate: 'CASCADE',
+                onDelete: 'CASCADE'
+            },
+            startDate: {
+                type: Sequelize.DATE, // Or DATETIME if you need time as well
+                allowNull: false,
+                field: 'start_date'
+            },
+            endDate: {
+                type: Sequelize.DATE, // Or DATETIME if you need time as well
+                allowNull: true, // Allow null as it might be ongoing
+                field: 'end_date'
+            },
+            createdAt: {
+                type: Sequelize.DATE,
+                allowNull: false,
+                field: 'created_at'
+            },
+            updatedAt: {
+                type: Sequelize.DATE,
+                allowNull: false,
+                field: 'updated_at'
+            }
+        }, {
+            timestamps: true,
+            freezeTableName: true
+        });
+    },
+
+    async down(queryInterface, Sequelize) {
+        await queryInterface.dropTable('students_semesters_batches');
+    }
+};
