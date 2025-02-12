@@ -27,6 +27,9 @@ module.exports = {
                             msg: 'Must be a valid email address',
                         }
                     },
+                    onUpdate: 'CASCADE',
+                    onDelete: 'CASCADE',
+                    field: 'admin_email',
                 },
                 code: {
                     type: Sequelize.STRING,
