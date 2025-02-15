@@ -20,6 +20,9 @@ Division.init(
                 notEmpty: {
                     msg: 'Division code cannot be empty'
                 }
+            },
+            unique: {
+                msg: 'This division code is already in use'
             }
         },
         semesterId: {
@@ -34,6 +37,9 @@ Division.init(
                 notNull: {
                     msg: 'Semester ID cannot be null'
                 }
+            },
+            unique: {
+                msg: 'This division code is already in use'
             }
         },
         createdAt: {

@@ -11,7 +11,7 @@ University.init(
             primaryKey: true,
             field: 'university_id'
         },
-        universityName: {
+        name: {
             type: Sequelize.STRING(255),
             allowNull: false,
             unique: {
@@ -24,7 +24,7 @@ University.init(
             },
             field: "university_name"
         },
-        universityAbbreviation: {
+        abbreviation: {
             type: Sequelize.STRING(255),
             allowNull: false,
             unique: {

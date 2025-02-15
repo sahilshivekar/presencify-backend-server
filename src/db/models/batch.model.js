@@ -20,6 +20,9 @@ Batch.init(
                 notEmpty: {
                     msg: 'Batch code cannot be empty'
                 }
+            },
+            unique: {
+                msg: 'This batch code is already in use'
             }
         },
         semesterId: {
@@ -34,6 +37,9 @@ Batch.init(
                 notNull: {
                     msg: 'Semester ID cannot be null'
                 }
+            },
+            unique: {
+                msg: 'This batch code is already in use'
             }
         },
         createdAt: {

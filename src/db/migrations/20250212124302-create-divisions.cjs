@@ -16,7 +16,8 @@ module.exports = {
                 divisionCode: {
                     type: Sequelize.STRING(255),
                     allowNull: false,
-                    field: 'division_code'
+                    field: 'division_code',
+                    unique: "only_one_div_with_same_name"
                 },
                 semesterId: {
                     type: Sequelize.INTEGER,
@@ -27,7 +28,8 @@ module.exports = {
                         key: 'semester_id' 
                     },
                     onUpdate: 'CASCADE',
-                    onDelete: 'CASCADE'
+                    onDelete: 'CASCADE',
+                    unique: "only_one_div_with_same_name"
                 },
                 createdAt: {
                     type: Sequelize.DATE,
