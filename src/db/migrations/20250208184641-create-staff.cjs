@@ -29,20 +29,26 @@ module.exports = {
                     field: 'last_name',
                 },
                 staffImageUrl: {
-                    type: Sequelize.TEXT, 
+                    type: Sequelize.TEXT,
                     allowNull: true,
                     field: 'staff_image_url',
+                },
+                staffImagePublicId: {
+                    type: Sequelize.TEXT,
+                    allowNull: true,
+                    field: 'staff_image_public_id'
                 },
                 email: {
                     type: Sequelize.STRING(255),
                     allowNull: false,
                     unique: true,
-                    field:'staff_email',
+                    field: 'staff_email',
                 },
                 phoneNumber: {
                     type: Sequelize.STRING(15),
                     allowNull: false,
                     field: 'staff_phone_number',
+                    unique: true,
                 },
                 gender: {
                     type: Sequelize.ENUM('Male', 'Female', 'Other'), // i want enum('Male', 'Female', 'Other')
@@ -64,20 +70,27 @@ module.exports = {
                     allowNull: false,
                     field: 'staff_password',
                 },
+                refreshToken: {
+                    type: Sequelize.TEXT,
+                    allowNull: true,
+                    field: 'refresh_token'
+                },
                 createdAt: {
                     type: Sequelize.DATE,
                     allowNull: false,
                     field: 'created_at',
+                    defaultValue: Sequelize.literal('CURRENT_TIMESTAMP')
                 },
                 updatedAt: {
                     type: Sequelize.DATE,
                     allowNull: false,
                     field: 'updated_at',
+                    defaultValue: Sequelize.literal('CURRENT_TIMESTAMP')
                 },
                 isActive: {
                     type: Sequelize.BOOLEAN,
                     allowNull: false,
-                    field: 'updated_at',
+                    field: 'is_active',
                     defaultValue: true,
                 },
             },

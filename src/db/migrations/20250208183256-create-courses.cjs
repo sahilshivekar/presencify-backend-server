@@ -35,20 +35,22 @@ module.exports = {
                     allowNull: false,
                     field: 'course_name',
                 },
-                courseAbbreviation: {
+                optionalSubject: {
                     type: Sequelize.STRING(255),
-                    allowNull: false,
-                    field: 'course_abbreviation',
+                    allowNull: true,
+                    field: 'course_optional_subject',
                 },
                 createdAt: {
                     type: Sequelize.DATE,
                     allowNull: false,
                     field: 'created_at',
+                    defaultValue: Sequelize.literal('CURRENT_TIMESTAMP')
                 },
                 updatedAt: {
                     type: Sequelize.DATE,
                     allowNull: false,
                     field: 'updated_at',
+                    defaultValue: Sequelize.literal('CURRENT_TIMESTAMP')
                 },
             },
             {

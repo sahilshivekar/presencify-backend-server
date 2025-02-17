@@ -17,7 +17,6 @@ module.exports = {
                     type: Sequelize.STRING(255),
                     allowNull: false,
                     field: 'division_code',
-                    unique: "only_one_div_with_same_name"
                 },
                 semesterId: {
                     type: Sequelize.INTEGER,
@@ -29,22 +28,28 @@ module.exports = {
                     },
                     onUpdate: 'CASCADE',
                     onDelete: 'CASCADE',
-                    unique: "only_one_div_with_same_name"
                 },
                 createdAt: {
                     type: Sequelize.DATE,
                     allowNull: false,
-                    field: 'created_at'
+                    field: 'created_at',
+                    defaultValue: Sequelize.literal('CURRENT_TIMESTAMP')
                 },
                 updatedAt: {
                     type: Sequelize.DATE,
                     allowNull: false,
-                    field: 'updated_at'
+                    field: 'updated_at',
+                    defaultValue: Sequelize.literal('CURRENT_TIMESTAMP')
                 }
             },
             {
                 timestamps: true,
-                freezeTableName: true
+                freezeTableName: true,
+                uniqueKeys: { 
+                    division_unique: { 
+                        fields: ['semester_id','division_code'] 
+                    }
+                }
             }
         );
     },

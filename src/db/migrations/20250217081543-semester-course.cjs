@@ -3,24 +3,13 @@
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
     async up(queryInterface, Sequelize) {
-        await queryInterface.createTable('students_semesters_divisions', {
-            id: { 
+        await queryInterface.createTable('semester_courses', {
+            id: {
                 type: Sequelize.INTEGER,
                 primaryKey: true,
                 allowNull: false,
                 autoIncrement: true,
-                field: 'student_semester_divison_id'
-            },
-            studentId: {
-                type: Sequelize.INTEGER,
-                allowNull: false,
-                field: 'student_id',
-                references: {
-                    model: 'students',
-                    key: 'student_id' 
-                },
-                onUpdate: 'CASCADE',
-                onDelete: 'CASCADE'
+                field: 'semester_courses_id'
             },
             semesterId: {
                 type: Sequelize.INTEGER,
@@ -28,31 +17,21 @@ module.exports = {
                 field: 'semester_id',
                 references: {
                     model: 'semesters',
-                    key: 'semester_id' 
+                    key: 'semester_id',
                 },
                 onUpdate: 'CASCADE',
                 onDelete: 'CASCADE'
             },
-            divisionId: {
+            courseId: {
                 type: Sequelize.INTEGER,
                 allowNull: false,
-                field: 'division_id',
+                field: 'course_id',
                 references: {
-                    model: 'divisions', 
-                    key: 'division_id' 
+                    model: 'courses',
+                    key: 'course_id',
                 },
                 onUpdate: 'CASCADE',
                 onDelete: 'CASCADE'
-            },
-            startDate: {
-                type: Sequelize.DATE, 
-                allowNull: false,
-                field: 'start_date'
-            },
-            endDate: {
-                type: Sequelize.DATE, 
-                allowNull: true, 
-                field: 'end_date'
             },
             createdAt: {
                 type: Sequelize.DATE,
@@ -73,6 +52,6 @@ module.exports = {
     },
 
     async down(queryInterface, Sequelize) {
-        await queryInterface.dropTable('students_semesters_divisions');
+        await queryInterface.dropTable('semester_courses');
     }
 };

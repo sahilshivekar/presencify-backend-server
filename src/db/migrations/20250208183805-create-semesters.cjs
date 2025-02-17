@@ -39,20 +39,38 @@ module.exports = {
                     allowNull: false,
                     field: 'academic_end_year',
                 },
+                schemeId: {
+                    type: Sequelize.INTEGER,
+                    allowNull: false,
+                    field: 'scheme_id',
+                    references: {
+                        model: 'schemes',
+                        key: 'scheme_id',
+                    },
+                    onUpdate: 'CASCADE',
+                    onDelete: 'CASCADE',
+                },
                 createdAt: {
                     type: Sequelize.DATE,
                     allowNull: false,
                     field: 'created_at',
+                    defaultValue: Sequelize.literal('CURRENT_TIMESTAMP')
                 },
                 updatedAt: {
                     type: Sequelize.DATE,
                     allowNull: false,
                     field: 'updated_at',
+                    defaultValue: Sequelize.literal('CURRENT_TIMESTAMP')
                 },
             },
             {
                 timestamps: true,
                 freezeTableName: true,
+                uniqueKeys: { 
+                    semester_unique: { 
+                        fields: ['branch_id', 'semester_number', 'academic_start_year', 'academic_end_year', 'scheme_id'] 
+                    }
+                }
             }
         );
     },

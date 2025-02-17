@@ -19,12 +19,6 @@ module.exports = {
                     unique: true, // To ensure no duplicate scheme names
                     field: 'scheme_name',
                 },
-                abbreviation: {
-                    type: Sequelize.STRING(255),
-                    allowNull: false,
-                    unique: true,
-                    field: 'scheme_abbreviation',
-                },
                 universityId: {
                     type: Sequelize.INTEGER,
                     allowNull: false,
@@ -40,11 +34,13 @@ module.exports = {
                     type: Sequelize.DATE,
                     allowNull: false,
                     field: "created_at",
+                    defaultValue: Sequelize.literal('CURRENT_TIMESTAMP')
                 },
                 updatedAt: {
                     type: Sequelize.DATE,
                     allowNull: false,
-                    field: "updated_at"
+                    field: "updated_at",
+                    defaultValue: Sequelize.literal('CURRENT_TIMESTAMP')
                 },
             },
             {

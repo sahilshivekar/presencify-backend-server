@@ -56,11 +56,11 @@ module.exports = {
                     unique: true,
                     field: 'phone_number',
                 },
-                enrollmentDate: {
-                    type: Sequelize.DATE,
-                    allowNull: false,
-                    field: 'enrollment_date',
-                },
+                // enrollmentDate: {
+                //     type: Sequelize.DATE,
+                //     allowNull: false,
+                //     field: 'enrollment_date',
+                // },
                 academicStatus: {
                     type: Sequelize.ENUM('Active', 'Drop out', 'Graduated'),
                     allowNull: false,
@@ -71,10 +71,20 @@ module.exports = {
                     allowNull: false,
                     field: 'password',
                 },
+                refreshToken: {
+                    type: Sequelize.TEXT,
+                    allowNull: true,
+                    field: 'refresh_token'
+                },
                 studentImgUrl: {
-                    type: Sequelize.STRING,
+                    type: Sequelize.TEXT,
                     allowNull: true,
                     field: 'student_img_url',
+                },
+                studentImgPublicId: {
+                    type: Sequelize.TEXT,
+                    allowNull: true,
+                    field: 'student_img_public_id',
                 },
                 schemeId: {
                     type: Sequelize.INTEGER,
@@ -91,11 +101,13 @@ module.exports = {
                     type: Sequelize.DATE,
                     allowNull: false,
                     field: 'created_at',
+                    defaultValue: Sequelize.literal('CURRENT_TIMESTAMP')
                 },
                 updatedAt: {
                     type: Sequelize.DATE,
                     allowNull: false,
                     field: 'updated_at',
+                    defaultValue: Sequelize.literal('CURRENT_TIMESTAMP')
                 },
             },
             {
