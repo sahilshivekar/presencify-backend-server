@@ -353,7 +353,7 @@ const getAdmins = asyncHandler(async (req, res) => {
         where: whereClause,
         order: orderClause,
         offset: offset,
-        limit: limit
+        limit: pageSize
     });
 
     // Return the list of admins
@@ -546,16 +546,17 @@ const getAdminDetails = asyncHandler(async (req, res) => {
 });
 
 export {
-    loginAdmin,
     addAdmin,
     updateAdminDetails,
     updateAdminPassword,
     verifyPassword,
     removeAdmin,
     getAdmins,
+    getAdminDetails,
+    
+    loginAdmin,
     sendVerificationCodeToEmail,
     verifyCode,
     getAccessToken,
     logout,
-    getAdminDetails
 };
