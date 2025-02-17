@@ -5,7 +5,13 @@ const asyncHandler = (fn) => async (req, res, next) => {
         console.log(err)
         // for direclty adding the validate error message in the err.message 
         // avoiding the multiple validation error messages in one message and als avoiding the "validation_error" prefix
-        if (err?.errors?.length > 0 && err?.errors[0]?.type == "Validation error") {
+        if (
+            (err?.errors?.length > 0)
+            && (err?.errors[0]?.type == "Validation error" ||
+                err?.errors[0]?.type == "notNull Violation" ||
+                err?.errors[0]?.type == "unique violation"
+            )
+        ) {
             err.message = err.errors[0].message
         }
 
