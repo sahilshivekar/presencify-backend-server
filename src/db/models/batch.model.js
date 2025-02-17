@@ -22,7 +22,8 @@ Batch.init(
                 }
             },
             unique: {
-                msg: 'This batch code is already in use'
+                name: 'batch_unique',
+                msg: 'Batch already exists'
             }
         },
         semesterId: {
@@ -39,7 +40,8 @@ Batch.init(
                 }
             },
             unique: {
-                msg: 'This batch code is already in use'
+                name: 'batch_unique',
+                msg: 'Batch already exists'
             }
         },
         createdAt: {

@@ -1,30 +1,16 @@
 import { Sequelize, Model } from 'sequelize';
 import sequelize from '../../config/db.connection.js';
 
-class Division extends Model { }
+class SemesterCourse extends Model { }
 
-Division.init(
+SemesterCourse.init(
     {
         id: {
             type: Sequelize.INTEGER,
             primaryKey: true,
             allowNull: false,
             autoIncrement: true,
-            field: 'division_id'
-        },
-        divisionCode: {
-            type: Sequelize.STRING(255),
-            allowNull: false,
-            field: 'division_code',
-            validate: {
-                notEmpty: {
-                    msg: 'Division code cannot be empty'
-                }
-            },
-            unique: {
-                name: 'division_unique',
-                msg: 'Division already exists'
-            }
+            field: 'semester_courses_id'
         },
         semesterId: {
             type: Sequelize.INTEGER,
@@ -32,16 +18,26 @@ Division.init(
             field: 'semester_id',
             references: {
                 model: 'semesters',
-                key: 'semester_id'
+                key: 'semester_id',
             },
             validate: {
                 notNull: {
                     msg: 'Semester ID cannot be null'
                 }
+            }
+        },
+        courseId: {
+            type: Sequelize.INTEGER,
+            allowNull: false,
+            field: 'course_id',
+            references: {
+                model: 'courses',
+                key: 'course_id',
             },
-            unique: {
-                name: 'division_unique',
-                msg: 'Division already exists'
+            validate: {
+                notNull: {
+                    msg: 'Course ID cannot be null'
+                }
             }
         },
         createdAt: {
@@ -63,14 +59,14 @@ Division.init(
                     msg: 'Updated At cannot be null'
                 }
             }
-        }
+        },
     },
     {
         sequelize,
         timestamps: true,
-        modelName: 'Division',
-        tableName: 'divisions'
+        modelName: 'SemesterCourse', // Corrected Model Name
+        tableName: 'semester_courses', // Corrected Table Name
     }
 );
 
-export default Division;
+export default SemesterCourse;

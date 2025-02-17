@@ -1,6 +1,6 @@
 import { Sequelize, Model } from 'sequelize';
 import sequelize from '../../config/db.connection.js';
-
+import bcrypt from 'bcrypt';
 class Student extends Model { }
 
 Student.init(
@@ -53,12 +53,9 @@ Student.init(
         },
         dob: {
             type: Sequelize.DATE,
-            allowNull: false,
+            allowNull: true,
             field: 'dob',
             validate: {
-                notNull: {
-                    msg: 'Date of birth cannot be null'
-                },
                 isDate: {
                     msg: 'Invalid date format for Date of birth'
                 }
@@ -66,7 +63,7 @@ Student.init(
         },
         gender: {
             type: Sequelize.STRING, // No ENUM provided in migration
-            allowNull: false,
+            allowNull: true,
             field: 'gender',
             validate: {
                 notEmpty: {
@@ -105,19 +102,19 @@ Student.init(
                 }
             }
         },
-        enrollmentDate: {
-            type: Sequelize.DATE,
-            allowNull: false,
-            field: 'enrollment_date',
-            validate: {
-                notNull: {
-                    msg: 'Enrollment date cannot be null'
-                },
-                isDate: {
-                    msg: 'Invalid date format for Enrollment date'
-                }
-            }
-        },
+        // enrollmentDate: {
+        //     type: Sequelize.DATE,
+        //     allowNull: false,
+        //     field: 'enrollment_date',
+        //     validate: {
+        //         notNull: {
+        //             msg: 'Enrollment date cannot be null'
+        //         },
+        //         isDate: {
+        //             msg: 'Invalid date format for Enrollment date'
+        //         }
+        //     }
+        // },
         academicStatus: {
             type: Sequelize.ENUM('Active', 'Drop out', 'Graduated'),
             allowNull: false,
@@ -135,13 +132,44 @@ Student.init(
             validate: {
                 notEmpty: {
                     msg: 'Password cannot be empty'
-                }
+                },
+                notNull: {
+                    msg: 'Password cannot be null'
+                },
+                isStrongPassword(value) {
+                    // Custom validation logic for password
+                    if (!/[A-Z]/.test(value)) {
+                        throw new Error('Password must contain at least one uppercase letter');
+                    }
+                    if (!/\d/.test(value)) {
+                        throw new Error('Password must contain at least one number');
+                    }
+                    if (!/[^\w]/.test(value)) {
+                        throw new Error('Password must contain at least one special character');
+                    }
+                    if (/\s/.test(value)) {
+                        throw new Error('Password cannot contain spaces');
+                    }
+                    if (value.length < 8) {
+                        throw new Error('Password must be at least 8 characters long');
+                    }
+                },
             }
         },
+        refreshToken: {
+            type: Sequelize.TEXT,
+            allowNull: true,
+            field: 'refresh_token'
+        },
         studentImgUrl: {
-            type: Sequelize.STRING,
+            type: Sequelize.TEXT,
             allowNull: true,
             field: 'student_img_url'
+        },
+        studentImgPublicId: {
+            type: Sequelize.TEXT,
+            allowNull: true,
+            field: 'student_img_public_id',
         },
         schemeId: {
             type: Sequelize.INTEGER,
@@ -185,5 +213,51 @@ Student.init(
         tableName: 'students',
     }
 );
+
+Student.prototype.isPasswordMatching = async function (password) {
+    return await bcrypt.compare(password, this.password)
+}
+
+Student.beforeCreate(async (student) => {
+    if (student?.password) {
+        student.password = await bcrypt.hash(student.password, Number(process.env.BCRYPT_SALT))
+    }
+})
+
+Student.beforeUpdate(async (student) => {
+    if (student.changed('password') && student?.password) {
+        student.password = await bcrypt.hash(student.password, Number(process.env.BCRYPT_SALT))
+    }
+    if (student.changed('email')) {
+        student.email = student.email.toLowerCase();
+        student.isVerified = false;
+    }
+})
+
+Student.prototype.generateAccessToken = function () {
+    return jwt.sign(
+        {
+            id: this.id,
+            email: this.email,
+        },
+        process.env.JWT_ACCESS_TOKEN_SECRET,
+        {
+            expiresIn: process.env.JWT_ACCESS_TOKEN_EXPIRY,
+        }
+    )
+}
+
+Student.prototype.generateRefreshToken = function () {
+    return jwt.sign(
+        {
+            id: this.id,
+            email: this.email,
+        },
+        process.env.JWT_REFRESH_TOKEN_SECRET,
+        {
+            expiresIn: process.env.JWT_REFRESH_TOKEN_EXPIRY
+        }
+    )
+}
 
 export default Student;

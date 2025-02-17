@@ -1,5 +1,7 @@
 import { Sequelize, Model } from 'sequelize';
 import sequelize from '../../config/db.connection.js';
+import Division from './division.model.js';
+import Batch from './batch.model.js';
 
 class Semester extends Model { }
 
@@ -24,6 +26,10 @@ Semester.init(
                 notNull: {
                     msg: 'Branch ID cannot be null'
                 }
+            },
+            unique: {
+                name: 'semester_unique',
+                msg: 'Semester already exists'
             }
         },
         semesterNumber: {
@@ -37,6 +43,10 @@ Semester.init(
                 isInt: {
                     msg: 'Semester number must be an integer'
                 }
+            },
+            unique: {
+                name: 'semester_unique',
+                msg: 'Semester already exists'
             }
         },
         academicStartYear: {
@@ -50,6 +60,10 @@ Semester.init(
                 isInt: {
                     msg: 'Academic start year must be an integer'
                 }
+            },
+            unique: {
+                name: 'semester_unique',
+                msg: 'Semester already exists'
             }
         },
         academicEndYear: {
@@ -63,6 +77,31 @@ Semester.init(
                 isInt: {
                     msg: 'Academic end year must be an integer'
                 }
+            },
+            unique: {
+                name: 'semester_unique',
+                msg: 'Semester already exists'
+            }
+        },
+        schemeId: {
+            type: Sequelize.INTEGER,
+            allowNull: false,
+            field: 'scheme_id',
+            references: {
+                model: 'schemes',
+                key: 'scheme_id',
+            },
+            validate: {
+                notNull: {
+                    msg: 'Scheme ID cannot be null'
+                },
+                isInt: {
+                    msg: 'Scheme ID must be an integer'
+                }
+            },
+            unique: {
+                name: 'semester_unique',
+                msg: 'Semester already exists'
             }
         },
         createdAt: {
@@ -93,5 +132,11 @@ Semester.init(
         tableName: 'semesters',
     }
 );
+
+Semester.hasMany(Division, {sourceKey: "id", foreignKey: "semesterId"})
+Division.belongsTo(Semester, {foreignKey: "semesterId", targetKey: "id"})   
+
+Semester.hasMany(Batch, {sourceKey: "id", foreignKey: "semesterId"})
+Batch.belongsTo(Semester, {foreignKey: "semesterId", targetKey: "id"})
 
 export default Semester;

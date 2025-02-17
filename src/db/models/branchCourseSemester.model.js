@@ -1,6 +1,7 @@
 import { Sequelize, Model } from 'sequelize';
 import sequelize from '../../config/db.connection.js';
 
+
 class BranchCourseSemester extends Model { }
 
 BranchCourseSemester.init(

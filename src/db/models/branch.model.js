@@ -1,5 +1,10 @@
 import { Sequelize, Model } from 'sequelize';
 import sequelize from '../../config/db.connection.js';
+import BranchCourseSemester from './branchCourseSemester.model.js';
+import Scheme from './scheme.model.js';
+import Semester from './semester.model.js';
+
+
 
 class Branch extends Model { }
 
@@ -67,5 +72,13 @@ Branch.init(
         tableName: 'branches',
     }
 );
+
+Branch.hasMany(BranchCourseSemester, {sourceKey: 'id', foreignKey: 'branchId'});
+BranchCourseSemester.belongsTo(Branch, {targetKey: 'id', foreignKey: 'branchId'});  
+
+
+Branch.hasMany(Semester, {sourceKey: 'id', foreignKey: 'branchId'});
+Semester.belongsTo(Branch, {targetKey: 'id', foreignKey: 'branchId'});
+
 
 export default Branch;

@@ -1,11 +1,13 @@
 import { Sequelize, Model } from 'sequelize';
 import sequelize from '../../config/db.connection.js';
+import BranchCourseSemester from './branchCourseSemester.model.js';
+import Scheme from './scheme.model.js';
 
 class Course extends Model { }
 
 Course.init(
     {
-        courseId: {
+        id: {
             type: Sequelize.INTEGER,
             primaryKey: true,
             allowNull: false,
@@ -26,7 +28,7 @@ Course.init(
                 }
             }
         },
-        courseCode: {
+        code: {
             type: Sequelize.STRING(255),
             allowNull: false,
             field: 'course_code',
@@ -40,7 +42,7 @@ Course.init(
                 }
             }
         },
-        courseName: {
+        name: {
             type: Sequelize.STRING(255),
             allowNull: false,
             field: 'course_name',
@@ -50,15 +52,10 @@ Course.init(
                 }
             }
         },
-        courseAbbreviation: {
+        optionalSubject: {
             type: Sequelize.STRING(255),
-            allowNull: false,
-            field: 'course_abbreviation',
-            validate: {
-                notEmpty: {
-                    msg: 'Course abbreviation cannot be empty'
-                }
-            }
+            allowNull: true,
+            field: 'course_optional_subject',
         },
         createdAt: {
             type: Sequelize.DATE,
@@ -88,5 +85,16 @@ Course.init(
         tableName: 'courses',
     }
 );
+
+Course.hasMany(BranchCourseSemester, {
+    sourceKey: 'id',
+    foreignKey: 'courseId',
+})
+BranchCourseSemester.belongsTo(Course, {foreignKey: 'courseId', targetKey: 'id'});
+
+
+Course.belongsTo(Scheme, {foreignKey: 'schemeId', targetKey: 'id'});
+Scheme.hasMany(Course, {sourceKey: 'id', foreignKey: 'schemeId'});
+
 
 export default Course;

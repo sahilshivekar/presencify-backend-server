@@ -1,5 +1,7 @@
 import { Sequelize, Model } from 'sequelize';
 import sequelize from '../../config/db.connection.js';
+import University from './university.model.js';
+import Semester from './semester.model.js';
 
 class Scheme extends Model { }
 
@@ -22,20 +24,6 @@ Scheme.init(
             validate: {
                 notEmpty: {
                     msg: 'Scheme name cannot be empty'
-                }
-            }
-        },
-        abbreviation: {
-            type: Sequelize.STRING(255),
-            allowNull: false,
-            field: 'scheme_abbreviation',
-            unique: {
-                name: 'scheme_abbreviation_unique', // Named constraint
-                msg: 'Scheme abbreviation already exists'
-            },
-            validate: {
-                notEmpty: {
-                    msg: 'Scheme abbreviation cannot be empty'
                 }
             }
         },
@@ -82,4 +70,9 @@ Scheme.init(
     }
 );
 
+Scheme.belongsTo(University, {foreignKey: 'universityId', targetKey: 'id'});
+University.hasMany(Scheme, {sourceKey: 'id', foreignKey: 'universityId'});
+
+Scheme.hasMany(Semester, {sourceKey: 'id', foreignKey: 'schemeId'});
+Semester.belongsTo(Scheme, {targetKey: 'id', foreignKey: 'schemeId'});
 export default Scheme;
