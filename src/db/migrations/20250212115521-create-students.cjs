@@ -56,15 +56,20 @@ module.exports = {
                     unique: true,
                     field: 'phone_number',
                 },
-                // enrollmentDate: {
-                //     type: Sequelize.DATE,
-                //     allowNull: false,
-                //     field: 'enrollment_date',
-                // },
                 academicStatus: {
                     type: Sequelize.ENUM('Active', 'Drop out', 'Graduated'),
                     allowNull: false,
                     field: 'academic_status',
+                },
+                admissionYear: {
+                    type: Sequelize.INTEGER,
+                    allowNull: false,
+                    field: 'admission_year',
+                },
+                admissionType: {
+                    type: Sequelize.ENUM('DSE', 'FE'),
+                    allowNull: false,
+                    field: 'admission_type',
                 },
                 password: {
                     type: Sequelize.STRING,
@@ -108,7 +113,7 @@ module.exports = {
                     allowNull: false,
                     field: 'updated_at',
                     defaultValue: Sequelize.literal('CURRENT_TIMESTAMP')
-                },
+                }
             },
             {
                 timestamps: true, // Enables automatic 'createdAt' and 'updatedAt'

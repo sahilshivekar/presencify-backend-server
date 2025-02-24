@@ -205,6 +205,32 @@ Student.init(
                 }
             }
         },
+        admissionYear: {
+            type: Sequelize.INTEGER,
+            allowNull: false,
+            field: 'admission_year',
+            validate: {
+                notEmpty: {
+                    msg: 'Admission Year cannot be empty'
+                },
+                notNull: {
+                    msg: 'Admission Year cannot be null'
+                }
+            }
+        },
+        admissionType: {
+            type: Sequelize.ENUM("DSE", "FE"),
+            allowNull: false,
+            field: 'admission_type',
+            validate: {
+                notEmpty: {
+                    msg: 'Admission Type cannot be empty'
+                },
+                notNull: {
+                    msg: 'Admission Type cannot be null'
+                }
+            }
+        }
     },
     {
         sequelize,
