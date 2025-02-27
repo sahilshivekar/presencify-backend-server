@@ -1,7 +1,7 @@
 import { Sequelize, Model } from 'sequelize';
 import sequelize from '../../config/db.connection.js';
 import Division from './division.model.js';
-import Batch from './batch.model.js';
+import StudentSemester from './studentSemester.model.js';
 
 class Semester extends Model { }
 
@@ -133,8 +133,10 @@ Semester.init(
     }
 );
 
-Semester.hasMany(Division, {sourceKey: "id", foreignKey: "semesterId"})
-Division.belongsTo(Semester, {foreignKey: "semesterId", targetKey: "id"})   
+Semester.hasMany(Division, { sourceKey: "id", foreignKey: "semesterId" })
+Division.belongsTo(Semester, { foreignKey: "semesterId", targetKey: "id" })
 
+Semester.hasMany(StudentSemester, { sourceKey: "id", foreignKey: "semesterId" })
+StudentSemester.belongsTo(Semester, { foreignKey: "semesterId", targetKey: "id" })
 
 export default Semester;

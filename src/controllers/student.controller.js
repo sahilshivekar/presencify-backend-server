@@ -8,10 +8,20 @@ import { uploadOnCloudinary, deleteFromCloudinary } from '../utils/cloudinary.js
 import { isValidPhoneNumber, parsePhoneNumberWithError } from 'libphonenumber-js';
 import Scheme from "../db/models/scheme.model.js"
 import moment from "moment"
+import Semester from '../db/models/semester.model.js';
+import StudentSemester from '../db/models/studentSemester.model.js';
+import Branch from '../db/models/branch.model.js';
+
 
 //* Get all students
 const getStudents = asyncHandler(async (req, res) => {
-    const { searchQuery } = req.query;
+    const {
+        searchQuery,
+        branchId,
+        semesterNumber,
+        academicStartYear,
+        academicEndYear
+    } = req.query;
 
     let searchClause = {};
 
@@ -22,12 +32,64 @@ const getStudents = asyncHandler(async (req, res) => {
                 { lastName: { [Op.iLike]: `%${searchQuery}%` } },
                 { email: { [Op.iLike]: `%${searchQuery}%` } },
                 { phoneNumber: { [Op.iLike]: `%${searchQuery}%` } },
-                { prn: { [Op.iLike]: `%${searchQuery}%` } }
+                { prn: { [Op.iLike]: `%${searchQuery}%` } },
+                { admissionYear: { [Op.iLike]: `%${searchQuery}%` } },
+                { academicStatus: { [Op.iLike]: `%${searchQuery}%` } },
+                { admissionType: { [Op.iLike]: `%${searchQuery}%` } },
             ]
         };
     }
 
-    const students = await Student.findAll({ where: searchClause });
+    let filterClause = {};
+
+    if (branchId) {
+        filterClause.branchId = Number(branchId);
+    }
+    if (semesterNumber) {
+        if (isNaN(Number(semesterNumber))) {
+            throw new ApiError(400, "Semester number must be a number");
+        }
+        if (![1, 2, 3, 4, 5, 6, 7, 8].includes(Number(semesterNumber))) {
+            throw new ApiError(400, "Invalid semester number");
+        }
+        filterClause.semesterNumber = semesterNumber;
+    }
+    if (academicStartYear) {
+        if (isNaN(Number(academicStartYear))) {
+            throw new ApiError(400, "Academic start year must be a number");
+        }  
+        filterClause.academicStartYear = academicStartYear;
+    }
+    if (academicEndYear) {
+        if (isNaN(Number(academicEndYear))) {
+            throw new ApiError(400, "Academic start year must be a number");
+        }
+        filterClause.academicEndYear = academicEndYear;
+    }
+
+
+    const students = await Student.findAll({
+        where: searchClause,
+        include: [
+            {
+                model: StudentSemester,
+                required: true,
+                include: [
+                    {
+                        model: Semester,
+                        required: true,
+                        where: filterClause,
+                        include: [
+                            {
+                                model: Branch,
+                                required: true
+                            }
+                        ]
+                    }
+                ]
+            },
+        ]
+    });
 
     res.status(200).json(new ApiResponse(200, "Students retrieved successfully.", students));
 });

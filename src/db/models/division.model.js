@@ -1,6 +1,6 @@
 import { Sequelize, Model } from 'sequelize';
 import sequelize from '../../config/db.connection.js';
-
+import Batch from './batch.model.js';
 class Division extends Model { }
 
 Division.init(
