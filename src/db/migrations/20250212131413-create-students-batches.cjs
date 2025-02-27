@@ -3,55 +3,45 @@
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
     async up(queryInterface, Sequelize) {
-        await queryInterface.createTable('students_semesters_divisions', {
-            id: { 
+        await queryInterface.createTable('students_batches', {
+            id: {
                 type: Sequelize.INTEGER,
                 primaryKey: true,
                 allowNull: false,
                 autoIncrement: true,
-                field: 'student_semester_divison_id'
+                field: 'student_batch_id'
             },
             studentId: {
                 type: Sequelize.INTEGER,
                 allowNull: false,
                 field: 'student_id',
                 references: {
-                    model: 'students',
-                    key: 'student_id' 
+                    model: 'students', // Name of the students table
+                    key: 'student_id' // Primary key of the students table
                 },
                 onUpdate: 'CASCADE',
                 onDelete: 'CASCADE'
             },
-            semesterId: {
-                type: Sequelize.INTEGER,
+            batchId: {
+                type: Sequelize.INTEGER,  // Changed to INTEGER to match batches table
                 allowNull: false,
-                field: 'semester_id',
+                field: 'batch_id',
                 references: {
-                    model: 'semesters',
-                    key: 'semester_id' 
-                },
-                onUpdate: 'CASCADE',
-                onDelete: 'CASCADE'
-            },
-            divisionId: {
-                type: Sequelize.INTEGER,
-                allowNull: false,
-                field: 'division_id',
-                references: {
-                    model: 'divisions', 
-                    key: 'division_id' 
+                    model: 'batches', // Name of the batches table
+                    key: 'batch_id' // Primary key of the batches table
                 },
                 onUpdate: 'CASCADE',
                 onDelete: 'CASCADE'
             },
             startDate: {
-                type: Sequelize.DATE, 
+                type: Sequelize.DATE, // Or DATETIME if you need time as well
                 allowNull: false,
-                field: 'start_date'
+                field: 'start_date',
+                defaultValue: Sequelize.literal('CURRENT_TIMESTAMP')
             },
             endDate: {
-                type: Sequelize.DATE, 
-                allowNull: true, 
+                type: Sequelize.DATE, // Or DATETIME if you need time as well
+                allowNull: true, // Allow null as it might be ongoing
                 field: 'end_date'
             },
             createdAt: {
@@ -73,6 +63,6 @@ module.exports = {
     },
 
     async down(queryInterface, Sequelize) {
-        await queryInterface.dropTable('students_semesters_divisions');
+        await queryInterface.dropTable('students_batches');
     }
 };
