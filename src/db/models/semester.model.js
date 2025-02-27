@@ -136,7 +136,5 @@ Semester.init(
 Semester.hasMany(Division, {sourceKey: "id", foreignKey: "semesterId"})
 Division.belongsTo(Semester, {foreignKey: "semesterId", targetKey: "id"})   
 
-Semester.hasMany(Batch, {sourceKey: "id", foreignKey: "semesterId"})
-Batch.belongsTo(Semester, {foreignKey: "semesterId", targetKey: "id"})
 
 export default Semester;

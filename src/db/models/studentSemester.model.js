@@ -1,16 +1,16 @@
 import { Sequelize, Model } from 'sequelize';
 import sequelize from '../../config/db.connection.js';
 
-class StudentSemesterDivision extends Model { }
+class StudentSemester extends Model { }
 
-StudentSemesterDivision.init(
+StudentSemester.init(
     {
         id: {
             type: Sequelize.INTEGER,
             primaryKey: true,
             allowNull: false,
             autoIncrement: true,
-            field: 'student_semester_divison_id'
+            field: 'student_semester_id'
         },
         studentId: {
             type: Sequelize.INTEGER,
@@ -40,43 +40,6 @@ StudentSemesterDivision.init(
                 }
             }
         },
-        divisionId: {
-            type: Sequelize.INTEGER,
-            allowNull: false,
-            field: 'division_id',
-            references: {
-                model: 'divisions',
-                key: 'division_id'
-            },
-            validate: {
-                notNull: {
-                    msg: 'Division ID cannot be null'
-                }
-            }
-        },
-        startDate: {
-            type: Sequelize.DATE,
-            allowNull: false,
-            field: 'start_date',
-            validate: {
-                notNull: {
-                    msg: 'Start date cannot be null'
-                },
-                isDate: {
-                    msg: 'Invalid date format for Start date'
-                }
-            }
-        },
-        endDate: {
-            type: Sequelize.DATE,
-            allowNull: true,
-            field: 'end_date',
-            validate: {
-                isDate: {
-                    msg: 'Invalid date format for End date'
-                }
-            }
-        },
         createdAt: {
             type: Sequelize.DATE,
             allowNull: false,
@@ -101,9 +64,9 @@ StudentSemesterDivision.init(
     {
         sequelize,
         timestamps: true,
-        modelName: 'StudentSemesterDivision', // Corrected model name
-        tableName: 'students_semesters_divisions' // Corrected table name
+        modelName: 'StudentSemester',
+        tableName: 'students_semesters'
     }
 );
 
-export default StudentSemesterDivision;
+export default StudentSemester;

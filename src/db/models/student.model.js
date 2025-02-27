@@ -1,6 +1,11 @@
 import { Sequelize, Model } from 'sequelize';
 import sequelize from '../../config/db.connection.js';
 import bcrypt from 'bcrypt';
+import StudentDivision from './studentDivision.model.js';
+import StudentBatch from './studentBatch.model.js';
+import StudentSemester from './studentSemester.model.js';
+import StudentBranch from './studentBranch.model.js';
+
 class Student extends Model { }
 
 Student.init(
@@ -239,6 +244,16 @@ Student.init(
         tableName: 'students',
     }
 );
+
+Student.hasMany(StudentBranch, {sourceKey: 'id', foreignKey: 'studentBranchId'});
+Student.hasMany(StudentSemester, {sourceKey: 'id', foreignKey: 'studentId'});
+Student.hasMany(StudentDivision, {sourceKey: 'id', foreignKey: 'studentId'});
+Student.hasMany(StudentBatch, {sourceKey: 'id', foreignKey: 'studentId'});
+
+StudentBranch.belongsTo(Student, {targetKey: 'id', foreignKey: 'studentId'});
+StudentSemester.belongsTo(Student, {targetKey: 'id', foreignKey: 'studentId'});
+StudentDivision.belongsTo(Student, {targetKey: 'id', foreignKey: 'studentId'});
+StudentBatch.belongsTo(Student, {targetKey: 'id', foreignKey: 'studentId'});
 
 Student.prototype.isPasswordMatching = async function (password) {
     return await bcrypt.compare(password, this.password)

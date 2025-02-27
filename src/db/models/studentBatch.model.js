@@ -1,16 +1,16 @@
 import { Sequelize, Model } from 'sequelize';
 import sequelize from '../../config/db.connection.js';
 
-class StudentSemesterBatch extends Model { }
+class StudentBatch extends Model { }
 
-StudentSemesterBatch.init(
+StudentBatch.init(
     {
         id: {
             type: Sequelize.INTEGER,
             primaryKey: true,
             allowNull: false,
             autoIncrement: true,
-            field: 'students_semesters_batches_id'
+            field: 'student_batch_id'
         },
         studentId: {
             type: Sequelize.INTEGER,
@@ -23,20 +23,6 @@ StudentSemesterBatch.init(
             validate: {
                 notNull: {
                     msg: 'Student ID cannot be null'
-                }
-            }
-        },
-        semesterId: {
-            type: Sequelize.INTEGER,
-            allowNull: false,
-            field: 'semester_id',
-            references: {
-                model: 'semesters',
-                key: 'semester_id'
-            },
-            validate: {
-                notNull: {
-                    msg: 'Semester ID cannot be null'
                 }
             }
         },
@@ -101,9 +87,9 @@ StudentSemesterBatch.init(
     {
         sequelize,
         timestamps: true,
-        modelName: 'StudentSemesterBatch',
-        tableName: 'students_semesters_batches'
+        modelName: 'StudentBatch',
+        tableName: 'students_batches'
     }
 );
 
-export default StudentSemesterBatch;
+export default StudentBatch;

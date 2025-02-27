@@ -73,4 +73,7 @@ Division.init(
     }
 );
 
+Division.hasMany(Batch, {sourceKey: "id", foreignKey: "divisionId"})
+Batch.belongsTo(Division, {foreignKey: "divisionId", targetKey: "id"})
+
 export default Division;

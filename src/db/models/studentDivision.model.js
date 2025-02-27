@@ -1,29 +1,29 @@
 import { Sequelize, Model } from 'sequelize';
 import sequelize from '../../config/db.connection.js';
 
-class Batch extends Model { }
+class StudentDivision extends Model { }
 
-Batch.init(
+StudentDivision.init(
     {
         id: {
             type: Sequelize.INTEGER,
             primaryKey: true,
             allowNull: false,
             autoIncrement: true,
-            field: 'batch_id'
+            field: 'student_divison_id'
         },
-        batchCode: {
-            type: Sequelize.STRING(255),
+        studentId: {
+            type: Sequelize.INTEGER,
             allowNull: false,
-            field: 'batch_code',
-            validate: {
-                notEmpty: {
-                    msg: 'Batch code cannot be empty'
-                }
+            field: 'student_id',
+            references: {
+                model: 'students',
+                key: 'student_id'
             },
-            unique: {
-                name: 'batch_unique',
-                msg: 'Batch already exists'
+            validate: {
+                notNull: {
+                    msg: 'Student ID cannot be null'
+                }
             }
         },
         divisionId: {
@@ -38,10 +38,29 @@ Batch.init(
                 notNull: {
                     msg: 'Division ID cannot be null'
                 }
-            },
-            unique: {
-                name: 'batch_unique',
-                msg: 'Batch already exists'
+            }
+        },
+        startDate: {
+            type: Sequelize.DATE,
+            allowNull: false,
+            field: 'start_date',
+            validate: {
+                notNull: {
+                    msg: 'Start date cannot be null'
+                },
+                isDate: {
+                    msg: 'Invalid date format for Start date'
+                }
+            }
+        },
+        endDate: {
+            type: Sequelize.DATE,
+            allowNull: true,
+            field: 'end_date',
+            validate: {
+                isDate: {
+                    msg: 'Invalid date format for End date'
+                }
             }
         },
         createdAt: {
@@ -68,9 +87,9 @@ Batch.init(
     {
         sequelize,
         timestamps: true,
-        modelName: 'Batch',
-        tableName: 'batches'
+        modelName: 'StudentDivision', // Corrected model name
+        tableName: 'students_divisions' // Corrected table name
     }
 );
 
-export default Batch;
+export default StudentDivision;

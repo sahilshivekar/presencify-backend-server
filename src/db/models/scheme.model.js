@@ -2,6 +2,7 @@ import { Sequelize, Model } from 'sequelize';
 import sequelize from '../../config/db.connection.js';
 import University from './university.model.js';
 import Semester from './semester.model.js';
+import Student from './student.model.js';
 
 class Scheme extends Model { }
 
@@ -75,4 +76,8 @@ University.hasMany(Scheme, {sourceKey: 'id', foreignKey: 'universityId'});
 
 Scheme.hasMany(Semester, {sourceKey: 'id', foreignKey: 'schemeId'});
 Semester.belongsTo(Scheme, {targetKey: 'id', foreignKey: 'schemeId'});
+
+Scheme.hasMany(Student, {sourceKey: 'id', foreignKey: 'schemeId'});
+Student.belongsTo(Scheme, {targetKey: 'id', foreignKey: 'schemeId'});
+
 export default Scheme;

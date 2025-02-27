@@ -18,13 +18,13 @@ module.exports = {
                     allowNull: false,
                     field: 'batch_code',
                 },
-                semesterId: {
+                divisionId: {
                     type: Sequelize.INTEGER,
                     allowNull: false,
-                    field: 'semester_id',
+                    field: 'division_id',
                     references: {
-                        model: 'semesters',
-                        key: 'semester_id'
+                        model: 'divisions',
+                        key: 'division_id'
                     },
                     onUpdate: 'CASCADE',
                     onDelete: 'CASCADE',
@@ -45,9 +45,9 @@ module.exports = {
             {
                 timestamps: true,
                 freezeTableName: true,
-                uniqueKeys: { 
+                uniqueKeys: {
                     batch_unique: {
-                        fields: ['semester_id','batch_code'] 
+                        fields: ['division_id', 'batch_code']
                     }
                 }
             }
