@@ -28,6 +28,11 @@ module.exports = {
                     allowNull: true,
                     field: 'event_image_url',
                 },
+                imagePublicId: {
+                    type: Sequelize.TEXT,
+                    allowNull: true,
+                    field: 'event_image_public_id'
+                },
                 location: {
                     type: Sequelize.STRING(255),
                     allowNull: true,

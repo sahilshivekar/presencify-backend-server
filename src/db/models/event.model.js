@@ -32,6 +32,11 @@ Event.init(
             allowNull: true,
             field: 'event_image_url'
         },
+        imagePublicId: {
+            type: Sequelize.TEXT,
+            allowNull: true,
+            field: 'event_image_public_id'
+        },
         location: {
             type: Sequelize.STRING(255),
             allowNull: true,
@@ -66,7 +71,7 @@ Event.init(
         registrationLink: {
             type: Sequelize.STRING(500),
             allowNull: true,
-            field: 'event_registration_link'
+            field: 'event_registration_link',
         },
         createdAt: {
             type: Sequelize.DATE,

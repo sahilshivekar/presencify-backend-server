@@ -26,6 +26,7 @@ import staffRouter from "./routes/staff.routes.js"
 import studentRouter from "./routes/student.routes.js"
 import divisionRouter from "./routes/division.routes.js"
 import batchRouter from "./routes/batch.routes.js"
+import eventRouter from "./routes/event.routes.js"
 
 //! routes declaration
 app.use("/api/v1/admin", adminRouter);
@@ -38,6 +39,7 @@ app.use("/api/v1/staff", staffRouter);
 app.use("/api/v1/student", studentRouter);
 app.use("/api/v1/division", divisionRouter);
 app.use("/api/v1/batch", batchRouter);
+app.use("/api/v1/event", eventRouter);
 
 
 export { app }

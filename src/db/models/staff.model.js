@@ -1,6 +1,8 @@
 import { Sequelize, Model } from 'sequelize';
 import sequelize from '../../config/db.connection.js';
 import bcrypt from 'bcrypt';
+import Event from './event.model.js';
+import Notice from './notice.model.js';
 
 class Staff extends Model { }
 
@@ -185,6 +187,11 @@ Staff.init(
     }
 );
 
+Staff.hasMany(Event, {sourceKey: 'id', foreignKey: 'uploadedBy'});
+Event.belongsTo(Staff, {targetKey: 'id', foreignKey: 'uploadedBy'});
+
+Staff.hasMany(Notice, {sourceKey: 'id', foreignKey: 'uploadedBy'});
+Notice.belongsTo(Staff, {targetKey: 'id', foreignKey: 'uploadedBy'});
 
 Staff.prototype.isPasswordMatching = async function (password) {
     return await bcrypt.compare(password, this.password)
