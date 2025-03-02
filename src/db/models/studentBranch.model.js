@@ -24,6 +24,10 @@ StudentBranch.init(
                 notNull: {
                     msg: 'Branch ID cannot be null'
                 }
+            },
+            unique: {
+                msg: 'Student is already present in this branch',
+                name: 'student_to_one_branch_only_once'
             }
         },
         studentId: {
@@ -38,6 +42,10 @@ StudentBranch.init(
                 notNull: {
                     msg: 'Student ID cannot be null'
                 }
+            },
+            unique: {
+                msg: 'Student is already present in this branch',
+                name: 'student_to_one_branch_only_once'
             }
         },
         academicStartYear: {

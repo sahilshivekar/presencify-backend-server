@@ -60,7 +60,12 @@ module.exports = {
             },
             {
                 timestamps: true,
-                freezeTableName: true
+                freezeTableName: true,
+                uniqueKeys: { 
+                    student_to_one_branch_only_once: { 
+                        fields: ['branch_id', 'student_id'] 
+                    }
+                }
             }
         );
     },

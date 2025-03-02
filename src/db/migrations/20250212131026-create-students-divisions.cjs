@@ -9,7 +9,7 @@ module.exports = {
                 primaryKey: true,
                 allowNull: false,
                 autoIncrement: true,
-                field: 'student_divison_id'
+                field: 'student_division_id'
             },
             studentId: {
                 type: Sequelize.INTEGER,

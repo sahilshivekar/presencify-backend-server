@@ -6,6 +6,7 @@ import { ApiError } from '../utils/ApiError.js';
 import { ApiResponse } from '../utils/ApiResponse.js';
 import Branch from '../db/models/branch.model.js';
 import Scheme from '../db/models/scheme.model.js';
+import Division from '../db/models/division.model.js';
 
 const getBatches = asyncHandler(async (req, res) => {
     const {
@@ -57,28 +58,35 @@ const getBatches = asyncHandler(async (req, res) => {
     const batches = await Batch.findAll({
         where: searchClause,
         include: {
-            model: Semester,
+            model: Division,
             required: true,
-            where: semesterWhereClause,
             duplicating: false,
             include: [
                 {
-                    model: Branch,
+                    model: Semester,
                     required: true,
                     duplicating: false,
+                    where: semesterWhereClause,
+                    include: [
+                        {
+                            model: Branch,
+                            required: true,
+                            duplicating: false,
+                        },
+                        {
+                            model: Scheme,
+                            required: true,
+                            duplicating: false,
+                        }
+                    ]
                 },
-                {
-                    model: Scheme,
-                    required: true,
-                    duplicating: false,
-                }
             ]
         },
         offset: offset,
         limit: limit
     });
 
-    res.status(200).json(new ApiResponse(200, "Divisions fetched successfully", batches));
+    res.status(200).json(new ApiResponse(200, "Batches fetched successfully", batches));
 
 })
 
@@ -120,7 +128,7 @@ const updateBatch = asyncHandler(async (req, res) => {
         throw new ApiError(400, "Batch id is required");
     }
 
-    if(!batchCode){
+    if (!batchCode) {
         throw new ApiError(400, "Batch code is required");
     }
 

@@ -4,7 +4,7 @@
 module.exports = {
     async up(queryInterface, Sequelize) {
         const students = await queryInterface.sequelize.query(
-            `SELECT student_id, first_name, last_name, admission_year FROM students;`
+            `SELECT student_id, first_name, last_name, admission_year, admission_type FROM students;`
         );
 
         const branches = await queryInterface.sequelize.query(
@@ -23,6 +23,7 @@ module.exports = {
             student_id: student.student_id,
             branch_id: student.last_name[1] == 'o' ? compBranchId : civilBranchId,
             academic_start_year: student.admission_year,
+            academic_end_year: student.admission_type === "FE" ? Number(student.admission_year) + 4 : Number(student.admission_year) + 3,
             created_at: new Date(),
             updated_at: new Date(),
         }));

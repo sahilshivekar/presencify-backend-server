@@ -1,6 +1,7 @@
 import { Sequelize, Model } from 'sequelize';
 import sequelize from '../../config/db.connection.js';
 import Batch from './batch.model.js';
+import StudentDivision from './studentDivision.model.js';
 class Division extends Model { }
 
 Division.init(
@@ -75,5 +76,10 @@ Division.init(
 
 Division.hasMany(Batch, {sourceKey: "id", foreignKey: "divisionId"})
 Batch.belongsTo(Division, {foreignKey: "divisionId", targetKey: "id"})
+
+
+Division.hasMany(StudentDivision, {sourceKey: "id", foreignKey: "divisionId"})
+StudentDivision.belongsTo(Division, {foreignKey: "divisionId", targetKey: "id"})
+
 
 export default Division;

@@ -67,12 +67,16 @@ Student.init(
             }
         },
         gender: {
-            type: Sequelize.STRING, // No ENUM provided in migration
+            type: Sequelize.ENUM('Male', 'Female', 'Other'), 
             allowNull: true,
             field: 'gender',
             validate: {
                 notEmpty: {
                     msg: 'Gender cannot be empty'
+                },
+                isIn: { // <-- Use isIn validator
+                    args: [['Male', 'Female', 'Other']], // Array of allowed values
+                    msg: 'Invalid gender value. Must be Male, Female, or Other'
                 }
             }
         },
@@ -127,6 +131,10 @@ Student.init(
             validate: {
                 notNull: {
                     msg: 'Academic status cannot be null'
+                },
+                isIn: {
+                    args: [['Active', 'Drop out', 'Graduated']],
+                    msg: 'Academic status must be Active, Drop out or Graduated'
                 }
             }
         },
@@ -233,6 +241,10 @@ Student.init(
                 },
                 notNull: {
                     msg: 'Admission Type cannot be null'
+                },
+                isIn: { // <-- Use isIn validator
+                    args: [['DSE', 'FE']], // Array of allowed values
+                    msg: 'Invalid admission type, Must be DSE or FE'
                 }
             }
         }
@@ -245,7 +257,7 @@ Student.init(
     }
 );
 
-Student.hasMany(StudentBranch, {sourceKey: 'id', foreignKey: 'studentBranchId'});
+Student.hasMany(StudentBranch, {sourceKey: 'id', foreignKey: 'studentId'});
 Student.hasMany(StudentSemester, {sourceKey: 'id', foreignKey: 'studentId'});
 Student.hasMany(StudentDivision, {sourceKey: 'id', foreignKey: 'studentId'});
 Student.hasMany(StudentBatch, {sourceKey: 'id', foreignKey: 'studentId'});
