@@ -29,7 +29,13 @@ const generateAccessAndRefreshTokens = async (staff) => {
 //* get all the staff
 const getStaff = asyncHandler(async (req, res) => {
 
-    const { searchQuery } = req.query;
+    const {
+        searchQuery,
+        page = 1,
+        limit = 10
+    } = req.query;
+
+    const offset = (parseInt(page, 10) - 1) * parseInt(limit, 10);
 
     let searchClause = {};
 
@@ -66,7 +72,9 @@ const getStaff = asyncHandler(async (req, res) => {
     }
 
     const staffs = await Staff.findAll({
-        where: searchClause
+        where: searchClause,
+        offset: offset,
+        limit: parseInt(limit, 10)
     });
 
     res
@@ -81,6 +89,29 @@ const getStaff = asyncHandler(async (req, res) => {
 
 });
 
+const getStaffById = asyncHandler(async (req, res) => {
+    const { staffId } = req.query;
+
+    if (!staffId) {
+        throw new ApiError(400, "Staff id is required");
+    }
+
+    const staff = await Staff.findByPk(staffId);
+
+    if (!staff) {
+        throw new ApiError(404, "Staff not found");
+    }
+
+    res
+        .status(200)
+        .json(
+            new ApiResponse(
+                200,
+                "Staff fetched successfully",
+                staff
+            )
+        );
+});
 
 //* add staff
 const addStaff = asyncHandler(async (req, res) => {
@@ -114,7 +145,7 @@ const addStaff = asyncHandler(async (req, res) => {
 
     for (const fieldName in fields) {
         if (!fields[fieldName]) {
-            if(staffImageLocalPath) {
+            if (staffImageLocalPath) {
                 fs.unlinkSync(staffImageLocalPath)
             }
             throw new ApiError(400, `${fieldName} is required`); // Use fieldName here
@@ -122,28 +153,28 @@ const addStaff = asyncHandler(async (req, res) => {
     }
 
     if (password !== confirmPassword) {
-        if(staffImageLocalPath) {
+        if (staffImageLocalPath) {
             fs.unlinkSync(staffImageLocalPath)
         }
         throw new ApiError(400, "Password and confirm password field do not match");
     }
 
     if (!['Male', 'Female', 'Other'].includes(gender)) {
-        if(staffImageLocalPath) {
+        if (staffImageLocalPath) {
             fs.unlinkSync(staffImageLocalPath)
         }
         throw new ApiError(400, "Invalid gender value. Must be Male, Female, or Other")
     }
 
     if (!['Teacher', 'Head of Department', 'Principal'].includes(role)) {
-        if(staffImageLocalPath) {
+        if (staffImageLocalPath) {
             fs.unlinkSync(staffImageLocalPath)
         }
         throw new ApiError(400, "Invalid role value. Must be Teacher, Head of Department, or Principal")
     }
 
     if (!isValidPhoneNumber(phoneNumber)) {
-        if(staffImageLocalPath) {
+        if (staffImageLocalPath) {
             fs.unlinkSync(staffImageLocalPath)
         }
         throw new ApiError(400, "Invalid phone number.")
@@ -152,7 +183,7 @@ const addStaff = asyncHandler(async (req, res) => {
     const existingStaffMember = await Staff.findOne({ where: { email } })
 
     if (existingStaffMember) {
-        if(staffImageLocalPath) {
+        if (staffImageLocalPath) {
             fs.unlinkSync(staffImageLocalPath)
         }
         throw new ApiError(400, "A staff member with this email already exists")
@@ -301,7 +332,7 @@ const updateStaffImage = asyncHandler(async (req, res) => {
     const staffImageLocalPath = req.file?.path
 
     if (req.admin && !id) { // will make it (req.admind && !id) || req.staff.id after adding staff
-        if(staffImageLocalPath) {
+        if (staffImageLocalPath) {
             fs.unlinkSync(staffImageLocalPath)
         }
         throw new ApiError(400, "Staff id is required")
@@ -310,7 +341,7 @@ const updateStaffImage = asyncHandler(async (req, res) => {
     const staff = await Staff.findByPk(id);
 
     if (!staff) {
-        if(staffImageLocalPath) {
+        if (staffImageLocalPath) {
             fs.unlinkSync(staffImageLocalPath)
         }
         throw new ApiError(404, "Staff not found")
@@ -359,8 +390,8 @@ const removeImage = asyncHandler(async (req, res) => {
 
     if (!deletedImage) {
         throw new ApiError(500, "Some issue occured while deleting the image")
-    }  
-    
+    }
+
     staff.staffImageUrl = null;
     staff.staffImagePublicId = null;
 
@@ -374,7 +405,7 @@ const removeImage = asyncHandler(async (req, res) => {
                 "Staff image deleted successfully",
                 staff
             )
-        );  
+        );
 })
 
 //* remove staff
@@ -631,5 +662,6 @@ export {
     updateStaffPassword,
     updateStaffImage,
     removeStaff,
-    removeImage
+    removeImage,
+    getStaffById
 }
