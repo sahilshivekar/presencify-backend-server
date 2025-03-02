@@ -24,7 +24,7 @@ const getEvents = asyncHandler(async (req, res) => {
         limit = 10
     } = req.query;
 
-    const whereClause = {};
+    let whereClause = {};
 
     if (searchQuery) {
         whereClause = {
@@ -112,7 +112,7 @@ const getEventById = asyncHandler(async (req, res) => {
     }
 
     const event = await Event.findOne({
-        id: eventId,
+        where: { id: eventId },
         include: [
             {
                 model: Staff,
@@ -150,7 +150,7 @@ const addEvent = asyncHandler(async (req, res) => {
 
 
     const eventImageFilePath = req?.file?.path;
-    
+
     if (req?.file) {
         const image = req?.file;
 
@@ -249,11 +249,19 @@ const updateEvent = asyncHandler(async (req, res) => {
 
     if (!eventId) {
         if (eventImageFilePath) {
-            throw new ApiError(500, "Error uploading image");
+            fs.unlinkSync(eventImageFilePath);
         }
         throw new ApiError(400, "Event id is required");
     }
 
+    if (req?.file) {
+        const image = req?.file;
+
+        if (image.mimetype !== "image/jpeg" && image.mimetype !== "image/png") {
+            fs.unlinkSync(eventImageFilePath);
+            throw new ApiError(400, "Invalid file type. Must be a jpeg or png");
+        }
+    }
 
     const event = await Event.findByPk(eventId);
 
@@ -312,6 +320,7 @@ const updateEvent = asyncHandler(async (req, res) => {
         if (!imageUploadedResponse) {
             throw new ApiError(500, "Error uploading image");
         }
+        await deleteFromCloudinary(event.imageFilePublicId);
         event.imageUrl = imageUploadedResponse.secure_url;
         event.imagePublicId = imageUploadedResponse.public_id;
     }
@@ -342,6 +351,8 @@ const deleteEvent = asyncHandler(async (req, res) => {
     if (!event) {
         throw new ApiError(404, "Event not found");
     }
+
+    await deleteFromCloudinary(event.imageFilePublicId);
 
     await event.destroy();
 

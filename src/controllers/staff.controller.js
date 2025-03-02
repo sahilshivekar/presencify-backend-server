@@ -6,6 +6,9 @@ import { Op } from 'sequelize'
 import { uploadOnCloudinary, deleteFromCloudinary } from '../utils/cloudinary.js';
 import fs from "fs"
 import { isValidPhoneNumber, parsePhoneNumberWithError } from 'libphonenumber-js';
+import Course from '../db/models/course.model.js';
+import TeacherTeachesCourse from '../db/models/teacherTeachesCourse.model.js';
+import Scheme from '../db/models/scheme.model.js';
 
 
 const options = {
@@ -31,6 +34,7 @@ const getStaff = asyncHandler(async (req, res) => {
 
     const {
         searchQuery,
+        courseId,
         page = 1,
         limit = 10
     } = req.query;
@@ -71,8 +75,32 @@ const getStaff = asyncHandler(async (req, res) => {
         };
     }
 
+    let courseIdFilterClause = {}
+    let includeClause = []
+
+    if (courseId) {
+        courseIdFilterClause.courseId = courseId
+        includeClause.push(
+            {
+                model: TeacherTeachesCourse,
+                required: true,
+                where: courseIdFilterClause,
+                duplicating: false,
+                include: [
+                    {
+                        model: Course,
+                        required: true,
+                        duplicating: false,
+                    }
+                ]
+            }
+        )
+    }
+
+
     const staffs = await Staff.findAll({
         where: searchClause,
+        include: includeClause,
         offset: offset,
         limit: parseInt(limit, 10)
     });
@@ -655,6 +683,111 @@ const removeStaff = asyncHandler(async (req, res) => {
 
 //! logout is remaining
 
+const addTeachingSubject = asyncHandler(async (req, res) => {
+    const { staffId, courseId } = req.body;
+
+    if (!staffId || !courseId) {
+        throw new ApiError(400, "Staff ID and Course ID are required");
+    }
+
+    const staff = await Staff.findByPk(staffId);
+
+    if (!staff) {
+        throw new ApiError(404, "Staff not found");
+    }
+
+    const course = await Course.findByPk(courseId);
+
+    if (!course) {
+        throw new ApiError(404, "Course not found");
+    }
+
+    const teacherTeachesCourseEntry = await TeacherTeachesCourse.create({
+        teacherId: staffId,
+        courseId: courseId,
+    });
+
+    res
+        .status(201)
+        .json(
+            new ApiResponse(
+                201,
+                "Teaching subject added successfully",
+                teacherTeachesCourseEntry
+            )
+        );
+});
+
+
+const removeTeachingSubject = asyncHandler(async (req, res) => {
+    const { teacherSubjectId } = req.query;
+
+    if (!teacherSubjectId) {
+        throw new ApiError(400, "Teacher subject ID is required");
+    }
+
+    const teacherSubject = await TeacherTeachesCourse.findByPk(teacherSubjectId);
+
+    if (!teacherSubject) {
+        throw new ApiError(404, "Teacher subject not found");
+    }
+
+    await teacherSubject.destroy();
+
+    res
+        .status(200)
+        .json(
+            new ApiResponse(
+                200,
+                "Teaching subject deleted successfully",
+                null
+            )
+        );
+});
+
+const getTeachingSubjects = asyncHandler(async (req, res) => {
+    const { staffId } = req.query;
+
+    if (!staffId) {
+        throw new ApiError(400, "Teacher ID is required");
+    }
+
+    const teacher = await Staff.findByPk(staffId);
+
+    if (!teacher) {
+        throw new ApiError(404, "Teacher not found");
+    }
+
+    const teachingSubjects = await TeacherTeachesCourse.findAll({
+        where: {
+            teacherId: staffId
+        },
+        include: [
+            {
+                model: Course,
+                required: true,
+                include: [
+                    {
+                        model: Scheme,
+                        required: true,
+                    }
+                ]
+            }
+        ]
+    });
+
+    res
+        .status(200)
+        .json(
+            new ApiResponse(
+                200,
+                "Teaching subjects retrieved successfully",
+                teachingSubjects
+            )
+        );
+});
+
+
 export {
     getStaff,
     addStaff,
@@ -663,5 +796,8 @@ export {
     updateStaffImage,
     removeStaff,
     removeImage,
-    getStaffById
+    getStaffById,
+    getTeachingSubjects,
+    addTeachingSubject,
+    removeTeachingSubject
 }

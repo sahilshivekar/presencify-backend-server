@@ -6,6 +6,7 @@ import {
     addUniversity,
     updateUniversity,
     removeUniversity,
+    getUniversityById
 } from '../controllers/university.controller.js';
 
 
@@ -15,5 +16,6 @@ router.route('/get-universities').get(verifyAdminJWT, getUniversities)
 router.route('/add').post(verifyAdminJWT, addUniversity);
 router.route('/update').put(verifyAdminJWT, updateUniversity)       
 router.route('/remove').delete(verifyAdminJWT, removeUniversity);
+router.route('/get-university-by-id').get(verifyAdminJWT, getUniversityById);
 
 export default router;

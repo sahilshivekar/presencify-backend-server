@@ -1,20 +1,18 @@
 import { Sequelize, Model } from 'sequelize';
 import sequelize from '../../config/db.connection.js';
+import Staff from './staff.model.js';
+import Course from './course.model.js';
+
 
 class TeacherTeachesCourse extends Model { }
 
 TeacherTeachesCourse.init(
     {
         id: {
-            type: Sequelize.STRING, // Corrected data type to STRING
-            allowNull: false,
+            type: Sequelize.INTEGER,
             primaryKey: true,
             field: 'teacher_subject_id',
-            validate: {
-                notEmpty: {
-                    msg: 'ID cannot be empty'
-                }
-            }
+            autoIncrement: true,
         },
         teacherId: {
             type: Sequelize.INTEGER,
@@ -28,6 +26,10 @@ TeacherTeachesCourse.init(
                 notNull: {
                     msg: 'Teacher ID cannot be null'
                 }
+            },
+            unique: {
+                name: 'one_subject_for_one_teacher_only_once',
+                msg: 'Teacher already have this subject in the teaching list'
             }
         },
         courseId: {
@@ -42,6 +44,10 @@ TeacherTeachesCourse.init(
                 notNull: {
                     msg: 'Course ID cannot be null'
                 }
+            },
+            unique: {
+                name: 'one_subject_for_one_teacher_only_once',
+                msg: 'Teacher already have this subject in the teaching list'
             }
         },
         createdAt: {
@@ -69,7 +75,7 @@ TeacherTeachesCourse.init(
         sequelize,
         timestamps: true,
         modelName: 'TeacherTeachesCourse', // Corrected Model Name
-        tableName: 'teacher_teaches_course', // Corrected Table Name
+        tableName: 'teacher_teaches_course', // Corrected Table Name,
     }
 );
 

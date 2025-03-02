@@ -58,7 +58,18 @@ const getSemesters = asyncHandler(async (req, res) => {
 
     const semesters = await Semester.findAll({
         where: whereClause,
-        include: [Branch, Scheme],
+        include: [
+            {
+                model: Branch,
+                required: true,
+                duplicating: false,
+            },
+            {
+                model: Scheme,
+                required: true,
+                duplicating: false,
+            }
+        ],
         limit: parseInt(limit, 10),
         offset: offset,
     });
@@ -87,7 +98,7 @@ const addSemester = asyncHandler(async (req, res) => {
         optionalCourseIds
     } = req.body;
 
-    if(!branchId || !semesterNumber || !academicStartYear || !academicEndYear || !schemeId){
+    if (!branchId || !semesterNumber || !academicStartYear || !academicEndYear || !schemeId) {
         throw new ApiError(400, "branchId, semesterNumber, academicStartYear, academicEndYear, schemeId must be provided")
     }
 
@@ -164,7 +175,7 @@ const addSemester = asyncHandler(async (req, res) => {
     // if the semester contains optional courses then we must check if the courses that are being added are valid
     if (countOfRequiredOptionalCourses > 0) {
 
-        if(!optionalCourseIds){
+        if (!optionalCourseIds) {
             throw new ApiError(400, `optional courses must be provided for semester ${semesterNumber}`)
         }
         if (!Array.isArray(optionalCourseIds)) {
@@ -203,9 +214,9 @@ const addSemester = asyncHandler(async (req, res) => {
         schemeId: schemeId || null,
     });
 
-    
+
     if (optionalCourseIds && optionalCourseIds.length > 0) {
-        
+
         // adding entry of optional courses for the specific semester
         for (let optionalCourseId of optionalCourseIds) {
             const addedOptionalCourse = await SemesterCourse.create({
@@ -216,9 +227,9 @@ const addSemester = asyncHandler(async (req, res) => {
     }
     const addedOptionalCourses = []
 
-    for(let optionalCourseId of optionalCourseIds) {    
+    for (let optionalCourseId of optionalCourseIds) {
         const course = await Course.findByPk(optionalCourseId);
-        if(course) {
+        if (course) {
             addedOptionalCourses.push(course);
         }
     }
@@ -252,7 +263,6 @@ const getCoursesOfSemester = asyncHandler(async (req, res) => {
             branchId: semester.branchId,
             semesterNumber: semester.semesterNumber
         },
-        attributes: [],
         include: {
             model: Course,
             required: true,
@@ -271,7 +281,6 @@ const getCoursesOfSemester = asyncHandler(async (req, res) => {
         where: {
             semesterId: semesterId
         },
-        attributes: [],
         include: {
             model: Course,
             required: true,
@@ -363,11 +372,49 @@ const removeSemester = asyncHandler(async (req, res) => {
         );
 });
 
+
+const getSemesterById = asyncHandler(async (req, res) => {
+    const { semesterId } = req.query;
+
+    if (!semesterId) {
+        throw new ApiError(400, "Semester id is required");
+    }
+
+    const semester = await Semester.findOne({
+        where: { id: semesterId },
+        include: [
+            {
+                model: Branch,
+                required: true,
+            },
+            {
+                model: Scheme,
+                required: true,
+            }
+        ]
+    });
+
+    if (!semester) {
+        throw new ApiError(404, "Semester not found");
+    }
+
+    res
+        .status(200)
+        .json(
+            new ApiResponse(
+                200,
+                "Semester retrieved successfully",
+                semester
+            )
+        );
+});
+
+
 export {
     getSemesters,
     addSemester,
     // updateSemester,
     removeSemester,
     getCoursesOfSemester,
-
+    getSemesterById
 };

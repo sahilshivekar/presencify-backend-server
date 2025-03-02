@@ -7,10 +7,10 @@ module.exports = {
             'teacher_teaches_course',
             {
                 id: {
-                    type: Sequelize.STRING,
-                    allowNull: false,
+                    type: Sequelize.INTEGER,
                     primaryKey: true,
                     field: 'teacher_subject_id',
+                    autoIncrement: true,
                 },
                 teacherId: {
                     type: Sequelize.INTEGER,
@@ -50,6 +50,11 @@ module.exports = {
             {
                 timestamps: true,
                 freezeTableName: true,
+                uniqueKeys: {
+                    one_subject_for_one_teacher_only_once: {
+                        fields: ['teacher_id', 'course_id'],
+                    }
+                }
             }
         );
     },

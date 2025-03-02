@@ -135,9 +135,42 @@ const removeScheme = asyncHandler(async (req, res) => {
         );
 });
 
+const getSchemeById = asyncHandler(async (req, res) => {
+    const { schemeId } = req.query;
+
+    if (!schemeId) {
+        throw new ApiError(400, "Scheme id is required");
+    }
+
+    const scheme = await Scheme.findOne({
+        where: { id: schemeId },
+        include: [
+            {
+                model: University,
+                required: true,
+            }
+        ]
+    });
+
+    if (!scheme) {
+        throw new ApiError(404, "Scheme not found");
+    }
+
+    res
+        .status(200)
+        .json(
+            new ApiResponse(
+                200,
+                "Scheme retrieved successfully",
+                scheme
+            )
+        );
+});
+
 export {
     getSchemes,
     addScheme,
     updateScheme,
     removeScheme,
+    getSchemeById
 };

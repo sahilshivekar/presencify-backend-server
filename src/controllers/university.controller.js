@@ -103,9 +103,34 @@ const removeUniversity = asyncHandler(async (req, res) => {
         );
 });
 
+const getUniversityById = asyncHandler(async (req, res) => {
+    const { universityId } = req.query;
+
+    if (!universityId) {
+        throw new ApiError(400, "University id is required");
+    }
+
+    const university = await University.findByPk(universityId);
+
+    if (!university) {
+        throw new ApiError(404, "University not found");
+    }
+
+    res
+        .status(200)
+        .json(
+            new ApiResponse(
+                200,
+                "University retrieved successfully",
+                university
+            )
+        );
+}); 
+
 export {
     getUniversities,
     addUniversity,
     updateUniversity,
     removeUniversity,
+    getUniversityById
 };  

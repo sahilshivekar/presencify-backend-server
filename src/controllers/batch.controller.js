@@ -90,6 +90,54 @@ const getBatches = asyncHandler(async (req, res) => {
 
 })
 
+const getBatchById = asyncHandler(async (req, res) => {
+    const { batchId } = req.query;
+
+    if (!batchId) {
+        throw new ApiError(400, "Batch id is required");
+    }
+
+    const batch = await Batch.findOne({
+        where: { id: batchId },
+        include: [
+            {
+                model: Division,
+                required: true,
+                include: [
+                    {
+                        model: Semester,
+                        required: true,
+                        include: [
+                            {
+                                model: Branch,
+                                required: true,
+                            },
+                            {
+                                model: Scheme,
+                                required: true,
+                            }
+                        ]
+                    }
+                ]
+            }
+        ]
+    });
+
+    if (!batch) {
+        throw new ApiError(404, "Batch not found");
+    }
+
+    res
+        .status(200)
+        .json(
+            new ApiResponse(
+                200,
+                "Batch retrieved successfully",
+                batch
+            )
+        );
+})
+
 
 const addBatch = asyncHandler(async (req, res) => {
     const {
@@ -168,5 +216,6 @@ export {
     getBatches,
     addBatch,
     updateBatch,
-    removeBatch
+    removeBatch,
+    getBatchById
 }

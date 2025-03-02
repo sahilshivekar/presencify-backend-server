@@ -251,6 +251,38 @@ const removeCourse = asyncHandler(async (req, res) => {
         );
 });
 
+const getCourseById = asyncHandler(async (req, res) => {
+    const { courseId } = req.query;
+
+    if (!courseId) {
+        throw new ApiError(400, "Course id is required");
+    }
+
+    const course = await Course.findOne({
+        where: { id: courseId },
+        include: [
+            {
+                model: Scheme,
+                required: true
+            }
+        ]
+    })
+
+    if (!course) {
+        throw new ApiError(404, "Course not found");
+    }
+
+    res
+        .status(200)
+        .json(
+            new ApiResponse(
+                200,
+                "Course retrieved successfully",
+                course
+            )
+        );
+});
+
 export {
     getCourses,
     addCourse,
@@ -258,4 +290,5 @@ export {
     removeCourse,
     addCourseToBranchWithSemesterNumber,
     removeCourseFromBranchWithSemesterNumber,
+    getCourseById
 };          

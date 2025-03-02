@@ -5,6 +5,7 @@ import {
     // updateSemester,
     removeSemester,
     getCoursesOfSemester,
+    getSemesterById
 } from '../controllers/semester.controller.js';
 import { verifyAdminJWT } from '../middlewares/auth.middleware.js';
 
@@ -19,4 +20,6 @@ router.route('/add').post(verifyAdminJWT, addSemester);
 router.route('/remove').delete(verifyAdminJWT, removeSemester);
 
 router.route('/get-courses-of-semester').get(verifyAdminJWT, getCoursesOfSemester);
+
+router.route('/get-semester-by-id').get(verifyAdminJWT, getSemesterById);
 export default router;

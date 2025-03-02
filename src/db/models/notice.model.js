@@ -22,30 +22,25 @@ Notice.init(
                 }
             }
         },
-        fileUrl: {
-            type: Sequelize.STRING,
+        imageFileUrl: {
+            type: Sequelize.TEXT,
             allowNull: true,
             field: 'notice_file_url'
+        },
+        imageFilePublicId: {
+            type: Sequelize.TEXT,
+            allowNull: true,
+            field: 'notice_file_public_id'
         },
         description: {
             type: Sequelize.TEXT,
             allowNull: true,
             field: 'notice_description'
         },
-        expiryDate: {
-            type: Sequelize.DATE,
-            allowNull: true,
-            field: 'expiry_date',
-            validate: {
-                isDate: {
-                    msg: 'Invalid date format for Expiry date'
-                }
-            }
-        },
         createdAt: {
             type: Sequelize.DATE,
             allowNull: false,
-            field: 'created_at',
+            field: 'created_at',  
             validate: {
                 notNull: {
                     msg: 'Created At cannot be null'
@@ -62,33 +57,18 @@ Notice.init(
                 }
             }
         },
-        category: {
-            type: Sequelize.STRING,
-            allowNull: false,
-            field: 'notice_category',
-            validate: {
-                notEmpty: {
-                    msg: 'Category cannot be empty'
-                }
-            }
-        },
         audiences: {
-            type: Sequelize.ENUM('BE', 'FE', 'SE', 'TE', 'All Students', 'Staff', 'Everyone'),
+            type: Sequelize.ENUM('Students', 'Staff', 'Everyone'),
             allowNull: false,
             field: 'notice_audiences',
             validate: {
                 notNull: {
                     msg: 'Audiences cannot be null'
+                },
+                isIn: {
+                    args: [['Students', 'Staff', 'Everyone']],
+                    msg: 'Audiences must be one of the following: Students, Staff, Everyone'
                 }
-            }
-        },
-        branchId: {
-            type: Sequelize.INTEGER,
-            allowNull: true,
-            field: 'branch_id',
-            references: {
-                model: 'branches',
-                key: 'branch_id',
             }
         },
         uploadedBy: {

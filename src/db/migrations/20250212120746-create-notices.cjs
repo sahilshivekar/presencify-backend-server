@@ -18,20 +18,20 @@ module.exports = {
                     allowNull: false,
                     field: 'notice_title',
                 },
-                fileUrl: {
-                    type: Sequelize.STRING,
+                imageFileUrl: {
+                    type: Sequelize.TEXT,
                     allowNull: true,
-                    field: 'notice_file_url',
+                    field: 'notice_file_url'
+                },
+                imageFilePublicId: {
+                    type: Sequelize.TEXT,
+                    allowNull: true,
+                    field: 'notice_file_public_id'
                 },
                 description: {
                     type: Sequelize.TEXT,
                     allowNull: true,
                     field: 'notice_description',
-                },
-                expiryDate: {
-                    type: Sequelize.DATE,
-                    allowNull: true,
-                    field: 'expiry_date',
                 },
                 createdAt: {
                     type: Sequelize.DATE,
@@ -45,26 +45,10 @@ module.exports = {
                     field: 'updated_at',
                     defaultValue: Sequelize.literal('CURRENT_TIMESTAMP')
                 },
-                category: {
-                    type: Sequelize.STRING,
-                    allowNull: false,
-                    field: 'notice_category',
-                },
                 audiences: {
-                    type: Sequelize.ENUM('BE', 'FE', 'SE', 'TE', 'All Students', 'Staff', 'Everyone'),
+                    type: Sequelize.ENUM('Students', 'Staff', 'Everyone'),
                     allowNull: false,
                     field: 'notice_audiences',
-                },
-                branchId: {
-                    type: Sequelize.INTEGER,
-                    allowNull: true, // will show for to all branches students if null
-                    references: {
-                        model: 'branches',
-                        key: 'branch_id',
-                    },
-                    onUpdate: 'CASCADE',
-                    onDelete: 'CASCADE',
-                    field: 'branch_id',
                 },
                 uploadedBy: {
                     type: Sequelize.INTEGER,

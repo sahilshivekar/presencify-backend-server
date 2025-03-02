@@ -27,6 +27,7 @@ import studentRouter from "./routes/student.routes.js"
 import divisionRouter from "./routes/division.routes.js"
 import batchRouter from "./routes/batch.routes.js"
 import eventRouter from "./routes/event.routes.js"
+import noticeRouter from "./routes/notice.routes.js"
 
 //! routes declaration
 app.use("/api/v1/admin", adminRouter);
@@ -40,6 +41,7 @@ app.use("/api/v1/student", studentRouter);
 app.use("/api/v1/division", divisionRouter);
 app.use("/api/v1/batch", batchRouter);
 app.use("/api/v1/event", eventRouter);
+app.use("/api/v1/notice", noticeRouter);
 
 
 export { app }

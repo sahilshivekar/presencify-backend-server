@@ -1,13 +1,16 @@
 import express from 'express';
-import { 
-    getStaff, 
-    addStaff, 
-    updateStaffDetails, 
-    updateStaffPassword, 
+import {
+    getStaff,
+    addStaff,
+    updateStaffDetails,
+    updateStaffPassword,
     updateStaffImage,
     removeStaff,
     removeImage,
-    getStaffById
+    getStaffById,
+    getTeachingSubjects,
+    addTeachingSubject,
+    removeTeachingSubject
 } from '../controllers/staff.controller.js';
 import { verifyAdminJWT } from '../middlewares/auth.middleware.js';
 import { upload } from '../middlewares/multer.middleware.js';
@@ -33,5 +36,11 @@ router.route('/update-image').put(verifyAdminJWT, upload.single('staffImageFile'
 router.route('/remove').delete(verifyAdminJWT, removeStaff)
 
 router.route('/remove-image').delete(verifyAdminJWT, removeImage)
+
+router.route('/get-teaching-subjects').get(verifyAdminJWT, getTeachingSubjects)
+
+router.route('/add-teaching-subject').post(verifyAdminJWT, addTeachingSubject)
+
+router.route('/remove-teaching-subject').delete(verifyAdminJWT, removeTeachingSubject)
 
 export default router;

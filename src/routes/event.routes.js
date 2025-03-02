@@ -29,6 +29,5 @@ router.use((err, req, res, next) => {
             res.status(413).json(new ApiResponse(413, 'The uploaded image is too large. Please limit the file size to 10 MB.'))
         }
     }
-    // next()
 });
 export default router;

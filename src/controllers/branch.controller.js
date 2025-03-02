@@ -116,9 +116,34 @@ const removeBranch = asyncHandler(async (req, res) => {
         );
 });
 
+const getBranchById = asyncHandler(async (req, res) => {    
+    const { branchId } = req.query;
+
+    if (!branchId) {
+        throw new ApiError(400, "Branch id is required");
+    }
+
+    const branch = await Branch.findByPk(branchId);
+
+    if (!branch) {
+        throw new ApiError(404, "Branch not found");
+    }
+
+    res
+        .status(200)
+        .json(
+            new ApiResponse(
+                200,
+                "Branch retrieved successfully",
+                branch
+            )
+        );
+});
+
 export {
     getBranches,
     addBranch,
     updateBranch,
     removeBranch,
+    getBranchById
 };
