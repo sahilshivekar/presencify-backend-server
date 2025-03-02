@@ -76,7 +76,7 @@ const getStudents = asyncHandler(async (req, res) => {
 
     if (academicStatus) {
 
-        if(!['Active', 'Drop out', 'Graduated'].includes(academicStatus)) {
+        if (!['Active', 'Drop out', 'Graduated'].includes(academicStatus)) {
             throw new ApiError(400, "Invalid academic status. Must be 'Active', 'Drop out', 'Graduated'");
         }
         academicStatusFilterClause.academicStatus = academicStatus;
@@ -113,8 +113,10 @@ const getStudents = asyncHandler(async (req, res) => {
         if (isNaN(Number(academicEndYearOfSemester))) {
             throw new ApiError(400, "Academic end year must be a number");
         }
-        if (Number(academicEndYearOfSemester) <= Number(academicStartYearOfSemester)) {
-            throw new ApiError(400, "Academic end year must be greater than academic start year");
+        if (academicStartYearOfSemester && !isNaN(Number(academicStartYearOfSemester))) {
+            if (Number(academicEndYearOfSemester) <= Number(academicStartYearOfSemester)) {
+                throw new ApiError(400, "Academic end year must be greater than academic start year");
+            }
         }
         semesterFilterClause.academicEndYear = {
             [Op.lte]: academicEndYearOfSemester
