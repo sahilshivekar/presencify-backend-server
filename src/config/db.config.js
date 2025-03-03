@@ -22,6 +22,7 @@ export default {
         host: process.env.PG_TEST_DB_HOST,
         port: process.env.PG_TEST_DB_PORT,
         dialect: "postgres",
+        logging: false,
     },
     production: {
         username: process.env.PG_PROD_DB_USER,
