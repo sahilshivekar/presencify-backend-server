@@ -83,6 +83,32 @@ Semester.init(
                 msg: 'Semester already exists'
             }
         },
+        startDate: {
+            type: Sequelize.DATEONLY,
+            allowNull: false,
+            field: 'start_date',
+            validate: {
+                notNull: {
+                    msg: 'Start date is required'
+                },
+                isDate: {
+                    msg: 'Invalid date format for Start date'
+                }
+            }
+        },
+        endDate: {
+            type: Sequelize.DATEONLY,
+            allowNull: false,
+            field: 'end_date',
+            validate: {
+                notNull: {
+                    msg: 'end date is required'
+                },
+                isDate: {
+                    msg: 'Invalid date format for End date'
+                }
+            }
+        },
         schemeId: {
             type: Sequelize.INTEGER,
             allowNull: false,

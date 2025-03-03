@@ -94,16 +94,33 @@ const addSemester = asyncHandler(async (req, res) => {
         semesterNumber,
         academicStartYear,
         academicEndYear,
+        startDate,
+        endDate,
         schemeId,
         optionalCourseIds
     } = req.body;
 
-    if (!branchId || !semesterNumber || !academicStartYear || !academicEndYear || !schemeId) {
-        throw new ApiError(400, "branchId, semesterNumber, academicStartYear, academicEndYear, schemeId must be provided")
+    if (!branchId || !semesterNumber || !academicStartYear || !academicEndYear || !schemeId || !startDate || !endDate) {
+        throw new ApiError(400, "branchId, semesterNumber, academicStartYear, academicEndYear, startDate, endDate, schemeId must be provided")
     }
 
     if (academicEndYear < academicStartYear) {
         throw new ApiError(400, "Academic end year cannot be less than academic start year");
+    }
+
+    const startDateObj = new Date(startDate);
+    const endDateObj = new Date(endDate);
+
+    if(startDateObj >= endDateObj) {
+        throw new ApiError(400, "End date cannot be less than or equal to start date");
+    }
+
+    if(startDateObj.getFullYear() < Number(academicStartYear)) {
+        throw new ApiError(400, "Start date cannot be lesser than academic start year");
+    }
+
+    if(endDateObj.getFullYear() > Number(academicEndYear)) {
+        throw new ApiError(400, "End date cannot be greater than academic end year");
     }
 
     // searching courses for the semeseter to be added bcz if the semester contains optional courses then we must create a entry in SemesterCourse table to tell the optional subjects for a particular semester
@@ -212,6 +229,8 @@ const addSemester = asyncHandler(async (req, res) => {
         academicStartYear: academicStartYear || null,
         academicEndYear: academicEndYear || null,
         schemeId: schemeId || null,
+        startDate: startDate || null,
+        endDate: endDate || null,
     });
 
 
@@ -301,48 +320,59 @@ const getCoursesOfSemester = asyncHandler(async (req, res) => {
 
 
 //! updating the semester will make the optional courses and other courses invalid, hence it is very error prone so use delete and then create new semester instead of updating
-// const updateSemester = asyncHandler(async (req, res) => {
-//     const {
-//         id,
-//         branchId,
-//         semesterNumber,
-//         academicStartYear,
-//         academicEndYear,
-//         schemeId,
-//     } = req.body;
+const updateSemester = asyncHandler(async (req, res) => {
+    const {
+        semesterId,
+        startDate,
+        endDate
+    } = req.body;
 
-//     if (academicEndYear < academicStartYear) {
-//         throw new ApiError(400, "Academic end year cannot be less than academic start year");
-//     }
+    if(!semesterId) {
+        throw new ApiError(400, "Semester id is required");
+    }
 
-//     if (!id) {
-//         throw new ApiError(400, "Semester id is required");
-//     }
+    if(!startDate || !endDate) {
+        throw new ApiError(400, "Start date and end date are required");
+    }
 
-//     const semester = await Semester.findByPk(id);
+    const semester = await Semester.findByPk(semesterId);
 
-//     if (!semester) {
-//         throw new ApiError(404, "Semester not found");
-//     }
+    if (!semester) {
+        throw new ApiError(404, "Semester not found");
+    }
+    
+    const startDateObj = new Date(startDate);
+    const endDateObj = new Date(endDate);
 
-//     semester.branchId = branchId || semester.branchId;
-//     semester.semesterNumber = semesterNumber || semester.semesterNumber;
-//     semester.academicStartYear = academicStartYear || semester.academicStartYear;
-//     semester.academicEndYear = academicEndYear || semester.academicEndYear;
-//     semester.schemeId = schemeId || semester.schemeId;
 
-//     await semester.save();
+    if(startDateObj >= endDateObj) {
+        throw new ApiError(400, "End date cannot be less than or equal to start date");
+    }
 
-//     res
-//         .status(200)
-//         .json(
-//             new ApiResponse(
-//                 200,
-//                 "Semester updated successfully",
-//                 semester
-//             )
-//         );
-// });
+    if(startDateObj.getFullYear() < semester.academicStartYear) {
+        throw new ApiError(400, "Start date cannot be lesser than academic start year");
+    }
+
+    if(endDateObj.getFullYear() > semester.academicEndYear) {
+        throw new ApiError(400, "End date cannot be greater than academic end year");
+    }
+
+
+    semester.endDate = endDate || semester.endDate;
+    semester.startDate = startDate || semester.startDate;
+
+    await semester.save();
+
+    res
+        .status(200)
+        .json(
+            new ApiResponse(
+                200,
+                "Semester updated successfully",
+                semester
+            )
+        );
+});
 
 //* remove semester
 const removeSemester = asyncHandler(async (req, res) => {
@@ -413,7 +443,7 @@ const getSemesterById = asyncHandler(async (req, res) => {
 export {
     getSemesters,
     addSemester,
-    // updateSemester,
+    updateSemester,
     removeSemester,
     getCoursesOfSemester,
     getSemesterById

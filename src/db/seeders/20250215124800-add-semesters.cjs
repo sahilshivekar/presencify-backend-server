@@ -10,21 +10,21 @@ module.exports = {
 
         await queryInterface.sequelize.query(`
             -- sem 1 & 2 all branch have same nep 2020 scheme
-            INSERT INTO Semesters (branch_id, semester_number, scheme_id, academic_start_year, academic_end_year) VALUES
-            (1, 1, 2, 2024, 2025), -- fe comp with scheme nep 2020
-            (1, 2, 2, 2024, 2025),
+            INSERT INTO Semesters (branch_id, semester_number, scheme_id, academic_start_year, academic_end_year, start_date, end_date) VALUES
+            (1, 1, 2, 2024, 2025, '2024-07-08', '2024-12-31'), -- fe comp with scheme nep 2020
+            (1, 2, 2, 2024, 2025, '2025-01-08', '2025-06-30'), -- se comp with scheme nep 2020
             
-            (2, 1, 2, 2024, 2025), -- fe civil with scheme nep 2020
-            (2, 2, 2, 2024, 2025),
+            (2, 1, 2, 2024, 2025, '2024-07-08', '2024-12-31'), -- fe civil with scheme nep 2020
+            (2, 2, 2, 2024, 2025, '2025-01-08', '2025-06-30'),
             
-            (1, 3, 1, 2024, 2025), -- se comp with scheme rev 2019
-            (1, 4, 1, 2024, 2025),
+            (1, 3, 1, 2024, 2025, '2024-07-08', '2024-12-31'), -- se comp with scheme rev 2019
+            (1, 4, 1, 2024, 2025, '2025-01-08', '2025-06-30'),
             
-            (1, 5, 1, 2024, 2025), -- te comp with scheme rev 2019
-            (1, 6, 1, 2024, 2025),
+            (1, 5, 1, 2024, 2025, '2024-07-08', '2024-12-31'), -- te comp with scheme rev 2019
+            (1, 6, 1, 2024, 2025, '2025-01-08', '2025-06-30'),
             
-            (1, 7, 1, 2024, 2025), -- be comp with scheme rev 2019
-            (1, 8, 1, 2024, 2025);
+            (1, 7, 1, 2024, 2025, '2024-07-08', '2024-12-31'), -- be comp with scheme rev 2019
+            (1, 8, 1, 2024, 2025, '2025-01-08', '2025-06-30');
         `)
 
 

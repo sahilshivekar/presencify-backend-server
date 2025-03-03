@@ -34,13 +34,13 @@ module.exports = {
                 onDelete: 'CASCADE'
             },
             startDate: {
-                type: Sequelize.DATE, // Or DATETIME if you need time as well
+                type: Sequelize.DATEONLY, // Or DATETIME if you need time as well
                 allowNull: false,
                 field: 'start_date',
                 defaultValue: Sequelize.literal('CURRENT_TIMESTAMP')
             },
             endDate: {
-                type: Sequelize.DATE, // Or DATETIME if you need time as well
+                type: Sequelize.DATEONLY, // Or DATETIME if you need time as well
                 allowNull: true, // Allow null as it might be ongoing
                 field: 'end_date'
             },

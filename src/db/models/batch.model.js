@@ -1,6 +1,8 @@
 import { Sequelize, Model } from 'sequelize';
 import sequelize from '../../config/db.connection.js';
 import StudentBatch from './studentBatch.model.js';
+import Class from './class.model.js';
+
 
 class Batch extends Model { }
 
@@ -78,5 +80,7 @@ Batch.init(
 Batch.hasMany(StudentBatch, {sourceKey: "id", foreignKey: "batchId"})
 StudentBatch.belongsTo(Batch, {foreignKey: "batchId", targetKey: "id"})
 
+Batch.hasMany(Class, {sourceKey: "id", foreignKey: "batchId"})
+Class.belongsTo(Batch, {foreignKey: "batchId", targetKey: "id"})
 
 export default Batch;

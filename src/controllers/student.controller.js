@@ -631,7 +631,7 @@ const getStudentDivisionsById = asyncHandler(async (req, res) => {
         .json(
             new ApiResponse(
                 200,
-                "Student fetched successfully",
+                "Student's divisions fetched successfully",
                 studentDivisions
             )
         );
@@ -688,7 +688,7 @@ const getStudentBatchesById = asyncHandler(async (req, res) => {
         .json(
             new ApiResponse(
                 200,
-                "Student fetched successfully",
+                "Student's batches fetched successfully",
                 studentBatches
             )
         );
@@ -748,7 +748,7 @@ const addStudentToBranch = asyncHandler(async (req, res) => {
         );
 });
 
-
+//! it will delete records of only that branch
 const removeStudentFromBranch = asyncHandler(async (req, res) => {
     const { studentBranchId } = req.body;
 
@@ -761,6 +761,70 @@ const removeStudentFromBranch = asyncHandler(async (req, res) => {
     if (!studentBranch) {
         throw new ApiError(404, "Student's record with given id not found");
     }
+
+    await StudentSemester.destroy({
+        where: {
+            studentId: studentBranch.studentId
+        },
+        include: [
+            {
+                model: Semester,
+                required: true,
+                where: {
+                    branchId: studentBranch.branchId
+                }
+            }
+        ]
+    });
+
+    await StudentDivision.destroy({
+        where: {
+            studentId: studentBranch.studentId
+        },
+        include: [
+            {
+                model: Division,
+                required: true,
+                include: [
+                    {
+                        model: Semester,
+                        required: true,
+                        where: {
+                            branchId: studentBranch.branchId
+                        }
+                    }
+                ]
+            }
+        ]
+    });
+
+    await StudentBatch.destroy({
+        where: {
+            studentId: studentBranch.studentId
+        },
+        include: [
+            {
+                model: Batch,
+                required: true,
+                include: [
+                    {
+                        model: Division,
+                        required: true,
+                        include: [
+                            {
+                                model: Semester,
+                                required: true,
+                                where: {
+                                    branchId: studentBranch.branchId
+                                }
+                            }
+                        ]
+                    }
+                ]
+
+            }
+        ]
+    });
 
     await studentBranch.destroy();
 
@@ -816,6 +880,26 @@ const addStudentToSemester = asyncHandler(async (req, res) => {
         throw new ApiError(400, `Student is already present in this semester`);
     }
 
+    const semesterNumberToAdd = semester.semesterNumber;
+    let validSemesterNumber;
+
+    if (semesterNumberToAdd == 1) {
+        validSemesterNumber = 1;
+    } else if (semesterNumberToAdd == 2) {
+        validSemesterNumber = 1;
+    } else if (semesterNumberToAdd == 3) {
+        validSemesterNumber = 4;
+    } else if (semesterNumberToAdd == 4) {
+        validSemesterNumber = 3;
+    } else if (semesterNumberToAdd == 5) {
+        validSemesterNumber = 6;
+    } else if (semesterNumberToAdd == 6) {
+        validSemesterNumber = 5;
+    } else if (semesterNumberToAdd == 7) {
+        validSemesterNumber = 8;
+    } else if (semesterNumberToAdd == 8) {
+        validSemesterNumber = 7;
+    }
     const alreadyExistsInOtherSemesterForSameAcademicYear = await StudentSemester.findOne({
         where: {
             studentId: studentId,
@@ -829,14 +913,17 @@ const addStudentToSemester = asyncHandler(async (req, res) => {
                 required: true,
                 where: {
                     academicStartYear: semester.academicStartYear,
-                    academicEndYear: semester.academicEndYear
+                    academicEndYear: semester.academicEndYear,
+                    semesterNumber: {
+                        [Op.ne]: validSemesterNumber
+                    }
                 }
             }
         ]
     });
 
     if (alreadyExistsInOtherSemesterForSameAcademicYear) {
-        throw new ApiError(400, `Student is already present in another semester for the same academic year`);
+        throw new ApiError(400, `Student is already added in other semester of another year for the same academic year`);
     }
 
     const studentSemesterEntry = await StudentSemester.create({
@@ -863,6 +950,39 @@ const removeStudentFromSemester = asyncHandler(async (req, res) => {
     }
 
     const studentSemester = await StudentSemester.findByPk(studentSemesterId);
+
+    const divisionsThatBelongToThisSemester = await Division.findAll({
+        where: {
+            semesterId: studentSemester.semesterId
+        }
+    });
+
+    await StudentDivision.destroy({
+        where: {
+            studentId: studentSemester.studentId,
+            divisionId: {
+                [Op.in]: divisionsThatBelongToThisSemester.map(division => division.id)
+            }
+        }
+    });
+
+
+    const batchesOfCurrentSemester = await Batch.findAll({
+        where: {
+            divisionId: {
+                [Op.in]: divisionsThatBelongToThisSemester.map(division => division.id)
+            }
+        }
+    });
+
+    await StudentBatch.destroy({
+        where: {
+            studentId: studentSemester.studentId,
+            batchId: {
+                [Op.in]: batchesOfCurrentSemester.map(batch => batch.id)
+            }
+        }
+    })
 
     if (!studentSemester) {
         throw new ApiError(404, "StudentSemester entry with given Id is not found");
@@ -895,6 +1015,8 @@ const addStudentToDivision = asyncHandler(async (req, res) => {
     }
 
     const division = await Division.findByPk(divisionId);
+
+    const semester = await Semester.findByPk(division.semesterId);
 
     const isStudentInSameSemesterAsDivision = await StudentSemester.findOne({
         where: {
@@ -945,8 +1067,9 @@ const addStudentToDivision = asyncHandler(async (req, res) => {
     const studentDivisionEntry = await StudentDivision.create({
         studentId: studentId,
         divisionId: divisionId,
-        startDate: new Date(),
+        startDate: semester.startDate,
     });
+
 
     res
         .status(200)
@@ -961,10 +1084,14 @@ const addStudentToDivision = asyncHandler(async (req, res) => {
 });
 
 const changeStudentDivision = asyncHandler(async (req, res) => {
-    const { studentDivisionId, divisionId } = req.body;
+    const { studentDivisionId, divisionId, newDivisionStartDate } = req.body;
 
     if (!studentDivisionId || !divisionId) {
         throw new Error("StudentDivision ID or Division ID is not provided");
+    }
+
+    if (!newDivisionStartDate) {
+        throw new ApiError(400, "New division start date is required");
     }
 
     const studentDivision = await StudentDivision.findByPk(studentDivisionId);
@@ -996,20 +1123,111 @@ const changeStudentDivision = asyncHandler(async (req, res) => {
     });
 
     if (!isStudentInSameSemesterAsDivision) {
-        throw new ApiError(400, "Student is not present in the same semester as the division")
+        throw new ApiError(400, "Student is not present in the same semester as the new division")
     }
 
-    const newDate = new Date();
+    const startDateOfNewDivision = new Date(newDivisionStartDate);
 
-    studentDivision.endDate = newDate;
+    if (isNaN(startDateOfNewDivision.getTime())) {
+        throw new ApiError(400, "Invalid date format for new division start date");
+    }
+
+    const semester = await Semester.findByPk(division.semesterId);
+
+    if (startDateOfNewDivision.toISOString().split('T')[0] <= studentDivision.startDate) {
+        throw new ApiError(400, "New division start date cannot be lesser than or same as previous division start date");
+    }
+
+    if (startDateOfNewDivision.toISOString().split('T')[0] >= semester.endDate) {
+        throw new ApiError(400, "New division start date cannot be greater than end date of the semester");
+    }
+
+    const endDateOfPrevDivision = new Date(startDateOfNewDivision.getFullYear(), startDateOfNewDivision.getMonth(), startDateOfNewDivision.getDate() - 1);
+
+    // console.log("in the start end date object creations")
+    // console.log(startDateOfNewDivision)
+    // console.log(endDateOfPrevDivision) // this will print date as 30
+    // console.log(endDateOfPrevDivision.getDate()) // this will print date as 31 bcz of the way its printing the whole date in iso
+
+    const batchesOfCurrentDivision = await Batch.findAll({
+        where: {
+            divisionId: studentDivision.divisionId,
+        }
+    });
+
+    // removing student from his previous batch of the previous division
+    const studentBatch = await StudentBatch.findOne({
+        where: {
+            studentId: studentDivision.studentId,
+            batchId: {
+                [Op.in]: batchesOfCurrentDivision.map(batch => batch.id),
+            },
+            endDate: null
+        }
+    });
+
+    if (studentBatch) {
+        // if the admin adds the student in a diff batch in the future date.
+        // then the student batch added for future will be deleted and there previous batch's end date will be set to end date of the previous division
+        if (studentBatch.startDate > startDateOfNewDivision.toISOString().split('T')[0]) {
+
+            const futureBatchStartDateObj = new Date(studentBatch.startDate)
+            const prevBatchEndDateObj = new Date(futureBatchStartDateObj.getFullYear(), futureBatchStartDateObj.getMonth(), futureBatchStartDateObj.getDate());
+
+            // console.log(`prev date: ${prevBatchEndDateObj.toISOString()}`) // this will print privious date even if i haven't did getDate() - 1 in the expression the reason is during creation its getting created locally and the printing is done in iso format
+            // console.log(`future start date: ${futureBatchStartDateObj.toISOString()}`)
+
+            const previousBatch = await StudentBatch.findOne({
+                where: {
+                    studentId: studentDivision.studentId,
+                    endDate: prevBatchEndDateObj.toISOString().split('T')[0],
+                },
+                include: [
+                    {
+                        model: Batch,
+                        required: true,
+                        where: {
+                            divisionId: studentDivision.divisionId
+                        }
+                    }
+                ]
+            });
+
+            // console.log(`future batch is ${studentBatch.toJSON()}`)
+            if (previousBatch) {
+                // console.log(`previous batch is ${previousBatch.toJSON()}`)
+            } else {
+                // console.log("prev batch is null")
+            }
+
+            await studentBatch.destroy();
+
+            if (previousBatch) {
+                // console.log(`setting end date of prev batch to ${endDateOfPrevDivision}`)
+                previousBatch.endDate = endDateOfPrevDivision;
+                await previousBatch.save();
+            }
+        } else {
+            studentBatch.endDate = endDateOfPrevDivision;
+            await studentBatch.save();
+        }
+    }
+
+    // console.log(`setting end date of prev division to ${endDateOfPrevDivision}`)
+    studentDivision.endDate = endDateOfPrevDivision;
 
     await studentDivision.save();
+
 
     const newStudentDivision = await StudentDivision.create({
         studentId: studentDivision.studentId,
         divisionId: divisionId,
-        startDate: newDate
+        startDate: startDateOfNewDivision
     });
+
+    if (!newStudentDivision) {
+        throw new ApiError(500, "Some issue occured while changing division");
+    }
 
     res
         .status(200)
@@ -1054,6 +1272,7 @@ const addStudentToBatch = asyncHandler(async (req, res) => {
         throw new ApiError(400, "Student is not present in the same division as the batch")
     }
 
+
     const alreadyExists = await StudentBatch.findOne({
         where: {
             studentId: studentId,
@@ -1063,7 +1282,7 @@ const addStudentToBatch = asyncHandler(async (req, res) => {
     });
 
     if (alreadyExists) {
-        throw new ApiError(400, "Student is already present in this division")
+        throw new ApiError(400, "Student is already present in this batch")
     }
 
     const batchesOfTheDivision = await Batch.findAll({
@@ -1081,7 +1300,8 @@ const addStudentToBatch = asyncHandler(async (req, res) => {
             studentId: studentId,
             batchId: {
                 [Op.in]: batchesOfTheDivision.map(batch => batch.id)
-            }
+            },
+            endDate: null
         }
     })
 
@@ -1092,7 +1312,7 @@ const addStudentToBatch = asyncHandler(async (req, res) => {
     const studentBatchEntry = await StudentBatch.create({
         studentId: studentId,
         batchId: batchId,
-        startDate: new Date(),
+        startDate: isStudentInSameDivisionAsBatch.startDate,
     });
 
     res
@@ -1109,10 +1329,14 @@ const addStudentToBatch = asyncHandler(async (req, res) => {
 
 const changeStudentBatch = asyncHandler(async (req, res, next) => {
 
-    const { studentBatchId, batchId } = req.body;
+    const { studentBatchId, batchId, newBatchStartDate } = req.body;
 
     if (!studentBatchId || !batchId) {
         throw new Error("StudentBatch ID or Batch ID is not provided");
+    }
+
+    if (!newBatchStartDate) {
+        throw new ApiError(400, "New batch start date is required");
     }
 
     const studentBatch = await StudentBatch.findByPk(studentBatchId);
@@ -1147,16 +1371,37 @@ const changeStudentBatch = asyncHandler(async (req, res, next) => {
         throw new ApiError(400, "Student is not present in the same division as the batch")
     }
 
-    const newDate = new Date();
+    const division = await Division.findByPk(batch.divisionId);
+    const semester = await Semester.findByPk(division.semesterId);
 
-    studentBatch.endDate = newDate;
+    const startDateOfNewBatch = new Date(newBatchStartDate);
+
+    if (isNaN(startDateOfNewBatch.getTime())) {
+        throw new ApiError(400, "Invalid date format for new division start date");
+    }
+
+    if (startDateOfNewBatch.toISOString().split('T')[0] > semester.endDate) {
+        throw new ApiError(400, "New batch start date cannot be greater than end date of the semester");
+    }
+
+    if (startDateOfNewBatch.toISOString().split('T')[0] <= studentBatch.startDate) {
+        throw new ApiError(400, "New batch start date cannot be lesser than or same as previous batch start date");
+    }
+
+    const endDateOfPrevBatch = new Date(startDateOfNewBatch.getFullYear(), startDateOfNewBatch.getMonth(), startDateOfNewBatch.getDate() - 1);
+
+    if (studentBatch.startDate >= startDateOfNewBatch.toISOString().split('T')[0]) {
+        throw new ApiError(400, "New batch start date cannot be lesser than or same as previous batch start date");
+    }
+
+    studentBatch.endDate = endDateOfPrevBatch;
 
     await studentBatch.save();
 
     const newStudentBatch = await StudentBatch.create({
         studentId: studentBatch.studentId,
         batchId: batchId,
-        startDate: newDate
+        startDate: startDateOfNewBatch
     });
 
     res

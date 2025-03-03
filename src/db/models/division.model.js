@@ -2,6 +2,7 @@ import { Sequelize, Model } from 'sequelize';
 import sequelize from '../../config/db.connection.js';
 import Batch from './batch.model.js';
 import StudentDivision from './studentDivision.model.js';
+import Timetable from './timetable.model.js';
 class Division extends Model { }
 
 Division.init(
@@ -81,5 +82,7 @@ Batch.belongsTo(Division, {foreignKey: "divisionId", targetKey: "id"})
 Division.hasMany(StudentDivision, {sourceKey: "id", foreignKey: "divisionId"})
 StudentDivision.belongsTo(Division, {foreignKey: "divisionId", targetKey: "id"})
 
+Division.hasOne(Timetable, {sourceKey: "id", foreignKey: "divisionId"})
+Timetable.belongsTo(Division, {foreignKey: "divisionId", targetKey: "id"})
 
 export default Division;

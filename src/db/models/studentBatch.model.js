@@ -41,7 +41,7 @@ StudentBatch.init(
             }
         },
         startDate: {
-            type: Sequelize.DATE,
+            type: Sequelize.DATEONLY,
             allowNull: false,
             field: 'start_date',
             validate: {
@@ -54,7 +54,7 @@ StudentBatch.init(
             }
         },
         endDate: {
-            type: Sequelize.DATE,
+            type: Sequelize.DATEONLY,
             allowNull: true,
             field: 'end_date',
             validate: {

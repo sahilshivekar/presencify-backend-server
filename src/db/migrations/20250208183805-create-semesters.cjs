@@ -50,6 +50,16 @@ module.exports = {
                     onUpdate: 'CASCADE',
                     onDelete: 'CASCADE',
                 },
+                startDate: {
+                    type: Sequelize.DATEONLY,
+                    allowNull: false,
+                    field: 'start_date',
+                },
+                endDate: {
+                    type: Sequelize.DATEONLY,
+                    allowNull: false,
+                    field: 'end_date',
+                },
                 createdAt: {
                     type: Sequelize.DATE,
                     allowNull: false,
@@ -66,9 +76,9 @@ module.exports = {
             {
                 timestamps: true,
                 freezeTableName: true,
-                uniqueKeys: { 
-                    semester_unique: { 
-                        fields: ['branch_id', 'semester_number', 'academic_start_year', 'academic_end_year', 'scheme_id'] 
+                uniqueKeys: {
+                    semester_unique: {
+                        fields: ['branch_id', 'semester_number', 'academic_start_year', 'academic_end_year', 'scheme_id']
                     }
                 }
             }
