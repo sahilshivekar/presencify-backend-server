@@ -4,6 +4,7 @@ import BranchCourseSemester from './branchCourseSemester.model.js';
 import Scheme from './scheme.model.js';
 import TeacherTeachesCourse from './teacherTeachesCourse.model.js';
 import Staff from './staff.model.js';
+import Class from './class.model.js';
 class Course extends Model { }
 
 Course.init(
@@ -103,5 +104,10 @@ TeacherTeachesCourse.belongsTo(Course, { foreignKey: 'courseId', targetKey: 'id'
 
 TeacherTeachesCourse.belongsTo(Staff, { foreignKey: 'teacherId', targetKey: 'id' });
 Staff.hasMany(TeacherTeachesCourse, { sourceKey: 'id', foreignKey: 'teacherId' });
+
+
+Course.hasMany(Class, { sourceKey: 'id', foreignKey: 'courseId' });
+Class.belongsTo(Course, { foreignKey: 'courseId', targetKey: 'id' });
+
 
 export default Course;

@@ -22,7 +22,7 @@ Class.init(
             },
             validate: {
                 notNull: {
-                    msg: 'Instructor ID cannot be null'
+                    msg: 'Instructor ID is required'
                 }
             }
         },
@@ -32,8 +32,8 @@ Class.init(
             field: 'start_time',
             validate: {
                 notNull: {
-                    msg: 'Start time cannot be null'
-                }
+                    msg: 'Start time is required'
+                },
             }
         },
         endTime: {
@@ -42,7 +42,7 @@ Class.init(
             field: 'end_time',
             validate: {
                 notNull: {
-                    msg: 'End time cannot be null'
+                    msg: 'End time is required'
                 }
             }
         },
@@ -52,7 +52,7 @@ Class.init(
             field: 'day_of_week',
             validate: {
                 notNull: {
-                    msg: 'Day of week cannot be null'
+                    msg: 'Day of week is required'
                 }
             }
         },
@@ -66,42 +66,26 @@ Class.init(
             },
             validate: {
                 notNull: {
-                    msg: 'Room ID cannot be null'
+                    msg: 'Room ID is required'
                 }
             }
         },
         batchId: {
             type: Sequelize.INTEGER,
-            allowNull: false,
+            allowNull: true,
             field: 'batch_id',
             references: {
                 model: 'batches',
                 key: 'batch_id'
-            },
-            validate: {
-                notNull: {
-                    msg: 'Batch ID cannot be null'
-                }
             }
         },
-        isActive: {
-            type: Sequelize.BOOLEAN,
+        activeFrom: {
+            type: Sequelize.DATEONLY,
             allowNull: false,
-            field: 'is_active',
-            defaultValue: true,
+            field: 'active_from',
             validate: {
                 notNull: {
-                    msg: 'Is active cannot be null'
-                }
-            }
-        },
-        isActiveFrom: {
-            type: Sequelize.DATE,
-            allowNull: false,
-            field: 'is_active_from',
-            validate: {
-                notNull: {
-                    msg: 'Is active from cannot be null'
+                    msg: 'Active from field is required'
                 },
                 isDate: {
                     msg: 'Invalid date format for Is active from'
@@ -109,36 +93,39 @@ Class.init(
             }
         },
         activeTill: {
-            type: Sequelize.DATE,
-            allowNull: true,
+            type: Sequelize.DATEONLY,
+            allowNull: false,
             field: 'active_till',
             validate: {
+                notNull: {
+                    msg: 'Active till field is required'
+                },
                 isDate: {
                     msg: 'Invalid date format for Active till'
                 }
             }
         },
         classType: {
-            type: Sequelize.ENUM('lecture', 'tutorial', 'lab'),
+            type: Sequelize.ENUM('Lecture', 'Tutorial', 'Practical'),
             allowNull: false,
             field: 'class_type',
             validate: {
                 notNull: {
-                    msg: 'Class type cannot be null'
+                    msg: 'Class type is required'
                 }
             }
         },
-        branchCourseSemesterId: {
+        courseId: {
             type: Sequelize.INTEGER,
             allowNull: false,
-            field: 'branch_course_semester_id',
+            field: 'course_id',
             references: {
-                model: 'branch_course_semesters',
-                key: 'branch_course_semester_id'
+                model: 'courses',
+                key: 'course_id'
             },
             validate: {
                 notNull: {
-                    msg: 'Branch course semester ID cannot be null'
+                    msg: 'Course ID is required'
                 }
             }
         },
@@ -148,7 +135,7 @@ Class.init(
             field: 'created_at',
             validate: {
                 notNull: {
-                    msg: 'Created At cannot be null'
+                    msg: 'Created At is required'
                 }
             }
         },
@@ -158,7 +145,21 @@ Class.init(
             field: 'updated_at',
             validate: {
                 notNull: {
-                    msg: 'Updated At cannot be null'
+                    msg: 'Updated At is required'
+                }
+            }
+        },
+        timetableId: {
+            type: Sequelize.INTEGER,
+            allowNull: false,
+            field: 'timetable_id',
+            references: {
+                model: 'timetables',
+                key: 'timetable_id'
+            },
+            validate: {
+                notNull: {
+                    msg: 'Timetable Id is required'
                 }
             }
         }

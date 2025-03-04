@@ -1,5 +1,6 @@
 import { Sequelize, Model } from 'sequelize';
 import sequelize from '../../config/db.connection.js';
+import Class from './class.model.js';
 
 class Room extends Model { }
 
@@ -13,7 +14,7 @@ Room.init(
             field: 'room_id'
         },
         roomNumber: {
-            type: Sequelize.STRING(255),
+            type: Sequelize.INTEGER,
             allowNull: false,
             field: 'room_number',
             unique: {
@@ -21,22 +22,24 @@ Room.init(
                 msg: 'Room number already exists'
             },
             validate: {
-                notEmpty: {
-                    msg: 'Room number cannot be empty'
-                }
+                notNull: {
+                    msg: 'Room number cannot be null'
+                },
+                isInt: {
+                    msg: 'Room number must be a number'
+                },
             }
         },
         sittingCapacity: {
             type: Sequelize.INTEGER,
             allowNull: false,
             field: 'sitting_capacity',
-            defaultValue: 60,
             validate: {
                 notNull: {
                     msg: 'Sitting capacity cannot be null'
                 },
                 isInt: {
-                    msg: 'Sitting capacity must be an integer'
+                    msg: 'Sitting capacity must be a number'
                 }
             }
         },
@@ -68,5 +71,8 @@ Room.init(
         tableName: 'rooms'
     }
 );
+
+Room.hasMany(Class, {sourceKey: 'id', foreignKey: 'roomId'});
+Class.belongsTo(Room, {targetKey: 'id', foreignKey: 'roomId'});
 
 export default Room;

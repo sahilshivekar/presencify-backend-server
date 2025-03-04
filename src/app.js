@@ -28,6 +28,9 @@ import divisionRouter from "./routes/division.routes.js"
 import batchRouter from "./routes/batch.routes.js"
 import eventRouter from "./routes/event.routes.js"
 import noticeRouter from "./routes/notice.routes.js"
+import timetableRouter from "./routes/timetable.routes.js"
+import roomRouter from "./routes/room.routes.js"
+import classRouter from "./routes/class.routes.js"
 
 //! routes declaration
 app.use("/api/v1/admin", adminRouter);
@@ -42,6 +45,9 @@ app.use("/api/v1/division", divisionRouter);
 app.use("/api/v1/batch", batchRouter);
 app.use("/api/v1/event", eventRouter);
 app.use("/api/v1/notice", noticeRouter);
+app.use("/api/v1/timetable", timetableRouter);
+app.use("/api/v1/room", roomRouter);
+app.use("/api/v1/class", classRouter);
 
 
 export { app }

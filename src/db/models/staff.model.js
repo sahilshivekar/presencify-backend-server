@@ -4,7 +4,7 @@ import bcrypt from 'bcrypt';
 import Event from './event.model.js';
 import Notice from './notice.model.js';
 import TeacherTeachesCourse from './teacherTeachesCourse.model.js';
-
+import Class from './class.model.js';
 
 class Staff extends Model { }
 
@@ -195,6 +195,8 @@ Event.belongsTo(Staff, {targetKey: 'id', foreignKey: 'uploadedBy'});
 Staff.hasMany(Notice, {sourceKey: 'id', foreignKey: 'uploadedBy'});
 Notice.belongsTo(Staff, {targetKey: 'id', foreignKey: 'uploadedBy'});
 
+Staff.hasMany(Class, {sourceKey: 'id', foreignKey: 'instructorId'});
+Class.belongsTo(Staff, {targetKey: 'id', foreignKey: 'instructorId'});
 
 Staff.prototype.isPasswordMatching = async function (password) {
     return await bcrypt.compare(password, this.password)

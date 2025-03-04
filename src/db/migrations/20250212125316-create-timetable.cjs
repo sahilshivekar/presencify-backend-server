@@ -14,21 +14,22 @@ module.exports = {
                     field: 'timetable_id'
                 },
                 divisionId: {
-                    type: Sequelize.INTEGER, 
+                    type: Sequelize.INTEGER,
                     allowNull: false,
                     field: 'division_id',
                     references: {
                         model: 'divisions',
-                        key: 'division_id' 
+                        key: 'division_id'
                     },
                     onUpdate: 'CASCADE',
-                    onDelete: 'CASCADE'
+                    onDelete: 'CASCADE',
+                    unique: true
                 },
                 timetableVersion: {
                     type: Sequelize.INTEGER,
                     allowNull: false,
                     field: 'timetable_version',
-                    defaultValue: 1 
+                    defaultValue: 1
                 },
                 createdAt: {
                     type: Sequelize.DATE,

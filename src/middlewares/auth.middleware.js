@@ -26,7 +26,6 @@ const verifyAdminJWT = asyncHandler(async (req, _, next) => {
         }
 
         req.admin = admin.dataValues;
-        
         next()
 
     } catch (err) {

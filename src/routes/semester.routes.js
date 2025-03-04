@@ -2,7 +2,7 @@ import express from 'express';
 import { 
     getSemesters,
     addSemester,
-    // updateSemester,
+    updateSemester,
     removeSemester,
     getCoursesOfSemester,
     getSemesterById
@@ -15,7 +15,7 @@ router.route('/get-semesters').get(verifyAdminJWT,getSemesters);
 
 router.route('/add').post(verifyAdminJWT, addSemester);
 
-// router.route('/update').put(verifyAdminJWT, updateSemester);
+router.route('/update').put(verifyAdminJWT, updateSemester);
 
 router.route('/remove').delete(verifyAdminJWT, removeSemester);
 

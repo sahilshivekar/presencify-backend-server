@@ -1,5 +1,7 @@
+
 import { Sequelize, Model } from 'sequelize';
 import sequelize from '../../config/db.connection.js';
+import Class from './class.model.js';
 
 class Timetable extends Model { }
 
@@ -24,6 +26,9 @@ Timetable.init(
                 notNull: {
                     msg: 'Division ID cannot be null'
                 }
+            },
+            unique: {
+                msg: 'Timetable already exists for this division'
             }
         },
         timetableVersion: {
@@ -68,5 +73,8 @@ Timetable.init(
         tableName: 'timetables'
     }
 );
+
+Timetable.hasMany(Class, { sourceKey: 'id', foreignKey: 'timetableId' })
+Class.belongsTo(Timetable, { targetKey: 'id', foreignKey: 'timetableId' })
 
 export default Timetable;

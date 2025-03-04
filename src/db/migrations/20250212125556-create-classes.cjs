@@ -50,7 +50,7 @@ module.exports = {
             },
             batchId: {
                 type: Sequelize.INTEGER,
-                allowNull: false,
+                allowNull: true,
                 field: 'batch_id',
                 references: {
                     model: 'batches',
@@ -59,37 +59,40 @@ module.exports = {
                 onUpdate: 'CASCADE',
                 onDelete: 'CASCADE'
             },
-            isActive: {
-                type: Sequelize.BOOLEAN,
+            activeFrom: {
+                type: Sequelize.DATEONLY, // Or DATETIME if you need time as well
                 allowNull: false,
-                field: 'is_active',
-                defaultValue: true // Default to active
-            },
-            isActiveFrom: {
-                type: Sequelize.DATE, // Or DATETIME if you need time as well
-                allowNull: false,
-                field: 'is_active_from'
+                field: 'active_from'
             },
             activeTill: {
-                type: Sequelize.DATE, // Or DATETIME if you need time as well
+                type: Sequelize.DATEONLY, // Or DATETIME if you need time as well
                 allowNull: true,
                 field: 'active_till'
             },
             classType: { // Added for the enum
-                type: Sequelize.ENUM('lecture', 'tutorial', 'lab'),
+                type: Sequelize.ENUM('Lecture', 'Tutorial', 'Practical'),
                 allowNull: false,
                 field: 'class_type'
             },
-            branchCourseSemesterId: {
+            courseId: {
                 type: Sequelize.INTEGER,
                 allowNull: false,
-                field: 'branch_course_semester_id',
+                field: 'course_id',
                 references: {
-                    model: 'branch_course_semesters', // Correct table name
-                    key: 'branch_course_semester_id'
+                    model: 'courses',
+                    key: 'course_id'
                 },
                 onUpdate: 'CASCADE',
                 onDelete: 'CASCADE'
+            },
+            timetableId: {
+                type: Sequelize.INTEGER,
+                allowNull: false,
+                field: 'timetable_id',
+                references: {
+                    model: 'timetables',
+                    key: 'timetable_id'
+                }
             },
             createdAt: {
                 type: Sequelize.DATE,

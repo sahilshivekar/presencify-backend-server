@@ -14,7 +14,7 @@ module.exports = {
                     field: 'room_id'
                 },
                 roomNumber: {
-                    type: Sequelize.STRING(255),
+                    type: Sequelize.INTEGER,
                     allowNull: false,
                     field: 'room_number',
                     unique: true
@@ -23,7 +23,6 @@ module.exports = {
                     type: Sequelize.INTEGER,
                     allowNull: false,
                     field: 'sitting_capacity',
-                    defaultValue: 60
                 },
                 createdAt: {
                     type: Sequelize.DATE,
