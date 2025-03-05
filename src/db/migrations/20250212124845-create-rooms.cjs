@@ -14,7 +14,7 @@ module.exports = {
                     field: 'room_id'
                 },
                 roomNumber: {
-                    type: Sequelize.INTEGER,
+                    type: Sequelize.STRING,
                     allowNull: false,
                     field: 'room_number',
                     unique: true

@@ -44,10 +44,8 @@ const getRooms = asyncHandler(async (req, res) => {
 
     if (searchQuery) {
         searchClause = {
-            [Op.or]: [
-                { roomNumber: { [Op.iLike]: `%${searchQuery}%` } },
-            ]
-        };
+            roomNumber: { [Op.iLike]: `%${searchQuery}%` }
+        }
     }
 
     const rooms = await Room.findAll({

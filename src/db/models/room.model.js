@@ -14,7 +14,7 @@ Room.init(
             field: 'room_id'
         },
         roomNumber: {
-            type: Sequelize.INTEGER,
+            type: Sequelize.STRING,
             allowNull: false,
             field: 'room_number',
             unique: {
@@ -24,10 +24,7 @@ Room.init(
             validate: {
                 notNull: {
                     msg: 'Room number cannot be null'
-                },
-                isInt: {
-                    msg: 'Room number must be a number'
-                },
+                }
             }
         },
         sittingCapacity: {

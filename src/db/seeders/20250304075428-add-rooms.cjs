@@ -23,7 +23,7 @@ module.exports = {
         // Create room objects
         roomNumbers.forEach((roomNumber) => {
             rooms.push({
-                room_number: parseInt(roomNumber, 10),  // Convert to integer
+                room_number: roomNumber, 
                 sitting_capacity: getRandomCapacity(),
                 created_at: new Date(),
                 updated_at: new Date()
