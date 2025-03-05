@@ -29,7 +29,7 @@ Attendance.init(
         date: {
             type: Sequelize.DATEONLY,
             allowNull: false,
-            field: 'current_date',
+            field: 'attendance_date',
             validate: {
                 notNull: {
                     msg: 'Date cannot be null'
@@ -73,7 +73,14 @@ class AttendanceStudent extends Model { }
 
 AttendanceStudent.init(
     {
-        attendance_id: {
+        id: {
+            type:Sequelize.INTEGER,
+            primaryKey: true,
+            allowNull: false,
+            autoIncrement: true,
+            field: 'attendance_student_id'
+        },
+        attendanceId: {
             type: Sequelize.INTEGER,
             allowNull: false,
             field: 'attendance_id',
@@ -87,7 +94,7 @@ AttendanceStudent.init(
                 }
             }
         },
-        student_id: {
+        studentId: {
             type: Sequelize.INTEGER,
             allowNull: false,
             field: 'student_id',
@@ -98,6 +105,16 @@ AttendanceStudent.init(
             validate: {
                 notNull: {
                     msg: 'Student ID cannot be null'
+                }
+            }
+        },
+        attendanceStatus: {
+            type: Sequelize.BOOLEAN,
+            allowNull: false,
+            field: 'attendance_status',
+            validate: {
+                notNull: {
+                    msg: 'Attendance status is required'
                 }
             }
         },
@@ -130,4 +147,8 @@ AttendanceStudent.init(
     }
 );
 
+
 export { Attendance, AttendanceStudent };
+
+Attendance.hasMany(AttendanceStudent, { sourceKey: 'id', foreignKey: 'attendanceId' })
+AttendanceStudent.belongsTo(Attendance, { targetKey: 'id', foreignKey: 'attendanceId' })

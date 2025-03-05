@@ -31,6 +31,7 @@ import noticeRouter from "./routes/notice.routes.js"
 import timetableRouter from "./routes/timetable.routes.js"
 import roomRouter from "./routes/room.routes.js"
 import classRouter from "./routes/class.routes.js"
+import attendanceRouter from "./routes/attendance.routes.js"
 
 //! routes declaration
 app.use("/api/v1/admin", adminRouter);
@@ -48,6 +49,6 @@ app.use("/api/v1/notice", noticeRouter);
 app.use("/api/v1/timetable", timetableRouter);
 app.use("/api/v1/room", roomRouter);
 app.use("/api/v1/class", classRouter);
-
+app.use("/api/v1/attendance", attendanceRouter);
 
 export { app }

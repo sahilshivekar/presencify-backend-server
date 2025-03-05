@@ -1,5 +1,6 @@
 import { Sequelize, Model } from 'sequelize';
 import sequelize from '../../config/db.connection.js';
+import { Attendance } from './attendance.model.js';
 
 class Class extends Model { }
 
@@ -173,3 +174,6 @@ Class.init(
 );
 
 export default Class;
+
+Class.hasMany(Attendance, { sourceKey: 'id', foreignKey: 'classId' })
+Attendance.belongsTo(Class, { targetKey: 'id', foreignKey: 'classId' })

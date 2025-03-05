@@ -25,7 +25,7 @@ module.exports = {
             date: {
                 type: Sequelize.DATEONLY,
                 allowNull: false,
-                field: 'current_date'
+                field: 'attendance_date'
             },
             createdAt: {
                 type: Sequelize.DATE,
@@ -44,7 +44,14 @@ module.exports = {
 
         // Create the join table for students and attendance
         await queryInterface.createTable('attendance_students', {
-            attendance_id: {
+            id: {
+                type: Sequelize.INTEGER,
+                primaryKey: true,
+                allowNull: false,
+                autoIncrement: true,
+                field: 'attendance_student_id'
+            },
+            attendanceId: {
                 type: Sequelize.INTEGER,
                 allowNull: false,
                 field: 'attendance_id',
@@ -55,7 +62,7 @@ module.exports = {
                 onUpdate: 'CASCADE',
                 onDelete: 'CASCADE'
             },
-            student_id: {
+            studentId: {
                 type: Sequelize.INTEGER,
                 allowNull: false,
                 field: 'student_id',
@@ -65,6 +72,11 @@ module.exports = {
                 },
                 onUpdate: 'CASCADE',
                 onDelete: 'CASCADE'
+            },
+            attendanceStatus: {
+                type: Sequelize.BOOLEAN,
+                allowNull: false,
+                field: 'attendance_status'
             },
             createdAt: {
                 type: Sequelize.DATE,

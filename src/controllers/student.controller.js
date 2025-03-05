@@ -31,6 +31,8 @@ const getStudents = asyncHandler(async (req, res) => {
         academicStatus,
         admissionType,
         admissionYear,
+        currentBatch, // can be true or false 
+        currentDivision, // can be true or false
         page = 1,
         limit = 10
     } = req.query;
@@ -129,6 +131,7 @@ const getStudents = asyncHandler(async (req, res) => {
 
     if (divisionId) {
         divisionFilterClause.divisionId = Number(divisionId);
+
     }
 
     const students = await Student.findAll({
@@ -171,7 +174,12 @@ const getStudents = asyncHandler(async (req, res) => {
                 model: StudentDivision,
                 required: true,
                 duplicating: false,
-                where: divisionFilterClause,
+                where: {
+                    [Op.and]: [
+                        divisionFilterClause,
+                        ...(currentDivision == 'true' ? [{ endDate: null }] : []) // need to write true in 
+                    ]
+                },
                 include: [
                     {
                         model: Division,
@@ -184,7 +192,12 @@ const getStudents = asyncHandler(async (req, res) => {
                 model: StudentBatch,
                 required: true,
                 duplicating: false,
-                where: batchFilterClause,
+                where: {
+                    [Op.and]: [
+                        batchFilterClause,
+                        ...(currentBatch == 'true' ? [{ endDate: null }] : [])
+                    ]
+                },
                 include: [
                     {
                         model: Batch,
