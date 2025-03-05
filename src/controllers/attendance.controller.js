@@ -408,14 +408,14 @@ const getAttendanceOfStudentForSpecificCourseInSemester = asyncHandler(async (re
     const attendance = await sequelize.query(
         `
         SELECT
-        attendance_students.student_id, 
-        courses.course_name, 
         courses.course_id,
-        courses.course_code,
-        semesters.semester_id,
-        semesters.semester_number,
+        courses.course_name, 
         COUNT(attendances.attendance_id) AS total_lectures,  
         SUM(CASE WHEN attendance_students.attendance_status = true THEN 1 ELSE 0 END) AS attended_lectures
+        --attendance_students.student_id, 
+        --courses.course_code,
+        --semesters.semester_id,
+        --semesters.semester_number,
         FROM attendances
         INNER JOIN attendance_students ON attendances.attendance_id = attendance_students.attendance_id
         INNER JOIN classes ON classes.class_id = attendances.class_id
@@ -425,27 +425,41 @@ const getAttendanceOfStudentForSpecificCourseInSemester = asyncHandler(async (re
         INNER JOIN semesters ON semesters.semester_id = divisions.semester_id
         WHERE attendance_students.student_id = ${studentId} AND courses.course_id = ${courseId} AND semesters.semester_id = ${semesterId}
         GROUP BY 
-        attendance_students.student_id, 
-        courses.course_name, 
         courses.course_id,
-        courses.course_code,
-        semesters.semester_id,
-        semesters.semester_number,
-        attendances.attendance_date
+        courses.course_name;
+        --attendance_students.student_id, 
+        --courses.course_code,
+        --semesters.semester_id,
+        --semesters.semester_number,
+        --attendances.attendance_date;
         `
     )
 
-    res.status(200).json(new ApiResponse(200, "Attendance fetched successfully", attendance[0]));
+    if (!attendance) {
+        throw new ApiError(404, "Attendance for this course not found")
+    }
+
+    const formattedResult = attendance[0].map(row => ({
+        courseId: row.course_id,
+        courseName: row.course_name,
+        totalLectures: row.total_lectures,
+        attendedLectures: row.attended_lectures,
+    }));
+
+    res.status(200).json(new ApiResponse(200, "Attendance fetched successfully", formattedResult));
 });
 
+
+// this controller and getAttendanceOfCourseThroughoutSemester controller uses same logic only the date is getting added in the where condition
 const getAttendanceOfCourseOnDate = asyncHandler(async (req, res) => {
     const {
         date,
         courseId,
+        divisionId
     } = req.query;
 
-    if (!date || !courseId) {
-        throw new ApiError(400, "Date and Course ID are required")
+    if (!date || !courseId || !divisionId) {
+        throw new ApiError(400, "Date, division ID and Course ID are required")
     }
 
     if (date) {
@@ -460,45 +474,44 @@ const getAttendanceOfCourseOnDate = asyncHandler(async (req, res) => {
         throw new ApiError(404, "Course not found")
     }
 
-    const attendance = await Attendance.findAll({
-        where: {
-            [Op.and]: [
-                { date: date },
-            ]
-        },
-        include: [
-            {
-                model: Class,
-                required: true,
-                duplicating: false,
-                where: {
-                    [Op.and]: [
-                        { courseId: courseId }
-                    ]
-                }
-            },
-            {
-                model: AttendanceStudent,
-                required: true,
-                duplicating: false,
-                attributes: ['studentId'],
-                include: [
-                    {
-                        model: Student,
-                        required: true,
-                        duplicating: false,
-                        attributes: ['firstName', 'lastName'],
-                    }
-                ],
-            }
-        ]
-    })
+    const division = await Division.findByPk(divisionId);
+
+    if (!division) {
+        throw new ApiError(404, "Division not found")
+    }
+
+    const attendance = await sequelize.query(
+        `
+       SELECT
+        CONCAT(students.first_name, ' ', students.last_name) AS student_name,
+        COUNT(attendances.attendance_id) AS total_lectures,
+        SUM(CASE WHEN attendance_students.attendance_status = true THEN 1 ELSE 0 END) AS attended_lectures
+        FROM attendances
+        INNER JOIN attendance_students ON attendances.attendance_id = attendance_students.attendance_id
+        INNER JOIN students ON students.student_id = attendance_students.student_id
+        INNER JOIN classes ON classes.class_id = attendances.class_id
+        INNER JOIN courses ON courses.course_id = classes.course_id
+        INNER JOIN timetables ON timetables.timetable_id = classes.timetable_id
+        INNER JOIN divisions ON divisions.division_id = timetables.division_id
+        INNER JOIN semesters ON semesters.semester_id = divisions.semester_id
+        WHERE courses.course_id = ${courseId} AND divisions.division_id = ${divisionId} AND attendances.attendance_date = '${date}'
+        GROUP BY 
+        students.first_name,
+        students.last_name
+       `
+    )
 
     if (!attendance) {
         throw new ApiError(404, "Attendance for this date and subject is found")
     }
 
-    res.status(200).json(new ApiResponse(200, "Attendance fetched successfully", attendance));
+    const formattedResult = attendance[0].map(row => ({
+        studentName: row.student_name, // Rename field manually
+        totalLectures: row.total_lectures,
+        attendedLectures: row.attended_lectures,
+    }));
+
+    res.status(200).json(new ApiResponse(200, "Attendance fetched successfully", formattedResult));
 
 })
 
@@ -552,6 +565,11 @@ const getAttendanceOfCourseThroughoutSemester = asyncHandler(async (req, res) =>
         students.last_name
         `
     )
+
+
+    if (!attendance) {
+        throw new ApiError(404, "Attendance for this course not found")
+    }
 
     const formattedResult = attendance[0].map(row => ({
         studentName: row.student_name, // Rename field manually
