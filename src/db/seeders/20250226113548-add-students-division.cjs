@@ -25,6 +25,7 @@ module.exports = {
                     {
                         student_id: secondSemesterComp[0][i].student_id,
                         division_id: secondSemesterCompDivisions[0][0].division_id,
+                        start_date: '2025-01-08',
                     }
                 )
             } else {
@@ -32,6 +33,7 @@ module.exports = {
                     {
                         student_id: secondSemesterComp[0][i].student_id,
                         division_id: secondSemesterCompDivisions[0][1].division_id,
+                        start_date: '2025-01-08',
                     }
                 )
             }
@@ -59,6 +61,7 @@ module.exports = {
                     {
                         student_id: fourthSemesterComp[0][i].student_id,
                         division_id: fourthSemesterCompDivisions[0][0].division_id,
+                        start_date: '2025-01-08',
                     }
                 )
             } else {
@@ -66,6 +69,7 @@ module.exports = {
                     {
                         student_id: fourthSemesterComp[0][i].student_id,
                         division_id: fourthSemesterCompDivisions[0][1].division_id,
+                        start_date: '2025-01-08',
                     }
                 )
             }
@@ -92,6 +96,7 @@ module.exports = {
                     {
                         student_id: sixthSemesterComp[0][i].student_id,
                         division_id: sixthSemesterCompDivisions[0][0].division_id,
+                        start_date: '2025-01-08',
                     }
                 )
             } else {
@@ -99,6 +104,7 @@ module.exports = {
                     {
                         student_id: sixthSemesterComp[0][i].student_id,
                         division_id: sixthSemesterCompDivisions[0][1].division_id,
+                        start_date: '2025-01-08',
                     }
                 )
             }
@@ -125,6 +131,7 @@ module.exports = {
                     {
                         student_id: eightSemesterComp[0][i].student_id,
                         division_id: eightSemesterCompDivisions[0][0].division_id,
+                        start_date: '2025-01-08',
                     }
                 )
             } else {
@@ -132,6 +139,7 @@ module.exports = {
                     {
                         student_id: eightSemesterComp[0][i].student_id,
                         division_id: eightSemesterCompDivisions[0][1].division_id,
+                        start_date: '2025-01-08',
                     }
                 )
             }
@@ -156,6 +164,7 @@ module.exports = {
                     {
                         student_id: secondSemesterCivil[0][i].student_id,
                         division_id: secondSemesterCivilDivisions[0][0].division_id,
+                        start_date: '2025-01-08',
                     }
                 )
             } else {
@@ -163,6 +172,7 @@ module.exports = {
                     {
                         student_id: secondSemesterCivil[0][i].student_id,
                         division_id: secondSemesterCivilDivisions[0][1].division_id,
+                        start_date: '2025-01-08',
                     }
                 )
             }

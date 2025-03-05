@@ -144,6 +144,7 @@ module.exports = {
                     {
                         student_id: studentDivisionACompSem2[i],
                         batch_id: aDivisionCompBatchesSem2[0][0].batch_id,
+                        start_date: '2025-01-08',
                     }
                 )
             }
@@ -152,6 +153,7 @@ module.exports = {
                     {
                         student_id: studentDivisionACompSem2[i],
                         batch_id: aDivisionCompBatchesSem2[0][1].batch_id,
+                        start_date: '2025-01-08',
                     }
                 )
             }
@@ -163,6 +165,7 @@ module.exports = {
                     {
                         student_id: studentDivisionBCompSem2[i],
                         batch_id: bDivisionCompBatchesSem2[0][0].batch_id,
+                        start_date: '2025-01-08',
                     }
                 )
             }
@@ -171,6 +174,7 @@ module.exports = {
                     {
                         student_id: studentDivisionBCompSem2[i],
                         batch_id: bDivisionCompBatchesSem2[0][1].batch_id,
+                        start_date: '2025-01-08',
                     }
                 )
             }
@@ -182,6 +186,7 @@ module.exports = {
                     {
                         student_id: studentDivisionACompSem4[i],
                         batch_id: aDivisionCompBatchesSem4[0][0].batch_id,
+                        start_date: '2025-01-08',
                     }
                 )
             }
@@ -190,6 +195,7 @@ module.exports = {
                     {
                         student_id: studentDivisionACompSem4[i],
                         batch_id: aDivisionCompBatchesSem4[0][1].batch_id,
+                        start_date: '2025-01-08',
                     }
                 )
             }
@@ -201,6 +207,7 @@ module.exports = {
                     {
                         student_id: studentDivisionBCompSem4[i],
                         batch_id: bDivisionCompBatchesSem4[0][0].batch_id,
+                        start_date: '2025-01-08',
                     }
                 )
             }
@@ -209,6 +216,7 @@ module.exports = {
                     {
                         student_id: studentDivisionBCompSem4[i],
                         batch_id: bDivisionCompBatchesSem4[0][1].batch_id,
+                        start_date: '2025-01-08',
                     }
                 )
             }
@@ -220,6 +228,7 @@ module.exports = {
                     {
                         student_id: studentDivisionACompSem6[i],
                         batch_id: aDivisionCompBatchesSem6[0][0].batch_id,
+                        start_date: '2025-01-08',
                     }
                 )
             }
@@ -228,6 +237,7 @@ module.exports = {
                     {
                         student_id: studentDivisionACompSem6[i],
                         batch_id: aDivisionCompBatchesSem6[0][1].batch_id,
+                        start_date: '2025-01-08',
                     }
                 )
             }
@@ -239,6 +249,7 @@ module.exports = {
                     {
                         student_id: studentDivisionBCompSem6[i],
                         batch_id: bDivisionCompBatchesSem6[0][0].batch_id,
+                        start_date: '2025-01-08',
                     }
                 )
             }
@@ -247,6 +258,7 @@ module.exports = {
                     {
                         student_id: studentDivisionBCompSem6[i],
                         batch_id: bDivisionCompBatchesSem6[0][1].batch_id,
+                        start_date: '2025-01-08',
                     }
                 )
             }
@@ -258,6 +270,7 @@ module.exports = {
                     {
                         student_id: studentDivisionACompSem8[i],
                         batch_id: aDivisionCompBatchesSem8[0][0].batch_id,
+                        start_date: '2025-01-08',
                     }
                 )
             }
@@ -266,6 +279,7 @@ module.exports = {
                     {
                         student_id: studentDivisionACompSem8[i],
                         batch_id: aDivisionCompBatchesSem8[0][1].batch_id,
+                        start_date: '2025-01-08',
                     }
                 )
             }
@@ -277,6 +291,7 @@ module.exports = {
                     {
                         student_id: studentDivisionBCompSem8[i],
                         batch_id: bDivisionCompBatchesSem8[0][0].batch_id,
+                        start_date: '2025-01-08',
                     }
                 )
             }
@@ -285,6 +300,7 @@ module.exports = {
                     {
                         student_id: studentDivisionBCompSem8[i],
                         batch_id: bDivisionCompBatchesSem8[0][1].batch_id,
+                        start_date: '2025-01-08',
                     }
                 )
             }
@@ -296,6 +312,7 @@ module.exports = {
                     {
                         student_id: studentDivisionACivSem2[i],
                         batch_id: aDivisionCivBatchesSem2[0][0].batch_id,
+                        start_date: '2025-01-08',
                     }
                 )
             }
@@ -304,6 +321,7 @@ module.exports = {
                     {
                         student_id: studentDivisionACivSem2[i],
                         batch_id: aDivisionCivBatchesSem2[0][1].batch_id,
+                        start_date: '2025-01-08',
                     }
                 )
             }
@@ -315,6 +333,7 @@ module.exports = {
                     {
                         student_id: studentDivisionBCivSem2[i],
                         batch_id: bDivisionCivBatchesSem2[0][0].batch_id,
+                        start_date: '2025-01-08',
                     }
                 )
             }
@@ -323,6 +342,7 @@ module.exports = {
                     {
                         student_id: studentDivisionBCivSem2[i],
                         batch_id: bDivisionCivBatchesSem2[0][1].batch_id,
+                        start_date: '2025-01-08',
                     }
                 )
             }
