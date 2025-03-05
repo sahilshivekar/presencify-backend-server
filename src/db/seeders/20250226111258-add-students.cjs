@@ -90,6 +90,7 @@ module.exports = {
                 updated_at: new Date(),
                 admission_year: 2024 - (year === 'FE' ? 0 : (year === 'SE' ? 1 : (year === 'TE' ? 2 : 3))),
                 admission_type: admissionType,
+                branch_id: branch == 'COMP' ? 1 : 2
             };
         };
 

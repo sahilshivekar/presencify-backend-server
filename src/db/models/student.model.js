@@ -4,7 +4,6 @@ import bcrypt from 'bcrypt';
 import StudentDivision from './studentDivision.model.js';
 import StudentBatch from './studentBatch.model.js';
 import StudentSemester from './studentSemester.model.js';
-import StudentBranch from './studentBranch.model.js';
 import { AttendanceStudent } from './attendance.model.js';
 
 class Student extends Model { }
@@ -68,7 +67,7 @@ Student.init(
             }
         },
         gender: {
-            type: Sequelize.ENUM('Male', 'Female', 'Other'), 
+            type: Sequelize.ENUM('Male', 'Female', 'Other'),
             allowNull: true,
             field: 'gender',
             validate: {
@@ -199,6 +198,20 @@ Student.init(
                 }
             }
         },
+        branchId: {
+            type: Sequelize.INTEGER,
+            allowNull: false,
+            references: {
+                model: 'branches', 
+                key: 'branch_id',
+            },
+            field: 'branch_id',
+            validate: {
+                notNull: {
+                    msg: 'Branch ID is required'
+                }
+            }
+        },
         createdAt: {
             type: Sequelize.DATE,
             allowNull: false,
@@ -258,17 +271,15 @@ Student.init(
     }
 );
 
-Student.hasMany(StudentBranch, {sourceKey: 'id', foreignKey: 'studentId'});
-Student.hasMany(StudentSemester, {sourceKey: 'id', foreignKey: 'studentId'});
-Student.hasMany(StudentDivision, {sourceKey: 'id', foreignKey: 'studentId'});
-Student.hasMany(StudentBatch, {sourceKey: 'id', foreignKey: 'studentId'});
-Student.hasMany(AttendanceStudent, {sourceKey: 'id', foreignKey: 'studentId'});
+Student.hasMany(StudentSemester, { sourceKey: 'id', foreignKey: 'studentId' });
+Student.hasMany(StudentDivision, { sourceKey: 'id', foreignKey: 'studentId' });
+Student.hasMany(StudentBatch, { sourceKey: 'id', foreignKey: 'studentId' });
+Student.hasMany(AttendanceStudent, { sourceKey: 'id', foreignKey: 'studentId' });
 
-StudentBranch.belongsTo(Student, {targetKey: 'id', foreignKey: 'studentId'});
-StudentSemester.belongsTo(Student, {targetKey: 'id', foreignKey: 'studentId'});
-StudentDivision.belongsTo(Student, {targetKey: 'id', foreignKey: 'studentId'});
-StudentBatch.belongsTo(Student, {targetKey: 'id', foreignKey: 'studentId'});
-AttendanceStudent.belongsTo(Student, {targetKey: 'id', foreignKey: 'studentId'});
+StudentSemester.belongsTo(Student, { targetKey: 'id', foreignKey: 'studentId' });
+StudentDivision.belongsTo(Student, { targetKey: 'id', foreignKey: 'studentId' });
+StudentBatch.belongsTo(Student, { targetKey: 'id', foreignKey: 'studentId' });
+AttendanceStudent.belongsTo(Student, { targetKey: 'id', foreignKey: 'studentId' });
 
 Student.prototype.isPasswordMatching = async function (password) {
     return await bcrypt.compare(password, this.password)

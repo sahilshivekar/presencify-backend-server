@@ -7,8 +7,6 @@ import {
     updateStudentImage,
     removeStudentImage,
     removeStudent,
-    addStudentToBranch,
-    removeStudentFromBranch,
     getStudentDetailsById,
     addStudentToSemester,
     removeStudentFromSemester,
@@ -16,7 +14,6 @@ import {
     changeStudentDivision,
     addStudentToBatch,
     changeStudentBatch,
-    getStudentBranchesById,
     getStudentSemestersById,
     getStudentDivisionsById,    
     getStudentBatchesById
@@ -41,10 +38,6 @@ router.route('/remove').delete(verifyAdminJWT, removeStudent)
 
 router.route('/get-student-details-by-id').get(verifyAdminJWT, getStudentDetailsById)
 
-router.route('/add-to-branch').post(verifyAdminJWT, addStudentToBranch)
-
-router.route('/remove-from-branch').delete(verifyAdminJWT, removeStudentFromBranch)
-
 router.route('/add-to-semester').post(verifyAdminJWT, addStudentToSemester)
 
 router.route('/remove-from-semester').delete(verifyAdminJWT, removeStudentFromSemester)
@@ -56,8 +49,6 @@ router.route('/change-division').put(verifyAdminJWT, changeStudentDivision)
 router.route('/add-to-batch').post(verifyAdminJWT, addStudentToBatch)
 
 router.route('/change-batch').put(verifyAdminJWT, changeStudentBatch)
-    
-router.route('/get-student-branches-by-id').get(verifyAdminJWT, getStudentBranchesById)
 
 router.route('/get-student-semesters-by-id').get(verifyAdminJWT, getStudentSemestersById)
 

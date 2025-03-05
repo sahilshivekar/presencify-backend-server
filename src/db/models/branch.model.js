@@ -4,7 +4,6 @@ import BranchCourseSemester from './branchCourseSemester.model.js';
 import Scheme from './scheme.model.js';
 import Semester from './semester.model.js';
 import Student from './student.model.js';
-import StudentBranch from './studentBranch.model.js';
 
 
 
@@ -82,6 +81,6 @@ BranchCourseSemester.belongsTo(Branch, {targetKey: 'id', foreignKey: 'branchId'}
 Branch.hasMany(Semester, {sourceKey: 'id', foreignKey: 'branchId'});
 Semester.belongsTo(Branch, {targetKey: 'id', foreignKey: 'branchId'});
 
-Branch.hasMany(StudentBranch, {sourceKey: 'id', foreignKey: 'branchId'});
-StudentBranch.belongsTo(Branch, {targetKey: 'id', foreignKey: 'branchId'});
+Branch.hasMany(Student, {sourceKey: 'id', foreignKey: 'branchId'});
+Student.belongsTo(Branch, {targetKey: 'id', foreignKey: 'branchId'});
 export default Branch;

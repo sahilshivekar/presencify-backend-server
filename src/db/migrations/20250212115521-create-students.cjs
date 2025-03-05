@@ -102,6 +102,17 @@ module.exports = {
                     onDelete: 'CASCADE',
                     field: 'scheme_id',
                 },
+                branchId: {
+                    type: Sequelize.INTEGER,
+                    allowNull: false,
+                    references: {
+                        model: 'branches', // Ensure 'branches' table exists
+                        key: 'branch_id',
+                    },
+                    onUpdate: 'CASCADE',
+                    onDelete: 'CASCADE',
+                    field: 'branch_id',
+                },
                 createdAt: {
                     type: Sequelize.DATE,
                     allowNull: false,

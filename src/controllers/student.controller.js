@@ -11,7 +11,6 @@ import moment from "moment"
 import Semester from '../db/models/semester.model.js';
 import StudentSemester from '../db/models/studentSemester.model.js';
 import Branch from '../db/models/branch.model.js';
-import StudentBranch from '../db/models/studentBranch.model.js';
 import StudentBatch from '../db/models/studentBatch.model.js';
 import StudentDivision from '../db/models/studentDivision.model.js';
 import Division from '../db/models/division.model.js';
@@ -33,6 +32,7 @@ const getStudents = asyncHandler(async (req, res) => {
         admissionYear,
         currentBatch, // can be true or false 
         currentDivision, // can be true or false
+        studentStatus,
         page = 1,
         limit = 10
     } = req.query;
@@ -64,6 +64,12 @@ const getStudents = asyncHandler(async (req, res) => {
     let branchFilterClause = {};
     let divisionFilterClause = {};
     let batchFilterClause = {};
+
+    if (studentStatus) {
+        if (!['Active', 'Drop out', 'Graduated'].includes(studentStatus)) {
+            throw new ApiError(400, "Invalid student status. Must be 'Active', 'Drop out', 'Graduated'");
+        }
+    }
 
     if (admissionYear) {
         if (isNaN(Number(admissionYear))) {
@@ -140,7 +146,9 @@ const getStudents = asyncHandler(async (req, res) => {
                 searchClause,
                 admissionTypeFilterClause,
                 academicStatusFilterClause,
-                admissionYearFilterClause
+                admissionYearFilterClause,
+                ...(studentStatus ? [{ academicStatus: studentStatus }] : []),
+                branchFilterClause
             ]
         },
         include: [
@@ -158,17 +166,9 @@ const getStudents = asyncHandler(async (req, res) => {
                 ]
             },
             {
-                model: StudentBranch,
+                model: Branch,
                 required: true,
-                where: branchFilterClause,
                 duplicating: false,
-                include: [
-                    {
-                        model: Branch,
-                        required: true,
-                        duplicating: false,
-                    }
-                ]
             },
             {
                 model: StudentDivision,
@@ -265,7 +265,8 @@ const addStudent = asyncHandler(async (req, res) => {
         schemeId,
         academicStatus,
         admissionYear,
-        admissionType
+        admissionType,
+        branchId
     } = req.body;
 
     const studentImageLocalPath = req.file?.path;
@@ -281,7 +282,8 @@ const addStudent = asyncHandler(async (req, res) => {
         "Academic Status": academicStatus,
         "Scheme": schemeId,
         "Admission Year": admissionYear,
-        "Admission Type": admissionType
+        "Admission Type": admissionType,
+        "Branch ID": branchId
     };
 
     for (const fieldName in fields) {
@@ -323,12 +325,16 @@ const addStudent = asyncHandler(async (req, res) => {
         throw new ApiError(400, "A student with this email already exists");
     }
 
-    if (schemeId) {
-        const scheme = await Scheme.findByPk(schemeId)
-        if (!scheme) {
-            throw new ApiError(404, "Scheme not found")
-        }
+    const scheme = await Scheme.findByPk(schemeId)
+    if (!scheme) {
+        throw new ApiError(404, "Scheme not found")
     }
+
+    const branch = await Branch.findByPk(branchId)
+    if (!branch) {
+        throw new ApiError(404, "Branch not found")
+    }
+
     let studentImageUrl = null;
     let studentImagePublicId = null;
 
@@ -365,7 +371,8 @@ const addStudent = asyncHandler(async (req, res) => {
         academicStatus,
         schemeId,
         admissionYear: Number(admissionYear) || null,
-        admissionType: admissionType
+        admissionType: admissionType,
+        branchId: branchId
     });
 
     res.status(201).json(new ApiResponse(201, "Student added successfully", { student: addedStudent }));
@@ -385,6 +392,7 @@ const updateStudentDetails = asyncHandler(async (req, res) => {
         dob,
         schemeId,
         academicStatus,
+        branchId
     } = req.body;
 
     if (!id) throw new ApiError(400, "Student ID is required");
@@ -410,6 +418,12 @@ const updateStudentDetails = asyncHandler(async (req, res) => {
         }
     }
 
+    if (branchId) {
+        const branch = await Branch.findByPk(branchId)
+        if (!branch) {
+            throw new ApiError(404, "Branch not found")
+        }
+    }
 
     student.firstName = firstName || student.firstName;
     student.middleName = middleName || student.middleName;
@@ -420,6 +434,7 @@ const updateStudentDetails = asyncHandler(async (req, res) => {
     student.dob = dobForDB || student.dob;
     student.academicStatus = academicStatus || student.academicStatus;
     student.schemeId = schemeId || student.schemeId;
+    student.branchId = branchId || student.branchId;
 
     await student.save();
 
@@ -515,7 +530,21 @@ const getStudentDetailsById = asyncHandler(async (req, res) => {
         throw new ApiError(400, "Student id is required");
     }
 
-    const student = await Student.findByPk(studentId);
+    const student = await Student.findOne({
+        where: {
+            id: studentId
+        },
+        include: [
+            {
+                model: Branch,
+                required: true
+            },
+            {
+                model: Scheme,
+                required: true
+            }
+        ]
+    });
 
     if (!student) throw new ApiError(404, "Student not found");
 
@@ -530,40 +559,6 @@ const getStudentDetailsById = asyncHandler(async (req, res) => {
         );
 });
 
-const getStudentBranchesById = asyncHandler(async (req, res) => {
-
-    const { studentId } = req.query;
-
-    if (!studentId) {
-        throw new ApiError(400, "Student id is required");
-    }
-
-    const student = await Student.findByPk(studentId);
-
-    if (!student) throw new ApiError(404, "Student not found");
-
-    const studentBranches = await StudentBranch.findAll({
-        where: {
-            studentId: studentId
-        },
-        include: [
-            {
-                model: Branch,
-                required: true
-            }
-        ]
-    });
-
-    res
-        .status(200)
-        .json(
-            new ApiResponse(
-                200,
-                "Student fetched successfully",
-                studentBranches
-            )
-        );
-});
 
 const getStudentSemestersById = asyncHandler(async (req, res) => {
     const { studentId } = req.query;
@@ -708,150 +703,6 @@ const getStudentBatchesById = asyncHandler(async (req, res) => {
 })
 
 
-const addStudentToBranch = asyncHandler(async (req, res) => {
-    const { studentId, branchId } = req.body;
-
-    if (!studentId) {
-        throw new ApiError(400, "Student id is required");
-    }
-
-    if (!branchId) {
-        throw new ApiError(400, "Branch id is required");
-    }
-
-    const student = await Student.findByPk(studentId);
-
-    if (!student) {
-        throw new ApiError(404, "Student not found");
-    }
-
-    const branch = await Branch.findByPk(branchId);
-
-    if (!branch) {
-        throw new ApiError(404, "Branch not found");
-    }
-
-    const alreadyExists = await StudentBranch.findOne({
-        where: {
-            studentId: studentId
-        }
-    });
-
-    if (alreadyExists) {
-        const anotherBranchId = alreadyExists.branchId
-        const branch = await Branch.findByPk(anotherBranchId)
-        throw new ApiError(400, `Student is already present in ${branch.name} branch`);
-    }
-
-    const studentBranchEntry = await StudentBranch.create({
-        studentId: studentId,
-        branchId: branchId,
-        academicStartYear: student.admissionYear,
-        academicEndYear: student.admissionType === "FE" ? student.admissionYear + 4 : student.admissionYear + 3
-    });
-
-    res
-        .status(200)
-        .json(
-            new ApiResponse(
-                200,
-                "Student added successfully",
-                studentBranchEntry
-            )
-        );
-});
-
-//! it will delete records of only that branch
-const removeStudentFromBranch = asyncHandler(async (req, res) => {
-    const { studentBranchId } = req.body;
-
-    if (!studentBranchId) {
-        throw new ApiError(400, "StudentBranch id is required");
-    }
-
-    const studentBranch = await StudentBranch.findByPk(studentBranchId);
-
-    if (!studentBranch) {
-        throw new ApiError(404, "Student's record with given id not found");
-    }
-
-    await StudentSemester.destroy({
-        where: {
-            studentId: studentBranch.studentId
-        },
-        include: [
-            {
-                model: Semester,
-                required: true,
-                where: {
-                    branchId: studentBranch.branchId
-                }
-            }
-        ]
-    });
-
-    await StudentDivision.destroy({
-        where: {
-            studentId: studentBranch.studentId
-        },
-        include: [
-            {
-                model: Division,
-                required: true,
-                include: [
-                    {
-                        model: Semester,
-                        required: true,
-                        where: {
-                            branchId: studentBranch.branchId
-                        }
-                    }
-                ]
-            }
-        ]
-    });
-
-    await StudentBatch.destroy({
-        where: {
-            studentId: studentBranch.studentId
-        },
-        include: [
-            {
-                model: Batch,
-                required: true,
-                include: [
-                    {
-                        model: Division,
-                        required: true,
-                        include: [
-                            {
-                                model: Semester,
-                                required: true,
-                                where: {
-                                    branchId: studentBranch.branchId
-                                }
-                            }
-                        ]
-                    }
-                ]
-
-            }
-        ]
-    });
-
-    await studentBranch.destroy();
-
-    res
-        .status(200)
-        .json(
-            new ApiResponse(
-                200,
-                `Student is removed from the branch`,
-                null
-            )
-        );
-});
-
 const addStudentToSemester = asyncHandler(async (req, res) => {
     const { studentId, semesterId } = req.body;
 
@@ -871,14 +722,8 @@ const addStudentToSemester = asyncHandler(async (req, res) => {
         throw new ApiError(404, "Semester not found");
     }
 
-    const studentBranch = await StudentBranch.findOne({
-        where: {
-            studentId: studentId,
-            branchId: semester.branchId
-        }
-    });
 
-    if (!studentBranch) {
+    if (student.branchId !== semester.branchId) {
         throw new ApiError(400, `Student is not present in the same branch as the semester`)
     }
 
@@ -1440,8 +1285,6 @@ export {
     updateStudentImage,
     removeStudentImage,
     removeStudent,
-    addStudentToBranch,
-    removeStudentFromBranch,
     addStudentToSemester,
     removeStudentFromSemester,
     addStudentToDivision,
@@ -1449,7 +1292,6 @@ export {
     addStudentToBatch,
     changeStudentBatch,
     getStudentDetailsById,
-    getStudentBranchesById,
     getStudentSemestersById,
     getStudentDivisionsById,
     getStudentBatchesById
