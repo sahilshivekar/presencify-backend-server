@@ -33,6 +33,8 @@ const getStudents = asyncHandler(async (req, res) => {
         currentBatch, // can be true or false 
         currentDivision, // can be true or false
         studentStatus,
+        divisionCode,
+        batchCode,
         page = 1,
         limit = 10
     } = req.query;
@@ -185,6 +187,11 @@ const getStudents = asyncHandler(async (req, res) => {
                         model: Division,
                         required: true,
                         duplicating: false,
+                        where: {
+                            [Op.and]: [
+                                ...(divisionCode ? [{ divisionCode }] : []),
+                            ]
+                        }
                     }
                 ]
             },
@@ -203,6 +210,11 @@ const getStudents = asyncHandler(async (req, res) => {
                         model: Batch,
                         required: true,
                         duplicating: false,
+                        where: {
+                            [Op.and]: [
+                                ...(batchCode ? [{ batchCode }] : []),
+                            ]
+                        }
                     }
                 ]
             },
