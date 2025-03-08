@@ -339,11 +339,13 @@ const addStudent = asyncHandler(async (req, res) => {
 
     const scheme = await Scheme.findByPk(schemeId)
     if (!scheme) {
+        if (studentImageLocalPath) fs.unlinkSync(studentImageLocalPath);
         throw new ApiError(404, "Scheme not found")
     }
 
     const branch = await Branch.findByPk(branchId)
     if (!branch) {
+        if (studentImageLocalPath) fs.unlinkSync(studentImageLocalPath);
         throw new ApiError(404, "Branch not found")
     }
 
@@ -353,7 +355,6 @@ const addStudent = asyncHandler(async (req, res) => {
     if (studentImageLocalPath) {
         const studentImage = await uploadOnCloudinary(studentImageLocalPath);
         if (!studentImage?.url) {
-            fs.unlinkSync(studentImageLocalPath);
             throw new ApiError(500, "Error uploading image");
         }
         studentImageUrl = studentImage.secure_url;
