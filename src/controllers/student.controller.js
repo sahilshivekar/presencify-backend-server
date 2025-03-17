@@ -282,7 +282,7 @@ const addStudent = asyncHandler(async (req, res) => {
     } = req.body;
 
     const studentImageLocalPath = req.file?.path;
-
+    console.log("uploaded file:", req.file || "No file uploaded");
     const fields = {
         "PRN": prn,
         "First Name": firstName,
