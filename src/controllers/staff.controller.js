@@ -153,8 +153,8 @@ const addStaff = asyncHandler(async (req, res) => {
         gender,
         highestQualification,
         role,
-        password,
-        confirmPassword,
+        // password,
+        // confirmPassword,
         isActive
     } = req.body;
 
@@ -167,8 +167,8 @@ const addStaff = asyncHandler(async (req, res) => {
         "Phone Number": phoneNumber,
         "Gender": gender,
         "Role": role,
-        "Password": password,
-        "Confirm Password": confirmPassword
+        // "Password": password,
+        // "Confirm Password": confirmPassword
     };
 
     for (const fieldName in fields) {
@@ -180,12 +180,12 @@ const addStaff = asyncHandler(async (req, res) => {
         }
     }
 
-    if (password !== confirmPassword) {
-        if (staffImageLocalPath) {
-            fs.unlinkSync(staffImageLocalPath)
-        }
-        throw new ApiError(400, "Password and confirm password field do not match");
-    }
+    // if (password !== confirmPassword) {
+    //     if (staffImageLocalPath) {
+    //         fs.unlinkSync(staffImageLocalPath)
+    //     }
+    //     throw new ApiError(400, "Password and confirm password field do not match");
+    // }
 
     if (!['Male', 'Female', 'Other'].includes(gender)) {
         if (staffImageLocalPath) {
@@ -244,7 +244,7 @@ const addStaff = asyncHandler(async (req, res) => {
         gender: gender,
         highestQualification: highestQualification || null,
         role: role,
-        password: password,
+        // password: password,
         isActive: isActive || true
     });
 

@@ -78,6 +78,7 @@ module.exports = {
                     type: Sequelize.STRING,
                     allowNull: false,
                     field: 'password',
+                    defaultValue: 'Student@123'
                 },
                 refreshToken: {
                     type: Sequelize.TEXT,

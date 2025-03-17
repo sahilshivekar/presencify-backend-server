@@ -272,8 +272,8 @@ const addStudent = asyncHandler(async (req, res) => {
         phoneNumber,
         gender,
         dob,
-        password,
-        confirmPassword,
+        // password,
+        // confirmPassword,
         schemeId,
         academicStatus,
         admissionYear,
@@ -289,8 +289,8 @@ const addStudent = asyncHandler(async (req, res) => {
         "Last Name": lastName,
         "Email": email,
         "Phone Number": phoneNumber,
-        "Password": password,
-        "Confirm Password": confirmPassword,
+        // "Password": password,
+        // "Confirm Password": confirmPassword,
         "Academic Status": academicStatus,
         "Scheme": schemeId,
         "Admission Year": admissionYear,
@@ -310,10 +310,10 @@ const addStudent = asyncHandler(async (req, res) => {
         throw new ApiError(400, "Admission year must be a number");
     }
 
-    if (password !== confirmPassword) {
-        if (studentImageLocalPath) fs.unlinkSync(studentImageLocalPath);
-        throw new ApiError(400, "Password and confirm password do not match");
-    }
+    // if (password !== confirmPassword) {
+    //     if (studentImageLocalPath) fs.unlinkSync(studentImageLocalPath);
+    //     throw new ApiError(400, "Password and confirm password do not match");
+    // }
 
     if (!['Male', 'Female', 'Other'].includes(gender)) {
         if (studentImageLocalPath) fs.unlinkSync(studentImageLocalPath);
@@ -380,7 +380,7 @@ const addStudent = asyncHandler(async (req, res) => {
         dob: dobForDB,
         studentImgUrl: studentImageUrl,
         studentImgPublicId: studentImagePublicId,
-        password,
+        // password,
         academicStatus,
         schemeId,
         admissionYear: Number(admissionYear) || null,
