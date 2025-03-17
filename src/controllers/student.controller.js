@@ -363,10 +363,10 @@ const addStudent = asyncHandler(async (req, res) => {
 
     let dobForDB = null
     if (dob) {
-        dobForDB = moment(dob, "DD/MM/YYYY").toDate();
+        dobForDB = moment(dob, "YYYY/MM/DD").toDate();
 
         if (new Date() < dobForDB) {
-            throw new ApiError(400, "Invalid date of birth")
+            throw new ApiError(400, "Date of birth cannot be in the future")
         }
     }
     const addedStudent = await Student.create({
@@ -417,10 +417,10 @@ const updateStudentDetails = asyncHandler(async (req, res) => {
 
     let dobForDB = null
     if (dob) {
-        dobForDB = moment(dob, "DD/MM/YYYY").toDate();
+        dobForDB = moment(dob, "YYYY/MM/DD").toDate();
 
         if (new Date() < dobForDB) {
-            throw new ApiError(400, "Invalid date of birth")
+            throw new ApiError(400, "Date of birth cannot be in the future")
         }
     }
 
