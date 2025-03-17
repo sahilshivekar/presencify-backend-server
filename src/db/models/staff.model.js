@@ -122,6 +122,7 @@ Staff.init(
             type: Sequelize.STRING(255),
             allowNull: false,
             field: 'staff_password',
+            defaultValue: 'Teacher@123',
             validate: {
                 notEmpty: {
                     msg: 'Password cannot be empty'
