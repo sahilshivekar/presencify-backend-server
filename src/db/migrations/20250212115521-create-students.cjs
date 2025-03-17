@@ -3,9 +3,9 @@
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
     async up(queryInterface, Sequelize) {
-        await queryInterface.sequelize.query(`
-            CREATE TYPE public.enum_students_admission_type AS ENUM ('DSE', 'FE');
-          `);
+        // await queryInterface.sequelize.query(`
+        //     CREATE TYPE public.enum_students_admission_type AS ENUM ('DSE', 'FE');
+        //   `);
         await queryInterface.createTable(
             'students',
             {
@@ -39,7 +39,7 @@ module.exports = {
                 },
                 dob: {
                     type: Sequelize.DATE,
-                    allowNull: false,
+                    allowNull: true,
                     field: 'dob',
                 },
                 gender: {
