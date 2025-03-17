@@ -140,7 +140,7 @@ Student.init(
         },
         password: {
             type: Sequelize.STRING,
-            allowNull: true,
+            allowNull: false,
             field: 'password',
             defaultValue: 'Student@123',
             validate: {
