@@ -18,16 +18,16 @@ import Batch from '../db/models/batch.model.js';
 
 //* Get all students
 const getStudents = asyncHandler(async (req, res) => {
-    const {
+    let {
         searchQuery,
-        branchId,
-        semesterNumber,
+        branchIds,
+        semesterNumbers,
         academicStartYearOfSemester,
         academicEndYearOfSemester,
         batchId,
         schemeId,
         divisionId,
-        academicStatus,
+        academicStatuses,
         admissionType,
         admissionYear,
         currentBatch, // can be true or false 
@@ -39,6 +39,16 @@ const getStudents = asyncHandler(async (req, res) => {
         limit = 10
     } = req.query;
 
+    // converting form data raw values to arrays
+    if(branchIds){
+        branchIds = JSON.parse(branchIds);
+    }
+    if(academicStatuses){
+        academicStatuses = JSON.parse(academicStatuses);
+    }
+    if(semesterNumbers){
+        semesterNumbers = JSON.parse(semesterNumbers);
+    }
     const offset = (parseInt(page, 10) - 1) * parseInt(limit, 10);
 
     let searchClause = {};
@@ -67,11 +77,11 @@ const getStudents = asyncHandler(async (req, res) => {
     let divisionFilterClause = {};
     let batchFilterClause = {};
 
-    if (studentStatus) {
-        if (!['Active', 'Drop out', 'Graduated'].includes(studentStatus)) {
-            throw new ApiError(400, "Invalid student status. Must be 'Active', 'Drop out', 'Graduated'");
-        }
-    }
+    // if (studentStatus) {
+    //     if (!['Active', 'Drop out', 'Graduated'].includes(studentStatus)) {
+    //         throw new ApiError(400, "Invalid student status. Must be 'Active', 'Drop out', 'Graduated'");
+    //     }
+    // }
 
     if (admissionYear) {
         if (isNaN(Number(admissionYear))) {
@@ -84,30 +94,39 @@ const getStudents = asyncHandler(async (req, res) => {
         admissionTypeFilterClause.admissionType = admissionType;
     }
 
-    if (academicStatus) {
-
-        if (!['Active', 'Drop out', 'Graduated'].includes(academicStatus)) {
-            throw new ApiError(400, "Invalid academic status. Must be 'Active', 'Drop out', 'Graduated'");
-        }
-        academicStatusFilterClause.academicStatus = academicStatus;
+    if (academicStatuses) {
+        academicStatuses.forEach(academicStatus => {
+            if (!['Active', 'Drop out', 'Graduated'].includes(academicStatus)) {
+                throw new ApiError(400, "Invalid academic status. Must be 'Active', 'Drop out', 'Graduated'");
+            }
+        })
+        academicStatusFilterClause.academicStatus = {
+            [Op.in]: academicStatuses
+        };
     }
 
     if (schemeId) {
         schemeFilterClause.id = Number(schemeId);
     }
 
-    if (branchId) {
-        branchFilterClause.branchId = Number(branchId);
+    if (branchIds) {
+        branchFilterClause.branchId = {
+            [Op.in]: branchIds.map(branchId => Number(branchId))
+        };
     }
 
-    if (semesterNumber) {
-        if (isNaN(Number(semesterNumber))) {
-            throw new ApiError(400, "Semester number must be a number");
-        }
-        if (![1, 2, 3, 4, 5, 6, 7, 8].includes(Number(semesterNumber))) {
-            throw new ApiError(400, "Invalid semester number");
-        }
-        semesterFilterClause.semesterNumber = Number(semesterNumber);
+    if (semesterNumbers) {
+        semesterNumbers.forEach(semesterNumber => {
+            if (isNaN(Number(semesterNumber))) {
+                throw new ApiError(400, "Semester number must be a number");
+            }
+            if (![1, 2, 3, 4, 5, 6, 7, 8].includes(Number(semesterNumber))) {
+                throw new ApiError(400, "Invalid semester number");
+            }
+        })
+        semesterFilterClause.semesterNumber = {
+            [Op.in]: semesterNumbers.map(semesterNumber => Number(semesterNumber))
+        };
     }
 
     if (academicStartYearOfSemester) {
