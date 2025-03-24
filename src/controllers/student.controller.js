@@ -28,7 +28,7 @@ const getStudents = asyncHandler(async (req, res) => {
         schemeId,
         divisionId,
         academicStatuses,
-        admissionType,
+        admissionTypes,
         admissionYear,
         currentBatch, // can be true or false 
         currentDivision, // can be true or false
@@ -48,6 +48,9 @@ const getStudents = asyncHandler(async (req, res) => {
     }
     if(semesterNumbers){
         semesterNumbers = JSON.parse(semesterNumbers);
+    }
+    if(admissionTypes){
+        admissionTypes = JSON.parse(admissionTypes);
     }
     const offset = (parseInt(page, 10) - 1) * parseInt(limit, 10);
 
@@ -90,8 +93,10 @@ const getStudents = asyncHandler(async (req, res) => {
         admissionYearFilterClause.admissionYear = Number(admissionYear);
     }
 
-    if (admissionType) {
-        admissionTypeFilterClause.admissionType = admissionType;
+    if (admissionTypes) {
+        admissionTypeFilterClause.admissionType = {
+            [Op.in]: admissionTypes
+        };
     }
 
     if (academicStatuses) {
