@@ -15,6 +15,8 @@ import StudentBatch from '../db/models/studentBatch.model.js';
 import StudentDivision from '../db/models/studentDivision.model.js';
 import Division from '../db/models/division.model.js';
 import Batch from '../db/models/batch.model.js';
+import { get } from 'http';
+import { getDateStringFromObj } from "../utils/date.js";
 
 //* Get all students
 const getStudents = asyncHandler(async (req, res) => {
@@ -32,6 +34,7 @@ const getStudents = asyncHandler(async (req, res) => {
         admissionYear,
         currentBatch, // can be true or false 
         currentDivision, // can be true or false
+        currentSemester, // can be true or false
         studentStatus,
         divisionCode,
         batchCode,
@@ -40,16 +43,16 @@ const getStudents = asyncHandler(async (req, res) => {
     } = req.query;
 
     // converting form data raw values to arrays
-    if(branchIds){
+    if (branchIds) {
         branchIds = JSON.parse(branchIds);
     }
-    if(academicStatuses){
+    if (academicStatuses) {
         academicStatuses = JSON.parse(academicStatuses);
     }
-    if(semesterNumbers){
+    if (semesterNumbers) {
         semesterNumbers = JSON.parse(semesterNumbers);
     }
-    if(admissionTypes){
+    if (admissionTypes) {
         admissionTypes = JSON.parse(admissionTypes);
     }
     const offset = (parseInt(page, 10) - 1) * parseInt(limit, 10);
@@ -163,9 +166,10 @@ const getStudents = asyncHandler(async (req, res) => {
 
     if (divisionId) {
         divisionFilterClause.divisionId = Number(divisionId);
-
     }
 
+    const currentDate = new Date()
+    
     const students = await Student.findAll({
         where: {
             [Op.and]: [
@@ -186,7 +190,19 @@ const getStudents = asyncHandler(async (req, res) => {
                     {
                         model: Semester,
                         required: true,
-                        where: semesterFilterClause,
+                        where: {
+                            [Op.and]: [
+                                semesterFilterClause,
+                                ...(currentSemester == 'true' ? [{
+                                    endDate: {
+                                        [Op.gte]: currentDate
+                                    },
+                                    startDate: {
+                                        [Op.lte]: currentDate
+                                    }
+                                }] : [])
+                            ]
+                        },
                         duplicating: false,
                     }
                 ]
