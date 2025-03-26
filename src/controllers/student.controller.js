@@ -41,19 +41,20 @@ const getStudents = asyncHandler(async (req, res) => {
         page = 1,
         limit = 10
     } = req.query;
+    console.log(semesterNumbers)
 
-    // converting form data raw values to arrays
-    if (branchIds) {
-        branchIds = JSON.parse(branchIds);
+    // converting form data raw values to arrays bcz if there is only one value in parameter then it will not be converted to array
+    if (branchIds && !Array.isArray(branchIds)) {
+        branchIds = [branchIds];
     }
-    if (academicStatuses) {
-        academicStatuses = JSON.parse(academicStatuses);
+    if (academicStatuses && !Array.isArray(academicStatuses)) {
+        academicStatuses = [academicStatuses];
     }
-    if (semesterNumbers) {
-        semesterNumbers = JSON.parse(semesterNumbers);
+    if (semesterNumbers && !Array.isArray(semesterNumbers)) {
+        semesterNumbers = [semesterNumbers];
     }
-    if (admissionTypes) {
-        admissionTypes = JSON.parse(admissionTypes);
+    if (admissionTypes && !Array.isArray(admissionTypes)) {
+        admissionTypes = [admissionTypes];
     }
     const offset = (parseInt(page, 10) - 1) * parseInt(limit, 10);
 
@@ -169,7 +170,7 @@ const getStudents = asyncHandler(async (req, res) => {
     }
 
     const currentDate = new Date()
-    
+
     const students = await Student.findAll({
         where: {
             [Op.and]: [
