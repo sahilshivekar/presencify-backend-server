@@ -41,7 +41,6 @@ const getStudents = asyncHandler(async (req, res) => {
         page = 1,
         limit = 10
     } = req.query;
-    console.log(semesterNumbers)
 
     // converting form data raw values to arrays bcz if there is only one value in parameter then it will not be converted to array
     if (branchIds && !Array.isArray(branchIds)) {
@@ -94,7 +93,9 @@ const getStudents = asyncHandler(async (req, res) => {
         if (isNaN(Number(admissionYear))) {
             throw new ApiError(400, "Admission year must be a number");
         }
-        admissionYearFilterClause.admissionYear = Number(admissionYear);
+        admissionYearFilterClause.admissionYear = {
+            [Op.eq]: Number(admissionYear)
+        }
     }
 
     if (admissionTypes) {
@@ -178,19 +179,19 @@ const getStudents = asyncHandler(async (req, res) => {
                 admissionTypeFilterClause,
                 academicStatusFilterClause,
                 admissionYearFilterClause,
-                ...(studentStatus ? [{ academicStatus: studentStatus }] : []),
+                // ...(studentStatus ? [{ academicStatus: studentStatus }] : []),
                 branchFilterClause
             ]
         },
         include: [
             {
                 model: StudentSemester,
-                required: true,
+                required: false,
                 duplicating: false,
                 include: [
                     {
                         model: Semester,
-                        required: true,
+                        required: false,
                         where: {
                             [Op.and]: [
                                 semesterFilterClause,
@@ -210,12 +211,12 @@ const getStudents = asyncHandler(async (req, res) => {
             },
             {
                 model: Branch,
-                required: true,
+                required: false,
                 duplicating: false,
             },
             {
                 model: StudentDivision,
-                required: true,
+                required: false,
                 duplicating: false,
                 where: {
                     [Op.and]: [
@@ -226,7 +227,7 @@ const getStudents = asyncHandler(async (req, res) => {
                 include: [
                     {
                         model: Division,
-                        required: true,
+                        required: false,
                         duplicating: false,
                         where: {
                             [Op.and]: [
@@ -238,7 +239,7 @@ const getStudents = asyncHandler(async (req, res) => {
             },
             {
                 model: StudentBatch,
-                required: true,
+                required: false,
                 duplicating: false,
                 where: {
                     [Op.and]: [
@@ -249,7 +250,7 @@ const getStudents = asyncHandler(async (req, res) => {
                 include: [
                     {
                         model: Batch,
-                        required: true,
+                        required: false,
                         duplicating: false,
                         where: {
                             [Op.and]: [
@@ -261,7 +262,7 @@ const getStudents = asyncHandler(async (req, res) => {
             },
             {
                 model: Scheme,
-                required: true,
+                required: false,
                 duplicating: false,
                 where: schemeFilterClause,
             }
