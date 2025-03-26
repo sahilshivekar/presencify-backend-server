@@ -322,8 +322,9 @@ const addStudent = asyncHandler(async (req, res) => {
         branchId
     } = req.body;
 
-    const studentImageLocalPath = req.file?.path;
-    console.log("uploaded file:", req.file || "No file uploaded");
+
+    const studentImageLocalPath = req?.file?.path;
+    console.log("uploaded file:", req?.file || "No file uploaded");
     const fields = {
         "PRN": prn,
         "First Name": firstName,
