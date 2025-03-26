@@ -11,7 +11,8 @@ export default {
         dialect: "postgres",
         dialectOptions: { 
             ssl: {
-                require: true
+                require: true,
+                rejectUnauthorized: false // Required for Render.com
             }
         },
     },
@@ -33,7 +34,8 @@ export default {
         dialect: "postgres",
         dialectOptions: { 
             ssl: {
-                require: true
+                require: true,
+                rejectUnauthorized: false // Required for Render.com
             }
         },
     }
