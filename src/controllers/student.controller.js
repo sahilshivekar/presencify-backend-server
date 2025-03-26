@@ -321,7 +321,8 @@ const addStudent = asyncHandler(async (req, res) => {
         admissionType,
         branchId
     } = req.body;
-
+    console.log("at start of controller")
+    console.log("uploaded file:", req?.file || "No file uploaded");
 
     const studentImageLocalPath = req?.file?.path;
     console.log("uploaded file:", req?.file || "No file uploaded");
