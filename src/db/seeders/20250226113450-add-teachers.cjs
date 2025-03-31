@@ -36,7 +36,7 @@ module.exports = {
         ];
 
         const staffMembers = await Promise.all(staffMembersDetails.map(async (staff, index) => ({
-            staff_id: index + 1,
+            // staff_id: index + 1,
             first_name: staff.firstName,
             last_name: staff.lastName,
             middle_name: null,
