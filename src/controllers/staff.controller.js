@@ -97,21 +97,23 @@ const getStaff = asyncHandler(async (req, res) => {
         )
     }
 
-
-    const staffs = await Staff.findAll({
+    const staff = await Staff.findAndCountAll({
         where: searchClause,
         include: includeClause,
         offset: offset,
-        limit: parseInt(limit, 10)
+        limit: parseInt(limit, 10),
+        distinct: true,
     });
-
     res
         .status(200)
         .json(
             new ApiResponse(
                 200,
                 "Staffs retrieved successfully.",
-                staffs
+                {
+                    staff: staff.rows,
+                    totalStaff: staff.count
+                }
             )
         );
 

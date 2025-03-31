@@ -52,6 +52,10 @@ const getStudents = asyncHandler(async (req, res) => {
     if (semesterNumbers && !Array.isArray(semesterNumbers)) {
         semesterNumbers = [semesterNumbers];
     }
+    if (semesterNumbers) {
+        // here it will be already a array
+        semesterNumbers = semesterNumbers.map(semesterNumber => Number(semesterNumber))
+    }
     if (admissionTypes && !Array.isArray(admissionTypes)) {
         admissionTypes = [admissionTypes];
     }
@@ -67,9 +71,6 @@ const getStudents = asyncHandler(async (req, res) => {
                 { email: { [Op.iLike]: `%${searchQuery}%` } },
                 { phoneNumber: { [Op.iLike]: `%${searchQuery}%` } },
                 { prn: { [Op.iLike]: `%${searchQuery}%` } },
-                // { admissionYear: { [Op.iLike]: `%${searchQuery}%` } },
-                // { academicStatus: { [Op.iLike]: `%${searchQuery}%` } },
-                // { admissionType: { [Op.iLike]: `%${searchQuery}%` } },
             ]
         };
     }
@@ -78,16 +79,7 @@ const getStudents = asyncHandler(async (req, res) => {
     let academicStatusFilterClause = {};
     let admissionTypeFilterClause = {};
     let schemeFilterClause = {};
-    let semesterFilterClause = {};
     let branchFilterClause = {};
-    let divisionFilterClause = {};
-    let batchFilterClause = {};
-
-    // if (studentStatus) {
-    //     if (!['Active', 'Drop out', 'Graduated'].includes(studentStatus)) {
-    //         throw new ApiError(400, "Invalid student status. Must be 'Active', 'Drop out', 'Graduated'");
-    //     }
-    // }
 
     if (admissionYear) {
         if (isNaN(Number(admissionYear))) {
@@ -134,18 +126,13 @@ const getStudents = asyncHandler(async (req, res) => {
                 throw new ApiError(400, "Invalid semester number");
             }
         })
-        semesterFilterClause.semesterNumber = {
-            [Op.in]: semesterNumbers.map(semesterNumber => Number(semesterNumber))
-        };
     }
 
     if (academicStartYearOfSemester) {
         if (isNaN(Number(academicStartYearOfSemester))) {
             throw new ApiError(400, "Academic start year must be a number");
         }
-        semesterFilterClause.academicStartYear = {
-            [Op.gte]: academicStartYearOfSemester
-        }
+        academicStartYearOfSemester = Number(academicStartYearOfSemester)
     }
 
     if (academicEndYearOfSemester) {
@@ -157,50 +144,54 @@ const getStudents = asyncHandler(async (req, res) => {
                 throw new ApiError(400, "Academic end year must be greater than academic start year");
             }
         }
-        semesterFilterClause.academicEndYear = {
-            [Op.lte]: academicEndYearOfSemester
-        }
-    }
-
-    if (batchId) {
-        batchFilterClause.batchId = Number(batchId);
-    }
-
-    if (divisionId) {
-        divisionFilterClause.divisionId = Number(divisionId);
+        academicEndYearOfSemester = Number(academicEndYearOfSemester)
     }
 
     const currentDate = new Date()
 
-    const students = await Student.findAll({
+    const students = await Student.findAndCountAll({
         where: {
             [Op.and]: [
                 searchClause,
                 admissionTypeFilterClause,
                 academicStatusFilterClause,
                 admissionYearFilterClause,
-                // ...(studentStatus ? [{ academicStatus: studentStatus }] : []),
                 branchFilterClause
             ]
         },
+        distinct: true, 
         include: [
             {
                 model: StudentSemester,
-                required: false,
+                required: semesterNumbers || academicStartYearOfSemester || academicEndYearOfSemester ? true : false,
                 duplicating: false,
                 include: [
                     {
                         model: Semester,
-                        required: false,
+                        required: semesterNumbers || academicStartYearOfSemester || academicEndYearOfSemester ? true : false,
                         where: {
                             [Op.and]: [
-                                semesterFilterClause,
+                                ...(semesterNumbers ? [{
+                                    semesterNumber: {
+                                        [Op.in]: semesterNumbers
+                                    }
+                                }] : []),
                                 ...(currentSemester == 'true' ? [{
                                     endDate: {
                                         [Op.gte]: currentDate
                                     },
                                     startDate: {
                                         [Op.lte]: currentDate
+                                    }
+                                }] : []),
+                                ...(academicStartYearOfSemester ? [{
+                                    academicStartYear: {
+                                        [Op.gte]: academicStartYearOfSemester
+                                    }
+                                }] : []),
+                                ...(academicEndYearOfSemester ? [{
+                                    academicEndYear: {
+                                        [Op.lte]: academicEndYearOfSemester
                                     }
                                 }] : [])
                             ]
@@ -211,23 +202,23 @@ const getStudents = asyncHandler(async (req, res) => {
             },
             {
                 model: Branch,
-                required: false,
+                required: true,
                 duplicating: false,
             },
             {
                 model: StudentDivision,
-                required: false,
+                required: divisionId || divisionCode ? true : false,
                 duplicating: false,
                 where: {
                     [Op.and]: [
-                        divisionFilterClause,
+                        ...(divisionId ? [{ divisionId: Number(divisionId) }] : []),
                         ...(currentDivision == 'true' ? [{ endDate: null }] : []) // need to write true in 
                     ]
                 },
                 include: [
                     {
                         model: Division,
-                        required: false,
+                        required: divisionId || divisionCode ? true : false,
                         duplicating: false,
                         where: {
                             [Op.and]: [
@@ -239,18 +230,18 @@ const getStudents = asyncHandler(async (req, res) => {
             },
             {
                 model: StudentBatch,
-                required: false,
+                required: batchCode || batchId == {} ? true : false,
                 duplicating: false,
                 where: {
                     [Op.and]: [
-                        batchFilterClause,
+                        ...(batchId ? [{ batchId: Number(batchId) }] : []),
                         ...(currentBatch == 'true' ? [{ endDate: null }] : [])
                     ]
                 },
                 include: [
                     {
                         model: Batch,
-                        required: false,
+                        required: batchCode || batchId ? true : false,
                         duplicating: false,
                         where: {
                             [Op.and]: [
@@ -262,7 +253,7 @@ const getStudents = asyncHandler(async (req, res) => {
             },
             {
                 model: Scheme,
-                required: false,
+                required: true,
                 duplicating: false,
                 where: schemeFilterClause,
             }
@@ -270,37 +261,23 @@ const getStudents = asyncHandler(async (req, res) => {
         offset: offset,
         limit: parseInt(limit, 10)
     });
+    const studentNames = students.rows.map(student => student.firstName + " " + student.lastName);
+    console.log(studentNames)
+    console.log("rows length", students.rows.length)
+    console.log("count from returned object", students.count)
+    res
+        .status(200)
+        .json(
+            new ApiResponse(
+                200,
+                "Students retrieved successfully.",
+                {
+                    students: students.rows,
+                    totalStudents: students.count
+                }
+            )
+        );
 
-
-    // const students = await Student.findAll({
-    //     where: searchClause,
-    //     include: [
-    //         {
-    //             model: StudentSemester,
-    //             required: true,
-    //             duplicating: false,
-    //             include: [
-    //                 {
-    //                     model: Semester,
-    //                     required: true,
-    //                     where: filterClause,
-    //                     duplicating: false,
-    //                     include: [
-    //                         {
-    //                             model: Branch,
-    //                             required: true,
-    //                             duplicating: false,
-    //                         }
-    //                     ]
-    //                 }
-    //             ]
-    //         },
-    //     ],
-    //     offset: offset,
-    //     limit: parseInt(limit, 10)
-    // });
-
-    res.status(200).json(new ApiResponse(200, "Students retrieved successfully.", students));
 });
 
 //* Add a student
@@ -322,11 +299,7 @@ const addStudent = asyncHandler(async (req, res) => {
         admissionType,
         branchId
     } = req.body;
-    console.log("at start of controller")
-    console.log("uploaded file:", req?.file || "No file uploaded");
-
-    const studentImageLocalPath = req?.file?.path;
-    console.log("uploaded file:", req?.file || "No file uploaded");
+    const studentImageLocalPath = req?.file?.path
     const fields = {
         "PRN": prn,
         "First Name": firstName,
@@ -866,6 +839,9 @@ const removeStudentFromSemester = asyncHandler(async (req, res) => {
 
     const studentSemester = await StudentSemester.findByPk(studentSemesterId);
 
+    if (!studentSemester) {
+        throw new ApiError(404, "StudentSemester not found");
+    }
     const divisionsThatBelongToThisSemester = await Division.findAll({
         where: {
             semesterId: studentSemester.semesterId
