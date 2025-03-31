@@ -11,6 +11,7 @@ const getDivisions = asyncHandler(async (req, res) => {
     const {
         semesterNumber,
         branchId,
+        semesterId,
         academicStartYear,
         academicEndYear,
         searchQuery,
@@ -54,7 +55,12 @@ const getDivisions = asyncHandler(async (req, res) => {
 
     const offset = (parseInt(page, 10) - 1) * parseInt(limit, 10);
     const divisions = await Division.findAll({
-        where: searchClause,
+        where: {
+            [Op.and]: [
+                searchClause,
+                ...(semesterId ? [{ semesterId }] : []),
+            ]
+        },
         include: {
             model: Semester,
             required: true,

@@ -12,6 +12,7 @@ const getBatches = asyncHandler(async (req, res) => {
     const {
         semesterNumber,
         branchId,
+        divisionId,
         academicStartYear,
         academicEndYear,
         searchQuery,
@@ -56,7 +57,12 @@ const getBatches = asyncHandler(async (req, res) => {
     const offset = (parseInt(page, 10) - 1) * parseInt(limit, 10);
 
     const batches = await Batch.findAll({
-        where: searchClause,
+        where: {
+            [Op.and]: [
+                searchClause,
+                ...(divisionId ? [{ divisionId }] : []),
+            ]
+        },
         include: {
             model: Division,
             required: true,
