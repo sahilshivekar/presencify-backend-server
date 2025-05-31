@@ -17,6 +17,7 @@ import Division from '../db/models/division.model.js';
 import Batch from '../db/models/batch.model.js';
 import { get } from 'http';
 import { getDateStringFromObj } from "../utils/date.js";
+import Dropout from '../db/models/dropout.model.js'
 
 //* Get all students
 const getStudents = asyncHandler(async (req, res) => {
@@ -29,13 +30,14 @@ const getStudents = asyncHandler(async (req, res) => {
         batchId,
         schemeId,
         divisionId,
-        academicStatuses,
+        academicStartYearOfDropYear,
+        academicEndYearOfDropYear,
+        // academicStatuses,
         admissionTypes,
         admissionYear,
         currentBatch, // can be true or false 
         currentDivision, // can be true or false
         currentSemester, // can be true or false
-        studentStatus,
         divisionCode,
         batchCode,
         page = 1,
@@ -46,9 +48,9 @@ const getStudents = asyncHandler(async (req, res) => {
     if (branchIds && !Array.isArray(branchIds)) {
         branchIds = [branchIds];
     }
-    if (academicStatuses && !Array.isArray(academicStatuses)) {
-        academicStatuses = [academicStatuses];
-    }
+    // if (academicStatuses && !Array.isArray(academicStatuses)) {
+    //     academicStatuses = [academicStatuses];
+    // }
     if (semesterNumbers && !Array.isArray(semesterNumbers)) {
         semesterNumbers = [semesterNumbers];
     }
@@ -76,7 +78,7 @@ const getStudents = asyncHandler(async (req, res) => {
     }
 
     let admissionYearFilterClause = {};
-    let academicStatusFilterClause = {};
+    // let academicStatusFilterClause = {};
     let admissionTypeFilterClause = {};
     let schemeFilterClause = {};
     let branchFilterClause = {};
@@ -96,16 +98,17 @@ const getStudents = asyncHandler(async (req, res) => {
         };
     }
 
-    if (academicStatuses) {
-        academicStatuses.forEach(academicStatus => {
-            if (!['Active', 'Drop out', 'Graduated'].includes(academicStatus)) {
-                throw new ApiError(400, "Invalid academic status. Must be 'Active', 'Drop out', 'Graduated'");
-            }
-        })
-        academicStatusFilterClause.academicStatus = {
-            [Op.in]: academicStatuses
-        };
-    }
+    // ! here 
+    // if (academicStatuses) {
+    //     academicStatuses.forEach(academicStatus => {
+    //         if (!['Active', 'Drop out', 'Graduated'].includes(academicStatus)) {
+    //             throw new ApiError(400, "Invalid academic status. Must be 'Active', 'Drop out', 'Graduated'");
+    //         }
+    //     })
+    //     academicStatusFilterClause.academicStatus = {
+    //         [Op.in]: academicStatuses
+    //     };
+    // }
 
     if (schemeId) {
         schemeFilterClause.id = Number(schemeId);
@@ -154,12 +157,12 @@ const getStudents = asyncHandler(async (req, res) => {
             [Op.and]: [
                 searchClause,
                 admissionTypeFilterClause,
-                academicStatusFilterClause,
+                // academicStatusFilterClause, //! here
                 admissionYearFilterClause,
                 branchFilterClause
             ]
         },
-        distinct: true, 
+        distinct: true,
         include: [
             {
                 model: StudentSemester,
@@ -256,6 +259,21 @@ const getStudents = asyncHandler(async (req, res) => {
                 required: true,
                 duplicating: false,
                 where: schemeFilterClause,
+            },
+            {
+                model: Dropout,
+                required: academicEndYearOfDropYear || academicStartYearOfDropYear ? true : false,
+                duplicating: false,
+                where: {
+                    [Op.and]: [
+                        ...(academicEndYearOfDropYear ? [{
+                            academicEndYear: { [Op.lte]: academicEndYearOfDropYear }
+                        }] : []),
+                        ...(academicStartYearOfDropYear ? [{
+                            academicStartYear: { [Op.gte]: academicStartYearOfDropYear }
+                        }] : [])
+                    ]
+                }
             }
         ],
         offset: offset,
@@ -771,8 +789,9 @@ const addStudentToSemester = asyncHandler(async (req, res) => {
     const semesterNumberToAdd = semester.semesterNumber;
     let validSemesterNumber;
 
+    // checks for which semester the duplicated academic year is fine
     if (semesterNumberToAdd == 1) {
-        validSemesterNumber = 1;
+        validSemesterNumber = 2;
     } else if (semesterNumberToAdd == 2) {
         validSemesterNumber = 1;
     } else if (semesterNumberToAdd == 3) {
@@ -788,6 +807,8 @@ const addStudentToSemester = asyncHandler(async (req, res) => {
     } else if (semesterNumberToAdd == 8) {
         validSemesterNumber = 7;
     }
+
+
     const alreadyExistsInOtherSemesterForSameAcademicYear = await StudentSemester.findOne({
         where: {
             studentId: studentId,
@@ -812,6 +833,19 @@ const addStudentToSemester = asyncHandler(async (req, res) => {
 
     if (alreadyExistsInOtherSemesterForSameAcademicYear) {
         throw new ApiError(400, `Student is already added in other semester of another year for the same academic year`);
+    }
+
+    // check if student is in dropout for same semester academic year
+    const studentDropout = await Dropout.findOne({
+        where: {
+            academicEndYear: semester.academicEndYear,
+            academicStartYear: semester.academicStartYear,
+            studentId: studentId
+        }
+    })
+
+    if (studentDropout) {
+        throw new ApiError(400, `Student is in drop-out list for the same academic year of semester's`)
     }
 
     const studentSemesterEntry = await StudentSemester.create({

@@ -1,0 +1,150 @@
+import { Op } from 'sequelize';
+import Student from '../db/models/student.model.js';
+import { asyncHandler } from '../utils/asyncHandler.js';
+import { ApiError } from '../utils/ApiError.js';
+import { ApiResponse } from '../utils/ApiResponse.js';
+import Dropout from '../db/models/dropout.model.js'
+
+
+const addStudentToDropout = asyncHandler(async (req, res) => {
+    const { studentId, academicStartYear, academicEndYear } = req.body
+
+    if (!studentId || !academicEndYear || !academicStartYear) {
+        throw new ApiError(400, "StudentId and academic year is required")
+    }
+
+    if (isNaN(academicEndYear) || isNaN(academicStartYear)) {
+        throw new ApiError(400, "Academic year must be a number")
+    }
+
+    if (academicStartYear >= academicEndYear) {
+        throw new ApiError(400, "Academic start year cannot be greater than or same academic end year")
+    }
+
+    const student = await Student.findByPk(studentId)
+
+    if (!student) {
+        throw new ApiError(400, "Student not found")
+    }
+
+    if (academicStartYear < student.admissionYear) {
+        throw new ApiError(400, "Academic start year cannot be before student's admission year")
+    }
+
+    const isAlreayInDropout = await Dropout.findOne({
+        where: {
+            studentId,
+            academicStartYear,
+            academicEndYear
+        }
+    })
+
+    if (isAlreayInDropout) {
+        throw new ApiError(400, "Student is already in dropout")
+    }
+
+    const dropout = await Dropout.create({
+        studentId,
+        academicStartYear,
+        academicEndYear
+    })
+
+    res
+        .status(201)
+        .json(
+            new ApiResponse(
+                201,
+                "Student added to dropout successfully",
+                dropout
+            )
+        )
+})
+
+const removeStudentFromDropout = asyncHandler(async (req, res) => {
+    const { studentId, academicStartYear, academicEndYear } = req.body
+
+    if (!studentId || !academicEndYear || !academicStartYear) {
+        throw new ApiError(400, "StudentId and academic year is required")
+    }
+
+    if (isNaN(academicEndYear) || isNaN(academicStartYear)) {
+        throw new ApiError(400, "Academic year must be a number")
+    }
+
+    if (academicStartYear >= academicEndYear) {
+        throw new ApiError(400, "Academic start year cannot be greater than or same academic end year")
+    }
+
+    const student = await Student.findByPk(studentId)
+
+    if (!student) {
+        throw new ApiError(400, "Student not found")
+    }
+    
+    if (academicStartYear < student.admissionYear) {
+        throw new ApiError(400, "Academic start year cannot be before student's admission year")
+    }
+
+    const isAlreayInDropout = await Dropout.findOne({
+        where: {
+            studentId,
+            academicStartYear,
+            academicEndYear
+        }
+    })
+
+    if (!isAlreayInDropout) {
+        throw new ApiError(400, "Student is not in dropout")
+    }
+
+    await isAlreayInDropout.destroy()
+
+    res
+        .status(200)
+        .json(
+            new ApiResponse(
+                200,
+                "Student removed from dropout successfully",
+                null
+            )
+        )
+})
+
+const getDropoutById = asyncHandler(async (req, res) => {
+    const { dropoutId } = req.query
+
+    if (!dropoutId) {
+        throw new ApiError(400, "Dropout id is required")
+    }
+
+    const dropout = await Dropout.findOne({
+        where: {
+            id: dropoutId
+        },
+        include: {
+            model: Student,
+            required: true,
+            duplicating: false
+        }
+    })
+
+    if (!dropout) {
+        throw new ApiError(404, "Dropout details for given input not found")
+    }
+
+    res
+        .status(200)
+        .json(
+            new ApiResponse(
+                200,
+                "Dropout fetched successfully",
+                dropout
+            )
+        )
+})
+
+export {
+    addStudentToDropout,
+    removeStudentFromDropout,
+    getDropoutById
+}
