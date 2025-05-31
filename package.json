@@ -1,7 +1,7 @@
 {
-  "name": "wiet-backend",
+  "name": "attendify-backend",
   "version": "1.0.0",
-  "description": "A Backend server providing RESTful API for managing data within WIET College management app.",
+  "description": "A Backend server providing RESTful API for managing data within attendify College management app.",
   "main": "server.js",
   "type": "module",
   "scripts": {
@@ -16,14 +16,14 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/sahilshivekar/wiet-backend.git"
+    "url": "git+https://github.com/sahilshivekar/attendify-backend.git"
   },
   "author": "Sahil Shivekar",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/sahilshivekar/wiet-backend/issues"
+    "url": "https://github.com/sahilshivekar/attendify-backend/issues"
   },
-  "homepage": "https://github.com/sahilshivekar/wiet-backend#readme",
+  "homepage": "https://github.com/sahilshivekar/attendify-backend#readme",
   "devDependencies": {
     "nodemon": "^3.1.9",
     "sequelize-cli": "^6.6.2"
