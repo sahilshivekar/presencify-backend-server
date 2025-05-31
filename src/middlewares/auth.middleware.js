@@ -3,8 +3,6 @@ import { asyncHandler } from "../utils/asyncHandler.js"
 import jwt from "jsonwebtoken"
 import Admin from "../db/models/admin.model.js"
 
-//old access token
-//eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MTUsInVzZXJuYW1lIjoid2lldCIsImVtYWlsIjoid2lldEBnbWFpbC5jb20iLCJwYXNzd29yZCI6IiQyYiQxMCRNUHc5QmdzUXZwLkJwb3Ywb0lGQzYub0xJTFVDNzVjbjJZZ2hsWUx5bmRCYjlVT1AzU0N2aSIsImlhdCI6MTczNzMwMTIwOCwiZXhwIjoxNzM3Mzg3NjA4fQ.JMwaL6FiJjxlAY3Ne8gwx9XrOFvUv9TMIv8geBMg158
 
 const verifyAdminJWT = asyncHandler(async (req, _, next) => {
     try {
