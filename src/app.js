@@ -1,4 +1,4 @@
-import express, { application } from "express"
+import express from "express"
 import cors from "cors"
 import cookieParser from "cookie-parser"
 
@@ -53,4 +53,4 @@ app.use("/api/v1/class", classRouter);
 app.use("/api/v1/attendance", attendanceRouter);
 app.use("/api/v1/dropout", dropoutRouter);
 
-export { app }
+export default app 

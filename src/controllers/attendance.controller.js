@@ -17,7 +17,7 @@ import Student from '../db/models/student.model.js';
 import { Attendance, AttendanceStudent } from '../db/models/attendance.model.js';
 import StudentDivision from '../db/models/studentDivision.model.js';
 import sequelize from '../config/db.connection.js';
-
+import { getIO } from '../socket/index.js';
 
 //* create attendance sheet type thing where student ids will be added
 const createAttendance = asyncHandler(async (req, res) => {
@@ -108,6 +108,10 @@ const addStudentsAttendance = asyncHandler(async (req, res) => {
 
     const classObj = await Class.findByPk(attendance.classId);
     const timetable = await Timetable.findByPk(classObj.timetableId);
+    let batch = null
+    if (classObj?.batchId) {
+        batch = await Batch.findByPk(classObj.batchId)
+    }
 
     const studentsOfDivision = await StudentDivision.findAll({
         where: {
@@ -122,12 +126,16 @@ const addStudentsAttendance = asyncHandler(async (req, res) => {
         throw new ApiError(400, `These student ids are missing: ${missingStudents.map(student => student.studentId)}`)
     }
 
-    console.log(presentStudentIds.length + absentStudentIds.length, studentsOfDivision.length)
     if (presentStudentIds.length + absentStudentIds.length > studentsOfDivision.length) {
         throw new ApiError(400, `There are some student ids which do not belong to the current division`)
     }
 
-    const addedAttendance = await AttendanceStudent.bulkCreate(
+
+    // check course and semester id to know whether to update students individual channel or not
+    const division = await Division.findByPk(timetable.divisionId);
+    const semester = await Semester.findByPk(division.semesterId);
+
+    await AttendanceStudent.bulkCreate(
         [...presentStudentIds.map(studentId => ({
             attendanceId,
             studentId,
@@ -140,7 +148,86 @@ const addStudentsAttendance = asyncHandler(async (req, res) => {
         }))]
     )
 
-    res.status(201).json(new ApiResponse(201, "Students attendance added successfully", addedAttendance));
+    // ! following code is for sending updated attendance to the student individual channel on websockets
+
+    const io = getIO();
+    const openRooms = io.of("/attendance").adapter.rooms.keys()
+    const openRoomsList = [...openRooms]
+
+
+
+
+    // ! For individual student attendance
+    let studentRooms = openRoomsList.filter(openRoom => openRoom.includes("student_attendance"))
+
+    for (const roomName of studentRooms) {
+        const studentId = roomName.split("_")[3]
+        const courseId = roomName.split("_")[5]
+        const semesterId = roomName.split("_")[7]
+        const divisionId = roomName.split("_")[9]
+        const batchId = roomName.split("_")[11]
+        const startDate = roomName.split("_")[13]
+        const endDate = roomName.split("_")[15]
+
+        if (
+            [...presentStudentIds, ...absentStudentIds].includes(Number(studentId)) &&
+            courseId == classObj.courseId &&
+            semesterId == division.semesterId
+        ) {
+            
+            const attendance = await getAttendanceOfStudentForSpecificCourseInSemesterQuery(
+                studentId, 
+                courseId, 
+                semesterId,
+                divisionId == "null" ? null : divisionId,
+                batchId == "null" ? null : batchId,
+                startDate == "null" ? null : startDate,
+                endDate == "null" ? null : endDate
+            )
+            io.of("/attendance").to(roomName).emit("student_updated_attendance", attendance);
+        }
+    }
+
+
+
+
+
+
+    // ! For all attendance by course, batch, division, semester
+
+    let roomsOfAllStudents = openRoomsList.filter(openRoom => openRoom.includes("all_attendance_room"))
+    for (const openRoom of roomsOfAllStudents) {
+        const semesterId = openRoom.split("_")[4]
+        const divisionId = openRoom.split("_")[6]
+        const batchId = openRoom.split("_")[8]
+        const courseId = openRoom.split("_")[10]
+        const startDate = openRoom.split("_")[12]
+        const endDate = openRoom.split("_")[14]
+        
+        
+        if (
+            semesterId == semester.id ||
+            divisionId == division.id ||
+            batchId == batch?.id ||
+            courseId == classObj.courseId
+        ) {
+            
+            const updatedAttendance = await getAttendanceOfAllForSemesterDivisionBatchCourseQuery(
+                semesterId == "null" ? null : semesterId,
+                divisionId == "null" ? null : divisionId,
+                batchId == "null" ? null : batchId,
+                courseId == "null" ? null : courseId,
+                startDate == "null" ? null : startDate,
+                endDate == "null" ? null : endDate
+            )
+            io.of("/attendance").to(openRoom).emit("all_updated_attendance", updatedAttendance);
+        }
+    }
+
+
+
+
+    res.status(201).json(new ApiResponse(201, "Students attendance added successfully", {}));
 
 })
 
@@ -210,383 +297,210 @@ const removeAttendance = asyncHandler(async (req, res) => {
 })
 
 
-//! to get attendance of student for specific course in a semester
-//  studentId, courseId, semesterId //! not division id bcz division keeps changing but semester doesn't
-
-//! to get attendance of a division for a semester - can also be course wise
-//  divisionId, - if course wise then courseId is also required
-
-//! to get attendance of a course throughout the semester of all students
-/// semesterId, courseId
-
-// if i try to get atttendance with all upper cases it will work but i can't implement the 
-// aggregation in the same query for multiple cases hence this controller will not be use instead
-//  separate controller for separate cases will be used
-const getAttendance = asyncHandler(async (req, res) => {
-    const {
-        date,
-        attendanceId,
-        classId,
-        studentId,
-        courseId,
-        semesterId,
-        divisionId
-    } = req.query;
-
-    if (date) {
-        if (!moment(date, 'YYYY-MM-DD', true).isValid()) {
-            throw new ApiError(400, "Invalid date format")
-        }
-    }
-
-    if (studentId) {
-        const student = await Student.findByPk(studentId);
-        if (!student) {
-            throw new ApiError(404, "Student not found")
-        }
-    }
-
-    if (courseId) {
-        const course = await Course.findByPk(courseId);
-        if (!course) {
-            throw new ApiError(404, "Course not found")
-        }
-    }
-
-    if (semesterId) {
-        const semester = await Semester.findByPk(semesterId);
-        if (!semester) {
-            throw new ApiError(404, "Semester not found")
-        }
-    }
-
-    if (divisionId) {
-        const division = await Division.findByPk(divisionId);
-        if (!division) {
-            throw new ApiError(404, "Division not found")
-        }
-    }
-
-    if (attendanceId) {
-        const attendance = await Attendance.findByPk(attendanceId);
-        if (!attendance) {
-            throw new ApiError(404, "Attendance not found")
-        }
-    }
-
-    if (classId) {
-        const classObj = await Class.findByPk(classId);
-        if (!classObj) {
-            throw new ApiError(404, "Class not found")
-        }
-    }
-
-    if (courseId) {
-        const course = await Course.findByPk(courseId);
-        if (!course) {
-            throw new ApiError(404, "Course not found")
-        }
-    }
-
-    const attendance = await Attendance.findAll({
-        where: {
-            [Op.and]: [
-                ...(attendanceId ? [{ id: attendanceId }] : []),
-                ...(date ? [{ date: date }] : []),
-                ...(classId ? [{ classId: classId }] : []),
-            ],
-        },
-        include: [
-            {
-                model: Class,
-                required: true,
-                duplicating: false,
-                include: [
-                    {
-                        model: Course,
-                        required: true,
-                        duplicating: false,
-                        where: {
-                            [Op.and]: [
-                                ...(courseId ? [{ id: courseId }] : []),
-                            ]
-                        }
-                    },
-                    {
-                        model: Timetable,
-                        required: true,
-                        duplicating: false,
-                        include: [
-                            {
-                                model: Division,
-                                required: true,
-                                duplicating: false,
-                                where: {
-                                    [Op.and]: [
-                                        ...(divisionId ? [{ id: divisionId }] : []),
-                                    ]
-                                },
-                                include: [
-                                    {
-                                        model: Semester,
-                                        required: true,
-                                        duplicating: false,
-                                        where: {
-                                            [Op.and]: [
-                                                ...(semesterId ? [{ id: semesterId }] : []),
-                                            ]
-                                        }
-                                    }
-                                ]
-                            }
-                        ]
-                    }
-                ]
-            },
-            {
-                model: AttendanceStudent,
-                required: true,
-                duplicating: false,
-                include: [
-                    {
-                        model: Student,
-                        required: true,
-                        duplicating: false,
-                        where: {
-                            [Op.and]: [
-                                ...(studentId ? [{ id: studentId }] : []),
-                            ]
-                        }
-                    },
-                ]
-            },
-        ]
-    })
-
-    if (!attendance) {
-        throw new ApiError(404, "Attendance not found")
-    }
-
-    res.status(200).json(new ApiResponse(200, "Attendance fetched successfully", attendance));
-})
-
-
 
 const getAttendanceOfStudentForSpecificCourseInSemester = asyncHandler(async (req, res) => {
 
     const {
         studentId,
         courseId,
-        semesterId
+        semesterId,
+        divisionId,
+        batchId,
+        startDate,
+        endDate
     } = req.query;
-
-    if (!studentId || !courseId || !semesterId) {
-        throw new ApiError(400, "Student ID, Course ID and Semester ID are required")
-    }
-
-    const student = await Student.findByPk(studentId);
-
-    if (!student) {
-        throw new ApiError(404, "Student not found")
-    }
-
-    const course = await Course.findByPk(courseId);
-
-    if (!course) {
-        throw new ApiError(404, "Course not found")
-    }
-
-    const semester = await Semester.findByPk(semesterId);
-
-    if (!semester) {
-        throw new ApiError(404, "Semester not found")
-    }
 
     // courseid, semesterid, studentId
 
     // for the rest of the subjects 
-    const attendance = await sequelize.query(
-        `
-        SELECT
-        courses.course_id,
-        courses.course_name, 
-        COUNT(attendances.attendance_id) AS total_lectures,  
-        SUM(CASE WHEN attendance_students.attendance_status = true THEN 1 ELSE 0 END) AS attended_lectures
-        --attendance_students.student_id, 
-        --courses.course_code,
-        --semesters.semester_id,
-        --semesters.semester_number,
-        FROM attendances
-        INNER JOIN attendance_students ON attendances.attendance_id = attendance_students.attendance_id
-        INNER JOIN classes ON classes.class_id = attendances.class_id
-        INNER JOIN courses ON courses.course_id = classes.course_id
-        INNER JOIN timetables ON timetables.timetable_id = classes.timetable_id
-        INNER JOIN divisions ON divisions.division_id = timetables.division_id
-        INNER JOIN semesters ON semesters.semester_id = divisions.semester_id
-        WHERE attendance_students.student_id = ${studentId} AND courses.course_id = ${courseId} AND semesters.semester_id = ${semesterId}
-        GROUP BY 
-        courses.course_id,
-        courses.course_name;
-        --attendance_students.student_id, 
-        --courses.course_code,
-        --semesters.semester_id,
-        --semesters.semester_number,
-        --attendances.attendance_date;
-        `
-    )
+    const attendance = await getAttendanceOfStudentForSpecificCourseInSemesterQuery(
+        studentId,
+        courseId,
+        semesterId ? semesterId : null,
+        divisionId ? divisionId : null,
+        batchId ? batchId : null,
+        startDate ? startDate : null,
+        endDate ? endDate : null
+    );
 
-    if (!attendance) {
-        throw new ApiError(404, "Attendance for this course not found")
-    }
-
-    const formattedResult = attendance[0].map(row => ({
-        courseId: row.course_id,
-        courseName: row.course_name,
-        totalLectures: row.total_lectures,
-        attendedLectures: row.attended_lectures,
-    }));
-
-    res.status(200).json(new ApiResponse(200, "Attendance fetched successfully", formattedResult));
+    res.status(200).json(new ApiResponse(200, "Attendance fetched successfully", attendance));
 });
 
-
-// this controller and getAttendanceOfCourseThroughoutSemester controller uses same logic only the date is getting added in the where condition
-const getAttendanceOfCourseOnDate = asyncHandler(async (req, res) => {
+const getAttendanceOfAllForSemesterDivisionBatchCourse = asyncHandler(async (req, res) => {
     const {
-        date,
+        semesterId,
+        divisionId,
+        batchId,
         courseId,
-        divisionId
+        startDate,
+        endDate
     } = req.query;
 
-    if (!date || !courseId || !divisionId) {
-        throw new ApiError(400, "Date, division ID and Course ID are required")
-    }
-
-    if (date) {
-        if (!moment(date, 'YYYY-MM-DD', true).isValid()) {
-            throw new ApiError(400, "Invalid date format")
-        }
-    }
-
-    const course = await Course.findByPk(courseId);
-
-    if (!course) {
-        throw new ApiError(404, "Course not found")
-    }
-
-    const division = await Division.findByPk(divisionId);
-
-    if (!division) {
-        throw new ApiError(404, "Division not found")
-    }
-
-    const attendance = await sequelize.query(
-        `
-       SELECT
-        CONCAT(students.first_name, ' ', students.last_name) AS student_name,
-        COUNT(attendances.attendance_id) AS total_lectures,
-        SUM(CASE WHEN attendance_students.attendance_status = true THEN 1 ELSE 0 END) AS attended_lectures
-        FROM attendances
-        INNER JOIN attendance_students ON attendances.attendance_id = attendance_students.attendance_id
-        INNER JOIN students ON students.student_id = attendance_students.student_id
-        INNER JOIN classes ON classes.class_id = attendances.class_id
-        INNER JOIN courses ON courses.course_id = classes.course_id
-        INNER JOIN timetables ON timetables.timetable_id = classes.timetable_id
-        INNER JOIN divisions ON divisions.division_id = timetables.division_id
-        INNER JOIN semesters ON semesters.semester_id = divisions.semester_id
-        WHERE courses.course_id = ${courseId} AND divisions.division_id = ${divisionId} AND attendances.attendance_date = '${date}'
-        GROUP BY 
-        students.first_name,
-        students.last_name
-       `
+    const attendance = await getAttendanceOfAllForSemesterDivisionBatchCourseQuery(
+        semesterId,
+        divisionId,
+        batchId,
+        courseId,
+        startDate,
+        endDate
     )
-
-    if (!attendance) {
-        throw new ApiError(404, "Attendance for this date and subject is found")
-    }
-
-    const formattedResult = attendance[0].map(row => ({
-        studentName: row.student_name, // Rename field manually
-        totalLectures: row.total_lectures,
-        attendedLectures: row.attended_lectures,
-    }));
-
-    res.status(200).json(new ApiResponse(200, "Attendance fetched successfully", formattedResult));
-
+    res.status(200).json(new ApiResponse(200, "Attendance fetched successfully", attendance));
 })
 
-const getAttendanceOfCourseThroughoutSemester = asyncHandler(async (req, res) => {
-    const {
-        courseId,
-        divisionId
-    } = req.query;
 
-    if (!courseId || !divisionId) {
-        throw new ApiError(400, "Course ID and Division ID are required")
+
+// ! query only
+const getAttendanceOfStudentForSpecificCourseInSemesterQuery = async (
+    studentId,
+    courseId,
+    semesterId,
+    divisionId,
+    batchId,
+    startDate,
+    endDate
+) => {
+
+    if (!studentId && !courseId && !semesterId && !divisionId && !batchId && !startDate && !endDate) {
+        throw new ApiError(400, "One of the parameters is required: studentId, courseId, semesterId, divisionId, batchId, startDate, endDate")
     }
 
-    const course = await Course.findByPk(courseId);
+    // for getting total and attended lectures of a student for a specific course
 
-    if (!course) {
-        throw new ApiError(400, "Course not found")
-    }
-
-    const division = await Division.findByPk(divisionId)
-
-    if (!division) {
-        throw new ApiError(400, "Division not found")
-    }
-
-    const attendance = await sequelize.query(
+    // in the query include the join of batches only if batchId is provided 
+    // bcz as the one division have many batches its adding duplicate rows
+    const aggregatedAttendance = await sequelize.query(
         `
         SELECT
-        CONCAT(students.first_name, ' ', students.last_name) AS student_name,
-        --courses.course_name,
-        --courses.course_code,
-        --semesters.semester_id,
-        --semesters.semester_number,
-        COUNT(attendances.attendance_id) AS total_lectures,
-        SUM(CASE WHEN attendance_students.attendance_status = true THEN 1 ELSE 0 END) AS attended_lectures
+        courses.course_id AS "courseId",
+        COUNT(attendances.attendance_id)::integer AS "totalLectures",
+        SUM(CASE WHEN attendance_students.attendance_status = true THEN 1 ELSE 0 END)::integer AS "attendedLectures"
         FROM attendances
         INNER JOIN attendance_students ON attendances.attendance_id = attendance_students.attendance_id
-        INNER JOIN students ON students.student_id = attendance_students.student_id
         INNER JOIN classes ON classes.class_id = attendances.class_id
         INNER JOIN courses ON courses.course_id = classes.course_id
         INNER JOIN timetables ON timetables.timetable_id = classes.timetable_id
         INNER JOIN divisions ON divisions.division_id = timetables.division_id
+        ${batchId ? `INNER JOIN batches ON batches.division_id = divisions.division_id` : ''}
         INNER JOIN semesters ON semesters.semester_id = divisions.semester_id
-        WHERE courses.course_id = ${courseId} AND divisions.division_id = ${divisionId}
+        WHERE 
+        attendance_students.student_id = ${studentId}
+        AND courses.course_id = ${courseId}
+        ${semesterId ? `AND semesters.semester_id = ${semesterId}` : ''}
+        ${divisionId ? `AND divisions.division_id = ${divisionId}` : ''}
+        ${batchId ? `AND batches.batch_id = ${batchId}` : ''}
+        ${startDate ? `AND attendances.attendance_date >= '${startDate}'` : ''}
+        ${endDate ? `AND attendances.attendance_date <= '${endDate}'` : ''}
         GROUP BY 
-        --courses.course_name,
-        --courses.course_code,
-        --semesters.semester_id,
-        --semesters.semester_number,
-        students.first_name,
-        students.last_name
+        courses.course_id;
         `
     )
+    // console.log(aggregatedAttendance) 
+    //! [ { course_id: 101, total_lectures: '18', attended_lectures: '0' } ]
 
 
-    if (!attendance) {
+    // for getting detail with each attendance_id and status
+    const detailedAttendance = await sequelize.query(
+        `
+        SELECT
+        attendances.attendance_id AS "attendanceId",
+        attendances.attendance_date AS "date",
+        attendance_students.attendance_status AS "attendanceStatus"
+        FROM attendances
+        INNER JOIN attendance_students ON attendances.attendance_id = attendance_students.attendance_id
+        INNER JOIN classes ON classes.class_id = attendances.class_id
+        INNER JOIN courses ON courses.course_id = classes.course_id
+        INNER JOIN timetables ON timetables.timetable_id = classes.timetable_id
+        INNER JOIN divisions ON divisions.division_id = timetables.division_id
+        ${batchId ? `INNER JOIN batches ON batches.division_id = divisions.division_id` : ''}
+        INNER JOIN semesters ON semesters.semester_id = divisions.semester_id
+        WHERE 
+        attendance_students.student_id = ${studentId}
+        AND courses.course_id = ${courseId}
+        ${semesterId ? `AND semesters.semester_id = ${semesterId}` : ''}
+        ${divisionId ? `AND divisions.division_id = ${divisionId}` : ''}
+        ${batchId ? `AND batches.batch_id = ${batchId}` : ''}
+        ${startDate ? `AND attendances.attendance_date >= '${startDate}'` : ''}
+        ${endDate ? `AND attendances.attendance_date <= '${endDate}'` : ''}
+        ORDER BY
+        attendances.attendance_date;
+        `
+    )
+    // console.log(detailedAttendance) 
+    //!  { attendance_id: 1, date: '2025-01-08', attendance_status: false },
+    //!  { attendance_id: 2, date: '2025-01-09', attendance_status: false },
+
+
+    if (!aggregatedAttendance || !detailedAttendance) {
         throw new ApiError(404, "Attendance for this course not found")
     }
 
-    const formattedResult = attendance[0].map(row => ({
-        studentName: row.student_name, // Rename field manually
-        totalLectures: row.total_lectures,
-        attendedLectures: row.attended_lectures,
-    }));
+    return {
+        aggregatedAttendance: aggregatedAttendance[0],
+        detailedAttendance: detailedAttendance[0]
+    }
+}
 
-    res.status(200).json(new ApiResponse(200, "Attendance fetched successfully", formattedResult));
-})
+const getAttendanceOfAllForSemesterDivisionBatchCourseQuery = async (
+    semesterId,
+    divisionId,
+    batchId,
+    courseId,
+    startDate,
+    endDate
+) => {
+    if (!semesterId && !divisionId && !courseId && !batchId && !startDate && !endDate) {
+        throw new ApiError(400, "One of the parameters is required: semesterId, divisionId, courseId, batchId, startDate, endDate")
+    }
+    const attendance = await sequelize.query(
+        `
+        WITH attendance_grouped_by_course_id_and_attendance_date AS (SELECT
+        courses.course_id AS course_id,
+        attendances.attendance_date AS "attendanceDate",
+        attendances.attendance_id AS "attendanceId",
+        COUNT(DISTINCT attendance_students.student_id)::int AS "totalStudents",
+        SUM(CASE WHEN attendance_students.attendance_status = true THEN 1 ELSE 0 END)::int AS "presentStudents"
+        FROM attendances
+        INNER JOIN attendance_students ON attendances.attendance_id = attendance_students.attendance_id
+        INNER JOIN classes ON classes.class_id = attendances.class_id
+        INNER JOIN courses ON courses.course_id = classes.course_id
+        INNER JOIN timetables ON timetables.timetable_id = classes.timetable_id
+        INNER JOIN divisions ON divisions.division_id = timetables.division_id
+        ${batchId ? `INNER JOIN batches ON batches.division_id = divisions.division_id` : ''}
+        INNER JOIN semesters ON semesters.semester_id = divisions.semester_id
+        WHERE 
+        ${semesterId ? `semesters.semester_id = ${semesterId}` : ''}
+        ${divisionId ? `AND timetables.division_id = ${divisionId}` : ''}
+        ${batchId ? `AND classes.batch_id = ${batchId}` : ''}
+        ${courseId ? `AND classes.course_id = ${courseId}` : ''}
+        ${startDate ? `AND attendances.attendance_date >= '${startDate}'` : ''}
+        ${endDate ? `AND attendances.attendance_date <= '${endDate}'` : ''}
+        GROUP BY courses.course_id, attendances.attendance_date, attendances.attendance_id
+        ORDER BY attendances.attendance_date)
+
+        SELECT 
+        course_id,
+        json_agg(
+            json_build_object(
+                'attendanceDate', "attendanceDate",
+                'totalStudents', "totalStudents",
+                'presentStudents', "presentStudents",
+                'attendanceId', "attendanceId"
+            ) ORDER BY "attendanceDate"
+        ) AS attendanceSummary
+        FROM attendance_grouped_by_course_id_and_attendance_date
+        GROUP BY course_id;
+        `
+    )
+
+    return attendance[0]
+
+}
 
 export {
     removeAttendance,
     addStudentsAttendance,
     updateStudentAttendance,
     createAttendance,
-    getAttendance,
     getAttendanceOfStudentForSpecificCourseInSemester,
-    getAttendanceOfCourseOnDate,
-    getAttendanceOfCourseThroughoutSemester
+    getAttendanceOfAllForSemesterDivisionBatchCourse
 }
