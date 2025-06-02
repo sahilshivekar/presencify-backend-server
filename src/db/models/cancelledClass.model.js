@@ -23,7 +23,7 @@ CancelledClass.init(
             onDelete: 'CASCADE'
         },
         date: {
-            type: Sequelize.DATE,
+            type: Sequelize.DATEONLY,
             allowNull: false,
             field: 'cancelled_class_date',
         },

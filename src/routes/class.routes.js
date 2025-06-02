@@ -5,7 +5,9 @@ import {
     getClassById,
     extendActiveTillDateOfClass,
     removeClass,
-    addExtraClass
+    addExtraClass,
+    getCancelledClasses,
+    cancelClass
 } from '../controllers/class.controller.js';
 import { verifyAdminJWT } from '../middlewares/auth.middleware.js';
 const router = express.Router();
@@ -16,5 +18,7 @@ router.route('/get-class-by-id').get(verifyAdminJWT, getClassById);
 router.route('/extend-acitve-till-date-of-class').put(verifyAdminJWT, extendActiveTillDateOfClass);
 router.route('/remove-class').delete(verifyAdminJWT, removeClass);  
 router.route('/add-extra-class').post(verifyAdminJWT, addExtraClass);
+router.route('/get-cancelled-classes').get(verifyAdminJWT, getCancelledClasses);
+router.route('/cancel-class').post(verifyAdminJWT, cancelClass);
 
 export default router;

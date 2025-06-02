@@ -13,6 +13,8 @@ import Division from '../db/models/division.model.js';
 import Semester from '../db/models/semester.model.js';
 import BranchCourseSemester from '../db/models/branchCourseSemester.model.js';
 import Branch from '../db/models/branch.model.js';
+import CancelledClass from '../db/models/cancelledClass.model.js';
+
 
 const getYearFromSemesterNumber = (semesterNumber) => {
     if (semesterNumber === 1 || semesterNumber === 2) return 'FE'
@@ -914,7 +916,7 @@ const addExtraClass = asyncHandler(async (req, res) => {
         dayOfWeek, // sometimes extra class can be on every specific day for some days if active From and active till of extra class is not same
         roomId,
         batchId,
-        activeFrom,  
+        activeFrom,
         activeTill, // will be same as active from if extra class is only for one day
         classType,
         courseId,
@@ -1059,6 +1061,65 @@ const addExtraClass = asyncHandler(async (req, res) => {
 })
 
 
+const cancelClass = asyncHandler(async (req, res) => {
+    const {
+        classId,
+        reason,
+        date
+    } = req.body;
+
+    if (!date) {
+        throw new ApiError(400, "Date is required");
+    }
+
+    if (!moment(date, 'YYYY-MM-DD', true).isValid()) {
+        throw new ApiError(400, "Invalid date format");
+    }
+
+    if (!classId) {
+        throw new ApiError(400, "Class id is required");
+    }
+
+    const classObj = await Class.findByPk(classId);
+
+    if (!classObj) throw new ApiError(404, "Class not found");
+
+    if (date > classObj.activeTill || date < classObj.activeFrom) {
+        throw new ApiError(400, "Date is not in bounds of active from and active till of class");
+    }
+
+    await CancelledClass.create(
+        {
+            classId: classId,
+            date: date,
+            reason: reason || null
+        }
+    );
+
+    res.status(200).json(new ApiResponse(200, "Class marked as cancelled successfully", null));
+});
+
+
+const getCancelledClasses = asyncHandler(async (req, res) => {
+    const {
+        date
+    } = req.query;
+
+    if (date && !moment(date, 'YYYY-MM-DD', true).isValid()) {
+        throw new ApiError(400, "Invalid date format");
+    }
+    
+    const cancelledClasses = await CancelledClass.findAll({
+        where: {
+            [Op.and]: [
+                ...(date ? [{ date: date }] : []),
+            ]
+        }
+    })
+
+    res.status(200).json(new ApiResponse(200, "Cancelled classes retrieved successfully.", cancelledClasses));
+});
+
 
 export {
     addClass,
@@ -1066,5 +1127,7 @@ export {
     getClassById,
     extendActiveTillDateOfClass,
     removeClass,
-    addExtraClass
+    addExtraClass,
+    getCancelledClasses,
+    cancelClass
 }   
