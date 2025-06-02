@@ -33,6 +33,7 @@ import roomRouter from "./routes/room.routes.js"
 import classRouter from "./routes/class.routes.js"
 import attendanceRouter from "./routes/attendance.routes.js"
 import dropoutRouter from "./routes/dropout.routes.js"
+import studentFCMTokenRouter from "./routes/studentFCMToken.routes.js"
 
 //! routes declaration
 app.use("/api/v1/admin", adminRouter);
@@ -52,5 +53,6 @@ app.use("/api/v1/room", roomRouter);
 app.use("/api/v1/class", classRouter);
 app.use("/api/v1/attendance", attendanceRouter);
 app.use("/api/v1/dropout", dropoutRouter);
+app.use("/api/v1/student-fcm-token", studentFCMTokenRouter);
 
 export default app 

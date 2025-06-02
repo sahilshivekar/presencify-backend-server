@@ -14,7 +14,11 @@ import Semester from '../db/models/semester.model.js';
 import BranchCourseSemester from '../db/models/branchCourseSemester.model.js';
 import Branch from '../db/models/branch.model.js';
 import CancelledClass from '../db/models/cancelledClass.model.js';
-
+import StudentDivision from '../db/models/studentDivision.model.js';
+import { sendNotification } from '../utils/firebaseCloudMessaging.js';
+import StudentFCMToken from '../db/models/studentFCMToken.model.js';
+import { getTimeInTwelveHourFormat } from '../utils/time.js';
+import { fromYYYYMMDDToDDMMYYYY } from '../utils/date.js';
 
 const getYearFromSemesterNumber = (semesterNumber) => {
     if (semesterNumber === 1 || semesterNumber === 2) return 'FE'
@@ -1056,6 +1060,44 @@ const addExtraClass = asyncHandler(async (req, res) => {
         }
     );
 
+    let studentsToNotify = []
+    if (batch) {
+        studentsToNotify = await StudentBatch.findAll({
+            where: {
+                batchId: batch.id,
+                endDate: null
+            }
+        })
+    } else {
+        studentsToNotify = await StudentDivision.findAll({
+            where: {
+                divisionId: timetable.divisionId,
+                endDate: null
+            }
+        })
+    }
+
+    studentsToNotify = studentsToNotify.map(student => student.studentId)
+    
+    const studentsWithFCMToken = await StudentFCMToken.findAll({
+        where: {
+            studentId: {
+                [Op.in]: studentsToNotify
+            }
+        }
+    })
+    
+    studentsWithFCMToken.forEach(studentWithFCMToken => {
+        sendNotification(
+            studentWithFCMToken.fcmToken,
+            "Extra lecture added",
+            `Extra lecture from ${getTimeInTwelveHourFormat(classObj.startTime)} to ${getTimeInTwelveHourFormat(classObj.endTime)} on ${classObj.dayOfWeek} of ${course.name} is sheduled`,
+            {
+                type: "ExtraLectureAdded"
+            }
+        )
+    })
+
     res.status(201).json(new ApiResponse(201, "Class added successfully", classObj));
 
 })
@@ -1096,6 +1138,54 @@ const cancelClass = asyncHandler(async (req, res) => {
         }
     );
 
+
+    //! sending notification to the students
+    let studentsToNotify = []
+    let batch = null;
+    if (classObj.batchId) {
+        batch = await Batch.findByPk(classObj.batchId);
+    }
+    const timetable = await Timetable.findByPk(classObj.timetableId);
+    const course = await Course.findByPk(classObj.courseId);
+
+
+    if (batch) {
+        studentsToNotify = await StudentBatch.findAll({
+            where: {
+                batchId: batch.id,
+                endDate: null
+            }
+        })
+    } else {
+        studentsToNotify = await StudentDivision.findAll({
+            where: {
+                divisionId: timetable.divisionId,
+                endDate: null
+            }
+        })
+    }
+
+    studentsToNotify = studentsToNotify.map(student => student.studentId)
+
+    const studentsWithFCMToken = await StudentFCMToken.findAll({
+        where: {
+            studentId: {
+                [Op.in]: studentsToNotify
+            }
+        }
+    })
+
+    studentsWithFCMToken.forEach(studentWithFCMToken => {
+        sendNotification(
+            studentWithFCMToken.fcmToken,
+            "Lecture cancelled",
+            `Lecture of ${course.name} from ${classObj.startTime} to ${classObj.endTime} on ${fromYYYYMMDDToDDMMYYYY(date)} is cancelled`,
+            {
+                type: "LectureCancelled"
+            }
+        )
+    })
+
     res.status(200).json(new ApiResponse(200, "Class marked as cancelled successfully", null));
 });
 
@@ -1113,7 +1203,7 @@ const getCancelledClasses = asyncHandler(async (req, res) => {
     if (date && !moment(date, 'YYYY-MM-DD', true).isValid()) {
         throw new ApiError(400, "Invalid date format");
     }
-    
+
     const cancelledClasses = await CancelledClass.findAll({
         where: {
             [Op.and]: [

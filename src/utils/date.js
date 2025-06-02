@@ -5,4 +5,9 @@ const getDateStringFromObj = (dateObj) => {
     return `${year}-${month}-${day}`;
 }
 
-export { getDateStringFromObj }
+const fromYYYYMMDDToDDMMYYYY = (dateString) => {
+    let date = dateString.split('-')
+    return `${date[2]}/${date[1]}/${date[0]}`
+}
+
+export { getDateStringFromObj, fromYYYYMMDDToDDMMYYYY }
