@@ -1102,8 +1102,13 @@ const cancelClass = asyncHandler(async (req, res) => {
 
 const getCancelledClasses = asyncHandler(async (req, res) => {
     const {
-        date
+        date,
+        page = 1,
+        limit = 10
     } = req.query;
+
+    const offset = (parseInt(page, 10) - 1) * parseInt(limit, 10);
+
 
     if (date && !moment(date, 'YYYY-MM-DD', true).isValid()) {
         throw new ApiError(400, "Invalid date format");
@@ -1114,7 +1119,9 @@ const getCancelledClasses = asyncHandler(async (req, res) => {
             [Op.and]: [
                 ...(date ? [{ date: date }] : []),
             ]
-        }
+        },
+        offset: offset,
+        limit: parseInt(limit, 10)
     })
 
     res.status(200).json(new ApiResponse(200, "Cancelled classes retrieved successfully.", cancelledClasses));
