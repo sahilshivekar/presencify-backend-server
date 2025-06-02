@@ -29,7 +29,7 @@ CancelledClass.init(
         },
         reason: {
             type: Sequelize.STRING,
-            allowNull: false,
+            allowNull: true,
             field: 'cancelled_class_reason',
         },
         createdAt: {
