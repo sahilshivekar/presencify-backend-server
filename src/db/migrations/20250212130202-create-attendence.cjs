@@ -22,6 +22,11 @@ module.exports = {
                 onUpdate: 'CASCADE',
                 onDelete: 'CASCADE'
             },
+            BLEsessionUUID: {
+                type: Sequelize.STRING,
+                allowNull: false,
+                field: 'ble_session_uuid'
+            },
             date: {
                 type: Sequelize.DATEONLY,
                 allowNull: false,

@@ -1,3 +1,4 @@
+
 import { Sequelize, Model } from 'sequelize';
 import sequelize from '../../config/db.connection.js';
 
@@ -23,6 +24,16 @@ Attendance.init(
             validate: {
                 notNull: {
                     msg: 'Class ID cannot be null'
+                }
+            }
+        },
+        BLEsessionUUID: {
+            type: Sequelize.STRING,
+            allowNull: false,
+            field: 'ble_session_uuid',
+            validate: {
+                notNull: {
+                    msg: 'BLE Session UUID cannot be empty'
                 }
             }
         },

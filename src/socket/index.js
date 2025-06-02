@@ -2,7 +2,6 @@ import { Server } from 'socket.io';
 import jwt from "jsonwebtoken";
 import Admin from "../db/models/admin.model.js";
 import attendanceNamespace from "./attendanceNamespace.js";
-import timetableNamespace from "./timetableNamespace.js";
 
 let io;
 
@@ -21,7 +20,6 @@ const initSocket = (httpServer) => {
 
     // setup namespaces
     attendanceNamespace(io);
-    timetableNamespace(io);
 
     return io;
 }

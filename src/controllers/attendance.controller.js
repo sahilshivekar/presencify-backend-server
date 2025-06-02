@@ -23,12 +23,13 @@ import { getIO } from '../socket/index.js';
 const createAttendance = asyncHandler(async (req, res) => {
     const {
         classId,
+        BLEsessionUUID,
         date
     } = req.body;
 
 
-    if (!classId || !date) {
-        throw new ApiError(400, "Class ID and Date are required")
+    if (!classId || !date || !BLEsessionUUID) {
+        throw new ApiError(400, "Class ID, Date and BLE Session UUID are required")
     }
 
     if (!moment(date, 'YYYY-MM-DD', true).isValid()) {
@@ -64,6 +65,7 @@ const createAttendance = asyncHandler(async (req, res) => {
     } else {
         const attendance = await Attendance.create({
             classId: classId,
+            BLEsessionUUID: BLEsessionUUID,
             date: date
         });
 
@@ -72,6 +74,9 @@ const createAttendance = asyncHandler(async (req, res) => {
 })
 
 
+
+// ! this will be used by the teacher initially to mark all the students as absent so that attendance for all the students will remain in the database
+// ! or if the teacher manually want to add attendance
 const addStudentsAttendance = asyncHandler(async (req, res) => {
     const {
         attendanceId,
@@ -174,10 +179,10 @@ const addStudentsAttendance = asyncHandler(async (req, res) => {
             courseId == classObj.courseId &&
             semesterId == division.semesterId
         ) {
-            
+
             const attendance = await getAttendanceOfStudentForSpecificCourseInSemesterQuery(
-                studentId, 
-                courseId, 
+                studentId,
+                courseId,
                 semesterId,
                 divisionId == "null" ? null : divisionId,
                 batchId == "null" ? null : batchId,
@@ -203,15 +208,15 @@ const addStudentsAttendance = asyncHandler(async (req, res) => {
         const courseId = openRoom.split("_")[10]
         const startDate = openRoom.split("_")[12]
         const endDate = openRoom.split("_")[14]
-        
-        
+
+
         if (
             semesterId == semester.id ||
             divisionId == division.id ||
             batchId == batch?.id ||
             courseId == classObj.courseId
         ) {
-            
+
             const updatedAttendance = await getAttendanceOfAllForSemesterDivisionBatchCourseQuery(
                 semesterId == "null" ? null : semesterId,
                 divisionId == "null" ? null : divisionId,
@@ -231,6 +236,9 @@ const addStudentsAttendance = asyncHandler(async (req, res) => {
 
 })
 
+
+
+//! this will be used by the teacher to correct a students attendance status
 const updateStudentAttendance = asyncHandler(async (req, res) => {
 
     const {
@@ -275,6 +283,44 @@ const updateStudentAttendance = asyncHandler(async (req, res) => {
     res.status(200).json(new ApiResponse(200, "Students attendance status updated successfully", attendanceStudent));
 })
 
+
+// ! this will be used only by the student to send the appropriate BLEsessionUUID to mark his attendance
+const markStudentAttendanceByBLEsessionUUID = asyncHandler(async (req, res) => {
+    const {
+        BLEsessionUUID,
+        studentId
+    } = req.body;
+
+    if (!BLEsessionUUID || !studentId) {
+        throw new ApiError(400, "BLE Session UUID and Student ID are required")
+    }
+
+    const attendanceSheet = await Attendance.findOne({
+        where: {
+            BLEsessionUUID: BLEsessionUUID
+        }
+    })
+
+    if (!attendanceSheet) {
+        throw new ApiError(404, "BLE session UUID is not valid")
+    }
+
+    await AttendanceStudent.update(
+        {
+            attendanceStatus: true
+        },
+        {
+            where: {
+                studentId: studentId,
+                attendanceId: attendanceSheet.id
+            }
+        }
+    )
+    
+    res
+        .status(200)
+        .json(new ApiResponse(200, "Attendance marked successfully", null));
+})
 
 const removeAttendance = asyncHandler(async (req, res) => {
     const {
@@ -502,5 +548,6 @@ export {
     updateStudentAttendance,
     createAttendance,
     getAttendanceOfStudentForSpecificCourseInSemester,
-    getAttendanceOfAllForSemesterDivisionBatchCourse
+    getAttendanceOfAllForSemesterDivisionBatchCourse,
+    markStudentAttendanceByBLEsessionUUID
 }
