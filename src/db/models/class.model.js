@@ -163,6 +163,12 @@ Class.init(
                     msg: 'Timetable Id is required'
                 }
             }
+        },
+        isExtraClass: {
+            type: Sequelize.BOOLEAN,
+            allowNull: false,
+            defaultValue: false,
+            field: 'is_extra_class'
         }
     },
     {

@@ -92,7 +92,14 @@ module.exports = {
                 references: {
                     model: 'timetables',
                     key: 'timetable_id'
-                }
+                },
+                onDelete: 'CASCADE'
+            },
+            isExtraClass: {
+                type: Sequelize.BOOLEAN,
+                allowNull: false,
+                defaultValue: false,
+                field: 'is_extra_class'
             },
             createdAt: {
                 type: Sequelize.DATE,
