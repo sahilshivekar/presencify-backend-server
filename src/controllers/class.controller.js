@@ -481,6 +481,7 @@ const getClasses = asyncHandler(async (req, res) => {
         classType,
         courseId,
         semesterId,
+        isExtraClass,
         page = 1,
         limit = 10
     } = req.query;
@@ -500,6 +501,7 @@ const getClasses = asyncHandler(async (req, res) => {
                 ...(roomId ? [{ roomId: roomId }] : []),
                 ...(batchId ? [{ batchId: batchId }] : []),
                 ...(classType ? [{ classType: classType }] : []),
+                ...(isExtraClass == "true" ? [{ isExtraClass: true }] : []),
             ]
         },
         include: [
@@ -663,7 +665,7 @@ const extendActiveTillDateOfClass = asyncHandler(async (req, res) => {
         if (newActiveTill <= classObj.activeTill) {
             throw new ApiError(400, "New active till date should be after the old active till date");
         }
-        if(newActiveTill > semester.endDate){
+        if (newActiveTill > semester.endDate) {
             throw new ApiError(400, "New active till date should be before the semester end date");
         }
         classObj.activeTill = newActiveTill;
@@ -902,10 +904,167 @@ const removeClass = asyncHandler(async (req, res) => {
     res.status(200).json(new ApiResponse(200, "Class deleted successfully", null));
 });
 
+
+
+const addExtraClass = asyncHandler(async (req, res) => {
+    const {
+        instructorId,
+        startTime,
+        endTime,
+        dayOfWeek, // sometimes extra class can be on every specific day for some days if active From and active till of extra class is not same
+        roomId,
+        batchId,
+        activeFrom,  
+        activeTill, // will be same as active from if extra class is only for one day
+        classType,
+        courseId,
+        timetableId
+    } = req.body;
+
+    const requiredFields = {
+        "Instructor ID": instructorId,
+        "Start Time": startTime,
+        "End Time": endTime,
+        "Day of week": dayOfWeek,
+        "Room ID": roomId,
+        "Active From": activeFrom,
+        "Active Till": activeTill,
+        "Class Type": classType,
+        "Course ID": courseId,
+        "Timetable ID": timetableId
+    }
+
+    for (const fieldName in requiredFields) {
+        if (!requiredFields[fieldName]) {
+            throw new ApiError(400, `${fieldName} is required`)
+        }
+    }
+
+    //!check if all id's exists in database
+    const instructor = await Staff.findByPk(instructorId);
+
+    if (!instructor) {
+        throw new ApiError(404, "Instructor not found");
+    }
+
+    const course = await Course.findByPk(courseId);
+
+    if (!course) {
+        throw new ApiError(404, "Course not found");
+    }
+
+    const room = await Room.findByPk(roomId);
+
+    if (!room) {
+        throw new ApiError(404, "Room not found");
+    }
+
+    const timetable = await Timetable.findByPk(timetableId);
+
+    if (!timetable) {
+        throw new ApiError(404, "Timetable not found");
+    }
+
+    //!chekc if the class type is valid
+    if (!['Lecture', 'Tutorial', 'Practical'].includes(classType)) {
+        throw new ApiError(400, "Invalid class type. Must be 'Lecture', 'Tutorial' or 'Practical'");
+    }
+
+    //!check if batchId is provided when the class type is not lecture && class type is practical || tutorial
+    let batch = null;
+    if (classType == "Tutorial" || classType == "Practical") {
+        if (!batchId) {
+            throw new ApiError(400, "Batch information is required if class type is practical or tutorial");
+        }
+        batch = await Batch.findByPk(batchId);
+        if (!batch) {
+            throw new ApiError(404, "Batch not found");
+        }
+
+        if (batch.divisionId != timetable.divisionId) {
+            throw new ApiError(400, "Batch doesn't belong to the same division as the timetable")
+        }
+    }
+
+    //! check if the time is in correct format
+    if (!moment(startTime, 'HH:mm:ss', true).isValid()) {
+        throw new ApiError(400, "Invalid time format for start time");
+    }
+    if (!moment(endTime, 'HH:mm:ss', true).isValid()) {
+        throw new ApiError(400, "Invalid time format for end time");
+    }
+
+    if (startTime > endTime) {
+        throw new ApiError(400, "Start time should be before end time");
+    }
+
+    //!check if active from is less than active till
+    if (!moment(activeFrom, 'YYYY-MM-DD', true).isValid()) {
+        throw new ApiError(400, "Invalid date format for active from field");
+    }
+    if (!moment(activeTill, 'YYYY-MM-DD', true).isValid()) {
+        throw new ApiError(400, "Invalid date format for active till field");
+    }
+
+    if (activeFrom > activeTill) {
+        throw new ApiError(400, "Active from date should be before active till date");
+    }
+
+
+    //!check if the course is available for that particular semester number in that branch (also for the optoinal course condition)
+    const division = await Division.findByPk(timetable.divisionId)
+    const semester = await Semester.findByPk(division.semesterId)
+    const branch = await Branch.findByPk(semester.branchId)
+
+    const checkCourseAvailableForSpecificSemester = await BranchCourseSemester.findOne({
+        where: {
+            courseId: courseId,
+            semesterNumber: semester.semesterNumber,
+            branchId: semester.branchId
+        }
+    })
+
+    if (!checkCourseAvailableForSpecificSemester) {
+        throw new ApiError(400, `Course '${course.name}' is not in syllabus for semester ${semester.semesterNumber} of branch ${branch.name}`)
+    }
+
+    //!check if dates are in bounds of semesters dates
+    if (activeFrom < semester.startDate || activeFrom > semester.endDate) {
+        throw new ApiError(400, `Active from date is out of bounds because semester start date is ${semester.startDate} and semester end date is ${semester.endDate}`)
+    }
+
+    if (activeTill > semester.endDate || activeTill < semester.startDate) {
+        throw new ApiError(400, `Active till date is out of bounds because semester start date is ${semester.startDate} and semester end date is ${semester.endDate}`)
+    }
+
+    const classObj = await Class.create(
+        {
+            instructorId: instructorId || null,
+            startTime: startTime || null,
+            endTime: endTime || null,
+            dayOfWeek: dayOfWeek || null,
+            roomId: roomId || null,
+            batchId: batchId || null,
+            activeFrom: activeFrom || null,
+            activeTill: activeTill || null,
+            classType: classType || null,
+            courseId: courseId || null,
+            timetableId: timetableId || null,
+            isExtraClass: true
+        }
+    );
+
+    res.status(201).json(new ApiResponse(201, "Class added successfully", classObj));
+
+})
+
+
+
 export {
     addClass,
     getClasses,
     getClassById,
     extendActiveTillDateOfClass,
-    removeClass
+    removeClass,
+    addExtraClass
 }   
