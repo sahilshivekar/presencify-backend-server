@@ -19,6 +19,88 @@ import StudentDivision from '../db/models/studentDivision.model.js';
 import sequelize from '../config/db.connection.js';
 import { getIO } from '../socket/index.js';
 
+
+
+const realtimeAttendanceHelper = async (
+    currStudentIds,
+    currCourseId,
+    currSemesterId,
+    currBatchId,
+    currDivisionId
+) => {
+    const io = getIO();
+    const openRooms = io.of("/attendance").adapter.rooms.keys()
+    const openRoomsList = [...openRooms]
+    console.log(openRoomsList)
+    // ! For individual student attendance
+    let studentRooms = openRoomsList.filter(openRoom => openRoom.includes("student_attendance"))
+
+    for (const roomName of studentRooms) {
+        const studentId = roomName.split("_")[3]
+        const courseId = roomName.split("_")[5]
+        const semesterId = roomName.split("_")[7]
+        const divisionId = roomName.split("_")[9]
+        const batchId = roomName.split("_")[11]
+        const startDate = roomName.split("_")[13]
+        const endDate = roomName.split("_")[15]
+        console.log(currStudentIds.includes(Number(studentId)), currStudentIds)
+        console.log(currCourseId == courseId, courseId)
+        console.log(currSemesterId == semesterId, currSemesterId, semesterId)
+        if (
+            currStudentIds.includes(Number(studentId)) &&
+            currCourseId == courseId &&
+            currSemesterId == semesterId
+        ) {
+            console.log("here")
+            const attendance = await getAttendanceOfStudentForSpecificCourseInSemesterQuery(
+                studentId,
+                courseId,
+                semesterId,
+                divisionId == "null" ? null : divisionId,
+                batchId == "null" ? null : batchId,
+                startDate == "null" ? null : startDate,
+                endDate == "null" ? null : endDate
+            )
+            io.of("/attendance").to(roomName).emit("student_updated_attendance", attendance);
+        }
+    }
+
+
+    
+    // ! For all attendance by course, batch, division, semester
+
+    let roomsOfAllStudents = openRoomsList.filter(openRoom => openRoom.includes("all_attendance_room"))
+    for (const openRoom of roomsOfAllStudents) {
+        const semesterId = openRoom.split("_")[4]
+        const divisionId = openRoom.split("_")[6]
+        const batchId = openRoom.split("_")[8]
+        const courseId = openRoom.split("_")[10]
+        const startDate = openRoom.split("_")[12]
+        const endDate = openRoom.split("_")[14]
+
+
+        if (
+            semesterId == currSemesterId ||
+            divisionId == currDivisionId ||
+            batchId == currBatchId ||
+            courseId == currCourseId
+        ) {
+
+            const updatedAttendance = await getAttendanceOfAllForSemesterDivisionBatchCourseQuery(
+                semesterId == "null" ? null : semesterId,
+                divisionId == "null" ? null : divisionId,
+                batchId == "null" ? null : batchId,
+                courseId == "null" ? null : courseId,
+                startDate == "null" ? null : startDate,
+                endDate == "null" ? null : endDate
+            )
+            io.of("/attendance").to(openRoom).emit("all_updated_attendance", updatedAttendance);
+        }
+    }
+
+}
+
+
 //* create attendance sheet type thing where student ids will be added
 const createAttendance = asyncHandler(async (req, res) => {
     const {
@@ -153,87 +235,15 @@ const addStudentsAttendance = asyncHandler(async (req, res) => {
         }))]
     )
 
-    // ! following code is for sending updated attendance to the student individual channel on websockets
-
-    const io = getIO();
-    const openRooms = io.of("/attendance").adapter.rooms.keys()
-    const openRoomsList = [...openRooms]
-
-
-
-
-    // ! For individual student attendance
-    let studentRooms = openRoomsList.filter(openRoom => openRoom.includes("student_attendance"))
-
-    for (const roomName of studentRooms) {
-        const studentId = roomName.split("_")[3]
-        const courseId = roomName.split("_")[5]
-        const semesterId = roomName.split("_")[7]
-        const divisionId = roomName.split("_")[9]
-        const batchId = roomName.split("_")[11]
-        const startDate = roomName.split("_")[13]
-        const endDate = roomName.split("_")[15]
-
-        if (
-            [...presentStudentIds, ...absentStudentIds].includes(Number(studentId)) &&
-            courseId == classObj.courseId &&
-            semesterId == division.semesterId
-        ) {
-
-            const attendance = await getAttendanceOfStudentForSpecificCourseInSemesterQuery(
-                studentId,
-                courseId,
-                semesterId,
-                divisionId == "null" ? null : divisionId,
-                batchId == "null" ? null : batchId,
-                startDate == "null" ? null : startDate,
-                endDate == "null" ? null : endDate
-            )
-            io.of("/attendance").to(roomName).emit("student_updated_attendance", attendance);
-        }
-    }
-
-
-
-
-
-
-    // ! For all attendance by course, batch, division, semester
-
-    let roomsOfAllStudents = openRoomsList.filter(openRoom => openRoom.includes("all_attendance_room"))
-    for (const openRoom of roomsOfAllStudents) {
-        const semesterId = openRoom.split("_")[4]
-        const divisionId = openRoom.split("_")[6]
-        const batchId = openRoom.split("_")[8]
-        const courseId = openRoom.split("_")[10]
-        const startDate = openRoom.split("_")[12]
-        const endDate = openRoom.split("_")[14]
-
-
-        if (
-            semesterId == semester.id ||
-            divisionId == division.id ||
-            batchId == batch?.id ||
-            courseId == classObj.courseId
-        ) {
-
-            const updatedAttendance = await getAttendanceOfAllForSemesterDivisionBatchCourseQuery(
-                semesterId == "null" ? null : semesterId,
-                divisionId == "null" ? null : divisionId,
-                batchId == "null" ? null : batchId,
-                courseId == "null" ? null : courseId,
-                startDate == "null" ? null : startDate,
-                endDate == "null" ? null : endDate
-            )
-            io.of("/attendance").to(openRoom).emit("all_updated_attendance", updatedAttendance);
-        }
-    }
-
-
-
+    realtimeAttendanceHelper(
+        [...presentStudentIds, ...absentStudentIds],
+        classObj.courseId,
+        semester.id,
+        classObj?.batchId,
+        division.id
+    )
 
     res.status(201).json(new ApiResponse(201, "Students attendance added successfully", {}));
-
 })
 
 
@@ -279,6 +289,18 @@ const updateStudentAttendance = asyncHandler(async (req, res) => {
 
     attendanceStudent.attendanceStatus = newAttendanceStatus
     await attendanceStudent.save()
+
+    const classObj = await Class.findByPk(attendance.classId);
+    const timetable = await Timetable.findByPk(classObj.timetableId);
+    const division = await Division.findByPk(timetable.divisionId);
+    
+    realtimeAttendanceHelper(
+        [studentId],
+        classObj.courseId,
+        division.semesterId,
+        classObj?.batchId,
+        timetable.divisionId
+    )
 
     res.status(200).json(new ApiResponse(200, "Students attendance status updated successfully", attendanceStudent));
 })
@@ -331,6 +353,18 @@ const markStudentAttendanceByBLEsessionUUID = asyncHandler(async (req, res) => {
                 attendanceId: attendanceSheet.id
             }
         }
+    )
+
+    const classObj = await Class.findByPk(attendanceSheet.classId);
+    const timetable = await Timetable.findByPk(classObj.timetableId);
+    const division = await Division.findByPk(timetable.divisionId);
+
+    realtimeAttendanceHelper(
+        [studentId],
+        classObj.courseId,
+        division.semesterId,
+        classObj?.batchId,
+        timetable.divisionId
     )
 
     res
