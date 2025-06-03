@@ -295,6 +295,7 @@ const markStudentAttendanceByBLEsessionUUID = asyncHandler(async (req, res) => {
         throw new ApiError(400, "BLE Session UUID and Student ID are required")
     }
 
+
     const attendanceSheet = await Attendance.findOne({
         where: {
             BLEsessionUUID: BLEsessionUUID
@@ -304,6 +305,21 @@ const markStudentAttendanceByBLEsessionUUID = asyncHandler(async (req, res) => {
     if (!attendanceSheet) {
         throw new ApiError(404, "BLE session UUID is not valid")
     }
+
+    const attendanceSheetCreatedAt = new Date(attendanceSheet.createdAt)
+    // console.log(attendanceSheetCreatedAt)
+
+    const fiveMinAfterTimeStamp = new Date(attendanceSheetCreatedAt.getTime() + (5 * 60 * 1000))
+
+    // console.log(fiveMinAfterTimeStamp)
+
+    const currentTimeStamp = new Date()
+
+    if (currentTimeStamp > fiveMinAfterTimeStamp) {
+        throw new ApiError(400, "Deadline to mark attendance is over")
+    }
+
+    // if (attendanceSheet.createdAt < ) {
 
     await AttendanceStudent.update(
         {
@@ -316,7 +332,7 @@ const markStudentAttendanceByBLEsessionUUID = asyncHandler(async (req, res) => {
             }
         }
     )
-    
+
     res
         .status(200)
         .json(new ApiResponse(200, "Attendance marked successfully", null));
