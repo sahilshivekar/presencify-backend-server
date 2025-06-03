@@ -18,7 +18,8 @@ import { Attendance, AttendanceStudent } from '../db/models/attendance.model.js'
 import StudentDivision from '../db/models/studentDivision.model.js';
 import sequelize from '../config/db.connection.js';
 import { getIO } from '../socket/index.js';
-
+import { fromYYYYMMDDToDDMMYYYY } from "../utils/date.js";
+import { sendAttendanceReportToEmail } from "../utils/email.js";
 
 
 const realtimeAttendanceHelper = async (
@@ -66,7 +67,7 @@ const realtimeAttendanceHelper = async (
     }
 
 
-    
+
     // ! For all attendance by course, batch, division, semester
 
     let roomsOfAllStudents = openRoomsList.filter(openRoom => openRoom.includes("all_attendance_room"))
@@ -293,7 +294,7 @@ const updateStudentAttendance = asyncHandler(async (req, res) => {
     const classObj = await Class.findByPk(attendance.classId);
     const timetable = await Timetable.findByPk(classObj.timetableId);
     const division = await Division.findByPk(timetable.divisionId);
-    
+
     realtimeAttendanceHelper(
         [studentId],
         classObj.courseId,
@@ -468,6 +469,7 @@ const getAttendanceOfStudentForSpecificCourseInSemesterQuery = async (
         `
         SELECT
         courses.course_id AS "courseId",
+        courses.course_name AS "courseName",
         COUNT(attendances.attendance_id)::integer AS "totalLectures",
         SUM(CASE WHEN attendance_students.attendance_status = true THEN 1 ELSE 0 END)::integer AS "attendedLectures"
         FROM attendances
@@ -487,7 +489,8 @@ const getAttendanceOfStudentForSpecificCourseInSemesterQuery = async (
         ${startDate ? `AND attendances.attendance_date >= '${startDate}'` : ''}
         ${endDate ? `AND attendances.attendance_date <= '${endDate}'` : ''}
         GROUP BY 
-        courses.course_id;
+        courses.course_id,
+        courses.course_name;
         `
     )
     // console.log(aggregatedAttendance) 
@@ -592,6 +595,100 @@ const getAttendanceOfAllForSemesterDivisionBatchCourseQuery = async (
 
 }
 
+
+const sendAttendanceReport = asyncHandler(async (req, res) => {
+    const {
+        startDate, // will be same as end date if its about single day attendance
+        endDate,
+        studentIds,
+        courseIds,
+        semesterId
+    } = req.body;
+
+    if (!studentIds && !courseIds && !semesterId) {
+        throw new ApiError(400, "These parameters are required: studentId, courseId, semesterId")
+    }
+
+    let studentWithNoParentEmail = []
+
+    for (const studentId of studentIds) {
+        let allCourseAttendance = []
+        let emailText = ""
+        for (const courseId of courseIds) {
+            const attendance = await getAttendanceOfStudentForSpecificCourseInSemesterQuery(
+                studentId,
+                courseId,
+                semesterId,
+                null,
+                null,
+                startDate || null,
+                endDate || null
+            )
+            allCourseAttendance.push(attendance)
+        }
+        const student = await Student.findByPk(studentId)
+        if (student.parentEmail != null) {
+
+            // each object in the "allCourseAttendance" represents a course
+            allCourseAttendance.forEach(courseAttendance => {
+                if (courseAttendance.aggregatedAttendance.length != 0) {
+                    emailText += `Attendance of ${student.firstName} ${student.lastName}\n\n`
+
+
+                    emailText += `Course: ${courseAttendance.aggregatedAttendance[0].courseName}\n`
+                    emailText += `Total lectures: ${courseAttendance.aggregatedAttendance[0].totalLectures}\n`
+                    emailText += `Attended lectures: ${courseAttendance.aggregatedAttendance[0].attendedLectures}\n`
+                    emailText += `Not attended lectures: ${courseAttendance.aggregatedAttendance[0].totalLectures - courseAttendance.aggregatedAttendance[0].attendedLectures}\n`
+
+                    emailText += `Attendance in percentage: ${(100 * (courseAttendance.aggregatedAttendance[0].attendedLectures / courseAttendance.aggregatedAttendance[0].totalLectures)).toFixed(2)}%\n`
+
+
+                    const attendedLecturesDates = []
+                    courseAttendance.detailedAttendance.forEach(detailedAttendanceObj => {
+                        if (detailedAttendanceObj.attendanceStatus == true) {
+                            attendedLecturesDates.push(fromYYYYMMDDToDDMMYYYY(detailedAttendanceObj.date))
+                        }
+                    })
+                    emailText += `Attended lectures dates: ${attendedLecturesDates.length > 0 ? attendedLecturesDates.join(", ") : "none"}\n`
+                    const notAttendedLecturesDates = []
+                    courseAttendance.detailedAttendance.forEach(detailedAttendanceObj => {
+                        if (detailedAttendanceObj.attendanceStatus == false) {
+                            notAttendedLecturesDates.push(fromYYYYMMDDToDDMMYYYY(detailedAttendanceObj.date))
+                        }
+                    })
+                    emailText += `Not attended lectures dates: ${notAttendedLecturesDates.length > 0 ? notAttendedLecturesDates.join(", ") : "none"}\n\n\n\n\n`
+                }
+            })
+            sendAttendanceReportToEmail(student.parentEmail, emailText)
+        
+        } else {
+            studentWithNoParentEmail.push(
+                {
+                    studentId: student.id,
+                    firstName: student.firstName,
+                    lastName: student.lastName
+                }
+            )
+        }
+    }
+
+
+    res
+        .status(200)
+        .json(
+            new ApiResponse(
+                200,
+                "Attendance report sent to student's parent for those who had there valid parent's email attached to their details",
+                {
+                    studentWithNoParentEmail: studentWithNoParentEmail
+                }
+            )
+        );
+
+})
+
+
+
 export {
     removeAttendance,
     addStudentsAttendance,
@@ -599,5 +696,6 @@ export {
     createAttendance,
     getAttendanceOfStudentForSpecificCourseInSemester,
     getAttendanceOfAllForSemesterDivisionBatchCourse,
-    markStudentAttendanceByBLEsessionUUID
+    markStudentAttendanceByBLEsessionUUID,
+    sendAttendanceReport
 }

@@ -111,6 +111,21 @@ Student.init(
                 }
             }
         },
+        parentEmail: {
+            type: Sequelize.STRING,
+            allowNull: true,
+            unique: false,
+            defaultValue: null,
+            field: 'parent_email',
+            validate: {
+                notEmpty: {
+                    msg: 'Email cannot be empty'
+                },
+                isEmail: {
+                    msg: 'Invalid email format'
+                }
+            }
+        },
         // enrollmentDate: {
         //     type: Sequelize.DATE,
         //     allowNull: false,
@@ -203,7 +218,7 @@ Student.init(
             type: Sequelize.INTEGER,
             allowNull: false,
             references: {
-                model: 'branches', 
+                model: 'branches',
                 key: 'branch_id',
             },
             field: 'branch_id',

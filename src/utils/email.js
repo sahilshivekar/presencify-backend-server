@@ -11,6 +11,26 @@ const createTransporter = () => {
     });
 };
 
+const sendAttendanceReportToEmail = async (to, text) => {
+    const transporter = createTransporter();
+
+    const mailOptions = {
+        from: process.env.NODEMAILER_USER,
+        to: to,
+        subject: "Attendance Report of student from <College-Name> college",
+        text: text
+    };
+
+    try {
+        const info = await transporter.sendMail(mailOptions);
+        console.log("Email sent: " + info.response);
+        return true
+    } catch (error) {
+        console.error("Error sending email: " + error);
+        return false
+    }
+}
+
 // Function to send a basic email
 const sendVerificationCode = async (to, verificationCode) => {
 
@@ -39,4 +59,5 @@ const sendVerificationCode = async (to, verificationCode) => {
 
 export {
     sendVerificationCode,
+    sendAttendanceReportToEmail
 };

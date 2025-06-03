@@ -6,7 +6,8 @@ import {
     createAttendance,
     getAttendanceOfStudentForSpecificCourseInSemester,
     getAttendanceOfAllForSemesterDivisionBatchCourse,
-    markStudentAttendanceByBLEsessionUUID
+    markStudentAttendanceByBLEsessionUUID,
+    sendAttendanceReport
 } from '../controllers/attendance.controller.js';
 import { verifyAdminJWT } from '../middlewares/auth.middleware.js';
 const router = express.Router();
@@ -18,5 +19,6 @@ router.route('/update-student-attendance').put(verifyAdminJWT, updateStudentAtte
 router.route('/get-attendance-of-student').get(verifyAdminJWT, getAttendanceOfStudentForSpecificCourseInSemester)
 router.route('/get-attendance-of-all').get(verifyAdminJWT, getAttendanceOfAllForSemesterDivisionBatchCourse)
 router.route('/mark-student-attendance').post(verifyAdminJWT, markStudentAttendanceByBLEsessionUUID)
+router.route('/send-attendance-report').post(verifyAdminJWT, sendAttendanceReport)
 
 export default router;

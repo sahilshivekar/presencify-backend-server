@@ -315,7 +315,8 @@ const addStudent = asyncHandler(async (req, res) => {
         academicStatus,
         admissionYear,
         admissionType,
-        branchId
+        branchId,
+        parentEmail
     } = req.body;
     const studentImageLocalPath = req?.file?.path
     const fields = {
@@ -411,6 +412,7 @@ const addStudent = asyncHandler(async (req, res) => {
         lastName,
         email,
         phoneNumber,
+        parentEmail: parentEmail || null,
         gender: gender || null,
         dob: dobForDB,
         studentImgUrl: studentImageUrl,
@@ -440,7 +442,8 @@ const updateStudentDetails = asyncHandler(async (req, res) => {
         dob,
         schemeId,
         academicStatus,
-        branchId
+        branchId,
+        parentEmail
     } = req.body;
 
     if (!id) throw new ApiError(400, "Student ID is required");
@@ -483,6 +486,7 @@ const updateStudentDetails = asyncHandler(async (req, res) => {
     student.academicStatus = academicStatus || student.academicStatus;
     student.schemeId = schemeId || student.schemeId;
     student.branchId = branchId || student.branchId;
+    student.parentEmail = parentEmail || student.parentEmail;
 
     await student.save();
 

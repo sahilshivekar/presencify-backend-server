@@ -59,6 +59,12 @@ module.exports = {
                     unique: true,
                     field: 'phone_number',
                 },
+                parentEmail: {
+                    type: Sequelize.STRING,
+                    allowNull: true,
+                    unique: false,
+                    field: 'parent_email',
+                },
                 academicStatus: {
                     type: Sequelize.ENUM('Active', 'Drop out', 'Graduated'),
                     allowNull: false,
