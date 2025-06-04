@@ -888,6 +888,83 @@ const getAttendance = asyncHandler(async (req, res) => {
     res.status(200).json(new ApiResponse(200, "Attendance fetched successfully", attendance));
 })
 
+
+// used by students in app to fetch active attendance sheet 
+const getActiveAttendanceSheet = asyncHandler(async (req, res) => {
+    const {
+        studentId,
+        divisionId
+    } = req.query;
+
+    if (!studentId || !divisionId) {
+        throw new ApiError(400, "Student ID and Division ID are required")
+    }
+
+    const student = await Student.findByPk(studentId);
+
+    if (!student) { 
+        throw new ApiError(404, "Student not found")
+    }
+
+    const studentDivision = await StudentDivision.findOne({
+        where: {
+            studentId: studentId,
+            divisionId: divisionId,
+            endDate: null
+        }
+    })
+
+    if (!studentDivision) {
+        throw new ApiError(404, "Student's division not found")
+    }
+    console.log(studentDivision)
+    const timetable = await Timetable.findOne({
+        where: {
+            divisionId: studentDivision.divisionId
+        } 
+    });
+
+    if (!timetable) {
+        throw new ApiError(404, "Timetable not found")
+    }
+
+    const classes = await Class.findAll({
+        where: {
+            timetableId: timetable.id
+        }
+    })
+
+    if (!classes) {
+        throw new ApiError("Classes not found")
+    }
+    const classIds = classes.map(classObj => classObj.id)
+
+    const fiveMinBeforeTimeStamp = new Date().getTime() - (5 * 60 * 1000)
+
+    const activeAttendanceSheets = await Attendance.findAll({
+        where: {
+            classId: {
+                [Op.in]: classIds
+            },
+            createdAt: {
+                [Op.gte]: fiveMinBeforeTimeStamp
+            }
+        }
+    })
+
+    res
+        .status(200)
+        .json(
+            new ApiResponse(
+                200,
+                "Active attendance sheets fetched successfully",
+                activeAttendanceSheets
+            )
+        );
+
+
+})
+
 export {
     removeAttendance,
     addStudentsAttendance,
@@ -897,5 +974,6 @@ export {
     getAttendanceOfAllForSemesterDivisionBatchCourse,
     markStudentAttendanceByBLEsessionUUID,
     sendAttendanceReport,
-    getAttendance
+    getAttendance,
+    getActiveAttendanceSheet
 }

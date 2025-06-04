@@ -8,7 +8,8 @@ import {
     getAttendanceOfAllForSemesterDivisionBatchCourse,
     markStudentAttendanceByBLEsessionUUID,
     sendAttendanceReport,
-    getAttendance
+    getAttendance,
+    getActiveAttendanceSheet
 } from '../controllers/attendance.controller.js';
 import { verifyAdminJWT, verifyStaffJWT, verifyStudentJWT } from '../middlewares/auth.middleware.js';
 const router = express.Router();
@@ -24,6 +25,7 @@ router.route('/admin/get-attendance-of-all').get(verifyAdminJWT, getAttendanceOf
 router.route('/admin/mark-student-attendance').post(verifyAdminJWT, markStudentAttendanceByBLEsessionUUID)
 router.route('/admin/send-attendance-report').post(verifyAdminJWT, sendAttendanceReport)
 router.route('/admin/get-attendance').get(verifyAdminJWT, getAttendance)
+router.route('/admin/get-active-attendance-sheet').get(verifyAdminJWT, getActiveAttendanceSheet)
 
 
 
@@ -36,11 +38,13 @@ router.route('/staff/get-attendance-of-student').get(verifyStaffJWT, getAttendan
 router.route('/staff/get-attendance-of-all').get(verifyStaffJWT, getAttendanceOfAllForSemesterDivisionBatchCourse)
 router.route('/staff/get-attendance').get(verifyStaffJWT, getAttendance)
 router.route('/staff/send-attendance-report').post(verifyStaffJWT, sendAttendanceReport)
+router.route('/staff/get-active-attendance-sheet').get(verifyStaffJWT, getActiveAttendanceSheet)
 
 
 //! routes for student
 router.route('/student/get-attendance-of-student').get(verifyStudentJWT, getAttendanceOfStudentForSpecificCourseInSemester)
 router.route('/student/mark-student-attendance').post(verifyStudentJWT, markStudentAttendanceByBLEsessionUUID)
+router.route('/student/get-active-attendance-sheet').get(verifyStudentJWT, getActiveAttendanceSheet)
 
 
 //! routes for student
