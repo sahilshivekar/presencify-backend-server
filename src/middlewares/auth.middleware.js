@@ -90,10 +90,12 @@ const verifyStaffJWT = asyncHandler(async (req, _, next) => {
             req.body.staffId = staff.id
             req.body.teacherId = staff.id
         }
+        
         req.query.teacherId = staff.id
-        req.query.staffId = staff.id
-
         req.teacher = staff.dataValues;
+
+        req.query.staffId = staff.id
+        req.staff = staff.dataValues
         next()
 
     } catch (err) {

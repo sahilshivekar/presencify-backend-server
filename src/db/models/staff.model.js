@@ -6,7 +6,7 @@ import Notice from './notice.model.js';
 import TeacherTeachesCourse from './teacherTeachesCourse.model.js';
 import Class from './class.model.js';
 import Course from './course.model.js'
-
+import jwt from 'jsonwebtoken'
 
 class Staff extends Model { }
 

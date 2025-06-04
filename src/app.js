@@ -35,6 +35,7 @@ import attendanceRouter from "./routes/attendance.routes.js"
 import dropoutRouter from "./routes/dropout.routes.js"
 import studentFCMTokenRouter from "./routes/studentFCMToken.routes.js"
 import studentAuthRouter from "./routes/studentAuth.routes.js"
+import staffAuthRouter from "./routes/staffAuth.routes.js"
 
 //! routes declaration
 app.use("/api/v1/admin", adminRouter);
@@ -56,5 +57,6 @@ app.use("/api/v1/attendance", attendanceRouter);
 app.use("/api/v1/dropout", dropoutRouter);
 app.use("/api/v1/student-fcm-token", studentFCMTokenRouter);
 app.use("/api/v1/student-auth", studentAuthRouter);
+app.use("/api/v1/staff-auth", staffAuthRouter);
 
 export default app 
