@@ -20,7 +20,9 @@ import sequelize from '../config/db.connection.js';
 import { getIO } from '../socket/index.js';
 import { fromYYYYMMDDToDDMMYYYY } from "../utils/date.js";
 import { sendAttendanceReportToEmail } from "../utils/email.js";
-
+import { sendNotification } from "../utils/firebaseCloudMessaging.js";
+import StudentFCMToken from "../db/models/studentFCMToken.model.js";
+import StudentBatch from '../db/models/studentBatch.model.js';
 
 const realtimeAttendanceHelper = async (
     currStudentIds,
@@ -107,12 +109,17 @@ const createAttendance = asyncHandler(async (req, res) => {
     const {
         classId,
         BLEsessionUUID,
-        date
+        date,
+        addAttendanceManually
     } = req.body;
 
 
-    if (!classId || !date || !BLEsessionUUID) {
-        throw new ApiError(400, "Class ID, Date and BLE Session UUID are required")
+    if (!classId || !date) {
+        throw new ApiError(400, "Class ID and Date are required")
+    }
+
+    if (!addAttendanceManually && !BLEsessionUUID) {
+        throw new ApiError(400, "BLE Session UUID is required")
     }
 
     if (!moment(date, 'YYYY-MM-DD', true).isValid()) {
@@ -148,9 +155,70 @@ const createAttendance = asyncHandler(async (req, res) => {
     } else {
         const attendance = await Attendance.create({
             classId: classId,
-            BLEsessionUUID: BLEsessionUUID,
+            BLEsessionUUID: BLEsessionUUID || null,
             date: date
         });
+        if (!addAttendanceManually) {
+            // send notification on phone to students
+            let studentsToNotify = []
+            let batch = null;
+            if (classObj.batchId) {
+                batch = await Batch.findByPk(classObj.batchId);
+            }
+            const course = await Course.findByPk(classObj.courseId);
+
+
+            if (batch) {
+                studentsToNotify = await StudentBatch.findAll({
+                    where: {
+                        batchId: batch.id,
+                        endDate: null
+                    }
+                })
+            } else {
+                studentsToNotify = await StudentDivision.findAll({
+                    where: {
+                        divisionId: timetable.divisionId,
+                        endDate: null
+                    }
+                })
+            }
+
+            studentsToNotify = studentsToNotify.map(student => student.studentId)
+
+            // mark all of them initially absent so that they can be notified to update their attendance status
+            await AttendanceStudent.bulkCreate(
+                [...studentsToNotify.map(studentId => ({
+                    attendanceId: attendance.id,
+                    studentId: studentId,
+                    attendanceStatus: false
+                }))]
+            )
+
+            const studentsWithFCMToken = await StudentFCMToken.findAll({
+                where: {
+                    studentId: {
+                        [Op.in]: studentsToNotify
+                    }
+                }
+            })
+
+            studentsWithFCMToken.forEach(studentWithFCMToken => {
+                sendNotification(
+                    studentWithFCMToken.fcmToken,
+                    "Mark attendance",
+                    `Mark attendance of ${course.name} in the next 5 minutes`,
+                    {
+                        type: "AttendanceAlert",
+                        classId: classObj.id,
+                        attendanceId: attendance.id
+                    }
+                )
+            })
+
+
+        }
+
 
         res.status(201).json(new ApiResponse(201, "Attendance created successfully", attendance));
     }
@@ -196,28 +264,6 @@ const addStudentsAttendance = asyncHandler(async (req, res) => {
 
     const classObj = await Class.findByPk(attendance.classId);
     const timetable = await Timetable.findByPk(classObj.timetableId);
-    let batch = null
-    if (classObj?.batchId) {
-        batch = await Batch.findByPk(classObj.batchId)
-    }
-
-    const studentsOfDivision = await StudentDivision.findAll({
-        where: {
-            divisionId: timetable.divisionId,
-            endDate: null
-        }
-    })
-
-    const missingStudents = studentsOfDivision.filter(student => !presentStudentIds.includes(student.studentId) && !absentStudentIds.includes(student.studentId))
-
-    if (missingStudents.length > 0) {
-        throw new ApiError(400, `These student ids are missing: ${missingStudents.map(student => student.studentId)}`)
-    }
-
-    if (presentStudentIds.length + absentStudentIds.length > studentsOfDivision.length) {
-        throw new ApiError(400, `There are some student ids which do not belong to the current division`)
-    }
-
 
     // check course and semester id to know whether to update students individual channel or not
     const division = await Division.findByPk(timetable.divisionId);
@@ -660,7 +706,7 @@ const sendAttendanceReport = asyncHandler(async (req, res) => {
                 }
             })
             sendAttendanceReportToEmail(student.parentEmail, emailText)
-        
+
         } else {
             studentWithNoParentEmail.push(
                 {
@@ -688,6 +734,159 @@ const sendAttendanceReport = asyncHandler(async (req, res) => {
 })
 
 
+// following controller needed to get attendance in diff aspects    
+// use only for getting attendance from a attendance id
+const getAttendance = asyncHandler(async (req, res) => {
+    const {
+        date,
+        attendanceId,
+        classId,
+        studentId,
+        courseId,
+        semesterId,
+        divisionId,
+        batchId,
+        startDate,
+        endDate
+    } = req.query;
+
+    if (date) {
+        if (!moment(date, 'YYYY-MM-DD', true).isValid()) {
+            throw new ApiError(400, "Invalid date format")
+        }
+    }
+
+    if (studentId) {
+        const student = await Student.findByPk(studentId);
+        if (!student) {
+            throw new ApiError(404, "Student not found")
+        }
+    }
+
+    if (courseId) {
+        const course = await Course.findByPk(courseId);
+        if (!course) {
+            throw new ApiError(404, "Course not found")
+        }
+    }
+
+    if (semesterId) {
+        const semester = await Semester.findByPk(semesterId);
+        if (!semester) {
+            throw new ApiError(404, "Semester not found")
+        }
+    }
+
+    if (divisionId) {
+        const division = await Division.findByPk(divisionId);
+        if (!division) {
+            throw new ApiError(404, "Division not found")
+        }
+    }
+
+    if (attendanceId) {
+        const attendance = await Attendance.findByPk(attendanceId);
+        if (!attendance) {
+            throw new ApiError(404, "Attendance not found")
+        }
+    }
+
+    if (classId) {
+        const classObj = await Class.findByPk(classId);
+        if (!classObj) {
+            throw new ApiError(404, "Class not found")
+        }
+    }
+
+    if (courseId) {
+        const course = await Course.findByPk(courseId);
+        if (!course) {
+            throw new ApiError(404, "Course not found")
+        }
+    }
+
+    const attendance = await Attendance.findAll({
+        where: {
+            [Op.and]: [
+                ...(attendanceId ? [{ id: attendanceId }] : []),
+                ...(date ? [{ date: date }] : []),
+                ...(classId ? [{ classId: classId }] : []),
+            ],
+        },
+        include: [
+            {
+                model: Class,
+                required: true,
+                duplicating: false,
+                include: [
+                    {
+                        model: Course,
+                        required: true,
+                        duplicating: false,
+                        where: {
+                            [Op.and]: [
+                                ...(courseId ? [{ id: courseId }] : []),
+                            ]
+                        }
+                    },
+                    {
+                        model: Timetable,
+                        required: true,
+                        duplicating: false,
+                        include: [
+                            {
+                                model: Division,
+                                required: true,
+                                duplicating: false,
+                                where: {
+                                    [Op.and]: [
+                                        ...(divisionId ? [{ id: divisionId }] : []),
+                                    ]
+                                },
+                                include: [
+                                    {
+                                        model: Semester,
+                                        required: true,
+                                        duplicating: false,
+                                        where: {
+                                            [Op.and]: [
+                                                ...(semesterId ? [{ id: semesterId }] : []),
+                                            ]
+                                        }
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                model: AttendanceStudent,
+                required: true,
+                duplicating: false,
+                include: [
+                    {
+                        model: Student,
+                        required: true,
+                        duplicating: false,
+                        where: {
+                            [Op.and]: [
+                                ...(studentId ? [{ id: studentId }] : []),
+                            ]
+                        }
+                    },
+                ]
+            },
+        ]
+    })
+    // courseid, semesterid, studentId
+
+    if (!attendance) {
+        throw new ApiError(404, "Attendance not found")
+    }
+
+    res.status(200).json(new ApiResponse(200, "Attendance fetched successfully", attendance));
+})
 
 export {
     removeAttendance,
@@ -697,5 +896,6 @@ export {
     getAttendanceOfStudentForSpecificCourseInSemester,
     getAttendanceOfAllForSemesterDivisionBatchCourse,
     markStudentAttendanceByBLEsessionUUID,
-    sendAttendanceReport
+    sendAttendanceReport,
+    getAttendance
 }

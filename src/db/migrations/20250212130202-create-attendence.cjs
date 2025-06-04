@@ -24,7 +24,7 @@ module.exports = {
             },
             BLEsessionUUID: {
                 type: Sequelize.STRING,
-                allowNull: false,
+                allowNull: true,
                 field: 'ble_session_uuid'
             },
             date: {

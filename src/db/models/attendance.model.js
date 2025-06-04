@@ -29,13 +29,8 @@ Attendance.init(
         },
         BLEsessionUUID: {
             type: Sequelize.STRING,
-            allowNull: false,
-            field: 'ble_session_uuid',
-            validate: {
-                notNull: {
-                    msg: 'BLE Session UUID cannot be empty'
-                }
-            }
+            allowNull: true,
+            field: 'ble_session_uuid'
         },
         date: {
             type: Sequelize.DATEONLY,
