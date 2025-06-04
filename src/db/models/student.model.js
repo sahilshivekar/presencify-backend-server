@@ -5,6 +5,7 @@ import StudentDivision from './studentDivision.model.js';
 import StudentBatch from './studentBatch.model.js';
 import StudentSemester from './studentSemester.model.js';
 import { AttendanceStudent } from './attendance.model.js';
+import jwt from 'jsonwebtoken'
 
 class Student extends Model { }
 

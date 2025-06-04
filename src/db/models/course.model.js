@@ -99,13 +99,6 @@ Course.belongsTo(Scheme, {foreignKey: 'schemeId', targetKey: 'id'});
 Scheme.hasMany(Course, {sourceKey: 'id', foreignKey: 'schemeId'});
 
 
-Course.hasMany(TeacherTeachesCourse, { sourceKey: 'id', foreignKey: 'courseId' });
-TeacherTeachesCourse.belongsTo(Course, { foreignKey: 'courseId', targetKey: 'id' });
-
-TeacherTeachesCourse.belongsTo(Staff, { foreignKey: 'teacherId', targetKey: 'id' });
-Staff.hasMany(TeacherTeachesCourse, { sourceKey: 'id', foreignKey: 'teacherId' });
-
-
 Course.hasMany(Class, { sourceKey: 'id', foreignKey: 'courseId' });
 Class.belongsTo(Course, { foreignKey: 'courseId', targetKey: 'id' });
 

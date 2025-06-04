@@ -280,9 +280,9 @@ const getStudents = asyncHandler(async (req, res) => {
         limit: parseInt(limit, 10)
     });
     const studentNames = students.rows.map(student => student.firstName + " " + student.lastName);
-    console.log(studentNames)
-    console.log("rows length", students.rows.length)
-    console.log("count from returned object", students.count)
+    // console.log(studentNames)
+    // console.log("rows length", students.rows.length)
+    // console.log("count from returned object", students.count)
     res
         .status(200)
         .json(
