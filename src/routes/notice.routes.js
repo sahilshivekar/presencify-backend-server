@@ -9,22 +9,17 @@ import {
 } from '../controllers/notice.controller.js';
 import { ApiResponse } from '../utils/ApiResponse.js';
 import multer from 'multer';
-import { verifyAdminJWT } from '../middlewares/auth.middleware.js';
+import { verifyAdminJWT, verifyStaffJWT, verifyStudentJWT } from '../middlewares/auth.middleware.js';
 
 
 const router = express.Router();
 
-router.route('/get-notices').get(verifyAdminJWT, getNotices);
-
-router.route('/get-notice-by-id').get(verifyAdminJWT, getNoticeById);
-
-router.route('/add-notice').post(verifyAdminJWT, upload.single('noticeImageFile'), addNotice);
-
-router.route('/update-notice').put(verifyAdminJWT, upload.single('noticeImageFile'), updateNotice);
-
-router.route('/delete-notice').delete(verifyAdminJWT, deleteNotice);
-
-// Error handling middleware for the file limit exceed.
+// ! routes for admin
+router.route('/admin/get-notices').get(verifyAdminJWT, getNotices);
+router.route('/admin/get-notice-by-id').get(verifyAdminJWT, getNoticeById);
+router.route('/admin/add-notice').post(verifyAdminJWT, upload.single('noticeImageFile'), addNotice);
+router.route('/admin/update-notice').put(verifyAdminJWT, upload.single('noticeImageFile'), updateNotice);
+router.route('/admin/delete-notice').delete(verifyAdminJWT, deleteNotice);
 router.use((err, req, res, next) => {
     if (err instanceof multer.MulterError) {
         if (err.code === 'LIMIT_FILE_SIZE') {
@@ -32,5 +27,18 @@ router.use((err, req, res, next) => {
         }
     }
 });
+
+
+// ! routes for staff
+router.route('/staff/get-notices').get(verifyStaffJWT, getNotices);
+router.route('/staff/get-notice-by-id').get(verifyStaffJWT, getNoticeById);
+
+
+
+// ! routes for student
+router.route('/student/get-notices').get(verifyStudentJWT, getNotices);
+router.route('/student/get-notice-by-id').get(verifyStudentJWT, getNoticeById);
+
+
 
 export default router;

@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { verifyAdminJWT } from "../middlewares/auth.middleware.js"
+import { verifyAdminJWT, verifyStaffJWT, verifyStudentJWT } from "../middlewares/auth.middleware.js"
 
 import {
     getBranches,
@@ -11,10 +11,19 @@ import {
 
 const router = Router();
 
-router.route('/get-branches').get(verifyAdminJWT, getBranches) 
-router.route('/add').post(verifyAdminJWT, addBranch);
-router.route('/update').put(verifyAdminJWT, updateBranch)       
-router.route('/remove').delete(verifyAdminJWT, removeBranch);   
-router.route('/get-branch-by-id').get(verifyAdminJWT, getBranchById);
+// ! routes for admin
+router.route('/admin/get-branches').get(verifyAdminJWT, getBranches) 
+router.route('/admin/get-branch-by-id').get(verifyAdminJWT, getBranchById);
+router.route('/admin/add').post(verifyAdminJWT, addBranch);
+router.route('/admin/update').put(verifyAdminJWT, updateBranch)       
+router.route('/admin/remove').delete(verifyAdminJWT, removeBranch);   
+
+// ! routes for staff
+router.route('/staff/get-branches').get(verifyStaffJWT, getBranches) 
+router.route('/staff/get-branch-by-id').get(verifyStaffJWT, getBranchById);
+
+// ! routes for student
+router.route('/student/get-branches').get(verifyStudentJWT, getBranches) 
+router.route('/student/get-branch-by-id').get(verifyStudentJWT, getBranchById);
 
 export default router;

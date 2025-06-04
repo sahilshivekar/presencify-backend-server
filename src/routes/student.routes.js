@@ -18,42 +18,47 @@ import {
     getStudentDivisionsById,    
     getStudentBatchesById
 } from '../controllers/student.controller.js';
-import { verifyAdminJWT } from '../middlewares/auth.middleware.js';
+import { verifyAdminJWT, verifyStaffJWT, verifyStudentJWT } from '../middlewares/auth.middleware.js';
 import { upload } from '../middlewares/multer.middleware.js';
 const router = express.Router();
 
-router.route('/get-students').get(verifyAdminJWT, getStudents)
+// ! routes for admin
+router.route('/admin/get-students').get(verifyAdminJWT, getStudents)
+router.route('/admin/get-student-details-by-id').get(verifyAdminJWT, getStudentDetailsById)
+router.route('/admin/update-details').put(verifyAdminJWT, updateStudentDetails)
+router.route('/admin/update-image').put(verifyAdminJWT, upload.single('studentImageFile'), updateStudentImage)
+router.route('/admin/remove-image').delete(verifyAdminJWT, removeStudentImage)
+router.route('/admin/get-student-semesters-by-id').get(verifyAdminJWT, getStudentSemestersById)
+router.route('/admin/get-student-divisions-by-id').get(verifyAdminJWT, getStudentDivisionsById)
+router.route('/admin/get-student-batches-by-id').get(verifyAdminJWT, getStudentBatchesById)
+router.route('/admin/update-password').put(verifyAdminJWT, updateStudentPassword)
+router.route('/admin/remove').delete(verifyAdminJWT, removeStudent)
+router.route('/admin/add-to-semester').post(verifyAdminJWT, addStudentToSemester)
+router.route('/admin/remove-from-semester').delete(verifyAdminJWT, removeStudentFromSemester)
+router.route('/admin/add-to-division').post(verifyAdminJWT, addStudentToDivision)
+router.route('/admin/change-division').put(verifyAdminJWT, changeStudentDivision)
+router.route('/admin/add-to-batch').post(verifyAdminJWT, addStudentToBatch)
+router.route('/admin/change-batch').put(verifyAdminJWT, changeStudentBatch)
+router.route('/admin/add').post(verifyAdminJWT, upload.single('studentImageFile'), addStudent)
 
-router.route('/add').post(verifyAdminJWT, upload.single('studentImageFile'), addStudent)
+// ! routes for staff
+router.route('/staff/get-students').get(verifyStaffJWT, getStudents)
+router.route('/staff/get-student-details-by-id').get(verifyStaffJWT, getStudentDetailsById)
+router.route('/staff/get-student-semesters-by-id').get(verifyStaffJWT, getStudentSemestersById)
+router.route('/staff/get-student-divisions-by-id').get(verifyStaffJWT, getStudentDivisionsById)
+router.route('/staff/get-student-batches-by-id').get(verifyStaffJWT, getStudentBatchesById)
 
-router.route('/update-details').put(verifyAdminJWT, updateStudentDetails)
 
-router.route('/update-password').put(verifyAdminJWT, updateStudentPassword)
+// ! routes for student
+router.route('/student/get-students').get(verifyStudentJWT, getStudents)
+router.route('/student/get-student-details-by-id').get(verifyStudentJWT, getStudentDetailsById)
+router.route('/student/update-details').put(verifyStudentJWT, updateStudentDetails)
+router.route('/student/update-image').put(verifyStudentJWT, upload.single('studentImageFile'), updateStudentImage)
+router.route('/student/remove-image').delete(verifyStudentJWT, removeStudentImage)
+router.route('/student/get-student-semesters-by-id').get(verifyStudentJWT, getStudentSemestersById)
+router.route('/student/get-student-divisions-by-id').get(verifyStudentJWT, getStudentDivisionsById)
+router.route('/student/get-student-batches-by-id').get(verifyStudentJWT, getStudentBatchesById)
 
-router.route('/update-image').put(verifyAdminJWT, upload.single('studentImageFile'), updateStudentImage)
 
-router.route('/remove-image').delete(verifyAdminJWT, removeStudentImage)
-
-router.route('/remove').delete(verifyAdminJWT, removeStudent)
-
-router.route('/get-student-details-by-id').get(verifyAdminJWT, getStudentDetailsById)
-
-router.route('/add-to-semester').post(verifyAdminJWT, addStudentToSemester)
-
-router.route('/remove-from-semester').delete(verifyAdminJWT, removeStudentFromSemester)
-
-router.route('/add-to-division').post(verifyAdminJWT, addStudentToDivision)
-
-router.route('/change-division').put(verifyAdminJWT, changeStudentDivision)
-
-router.route('/add-to-batch').post(verifyAdminJWT, addStudentToBatch)
-
-router.route('/change-batch').put(verifyAdminJWT, changeStudentBatch)
-
-router.route('/get-student-semesters-by-id').get(verifyAdminJWT, getStudentSemestersById)
-
-router.route('/get-student-divisions-by-id').get(verifyAdminJWT, getStudentDivisionsById)
-
-router.route('/get-student-batches-by-id').get(verifyAdminJWT, getStudentBatchesById)
 
 export default router;

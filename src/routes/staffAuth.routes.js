@@ -10,11 +10,12 @@ import {
 import { verifyStaffJWT } from '../middlewares/auth.middleware.js';
 const router = Router();
 
-router.route('/update-staff-password').put(verifyStaffJWT, updateStaffPassword);
-router.route('/login-staff').post(loginStaff);
-router.route('/send-verification-code-to-email').post(sendVerificationCodeToEmail);
-router.route('/verify-code').post(verifyStaffJWT, verifyCode);
-router.route('/get-access-token').get(getAccessToken);
-router.route('/logout').post(verifyStaffJWT, logout);
+// ! routes for staff
+router.route('/staff/update-staff-password').put(verifyStaffJWT, updateStaffPassword);
+router.route('/staff/login-staff').post(loginStaff);
+router.route('/staff/send-verification-code-to-email').post(sendVerificationCodeToEmail);
+router.route('/staff/verify-code').post(verifyStaffJWT, verifyCode);
+router.route('/staff/get-access-token').get(getAccessToken);
+router.route('/staff/logout').post(verifyStaffJWT, logout);
 
 export default router;

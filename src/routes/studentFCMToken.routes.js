@@ -4,12 +4,17 @@ import {
     updateStudentFCMTokens,
     removeStudentFCMTokens
 } from '../controllers/studentFCMToken.controller.js';
-import { verifyAdminJWT } from '../middlewares/auth.middleware.js';
+import { verifyAdminJWT, verifyStudentJWT } from '../middlewares/auth.middleware.js';
 
 const router = Router();
 
-router.route('/add-student-fcm-token').post(verifyAdminJWT, addStudentFCMTokens)
-router.route('/update-student-fcm-token').put(verifyAdminJWT, updateStudentFCMTokens)
-router.route('/remove-student-fcm-token').delete(verifyAdminJWT, removeStudentFCMTokens)
+// ! routes for admin
+router.route('/admin/add-student-fcm-token').post(verifyAdminJWT, addStudentFCMTokens)
+router.route('/admin/update-student-fcm-token').put(verifyAdminJWT, updateStudentFCMTokens)
+router.route('/admin/remove-student-fcm-token').delete(verifyAdminJWT, removeStudentFCMTokens)
+
+// ! routes for student
+router.route('/student/add-student-fcm-token').post(verifyStudentJWT, addStudentFCMTokens)
+router.route('/student/update-student-fcm-token').put(verifyStudentJWT, updateStudentFCMTokens)
 
 export default router

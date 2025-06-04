@@ -6,13 +6,24 @@ import {
     updateRoom,
     removeRoom
 } from '../controllers/room.controller.js';
-import { verifyAdminJWT } from '../middlewares/auth.middleware.js';
+import { verifyAdminJWT, verifyStaffJWT, verifyStudentJWT } from '../middlewares/auth.middleware.js';
 const router = express.Router();
 
-router.route('/add-room').post(verifyAdminJWT, addRoom);
-router.route('/get-rooms').get(verifyAdminJWT, getRooms);
-router.route('/get-room-by-id').get(verifyAdminJWT, getRoomById);
-router.route('/update-room').put(verifyAdminJWT, updateRoom);
-router.route('/remove-room').delete(verifyAdminJWT, removeRoom);
+// ! routes for admin
+router.route('/admin/get-rooms').get(verifyAdminJWT, getRooms);
+router.route('/admin/get-room-by-id').get(verifyAdminJWT, getRoomById);
+router.route('/admin/add-room').post(verifyAdminJWT, addRoom);
+router.route('/admin/update-room').put(verifyAdminJWT, updateRoom);
+router.route('/admin/remove-room').delete(verifyAdminJWT, removeRoom);
+
+// ! routes for staff
+router.route('/staff/get-rooms').get(verifyStaffJWT, getRooms);
+router.route('/staff/get-room-by-id').get(verifyStaffJWT, getRoomById);
+
+
+// ! routes for student
+router.route('/student/get-rooms').get(verifyStudentJWT, getRooms);
+router.route('/student/get-room-by-id').get(verifyStudentJWT, getRoomById);
+
 
 export default router;

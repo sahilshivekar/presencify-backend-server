@@ -10,11 +10,12 @@ import {
 import { verifyStudentJWT } from '../middlewares/auth.middleware.js';
 const router = Router();
 
-router.route('/update-student-password').put(verifyStudentJWT, updateStudentPassword);
-router.route('/login-student').post(loginStudent);
-router.route('/send-verification-code-to-email').post(sendVerificationCodeToEmail);
-router.route('/verify-code').post(verifyStudentJWT, verifyCode);
-router.route('/get-access-token').get(getAccessToken);
-router.route('/logout').post(verifyStudentJWT, logout);
+// ! routes for student
+router.route('/student/update-student-password').put(verifyStudentJWT, updateStudentPassword);
+router.route('/student/login-student').post(loginStudent);
+router.route('/student/send-verification-code-to-email').post(sendVerificationCodeToEmail);
+router.route('/student/verify-code').post(verifyStudentJWT, verifyCode);
+router.route('/student/get-access-token').get(getAccessToken);
+router.route('/student/logout').post(verifyStudentJWT, logout);
 
 export default router;
