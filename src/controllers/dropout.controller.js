@@ -143,8 +143,33 @@ const getDropoutById = asyncHandler(async (req, res) => {
         )
 })
 
+const getDropoutDetailsOfStudent = asyncHandler(async (req, res) => {
+    const { studentId } = req.query
+
+    if (!studentId) {
+        throw new ApiError(400, "Student id is required")
+    }
+
+    const dropout = await Dropout.findOne({
+        where: {
+            studentId: studentId
+        }
+    })
+
+    res
+        .status(200)
+        .json(
+            new ApiResponse(
+                200,
+                "Dropout fetched successfully",
+                dropout
+            )
+        )
+})
+
 export {
     addStudentToDropout,
     removeStudentFromDropout,
-    getDropoutById
+    getDropoutById,
+    getDropoutDetailsOfStudent
 }
