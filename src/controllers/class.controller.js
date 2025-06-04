@@ -19,6 +19,7 @@ import { sendNotification } from '../utils/firebaseCloudMessaging.js';
 import StudentFCMToken from '../db/models/studentFCMToken.model.js';
 import { getTimeInTwelveHourFormat } from '../utils/time.js';
 import { fromYYYYMMDDToDDMMYYYY } from '../utils/date.js';
+import StudentBatch from '../db/models/studentBatch.model.js';
 
 const getYearFromSemesterNumber = (semesterNumber) => {
     if (semesterNumber === 1 || semesterNumber === 2) return 'FE'
@@ -1078,7 +1079,7 @@ const addExtraClass = asyncHandler(async (req, res) => {
     }
 
     studentsToNotify = studentsToNotify.map(student => student.studentId)
-    
+
     const studentsWithFCMToken = await StudentFCMToken.findAll({
         where: {
             studentId: {
@@ -1086,14 +1087,15 @@ const addExtraClass = asyncHandler(async (req, res) => {
             }
         }
     })
-    
+
     studentsWithFCMToken.forEach(studentWithFCMToken => {
         sendNotification(
             studentWithFCMToken.fcmToken,
             "Extra lecture added",
             `Extra lecture from ${getTimeInTwelveHourFormat(classObj.startTime)} to ${getTimeInTwelveHourFormat(classObj.endTime)} on ${classObj.dayOfWeek} of ${course.name} is sheduled`,
             {
-                type: "ExtraLectureAdded"
+                type: "ExtraLectureAdded",
+                classId: classObj.id,
             }
         )
     })
@@ -1128,6 +1130,17 @@ const cancelClass = asyncHandler(async (req, res) => {
 
     if (date > classObj.activeTill || date < classObj.activeFrom) {
         throw new ApiError(400, "Date is not in bounds of active from and active till of class");
+    }
+
+    const isAlreadyCancelled = await CancelledClass.findOne({
+        where: {
+            classId: classId,
+            date: date
+        }
+    })
+
+    if (isAlreadyCancelled) {
+        throw new ApiError(400, "Class is already cancelled")
     }
 
     await CancelledClass.create(
@@ -1181,7 +1194,9 @@ const cancelClass = asyncHandler(async (req, res) => {
             "Lecture cancelled",
             `Lecture of ${course.name} from ${classObj.startTime} to ${classObj.endTime} on ${fromYYYYMMDDToDDMMYYYY(date)} is cancelled`,
             {
-                type: "LectureCancelled"
+                type: "LectureCancelled",
+                classId: classObj.id,
+                cancelDate: fromYYYYMMDDToDDMMYYYY(date)
             }
         )
     })
@@ -1190,8 +1205,11 @@ const cancelClass = asyncHandler(async (req, res) => {
 });
 
 
+// should check for the division and batch too
 const getCancelledClasses = asyncHandler(async (req, res) => {
     const {
+        divisionId,  // must provide either division or batch
+        batchId,
         date,
         page = 1,
         limit = 10
@@ -1204,12 +1222,37 @@ const getCancelledClasses = asyncHandler(async (req, res) => {
         throw new ApiError(400, "Invalid date format");
     }
 
+    let timetableOfDivision = null
+    if (divisionId) {
+        timetableOfDivision = await Timetable.findOne({
+            where: {
+                divisionId: divisionId
+            }
+        })
+        if(!timetableOfDivision) {
+            throw new ApiError(404, "Timetable not found")
+        }
+    }
+
     const cancelledClasses = await CancelledClass.findAll({
         where: {
             [Op.and]: [
-                ...(date ? [{ date: date }] : []),
+                ...(date ? [{ date: date }] : [])
             ]
         },
+        include: [
+            {
+                model: Class,
+                required: divisionId || batchId ? true : false, 
+                duplicating: false,
+                where: {
+                    [Op.and]: [
+                        ...(divisionId ? [{ timetableId: timetableOfDivision.id }] : []),
+                        ...(batchId ? [{ batchId: batchId }] : [])
+                    ]
+                }
+            }
+        ],
         offset: offset,
         limit: parseInt(limit, 10)
     })
