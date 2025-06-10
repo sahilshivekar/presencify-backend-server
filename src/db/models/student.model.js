@@ -140,20 +140,20 @@ Student.init(
         //         }
         //     }
         // },
-        academicStatus: {
-            type: Sequelize.ENUM('Active', 'Drop out', 'Graduated'),
-            allowNull: false,
-            field: 'academic_status',
-            validate: {
-                notNull: {
-                    msg: 'Academic status cannot be null'
-                },
-                isIn: {
-                    args: [['Active', 'Drop out', 'Graduated']],
-                    msg: 'Academic status must be Active, Drop out or Graduated'
-                }
-            }
-        },
+        // academicStatus: {
+        //     type: Sequelize.ENUM('Active', 'Graduated'),
+        //     allowNull: false,
+        //     field: 'academic_status',
+        //     validate: {
+        //         notNull: {
+        //             msg: 'Academic status cannot be null'
+        //         },
+        //         isIn: {
+        //             args: [['Active', 'Graduated']],
+        //             msg: 'Academic status must be Active or Graduated'
+        //         }
+        //     }
+        // },
         password: {
             type: Sequelize.STRING,
             allowNull: false,

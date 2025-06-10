@@ -65,11 +65,11 @@ module.exports = {
                     unique: false,
                     field: 'parent_email',
                 },
-                academicStatus: {
-                    type: Sequelize.ENUM('Active', 'Drop out', 'Graduated'),
-                    allowNull: false,
-                    field: 'academic_status',
-                },
+                // academicStatus: {
+                //     type: Sequelize.ENUM('Active', 'Graduated'),
+                //     allowNull: false,
+                //     field: 'academic_status',
+                // },
                 admissionYear: {
                     type: Sequelize.INTEGER,
                     allowNull: false,

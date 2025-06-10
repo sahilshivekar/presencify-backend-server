@@ -312,7 +312,7 @@ const addStudent = asyncHandler(async (req, res) => {
         // password,
         // confirmPassword,
         schemeId,
-        academicStatus,
+        // academicStatus,
         admissionYear,
         admissionType,
         branchId,
@@ -327,7 +327,7 @@ const addStudent = asyncHandler(async (req, res) => {
         "Phone Number": phoneNumber,
         // "Password": password,
         // "Confirm Password": confirmPassword,
-        "Academic Status": academicStatus,
+        // "Academic Status": academicStatus,
         "Scheme": schemeId,
         "Admission Year": admissionYear,
         "Admission Type": admissionType,
@@ -356,10 +356,10 @@ const addStudent = asyncHandler(async (req, res) => {
         throw new ApiError(400, "Invalid gender value. Must be Male, Female, or Other");
     }
 
-    if (!['Active', 'Drop out', 'Graduated'].includes(academicStatus)) {
-        if (studentImageLocalPath) fs.unlinkSync(studentImageLocalPath);
-        throw new ApiError(400, "Invalid academic status. Must be 'Active', 'Drop out', 'Graduated'");
-    }
+    // if (!['Active', 'Drop out', 'Graduated'].includes(academicStatus)) {
+    //     if (studentImageLocalPath) fs.unlinkSync(studentImageLocalPath);
+    //     throw new ApiError(400, "Invalid academic status. Must be 'Active', 'Drop out', 'Graduated'");
+    // }
 
     if (!isValidPhoneNumber(phoneNumber)) {
         if (studentImageLocalPath) fs.unlinkSync(studentImageLocalPath);
@@ -418,7 +418,7 @@ const addStudent = asyncHandler(async (req, res) => {
         studentImgUrl: studentImageUrl,
         studentImgPublicId: studentImagePublicId,
         // password,
-        academicStatus,
+        // academicStatus,
         schemeId,
         admissionYear: Number(admissionYear) || null,
         admissionType: admissionType,
@@ -441,7 +441,7 @@ const updateStudentDetails = asyncHandler(async (req, res) => {
         phoneNumber,
         dob,
         schemeId,
-        academicStatus,
+        // academicStatus,
         branchId,
         parentEmail
     } = req.body;
@@ -483,7 +483,7 @@ const updateStudentDetails = asyncHandler(async (req, res) => {
     student.gender = gender || student.gender;
     student.phoneNumber = phoneNumber || student.phoneNumber;
     student.dob = dobForDB || student.dob;
-    student.academicStatus = academicStatus || student.academicStatus;
+    // student.academicStatus = academicStatus || student.academicStatus;
     student.schemeId = schemeId || student.schemeId;
     student.branchId = branchId || student.branchId;
     student.parentEmail = parentEmail || student.parentEmail;
