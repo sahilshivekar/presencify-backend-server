@@ -150,7 +150,7 @@ const getDropoutDetailsOfStudent = asyncHandler(async (req, res) => {
         throw new ApiError(400, "Student id is required")
     }
 
-    const dropout = await Dropout.findOne({
+    const dropouts = await Dropout.findAll({
         where: {
             studentId: studentId
         }
@@ -162,7 +162,7 @@ const getDropoutDetailsOfStudent = asyncHandler(async (req, res) => {
             new ApiResponse(
                 200,
                 "Dropout fetched successfully",
-                dropout
+                dropouts
             )
         )
 })
