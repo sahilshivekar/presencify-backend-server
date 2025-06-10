@@ -80,7 +80,7 @@ module.exports = {
                 gender: index % 2 === 0 ? 'Male' : 'Female',
                 email: `${firstName.toLowerCase()}.${lastName.toLowerCase()}@gmail.com`,
                 phone_number: `+91${9000000000 + studentCounter++}`, // student counter will never reach 999999999 so this will be fine
-                academic_status: 'Active',
+                // academic_status: 'Active',
                 password: password,
                 refresh_token: null,
                 student_img_url: null,
