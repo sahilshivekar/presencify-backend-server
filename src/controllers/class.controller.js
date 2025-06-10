@@ -184,6 +184,7 @@ const addClass = asyncHandler(async (req, res) => {
         where: {
             [Op.and]: [
                 { instructorId: instructorId }, // same instructor
+                { isExtraClass: false },
                 { dayOfWeek: dayOfWeek },
                 {
                     [Op.or]: [
@@ -247,6 +248,7 @@ const addClass = asyncHandler(async (req, res) => {
         where: {
             [Op.and]: [
                 { roomId: roomId }, // same room
+                { isExtraClass: false },
                 { dayOfWeek: dayOfWeek },
                 {
                     [Op.or]: [
@@ -312,6 +314,7 @@ const addClass = asyncHandler(async (req, res) => {
             where: {
                 [Op.and]: [
                     { timetableId: timetableId }, // same division
+                    { isExtraClass: false },
                     { dayOfWeek: dayOfWeek },
                     // { classType: "Lecture" },
                     {
@@ -379,6 +382,7 @@ const addClass = asyncHandler(async (req, res) => {
             where: {
                 [Op.and]: [
                     { timetableId: timetableId }, // same division
+                    { isExtraClass: false },
                     {
                         batchId: {
                             [Op.or]: [
@@ -1044,6 +1048,286 @@ const addExtraClass = asyncHandler(async (req, res) => {
         throw new ApiError(400, `Active till date is out of bounds because semester start date is ${semester.startDate} and semester end date is ${semester.endDate}`)
     }
 
+
+    //!check if instructor is teaching at diff class at same time
+    const instructorConflict = await Class.findOne({
+        where: {
+            [Op.and]: [
+                { instructorId: instructorId }, // same instructor
+                { dayOfWeek: dayOfWeek },
+                { isExtraClass: true },
+                {
+                    [Op.or]: [
+                        {
+                            startTime: {
+                                [Op.gt]: startTime, // Existing class starts inside the new class
+                                [Op.lt]: endTime
+                            }
+                        },
+                        {
+                            endTime: {
+                                [Op.gt]: startTime,  // Existing class ends inside the new class
+                                [Op.lt]: endTime
+                            }
+                        },
+                        {
+                            startTime: {
+                                [Op.lte]: startTime // Existing class fully contains the new class
+                            },
+                            endTime: {
+                                [Op.gte]: endTime // Existing class fully contains the new class
+                            }
+                        }
+                    ],
+                },
+                {
+                    [Op.or]: [
+                        {
+                            activeFrom: {
+                                [Op.gte]: activeFrom,  // Existing class starts inside the new class period
+                                [Op.lte]: activeTill
+                            }
+                        },
+                        {
+                            activeTill: {
+                                [Op.gte]: activeFrom,  // Existing class ends inside the new class period
+                                [Op.lte]: activeTill
+                            }
+                        },
+                        {
+                            activeFrom: {
+                                [Op.lte]: activeFrom  // Existing class fully contains the new class
+                            },
+                            activeTill: {
+                                [Op.gte]: activeTill
+                            }
+                        }
+                    ],
+                }
+            ]
+        }
+    })
+
+
+    if (instructorConflict) {
+        const msg = await getThrowableConflictMessage(instructorConflict, "Instructor unavailable at this time: ")
+        throw new ApiError(400, msg)
+    }
+
+    //!check if at the same time there is only one class going on in a room
+    const roomConflict = await Class.findOne({
+        where: {
+            [Op.and]: [
+                { roomId: roomId }, // same room
+                { isExtraClass: true },
+                { dayOfWeek: dayOfWeek },
+                {
+                    [Op.or]: [
+                        {
+                            startTime: {
+                                [Op.gt]: startTime, // Existing class starts inside the new class
+                                [Op.lt]: endTime
+                            }
+                        },
+                        {
+                            endTime: {
+                                [Op.gt]: startTime,  // Existing class ends inside the new class
+                                [Op.lt]: endTime
+                            }
+                        },
+                        {
+                            startTime: {
+                                [Op.lte]: startTime // Existing class fully contains the new class
+                            },
+                            endTime: {
+                                [Op.gte]: endTime // Existing class fully contains the new class
+                            }
+                        }
+                    ]
+                },
+                {
+                    [Op.or]: [
+                        {
+                            activeFrom: {
+                                [Op.gte]: activeFrom,  // Existing class starts inside the new class period
+                                [Op.lte]: activeTill
+                            }
+                        },
+                        {
+                            activeTill: {
+                                [Op.gte]: activeFrom,  // Existing class ends inside the new class period
+                                [Op.lte]: activeTill
+                            }
+                        },
+                        {
+                            activeFrom: {
+                                [Op.lte]: activeFrom  // Existing class fully contains the new class
+                            },
+                            activeTill: {
+                                [Op.gte]: activeTill
+                            }
+                        }
+                    ]
+                }
+            ]
+        }
+    })
+
+    if (roomConflict) {
+        const msg = await getThrowableConflictMessage(roomConflict, "Room unavailable at this time: ")
+        throw new ApiError(400, msg)
+    }
+
+
+    //!check if at the same time there is another class going on for same division
+    if (batch == null) {
+        const multipleLecturesConflict = await Class.findOne({
+            where: {
+                [Op.and]: [
+                    { timetableId: timetableId }, // same division
+                    { isExtraClass: true },
+                    { dayOfWeek: dayOfWeek },
+                    // { classType: "Lecture" },
+                    {
+                        [Op.or]: [
+                            {
+                                startTime: {
+                                    [Op.gt]: startTime, // Existing class starts inside the new class
+                                    [Op.lt]: endTime
+                                }
+                            },
+                            {
+                                endTime: {
+                                    [Op.gt]: startTime,  // Existing class ends inside the new class
+                                    [Op.lt]: endTime
+                                }
+                            },
+                            {
+                                startTime: {
+                                    [Op.lte]: startTime // Existing class fully contains the new class
+                                },
+                                endTime: {
+                                    [Op.gte]: endTime // Existing class fully contains the new class
+                                }
+                            }
+                        ],
+                    },
+                    {
+                        [Op.or]: [
+                            {
+                                activeFrom: {
+                                    [Op.gte]: activeFrom,  // Existing class starts inside the new class period
+                                    [Op.lte]: activeTill
+                                }
+                            },
+                            {
+                                activeTill: {
+                                    [Op.gte]: activeFrom,  // Existing class ends inside the new class period
+                                    [Op.lte]: activeTill
+                                }
+                            },
+                            {
+                                activeFrom: {
+                                    [Op.lte]: activeFrom  // Existing class fully contains the new class
+                                },
+                                activeTill: {
+                                    [Op.gte]: activeTill
+                                }
+                            }
+                        ],
+                    }
+                ]
+            }
+        })
+
+        if (multipleLecturesConflict) {
+            const msg = await getThrowableConflictMessage(multipleLecturesConflict, "Time slot isn't free: ")
+            throw new ApiError(400, msg)
+        }
+    }
+
+
+    //!check if at the same time there is another practical added for same batch
+
+    if (batch != null) {
+        const multiplePracticalsConflict = await Class.findOne({
+            where: {
+                [Op.and]: [
+                    { timetableId: timetableId }, // same division
+                    { isExtraClass: true },
+                    {
+                        batchId: {
+                            [Op.or]: [
+                                { [Op.eq]: null }, // no batch means a lecture is going on
+                                { [Op.eq]: batchId } // same batch's practical is going on
+                            ]
+                        }
+                    },
+                    { dayOfWeek: dayOfWeek },
+                    // {
+                    //     classType: {
+                    //         [Op.in]: ["Tutorial", "Practical"]
+                    //     }
+                    // },
+                    {
+                        [Op.or]: [
+                            {
+                                startTime: {
+                                    [Op.gt]: startTime, // Existing class starts inside the new class
+                                    [Op.lt]: endTime
+                                }
+                            },
+                            {
+                                endTime: {
+                                    [Op.gt]: startTime,  // Existing class ends inside the new class
+                                    [Op.lt]: endTime
+                                }
+                            },
+                            {
+                                startTime: {
+                                    [Op.lte]: startTime // Existing class fully contains the new class
+                                },
+                                endTime: {
+                                    [Op.gte]: endTime // Existing class fully contains the new class
+                                }
+                            }
+                        ]
+                    },
+                    {
+                        [Op.or]: [
+                            {
+                                activeFrom: {
+                                    [Op.gte]: activeFrom,  // Existing class starts inside the new class period
+                                    [Op.lte]: activeTill
+                                }
+                            },
+                            {
+                                activeTill: {
+                                    [Op.gte]: activeFrom,  // Existing class ends inside the new class period
+                                    [Op.lte]: activeTill
+                                }
+                            },
+                            {
+                                activeFrom: {
+                                    [Op.lte]: activeFrom  // Existing class fully contains the new class
+                                },
+                                activeTill: {
+                                    [Op.gte]: activeTill
+                                }
+                            }
+                        ]
+                    }
+                ]
+
+            }
+        })
+
+        if (multiplePracticalsConflict) {
+            const msg = await getThrowableConflictMessage(multiplePracticalsConflict, "Time slot isn't free: ")
+            throw new ApiError(400, msg)
+        }
+    }
+
     const classObj = await Class.create(
         {
             instructorId: instructorId || null,
@@ -1229,7 +1513,7 @@ const getCancelledClasses = asyncHandler(async (req, res) => {
                 divisionId: divisionId
             }
         })
-        if(!timetableOfDivision) {
+        if (!timetableOfDivision) {
             throw new ApiError(404, "Timetable not found")
         }
     }
@@ -1243,7 +1527,7 @@ const getCancelledClasses = asyncHandler(async (req, res) => {
         include: [
             {
                 model: Class,
-                required: divisionId || batchId ? true : false, 
+                required: divisionId || batchId ? true : false,
                 duplicating: false,
                 where: {
                     [Op.and]: [
