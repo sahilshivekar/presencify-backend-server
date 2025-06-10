@@ -16,5 +16,6 @@ router.route('/admin/remove-student-fcm-token').delete(verifyAdminJWT, removeStu
 // ! routes for student
 router.route('/student/add-student-fcm-token').post(verifyStudentJWT, addStudentFCMTokens)
 router.route('/student/update-student-fcm-token').put(verifyStudentJWT, updateStudentFCMTokens)
+router.route('/student/remove-student-fcm-token').delete(verifyStudentJWT, removeStudentFCMTokens)
 
 export default router
