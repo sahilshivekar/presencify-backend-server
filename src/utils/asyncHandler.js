@@ -12,13 +12,24 @@ const asyncHandler = (fn) => async (req, res, next) => {
                 err?.errors[0]?.type == "unique violation"
             )
         ) {
-            err.message = err.errors[0].message
+            err.code = err.errors[0].type.replace(/ /g, "_").toUpperCase()
+            err.message = "Validation failed for one or many fields"
+            err.errors = err.errors.map(e => {
+                return {
+                    message: e.message,
+                    code: e.path.toUpperCase() + "_" + err.code,
+                    field: e.path.replace(e.path.split("_")[0] + "_", ""),
+                }
+            })
         }
+
 
         res.status(err?.statusCode || 500).json({
             statusCode: err?.statusCode || 500,
             success: false,
-            message: err?.message
+            message: err?.message,
+            code: err?.code,
+            errors: err?.errors,
         })
     }
 }

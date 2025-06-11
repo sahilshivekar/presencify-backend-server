@@ -1,8 +1,7 @@
 import { Sequelize, Model } from 'sequelize';
 import sequelize from '../../config/db.connection.js';
 import bcrypt from 'bcrypt';
-import Event from './event.model.js';
-import Notice from './notice.model.js';
+
 import TeacherTeachesCourse from './teacherTeachesCourse.model.js';
 import Class from './class.model.js';
 import Course from './course.model.js'
@@ -191,12 +190,6 @@ Staff.init(
         tableName: 'staff',
     }
 );
-
-Staff.hasMany(Event, {sourceKey: 'id', foreignKey: 'uploadedBy'});
-Event.belongsTo(Staff, {targetKey: 'id', foreignKey: 'uploadedBy'});
-
-Staff.hasMany(Notice, {sourceKey: 'id', foreignKey: 'uploadedBy'});
-Notice.belongsTo(Staff, {targetKey: 'id', foreignKey: 'uploadedBy'});
 
 Staff.hasMany(Class, {sourceKey: 'id', foreignKey: 'instructorId'});
 Class.belongsTo(Staff, {targetKey: 'id', foreignKey: 'instructorId'});
