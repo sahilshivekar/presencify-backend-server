@@ -363,6 +363,7 @@ const addStudent = asyncHandler(async (req, res) => {
 
     if (!isValidPhoneNumber(phoneNumber)) {
         if (studentImageLocalPath) fs.unlinkSync(studentImageLocalPath);
+        console.log(phoneNumber)
         throw new ApiError(400, "Invalid phone number.");
     }
 
@@ -424,8 +425,11 @@ const addStudent = asyncHandler(async (req, res) => {
         admissionType: admissionType,
         branchId: branchId
     });
-
-    res.status(201).json(new ApiResponse(201, "Student added successfully", { student: addedStudent }));
+    if(addedStudent){
+        console.log("student added")
+        console.log(addedStudent)
+    }
+    res.status(201).json(new ApiResponse(201, "Student added successfully", addedStudent));
 });
 
 
