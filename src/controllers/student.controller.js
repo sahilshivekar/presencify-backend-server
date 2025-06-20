@@ -447,7 +447,10 @@ const updateStudentDetails = asyncHandler(async (req, res) => {
         schemeId,
         // academicStatus,
         branchId,
-        parentEmail
+        parentEmail,
+        prn,
+        admissionYear,
+        admissionType
     } = req.body;
 
     if (!id) throw new ApiError(400, "Student ID is required");
@@ -491,6 +494,9 @@ const updateStudentDetails = asyncHandler(async (req, res) => {
     student.schemeId = schemeId || student.schemeId;
     student.branchId = branchId || student.branchId;
     student.parentEmail = parentEmail || student.parentEmail;
+    student.prn = prn || student.prn
+    student.admissionYear = admissionYear || student.admissionYear
+    student.admissionType = admissionType || student.admissionType
 
     await student.save();
 
@@ -601,7 +607,7 @@ const getStudentDetailsById = asyncHandler(async (req, res) => {
             }
         ]
     });
-
+    console.log(student)
     if (!student) throw new ApiError(404, "Student not found");
 
     res

@@ -58,7 +58,7 @@ Student.init(
             field: 'middle_name'
         },
         dob: {
-            type: Sequelize.DATE,
+            type: Sequelize.DATEONLY,
             allowNull: true,
             field: 'dob',
             validate: {
