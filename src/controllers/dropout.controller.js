@@ -61,7 +61,7 @@ const addStudentToDropout = asyncHandler(async (req, res) => {
 })
 
 const removeStudentFromDropout = asyncHandler(async (req, res) => {
-    const { studentId, academicStartYear, academicEndYear } = req.body
+    const { studentId, academicStartYear, academicEndYear } = req.query
 
     if (!studentId || !academicEndYear || !academicStartYear) {
         throw new ApiError(400, "StudentId and academic year is required")

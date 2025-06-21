@@ -104,6 +104,7 @@ const getStaff = asyncHandler(async (req, res) => {
         limit: parseInt(limit, 10),
         distinct: true,
     });
+    console.log(staff.rows)
     res
         .status(200)
         .json(
@@ -261,7 +262,7 @@ const addStaff = asyncHandler(async (req, res) => {
             new ApiResponse(
                 201,
                 'Staff member added successfully',
-                { staffMember: addedStaffMember }
+                addedStaffMember
             )
         )
 
@@ -404,7 +405,7 @@ const updateStaffImage = asyncHandler(async (req, res) => {
 })
 
 const removeImage = asyncHandler(async (req, res) => {
-    const { id } = req.body;
+    const { id } = req.query;
 
     if (req.admin && !id) {
         throw new ApiError(400, "Staff id is required");
@@ -441,7 +442,7 @@ const removeImage = asyncHandler(async (req, res) => {
 //* remove staff
 const removeStaff = asyncHandler(async (req, res) => {
 
-    const { id } = req.body;
+    const { id } = req.query;
 
     if (req.admin && !id) {
         throw new ApiError(400, "Staff id is required");

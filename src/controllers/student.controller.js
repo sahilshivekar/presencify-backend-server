@@ -551,7 +551,7 @@ const updateStudentImage = asyncHandler(async (req, res) => {
 
 //* Remove student image
 const removeStudentImage = asyncHandler(async (req, res) => {
-    const { id } = req.body;
+    const { id } = req.query;
 
     if (!id) throw new ApiError(400, "Student ID is required");
 
@@ -566,13 +566,13 @@ const removeStudentImage = asyncHandler(async (req, res) => {
     student.studentImgPublicId = null;
 
     await student.save();
-
+    console.log(student)
     res.status(200).json(new ApiResponse(200, "Student image deleted successfully", student));
 });
 
 //* Remove student
 const removeStudent = asyncHandler(async (req, res) => {
-    const { id } = req.body;
+    const { id } = req.query;
 
     if (!id) throw new ApiError(400, "Student ID is required");
 
@@ -879,7 +879,7 @@ const addStudentToSemester = asyncHandler(async (req, res) => {
 });
 
 const removeStudentFromSemester = asyncHandler(async (req, res) => {
-    const { studentSemesterId } = req.body;
+    const { studentSemesterId } = req.query;
 
     if (!studentSemesterId) {
         throw new ApiError(400, "StudentSemester id is required");

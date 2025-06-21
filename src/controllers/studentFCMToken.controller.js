@@ -94,7 +94,7 @@ const updateStudentFCMTokens = asyncHandler(async (req, res) => {
 const removeStudentFCMTokens = asyncHandler(async (req, res) => {
     const {
         studentId
-    } = req.body;
+    } = req.query;
 
     if (!studentId) {
         throw new ApiError(400, "Student id is required");
