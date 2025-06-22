@@ -30,9 +30,8 @@ const getStudents = asyncHandler(async (req, res) => {
         batchId,
         schemeId,
         divisionId,
-        academicStartYearOfDropYear,
-        academicEndYearOfDropYear,
-        // academicStatuses,
+        dropoutAcademicStartYear,
+        dropoutAcademicEndYear,
         admissionTypes,
         admissionYear,
         currentBatch, // can be true or false 
@@ -48,9 +47,7 @@ const getStudents = asyncHandler(async (req, res) => {
     if (branchIds && !Array.isArray(branchIds)) {
         branchIds = [branchIds];
     }
-    // if (academicStatuses && !Array.isArray(academicStatuses)) {
-    //     academicStatuses = [academicStatuses];
-    // }
+
     if (semesterNumbers && !Array.isArray(semesterNumbers)) {
         semesterNumbers = [semesterNumbers];
     }
@@ -98,18 +95,6 @@ const getStudents = asyncHandler(async (req, res) => {
         };
     }
 
-    // ! here 
-    // if (academicStatuses) {
-    //     academicStatuses.forEach(academicStatus => {
-    //         if (!['Active', 'Drop out', 'Graduated'].includes(academicStatus)) {
-    //             throw new ApiError(400, "Invalid academic status. Must be 'Active', 'Drop out', 'Graduated'");
-    //         }
-    //     })
-    //     academicStatusFilterClause.academicStatus = {
-    //         [Op.in]: academicStatuses
-    //     };
-    // }
-
     if (schemeId) {
         schemeFilterClause.id = Number(schemeId);
     }
@@ -148,6 +133,25 @@ const getStudents = asyncHandler(async (req, res) => {
             }
         }
         academicEndYearOfSemester = Number(academicEndYearOfSemester)
+    }
+
+    if (dropoutAcademicStartYear) {
+        if (isNaN(Number(dropoutAcademicStartYear))) {
+            throw new ApiError(400, "dropout academic start year must be a number");
+        }
+        dropoutAcademicStartYear = Number(dropoutAcademicStartYear)
+    }
+
+    if (dropoutAcademicEndYear) {
+        if (isNaN(Number(dropoutAcademicEndYear))) {
+            throw new ApiError(400, "dropout academic end year must be a number");
+        }
+        if (dropoutAcademicStartYear && !isNaN(Number(dropoutAcademicStartYear))) {
+            if (Number(dropoutAcademicEndYear) <= Number(dropoutAcademicStartYear)) {
+                throw new ApiError(400, "dropout academic end year must be greater than dropout academic start year");
+            }
+        }
+        dropoutAcademicEndYear = Number(dropoutAcademicEndYear)
     }
 
     const currentDate = new Date()
@@ -262,15 +266,15 @@ const getStudents = asyncHandler(async (req, res) => {
             },
             {
                 model: Dropout,
-                required: academicEndYearOfDropYear || academicStartYearOfDropYear ? true : false,
+                required: dropoutAcademicEndYear || dropoutAcademicStartYear ? true : false,
                 duplicating: false,
                 where: {
                     [Op.and]: [
-                        ...(academicEndYearOfDropYear ? [{
-                            academicEndYear: { [Op.lte]: academicEndYearOfDropYear }
+                        ...(dropoutAcademicEndYear ? [{
+                            academicEndYear: { [Op.lte]: dropoutAcademicEndYear }
                         }] : []),
-                        ...(academicStartYearOfDropYear ? [{
-                            academicStartYear: { [Op.gte]: academicStartYearOfDropYear }
+                        ...(dropoutAcademicStartYear ? [{
+                            academicStartYear: { [Op.gte]: dropoutAcademicStartYear }
                         }] : [])
                     ]
                 }
