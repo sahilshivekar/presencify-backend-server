@@ -54,7 +54,7 @@ const getDivisions = asyncHandler(async (req, res) => {
     }
 
     const offset = (parseInt(page, 10) - 1) * parseInt(limit, 10);
-    const divisions = await Division.findAll({
+    const divisions = await Division.findAndCountAll({
         where: {
             [Op.and]: [
                 searchClause,
@@ -83,7 +83,10 @@ const getDivisions = asyncHandler(async (req, res) => {
         ...(limit ? { limit } : {})
     });
 
-    res.status(200).json(new ApiResponse(200, "Divisions fetched successfully", divisions));
+    res.status(200).json(new ApiResponse(200, "Divisions fetched successfully", {
+        divisions: divisions.rows,
+        totalCount: divisions.count
+    }));
 });
 
 const addDivision = asyncHandler(async (req, res) => {

@@ -54,7 +54,7 @@ const getTimetables = asyncHandler(async (req, res) => {
         }
     }
 
-    const timetables = await Timetable.findAll({
+    const timetables = await Timetable.findAndCountAll({
         include: [
             {
                 model: Division,
@@ -92,7 +92,10 @@ const getTimetables = asyncHandler(async (req, res) => {
         limit: parseInt(limit, 10)
     });
 
-    res.status(200).json(new ApiResponse(200, "Timetables retrieved successfully.", timetables));
+    res.status(200).json(new ApiResponse(200, "Timetables retrieved successfully.", {
+        timetables: timetables.rows,
+        totalCount: timetables.count
+    }));
 });
 
 //! Get timetable by id

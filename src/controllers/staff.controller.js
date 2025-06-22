@@ -453,11 +453,13 @@ const removeStaff = asyncHandler(async (req, res) => {
     if (!staff) {
         throw new ApiError(404, "Staff not found");
     }
-    const deletedImage = await deleteFromCloudinary(staff.staffImagePublicId)
-
-    if (!deletedImage) {
-        throw new ApiError(500, "Some issue occured while deleting the image")
+    if (staff.staffImagePublicId) {
+        const deletedImage = await deleteFromCloudinary(staff.staffImagePublicId)
+        if (!deletedImage) {
+            throw new ApiError(500, "Some issue occured while deleting the image")
+        }
     }
+
 
     await staff.destroy();
 

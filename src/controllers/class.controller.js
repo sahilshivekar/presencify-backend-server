@@ -499,7 +499,7 @@ const getClasses = asyncHandler(async (req, res) => {
 
     const offset = (parseInt(page, 10) - 1) * parseInt(limit, 10);
 
-    const classes = await Class.findAll({
+    const classes = await Class.findAndCountAll({
         where: {
             [Op.and]: [
                 ...(timetableId ? [{ timetableId: timetableId }] : []),
@@ -578,7 +578,10 @@ const getClasses = asyncHandler(async (req, res) => {
         limit: limit
     })
 
-    res.status(200).json(new ApiResponse(200, "Classes retrieved successfully.", classes));
+    res.status(200).json(new ApiResponse(200, "Classes retrieved successfully.", {
+        classes: classes.rows,
+        totalCount: classes.count
+    }));
 });
 
 const getClassById = asyncHandler(async (req, res) => {
@@ -1518,7 +1521,7 @@ const getCancelledClasses = asyncHandler(async (req, res) => {
         }
     }
 
-    const cancelledClasses = await CancelledClass.findAll({
+    const cancelledClasses = await CancelledClass.findAndCountAll({
         where: {
             [Op.and]: [
                 ...(date ? [{ date: date }] : [])
@@ -1541,7 +1544,10 @@ const getCancelledClasses = asyncHandler(async (req, res) => {
         limit: parseInt(limit, 10)
     })
 
-    res.status(200).json(new ApiResponse(200, "Cancelled classes retrieved successfully.", cancelledClasses));
+    res.status(200).json(new ApiResponse(200, "Cancelled classes retrieved successfully.", {
+        cancelledClasses: cancelledClasses.rows,
+        totalCount: cancelledClasses.count
+    }));
 });
 
 

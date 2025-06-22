@@ -56,7 +56,7 @@ const getCourses = asyncHandler(async (req, res) => {
 
     const offset = (parseInt(page, 10) - 1) * parseInt(limit, 10);
 
-    const courses = await Course.findAll({
+    const courses = await Course.findAndCountAll({
         where: whereClause,
         include: [
             {
@@ -92,7 +92,10 @@ const getCourses = asyncHandler(async (req, res) => {
             new ApiResponse(
                 200,
                 "Courses retrieved successfully.",
-                courses
+                {
+                    courses: courses.rows,
+                    totalCount: courses.count
+                }
             )
         );
 });

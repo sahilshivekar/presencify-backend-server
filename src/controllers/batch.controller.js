@@ -56,7 +56,7 @@ const getBatches = asyncHandler(async (req, res) => {
 
     const offset = (parseInt(page, 10) - 1) * parseInt(limit, 10);
 
-    const batches = await Batch.findAll({
+    const batches = await Batch.findAndCountAll({
         where: {
             [Op.and]: [
                 searchClause,
@@ -92,7 +92,10 @@ const getBatches = asyncHandler(async (req, res) => {
         ...(limit ? { limit: Number(limit) } : {})
     });
 
-    res.status(200).json(new ApiResponse(200, "Batches fetched successfully", batches));
+    res.status(200).json(new ApiResponse(200, "Batches fetched successfully", {
+        batches: batches.rows,
+        totalCount: batches.count
+    }));
 
 })
 

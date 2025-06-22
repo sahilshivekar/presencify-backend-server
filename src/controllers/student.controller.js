@@ -551,11 +551,11 @@ const updateStudentImage = asyncHandler(async (req, res) => {
 
 //* Remove student image
 const removeStudentImage = asyncHandler(async (req, res) => {
-    const { id } = req.query;
+    const { studentId } = req.query;
 
-    if (!id) throw new ApiError(400, "Student ID is required");
-
-    const student = await Student.findByPk(id);
+    if (!studentId) throw new ApiError(400, "Student ID is required");
+    
+    const student = await Student.findByPk(studentId);
     if (!student) throw new ApiError(404, "Student not found");
 
     if (student.studentImgPublicId == null) throw new ApiError(400, "There is no student image uploaded to remove");

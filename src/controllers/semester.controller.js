@@ -56,7 +56,7 @@ const getSemesters = asyncHandler(async (req, res) => {
 
     const offset = (parseInt(page, 10) - 1) * parseInt(limit, 10);
 
-    const semesters = await Semester.findAll({
+    const semesters = await Semester.findAndCountAll({
         where: whereClause,
         include: [
             {
@@ -80,7 +80,10 @@ const getSemesters = asyncHandler(async (req, res) => {
             new ApiResponse(
                 200,
                 "Semesters retrieved successfully.",
-                semesters
+                {
+                    semesters: semesters.rows,
+                    totalCount: semesters.count
+                }
             )
         );
 });
