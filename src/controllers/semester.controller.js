@@ -20,7 +20,8 @@ const getSemesters = asyncHandler(async (req, res) => {
         branchId,
         schemeId,
         page = 1,
-        limit = 10
+        limit = 10,
+        getAll = "false",
     } = req.query;
 
     const whereClause = {};
@@ -70,8 +71,8 @@ const getSemesters = asyncHandler(async (req, res) => {
                 duplicating: false,
             }
         ],
-        limit: parseInt(limit, 10),
-        offset: offset,
+        ...(limit && getAll == "false" ? { offset: offset, } : {}),
+        ...(limit && getAll == "false" ? { limit } : {})
     });
 
     res

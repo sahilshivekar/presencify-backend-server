@@ -25,7 +25,8 @@ const getRooms = asyncHandler(async (req, res) => {
         sortBy = 'roomNumber',
         sortOrder = 'ASC',
         page = 1,
-        limit = 10
+        limit = 10,
+        getAll = "false",
     } = req.query;
 
 
@@ -51,8 +52,8 @@ const getRooms = asyncHandler(async (req, res) => {
     const rooms = await Room.findAndCountAll({
         where: searchClause,
         order: [[sortBy, sortOrder]],
-        offset: offset,
-        limit: parseInt(limit, 10)
+        ...(limit && getAll == "false" ? { limit } : {}),
+        ...(limit && getAll == "false" ? { offset } : {})
     });
 
     res.status(200).json(new ApiResponse(200, "Rooms retrieved successfully.", {

@@ -36,7 +36,8 @@ const getStaff = asyncHandler(async (req, res) => {
         searchQuery,
         courseId,
         page = 1,
-        limit = 10
+        limit = 10,
+        getAll = "false",
     } = req.query;
 
     const offset = (parseInt(page, 10) - 1) * parseInt(limit, 10);
@@ -100,8 +101,8 @@ const getStaff = asyncHandler(async (req, res) => {
     const staff = await Staff.findAndCountAll({
         where: searchClause,
         include: includeClause,
-        offset: offset,
-        limit: parseInt(limit, 10),
+        ...(limit && getAll == "false" ? { offset: offset, } : {}),
+        ...(limit && getAll == "false" ? { limit: parseInt(limit, 10) } : {}),
         distinct: true,
     });
     console.log(staff.rows)

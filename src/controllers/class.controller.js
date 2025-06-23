@@ -494,7 +494,8 @@ const getClasses = asyncHandler(async (req, res) => {
         semesterId,
         isExtraClass,
         page = 1,
-        limit = 10
+        limit = 10,
+        getAll = "false",
     } = req.query;
 
     const offset = (parseInt(page, 10) - 1) * parseInt(limit, 10);
@@ -574,8 +575,8 @@ const getClasses = asyncHandler(async (req, res) => {
                 duplicating: false
             }
         ],
-        offset: offset,
-        limit: limit
+        ...(limit && getAll == "false" ? { offset: offset, } : {}),
+        ...(limit && getAll == "false" ? { limit: parseInt(limit, 10) } : {})
     })
 
     res.status(200).json(new ApiResponse(200, "Classes retrieved successfully.", {
@@ -1499,7 +1500,8 @@ const getCancelledClasses = asyncHandler(async (req, res) => {
         batchId,
         date,
         page = 1,
-        limit = 10
+        limit = 10,
+        getAll = "false",
     } = req.query;
 
     const offset = (parseInt(page, 10) - 1) * parseInt(limit, 10);
@@ -1540,8 +1542,8 @@ const getCancelledClasses = asyncHandler(async (req, res) => {
                 }
             }
         ],
-        offset: offset,
-        limit: parseInt(limit, 10)
+        ...(limit && getAll == "false" ? { offset: offset, } : {}),
+        ...(limit && getAll == "false" ? { limit: parseInt(limit, 10) } : {})
     })
 
     res.status(200).json(new ApiResponse(200, "Cancelled classes retrieved successfully.", {

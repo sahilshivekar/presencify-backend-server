@@ -40,7 +40,8 @@ const getStudents = asyncHandler(async (req, res) => {
         divisionCode,
         batchCode,
         page = 1,
-        limit = 10
+        limit = 10,
+        getAll = "false"
     } = req.query;
 
     // converting form data raw values to arrays bcz if there is only one value in parameter then it will not be converted to array
@@ -280,10 +281,10 @@ const getStudents = asyncHandler(async (req, res) => {
                 }
             }
         ],
-        offset: offset,
-        limit: parseInt(limit, 10)
+        ...(limit && getAll == "false" ? { offset: offset, } : {}),
+        ...(limit && getAll == "false" ? { limit: parseInt(limit, 10) } : {})
     });
-    const studentNames = students.rows.map(student => student.firstName + " " + student.lastName);
+    // const studentNames = students.rows.map(student => student.firstName + " " + student.lastName);
     // console.log(studentNames)
     // console.log("rows length", students.rows.length)
     // console.log("count from returned object", students.count)

@@ -20,7 +20,8 @@ const getCourses = asyncHandler(async (req, res) => {
         semesterNumber,
         schemeId,
         page = 1,
-        limit = 10
+        limit = 10,
+        getAll = "false",
         // how to show optional subject while adding courses for semester will be handled in frontend
     } = req.query;
 
@@ -82,8 +83,8 @@ const getCourses = asyncHandler(async (req, res) => {
                 }
             }
         ],
-        limit: parseInt(limit, 10),
-        offset: offset,
+        ...(limit && getAll == "false" ? { offset: offset, } : {}),
+        ...(limit && getAll == "false" ? { limit: parseInt(limit, 10) } : {})
     });
 
     res

@@ -17,7 +17,8 @@ const getBatches = asyncHandler(async (req, res) => {
         academicEndYear,
         searchQuery,
         page = 1,
-        limit,
+        limit = 10,
+        getAll = "false",
     } = req.query;
 
     const searchClause = {}
@@ -88,8 +89,8 @@ const getBatches = asyncHandler(async (req, res) => {
                 },
             ]
         },
-        ...(limit ? { offset: offset, } : {}),
-        ...(limit ? { limit: Number(limit) } : {})
+        ...(limit && getAll == "false" ? { offset: offset, } : {}),
+        ...(limit && getAll == "false" ? { limit } : {})
     });
 
     res.status(200).json(new ApiResponse(200, "Batches fetched successfully", {
