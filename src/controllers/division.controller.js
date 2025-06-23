@@ -8,7 +8,82 @@ import Branch from '../db/models/branch.model.js';
 import Scheme from '../db/models/scheme.model.js';
 const getDivisions = asyncHandler(async (req, res) => {
 
-  
+    const {
+        semesterNumber,
+        branchId,
+        semesterId,
+        academicStartYear,
+        academicEndYear,
+        searchQuery,
+        page = 1,
+        limit = 10,
+        getAll = "false",
+    } = req.query;
+
+    const searchClause = {}
+
+    if (searchQuery) {
+        searchClause.divisionCode = {
+            [Op.iLike]: `%${searchQuery}%`
+        }
+    }
+
+    const semesterWhereClause = {}
+
+    if (semesterNumber) {
+        semesterWhereClause.semesterNumber = {
+            [Op.eq]: semesterNumber
+        }
+    }
+
+    if (branchId) {
+        semesterWhereClause.branchId = {
+            [Op.eq]: branchId
+        }
+    }
+
+    if (academicStartYear) {
+        semesterWhereClause.academicStartYear = {
+            [Op.gte]: academicStartYear
+        }
+    }
+
+    if (academicEndYear) {
+        semesterWhereClause.academicEndYear = {
+            [Op.lte]: academicEndYear
+        }
+    }
+
+    const offset = (parseInt(page, 10) - 1) * parseInt(limit, 10);
+    const divisions = await Division.findAndCountAll({
+        where: {
+            [Op.and]: [
+                searchClause,
+                ...(semesterId ? [{ semesterId }] : []),
+            ]
+        },
+        include: {
+            model: Semester,
+            required: true,
+            where: semesterWhereClause,
+            duplicating: false,
+            include: [
+                {
+                    model: Branch,
+                    required: true,
+                    duplicating: false,
+                },
+                {
+                    model: Scheme,
+                    required: true,
+                    duplicating: false,
+                }
+            ]
+        },
+        ...(limit ? { offset: offset, } : {}),
+        ...(limit && getAll == "false" ? { limit } : {})
+    });
+
     res.status(200).json(new ApiResponse(200, "Divisions fetched successfully", {
         divisions: divisions.rows,
         totalCount: divisions.count
