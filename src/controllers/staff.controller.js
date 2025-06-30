@@ -708,6 +708,17 @@ const addTeachingSubject = asyncHandler(async (req, res) => {
         throw new ApiError(404, "Course not found");
     }
 
+    const alreadyAssigned = await TeacherTeachesCourse.findOne({
+        where: {
+            teacherId: staffId,
+            courseId: courseId,
+        }
+    });
+
+    if(alreadyAssigned) {
+        throw new ApiError(400, "Course is already assigned to this staff member")
+    }
+
     const teacherTeachesCourseEntry = await TeacherTeachesCourse.create({
         teacherId: staffId,
         courseId: courseId,

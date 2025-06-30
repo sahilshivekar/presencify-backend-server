@@ -92,7 +92,7 @@ const getBatches = asyncHandler(async (req, res) => {
         ...(limit && getAll == "false" ? { offset: offset, } : {}),
         ...(limit && getAll == "false" ? { limit } : {})
     });
-
+    
     res.status(200).json(new ApiResponse(200, "Batches fetched successfully", {
         batches: batches.rows,
         totalCount: batches.count

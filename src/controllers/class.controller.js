@@ -20,6 +20,7 @@ import StudentFCMToken from '../db/models/studentFCMToken.model.js';
 import { getTimeInTwelveHourFormat } from '../utils/time.js';
 import { fromYYYYMMDDToDDMMYYYY } from '../utils/date.js';
 import StudentBatch from '../db/models/studentBatch.model.js';
+import TeacherTeachesCourse from '../db/models/teacherTeachesCourse.model.js';
 
 const getYearFromSemesterNumber = (semesterNumber) => {
     if (semesterNumber === 1 || semesterNumber === 2) return 'FE'
@@ -177,6 +178,22 @@ const addClass = asyncHandler(async (req, res) => {
 
     if (activeTill > semester.endDate || activeTill < semester.startDate) {
         throw new ApiError(400, `Active till date is out of bounds because semester start date is ${semester.startDate} and semester end date is ${semester.endDate}`)
+    }
+
+    //! check if course is teached by the instructor
+    if (!course) {
+        throw new ApiError(404, "Course not found");
+    }
+
+    const teacherTeachesCourse = await TeacherTeachesCourse.findOne({
+        where: {
+            teacherId: instructorId,
+            courseId: courseId
+        }
+    })
+
+    if (!teacherTeachesCourse) {
+        throw new ApiError(400, "Instructor is not teaching this course")
     }
 
     //!check if instructor is teaching at diff class at same time

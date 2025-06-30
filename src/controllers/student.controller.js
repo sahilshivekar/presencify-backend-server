@@ -27,6 +27,7 @@ const getStudents = asyncHandler(async (req, res) => {
         semesterNumbers,
         academicStartYearOfSemester,
         academicEndYearOfSemester,
+        semesterId,
         batchId,
         schemeId,
         divisionId,
@@ -171,12 +172,12 @@ const getStudents = asyncHandler(async (req, res) => {
         include: [
             {
                 model: StudentSemester,
-                required: semesterNumbers || academicStartYearOfSemester || academicEndYearOfSemester ? true : false,
+                required: semesterNumbers || academicStartYearOfSemester || academicEndYearOfSemester || semesterId ? true : false,
                 duplicating: false,
                 include: [
                     {
                         model: Semester,
-                        required: semesterNumbers || academicStartYearOfSemester || academicEndYearOfSemester ? true : false,
+                        required: semesterNumbers || academicStartYearOfSemester || academicEndYearOfSemester || semesterId ? true : false,
                         where: {
                             [Op.and]: [
                                 ...(semesterNumbers ? [{
@@ -201,7 +202,11 @@ const getStudents = asyncHandler(async (req, res) => {
                                     academicEndYear: {
                                         [Op.lte]: academicEndYearOfSemester
                                     }
+                                }] : []),
+                                ...(semesterId ? [{
+                                    id: semesterId    
                                 }] : [])
+
                             ]
                         },
                         duplicating: false,
@@ -238,7 +243,7 @@ const getStudents = asyncHandler(async (req, res) => {
             },
             {
                 model: StudentBatch,
-                required: batchCode || batchId == {} ? true : false,
+                required: batchCode || batchId ? true : false,
                 duplicating: false,
                 where: {
                     [Op.and]: [
