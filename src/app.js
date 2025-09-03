@@ -1,10 +1,10 @@
 import express from "express"
 import cors from "cors"
 import cookieParser from "cookie-parser"
-import config from '../config/config.js';
+import { config } from './config/config.js';
 const app = express()
 import xss from 'xss-clean';
-import morgan from '../config/morgan.js';
+import { successHandler, errorHandler } from './config/morgan.js';
 import helmet from 'helmet';
 import compression from 'compression';
 
@@ -15,8 +15,8 @@ app.use(cors({
 }))
 
 if (config.env !== 'test') {
-  app.use(morgan.successHandler);
-  app.use(morgan.errorHandler);
+    app.use(successHandler);
+    app.use(errorHandler);
 }
 
 // set security HTTP headers
@@ -35,7 +35,7 @@ app.use(cookieParser())
 
 // limit repeated failed requests to auth endpoints
 if (config.env === 'production') {
-  app.use('/api/v1/auth', authLimiter);
+    app.use('/api/v1/auth', authLimiter);
 }
 
 //! routes import
