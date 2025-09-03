@@ -7,15 +7,19 @@ import {
     getAccessToken,
     logout,
 } from '../controllers/teacherAuth.controller.js';
-import { verifyTeacherJWT } from '../middlewares/auth.middleware.js';
+import { verifyJWT } from '../middlewares/auth.middleware.js';
+import { ROLES } from '../config/roles.js';
+
 const router = Router();
 
-// ! routes for teacher
-router.route('/teacher/update-teacher-password').put(verifyTeacherJWT, updateTeacherPassword);
-router.route('/teacher/login-teacher').post(loginTeacher);
-router.route('/teacher/send-verification-code-to-email').post(sendVerificationCodeToEmail);
-router.route('/teacher/verify-code').post(verifyTeacherJWT, verifyCode);
-router.route('/teacher/get-access-token').get(getAccessToken);
-router.route('/teacher/logout').post(verifyTeacherJWT, logout);
+// Public authentication routes (no authentication required)
+router.route('/login').post(loginTeacher);
+router.route('/send-verification-code').post(sendVerificationCodeToEmail);
+router.route('/access-token').get(getAccessToken);
+
+// Secured authentication routes (teacher authentication required)
+router.route('/update-password').put(verifyJWT([ROLES.TEACHER]), updateTeacherPassword);
+router.route('/verify-code').post(verifyJWT([ROLES.TEACHER]), verifyCode);
+router.route('/logout').post(verifyJWT([ROLES.TEACHER]), logout);
 
 export default router;

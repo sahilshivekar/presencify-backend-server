@@ -1,6 +1,5 @@
 import { Router } from 'express';
-import { verifyAdminJWT, verifyTeacherJWT, verifyStudentJWT } from "../middlewares/auth.middleware.js"
-const router = Router();
+import { verifyJWT } from "../middlewares/auth.middleware.js";
 import {
     getUniversities,
     addUniversity,
@@ -8,23 +7,18 @@ import {
     removeUniversity,
     getUniversityById
 } from '../controllers/university.controller.js';
+import { ROLES } from '../config/roles.js';
 
+const router = Router();
 
-//!  secured routes
+// Basic CRUD operations
+router.route('/')
+    .get(verifyJWT([ROLES.ADMIN, ROLES.TEACHER, ROLES.STUDENT]), getUniversities)
+    .post(verifyJWT([ROLES.ADMIN]), addUniversity);
 
-// ! routes for admin
-router.route('/admin/get-universities').get(verifyAdminJWT, getUniversities) 
-router.route('/admin/get-university-by-id').get(verifyAdminJWT, getUniversityById);
-router.route('/admin/add').post(verifyAdminJWT, addUniversity);
-router.route('/admin/update').put(verifyAdminJWT, updateUniversity)       
-router.route('/admin/remove').delete(verifyAdminJWT, removeUniversity);
+router.route('/:id')
+    .get(verifyJWT([ROLES.ADMIN, ROLES.TEACHER, ROLES.STUDENT]), getUniversityById)
+    .put(verifyJWT([ROLES.ADMIN]), updateUniversity)
+    .delete(verifyJWT([ROLES.ADMIN]), removeUniversity);
 
-// ! routes for teacher
-router.route('/teacher/get-universities').get(verifyTeacherJWT, getUniversities) 
-router.route('/teacher/get-university-by-id').get(verifyTeacherJWT, getUniversityById);
-
-
-// ! routes for student
-router.route('/student/get-universities').get(verifyStudentJWT, getUniversities) 
-router.route('/student/get-university-by-id').get(verifyStudentJWT, getUniversityById);
 export default router;

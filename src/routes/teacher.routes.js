@@ -12,45 +12,35 @@ import {
     addTeachingSubject,
     removeTeachingSubject
 } from '../controllers/teacher.controller.js';
-import { verifyAdminJWT, verifyTeacherJWT, verifyStudentJWT } from '../middlewares/auth.middleware.js';
+import { verifyJWT } from '../middlewares/auth.middleware.js';
+import { ROLES } from '../config/roles.js';
 import { upload } from '../middlewares/multer.middleware.js';
 
 const router = express.Router();
 
-// ! routes for admin
-router.route('/admin/get-teacher').get(verifyAdminJWT, getTeacher)
-router.route('/admin/get-teacher-by-id').get(verifyAdminJWT, getTeacherById)
-router.route('/admin/update-details').put(verifyAdminJWT, updateTeacherDetails)
-router.route('/admin/update-image').put(verifyAdminJWT, upload.single('teacherImageFile'), updateTeacherImage)
-router.route('/admin/remove-image').delete(verifyAdminJWT, removeImage)
-router.route('/admin/get-teaching-subjects').get(verifyAdminJWT, getTeachingSubjects)
-router.route('/admin/update-password').put(verifyAdminJWT, updateTeacherPassword)
-router.route('/admin/add').post(verifyAdminJWT, upload.single('teacherImageFile'), addTeacher)
-router.route('/admin/remove').delete(verifyAdminJWT, removeTeacher)
-router.route('/admin/add-teaching-subject').post(verifyAdminJWT, addTeachingSubject)
-router.route('/admin/remove-teaching-subject').delete(verifyAdminJWT, removeTeachingSubject)
+// Basic CRUD operations
+router.route('/')
+    .get(verifyJWT([ROLES.ADMIN, ROLES.TEACHER, ROLES.STUDENT]), getTeacher)
+    .post(verifyJWT([ROLES.ADMIN]), upload.single('teacherImageFile'), addTeacher)
+    .delete(verifyJWT([ROLES.ADMIN]), removeTeacher);
 
+router.route('/:id')
+    .get(verifyJWT([ROLES.ADMIN, ROLES.TEACHER, ROLES.STUDENT]), getTeacherById)
+    .put(verifyJWT([ROLES.ADMIN, ROLES.TEACHER]), updateTeacherDetails);
 
+// Teacher profile image management
+router.route('/image')
+    .put(verifyJWT([ROLES.ADMIN, ROLES.TEACHER]), upload.single('teacherImageFile'), updateTeacherImage)
+    .delete(verifyJWT([ROLES.ADMIN, ROLES.TEACHER]), removeImage);
 
+// Password management (admin only)
+router.route('/password')
+    .put(verifyJWT([ROLES.ADMIN]), updateTeacherPassword);
 
-
-// ! routes for teacher
-router.route('/teacher/get-teacher').get(verifyTeacherJWT, getTeacher)
-router.route('/teacher/get-teacher-by-id').get(verifyTeacherJWT, getTeacherById)
-router.route('/teacher/get-teaching-subjects').get(verifyTeacherJWT, getTeachingSubjects)
-router.route('/teacher/update-details').put(verifyTeacherJWT, updateTeacherDetails)
-router.route('/teacher/update-image').put(verifyTeacherJWT, upload.single('teacherImageFile'), updateTeacherImage)
-router.route('/teacher/remove-image').delete(verifyTeacherJWT, removeImage)
-
-
-
-
-// ! routes for student
-router.route('/student/get-teacher').get(verifyStudentJWT, getTeacher)
-router.route('/student/get-teacher-by-id').get(verifyStudentJWT, getTeacherById)
-router.route('/student/get-teaching-subjects').get(verifyStudentJWT, getTeachingSubjects)
-
-
-
+// Teaching subjects management
+router.route('/subjects')
+    .get(verifyJWT([ROLES.ADMIN, ROLES.TEACHER, ROLES.STUDENT]), getTeachingSubjects)
+    .post(verifyJWT([ROLES.ADMIN]), addTeachingSubject)
+    .delete(verifyJWT([ROLES.ADMIN]), removeTeachingSubject);
 
 export default router;

@@ -1,6 +1,5 @@
 import { Router } from 'express';
-import { verifyAdminJWT, verifyTeacherJWT, verifyStudentJWT } from "../middlewares/auth.middleware.js"
-
+import { verifyJWT } from "../middlewares/auth.middleware.js";
 import {
     getBranches,
     addBranch,
@@ -8,22 +7,18 @@ import {
     removeBranch,
     getBranchById
 } from '../controllers/branch.controller.js';
+import { ROLES } from '../config/roles.js';
 
 const router = Router();
 
-// ! routes for admin
-router.route('/admin/get-branches').get(verifyAdminJWT, getBranches) 
-router.route('/admin/get-branch-by-id').get(verifyAdminJWT, getBranchById);
-router.route('/admin/add').post(verifyAdminJWT, addBranch);
-router.route('/admin/update').put(verifyAdminJWT, updateBranch)       
-router.route('/admin/remove').delete(verifyAdminJWT, removeBranch);   
+// Basic CRUD operations
+router.route('/')
+    .get(verifyJWT([ROLES.ADMIN, ROLES.TEACHER, ROLES.STUDENT]), getBranches)
+    .post(verifyJWT([ROLES.ADMIN]), addBranch);
 
-// ! routes for teacher
-router.route('/teacher/get-branches').get(verifyTeacherJWT, getBranches) 
-router.route('/teacher/get-branch-by-id').get(verifyTeacherJWT, getBranchById);
-
-// ! routes for student
-router.route('/student/get-branches').get(verifyStudentJWT, getBranches) 
-router.route('/student/get-branch-by-id').get(verifyStudentJWT, getBranchById);
+router.route('/:id')
+    .get(verifyJWT([ROLES.ADMIN, ROLES.TEACHER, ROLES.STUDENT]), getBranchById)
+    .put(verifyJWT([ROLES.ADMIN]), updateBranch)
+    .delete(verifyJWT([ROLES.ADMIN]), removeBranch);
 
 export default router;

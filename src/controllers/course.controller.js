@@ -174,7 +174,7 @@ const addCourseToBranchWithSemesterNumber = asyncHandler(async (req, res) => {
 });
 
 const removeCourseFromBranchWithSemesterNumber = asyncHandler(async (req, res) => {
-    const { branchCourseSemesterId } = req.body;
+    const { branchCourseSemesterId } = req.params;
 
     if (!branchCourseSemesterId) {
         throw new ApiError(400, "branchCourseSemester id is required");

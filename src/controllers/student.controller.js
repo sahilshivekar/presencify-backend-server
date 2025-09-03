@@ -582,7 +582,7 @@ const removeStudentImage = asyncHandler(async (req, res) => {
 
 //* Remove student
 const removeStudent = asyncHandler(async (req, res) => {
-    const { id } = req.query;
+    const { id } = req.params;
 
     if (!id) throw new ApiError(400, "Student ID is required");
 

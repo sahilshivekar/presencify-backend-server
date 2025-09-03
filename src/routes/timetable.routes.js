@@ -6,25 +6,19 @@ import {
     updateTimetable,
     removeTimetable
 } from '../controllers/timetable.controller.js';
-import { verifyAdminJWT, verifyTeacherJWT, verifyStudentJWT } from '../middlewares/auth.middleware.js';
+import { verifyJWT } from '../middlewares/auth.middleware.js';
+import { ROLES } from '../config/roles.js';
+
 const router = express.Router();
 
-// ! routes for admin
-router.route('/admin/get-timetables').get(verifyAdminJWT, getTimetables);
-router.route('/admin/get-timetable-by-id').get(verifyAdminJWT, getTimetableById);
-router.route('/admin/add-timetable').post(verifyAdminJWT, addTimetable);
-router.route('/admin/update-timetable').put(verifyAdminJWT, updateTimetable);
-router.route('/admin/remove-timetable').delete(verifyAdminJWT, removeTimetable);
+// Basic CRUD operations
+router.route('/')
+    .get(verifyJWT([ROLES.ADMIN, ROLES.TEACHER, ROLES.STUDENT]), getTimetables)
+    .post(verifyJWT([ROLES.ADMIN]), addTimetable);
 
-// ! routes for teacher
-router.route('/teacher/get-timetables').get(verifyTeacherJWT, getTimetables);
-router.route('/teacher/get-timetable-by-id').get(verifyTeacherJWT, getTimetableById);
-
-
-// ! routes for student
-router.route('/student/get-timetables').get(verifyStudentJWT, getTimetables);
-router.route('/student/get-timetable-by-id').get(verifyStudentJWT, getTimetableById);
-
-
+router.route('/:id')
+    .get(verifyJWT([ROLES.ADMIN, ROLES.TEACHER, ROLES.STUDENT]), getTimetableById)
+    .put(verifyJWT([ROLES.ADMIN]), updateTimetable)
+    .delete(verifyJWT([ROLES.ADMIN]), removeTimetable);
 
 export default router;

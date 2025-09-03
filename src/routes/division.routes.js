@@ -1,6 +1,5 @@
 import { Router } from 'express';
-import { verifyAdminJWT, verifyTeacherJWT, verifyStudentJWT } from "../middlewares/auth.middleware.js"
-
+import { verifyJWT } from "../middlewares/auth.middleware.js";
 import {
     getDivisions,
     addDivision,
@@ -8,27 +7,18 @@ import {
     removeDivision,
     getDivisionById
 } from '../controllers/division.controller.js';
+import { ROLES } from '../config/roles.js';
 
 const router = Router();
 
+// Basic CRUD operations
+router.route('/')
+    .get(verifyJWT([ROLES.ADMIN, ROLES.TEACHER, ROLES.STUDENT]), getDivisions)
+    .post(verifyJWT([ROLES.ADMIN]), addDivision);
 
-// ! routes for admin
-router.route('/admin/get-divisions').get(verifyAdminJWT, getDivisions)
-router.route('/admin/get-division-by-id').get(verifyAdminJWT, getDivisionById)
-router.route('/admin/add').post(verifyAdminJWT, addDivision)
-router.route('/admin/update').put(verifyAdminJWT, updateDivision)
-router.route('/admin/remove').delete(verifyAdminJWT, removeDivision)
-
-
-
-// ! routes for teacher
-router.route('/teacher/get-divisions').get(verifyTeacherJWT, getDivisions)
-router.route('/teacher/get-division-by-id').get(verifyTeacherJWT, getDivisionById)
-
-
-// ! routes for student
-router.route('/student/get-divisions').get(verifyStudentJWT, getDivisions)
-router.route('/student/get-division-by-id').get(verifyStudentJWT, getDivisionById)
-
+router.route('/:id')
+    .get(verifyJWT([ROLES.ADMIN, ROLES.TEACHER, ROLES.STUDENT]), getDivisionById)
+    .put(verifyJWT([ROLES.ADMIN]), updateDivision)
+    .delete(verifyJWT([ROLES.ADMIN]), removeDivision);
 
 export default router;

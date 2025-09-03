@@ -1,6 +1,5 @@
 import { Router } from 'express';
-import { verifyAdminJWT } from "../middlewares/auth.middleware.js"
-const router = Router();
+import { verifyJWT } from "../middlewares/auth.middleware.js";
 import {
     loginAdmin,
     addAdmin,
@@ -14,49 +13,32 @@ import {
     getAccessToken,
     logout,
     getAdminDetails
-
 } from '../controllers/admin.controller.js';
+import { ROLES } from '../config/roles.js';
 
-// login admin
-router.route('/admin/login').post(loginAdmin);
+const router = Router();
 
-// send code to email (for forgot password option at the time of login)
-router.route("/admin/forgot-password").post(sendVerificationCodeToEmail)
+// Public routes (no authentication required)
+router.route('/login').post(loginAdmin);
+router.route('/forgot-password').post(sendVerificationCodeToEmail);
+router.route('/verify-code').post(verifyCode);
+router.route('/access-token').post(getAccessToken);
 
-// verify the email verification code
-router.route("/admin/verify-code").post(verifyCode)
+// Secured routes (admin authentication required)
+router.route('/me')
+    .get(verifyJWT([ROLES.ADMIN]), getAdminDetails)
+    .put(verifyJWT([ROLES.ADMIN]), updateAdminDetails)
+    .delete(verifyJWT([ROLES.ADMIN]), removeAdmin)
 
-// provide access token 
-router.route("/admin/get-access-token").post(getAccessToken);
+router.route('/')
+    .get(verifyJWT([ROLES.ADMIN]), getAdmins)
+    .post(verifyJWT([ROLES.ADMIN]), addAdmin);
 
 
-//!  secured routes
-// send admin his details
-router.route('/admin/me').get(verifyAdminJWT, getAdminDetails)
-
-// add a new admin
-router.route('/admin/add').post(verifyAdminJWT, addAdmin);
-
-// retrieve info of current admin
-router.route('/admin/get-admins').get(verifyAdminJWT, getAdmins)  // current admin
-
-// update current admin details
-router.route('/admin/update-details').put(verifyAdminJWT, updateAdminDetails)
-
-// verify password 
-router.route('/admin/verify-password').post(verifyAdminJWT, verifyPassword)
-
-// update current admin password
-router.route('/admin/update-password').put(verifyAdminJWT, updateAdminPassword)
-
-// delete a admin
-router.route('/admin/remove-admin').delete(verifyAdminJWT, removeAdmin);
-
-// logout admin
-router.route("/admin/logout").post(verifyAdminJWT, logout)
-
-// send code to email (for email verfication and to reset the password if the password is forgotten but the admin is logged in)
-router.route("/admin/email-verification").get(verifyAdminJWT, sendVerificationCodeToEmail)
-
+// Authentication and password management
+router.route('/verify-password').post(verifyJWT([ROLES.ADMIN]), verifyPassword);
+router.route('/update-password').put(verifyJWT([ROLES.ADMIN]), updateAdminPassword);
+router.route('/logout').post(verifyJWT([ROLES.ADMIN]), logout);
+router.route('/email-verification').get(verifyJWT([ROLES.ADMIN]), sendVerificationCodeToEmail);
 
 export default router;

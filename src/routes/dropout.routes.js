@@ -1,26 +1,25 @@
 import { Router } from 'express';
-import { verifyAdminJWT, verifyTeacherJWT, verifyStudentJWT } from "../middlewares/auth.middleware.js"
-const router = Router();
+import { verifyJWT } from "../middlewares/auth.middleware.js";
 import {
     addStudentToDropout,
     removeStudentFromDropout,
     getDropoutById,
     getDropoutDetailsOfStudent
 } from '../controllers/dropout.controller.js';
+import { ROLES } from '../config/roles.js';
 
-//!  secured routes
+const router = Router();
 
-// ! routes for admin
-router.route('/admin/add-student-to-dropout').post(verifyAdminJWT, addStudentToDropout);
-router.route('/admin/remove-student-from-dropout').delete(verifyAdminJWT, removeStudentFromDropout);
-router.route('/admin/get-dropout-by-id').get(verifyAdminJWT, getDropoutById);
-router.route('/admin/get-dropout-details-of-student').get(verifyAdminJWT, getDropoutDetailsOfStudent);
+// Basic CRUD operations for dropout records
+router.route('/')
+    .post(verifyJWT([ROLES.ADMIN]), addStudentToDropout)
+    .delete(verifyJWT([ROLES.ADMIN]), removeStudentFromDropout);
 
-// ! routes for teacher
-router.route('/teacher/get-dropout-details-of-student').get(verifyTeacherJWT, getDropoutDetailsOfStudent);
+router.route('/:id')
+    .get(verifyJWT([ROLES.ADMIN]), getDropoutById);
 
-// ! routes for student
-router.route('/student/get-dropout-details-of-student').get(verifyStudentJWT, getDropoutDetailsOfStudent);
-
+// Student-specific dropout details
+router.route('/student')
+    .get(verifyJWT([ROLES.ADMIN, ROLES.TEACHER, ROLES.STUDENT]), getDropoutDetailsOfStudent);
 
 export default router;

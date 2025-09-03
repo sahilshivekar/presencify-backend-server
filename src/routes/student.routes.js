@@ -18,47 +18,55 @@ import {
     getStudentDivisionsById,    
     getStudentBatchesById
 } from '../controllers/student.controller.js';
-import { verifyAdminJWT, verifyTeacherJWT, verifyStudentJWT } from '../middlewares/auth.middleware.js';
+import { verifyJWT } from '../middlewares/auth.middleware.js';
+import { ROLES } from '../config/roles.js';
 import { upload } from '../middlewares/multer.middleware.js';
+
 const router = express.Router();
 
-// ! routes for admin
-router.route('/admin/get-students').get(verifyAdminJWT, getStudents)
-router.route('/admin/get-student-details-by-id').get(verifyAdminJWT, getStudentDetailsById)
-router.route('/admin/update-details').put(verifyAdminJWT, updateStudentDetails)
-router.route('/admin/update-image').put(verifyAdminJWT, upload.single('studentImageFile'), updateStudentImage)
-router.route('/admin/remove-image').delete(verifyAdminJWT, removeStudentImage)
-router.route('/admin/get-student-semesters-by-id').get(verifyAdminJWT, getStudentSemestersById)
-router.route('/admin/get-student-divisions-by-id').get(verifyAdminJWT, getStudentDivisionsById)
-router.route('/admin/get-student-batches-by-id').get(verifyAdminJWT, getStudentBatchesById)
-router.route('/admin/update-password').put(verifyAdminJWT, updateStudentPassword)
-router.route('/admin/remove').delete(verifyAdminJWT, removeStudent)
-router.route('/admin/add-to-semester').post(verifyAdminJWT, addStudentToSemester)
-router.route('/admin/remove-from-semester').delete(verifyAdminJWT, removeStudentFromSemester)
-router.route('/admin/add-to-division').post(verifyAdminJWT, addStudentToDivision)
-router.route('/admin/change-division').put(verifyAdminJWT, changeStudentDivision)
-router.route('/admin/add-to-batch').post(verifyAdminJWT, addStudentToBatch)
-router.route('/admin/change-batch').put(verifyAdminJWT, changeStudentBatch)
-router.route('/admin/add').post(verifyAdminJWT, upload.single('studentImageFile'), addStudent)
+// Basic CRUD operations
+router.route('/')
+    .get(verifyJWT([ROLES.ADMIN, ROLES.TEACHER, ROLES.STUDENT]), getStudents)
+    .post(verifyJWT([ROLES.ADMIN]), upload.single('studentImageFile'), addStudent)
+    
 
-// ! routes for teacher
-router.route('/teacher/get-students').get(verifyTeacherJWT, getStudents)
-router.route('/teacher/get-student-details-by-id').get(verifyTeacherJWT, getStudentDetailsById)
-router.route('/teacher/get-student-semesters-by-id').get(verifyTeacherJWT, getStudentSemestersById)
-router.route('/teacher/get-student-divisions-by-id').get(verifyTeacherJWT, getStudentDivisionsById)
-router.route('/teacher/get-student-batches-by-id').get(verifyTeacherJWT, getStudentBatchesById)
+router.route('/:id')
+    .get(verifyJWT([ROLES.ADMIN, ROLES.TEACHER, ROLES.STUDENT]), getStudentDetailsById)
+    .put(verifyJWT([ROLES.ADMIN, ROLES.STUDENT]), updateStudentDetails)
+    .delete(verifyJWT([ROLES.ADMIN]), removeStudent);
 
+// Student profile image management
+router.route('/image')
+    .put(verifyJWT([ROLES.ADMIN, ROLES.STUDENT]), upload.single('studentImageFile'), updateStudentImage)
+    .delete(verifyJWT([ROLES.ADMIN, ROLES.STUDENT]), removeStudentImage);
 
-// ! routes for student
-router.route('/student/get-students').get(verifyStudentJWT, getStudents)
-router.route('/student/get-student-details-by-id').get(verifyStudentJWT, getStudentDetailsById)
-router.route('/student/update-details').put(verifyStudentJWT, updateStudentDetails)
-router.route('/student/update-image').put(verifyStudentJWT, upload.single('studentImageFile'), updateStudentImage)
-router.route('/student/remove-image').delete(verifyStudentJWT, removeStudentImage)
-router.route('/student/get-student-semesters-by-id').get(verifyStudentJWT, getStudentSemestersById)
-router.route('/student/get-student-divisions-by-id').get(verifyStudentJWT, getStudentDivisionsById)
-router.route('/student/get-student-batches-by-id').get(verifyStudentJWT, getStudentBatchesById)
+// Password management (admin only)
+router.route('/password')
+    .put(verifyJWT([ROLES.ADMIN]), updateStudentPassword);
 
+// Student relationship queries
+router.route('/:id/semesters')
+    .get(verifyJWT([ROLES.ADMIN, ROLES.TEACHER, ROLES.STUDENT]), getStudentSemestersById);
 
+router.route('/:id/divisions')
+    .get(verifyJWT([ROLES.ADMIN, ROLES.TEACHER, ROLES.STUDENT]), getStudentDivisionsById);
+
+router.route('/:id/batches')
+    .get(verifyJWT([ROLES.ADMIN, ROLES.TEACHER, ROLES.STUDENT]), getStudentBatchesById);
+
+// Semester management (admin only)
+router.route('/semester')
+    .post(verifyJWT([ROLES.ADMIN]), addStudentToSemester)
+    .delete(verifyJWT([ROLES.ADMIN]), removeStudentFromSemester);
+
+// Division management (admin only)
+router.route('/division')
+    .post(verifyJWT([ROLES.ADMIN]), addStudentToDivision)
+    .put(verifyJWT([ROLES.ADMIN]), changeStudentDivision);
+
+// Batch management (admin only)
+router.route('/batch')
+    .post(verifyJWT([ROLES.ADMIN]), addStudentToBatch)
+    .put(verifyJWT([ROLES.ADMIN]), changeStudentBatch);
 
 export default router;

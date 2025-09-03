@@ -1,26 +1,18 @@
 import express from 'express';
-import { verifyAdminJWT, verifyTeacherJWT, verifyStudentJWT } from "../middlewares/auth.middleware.js"
-
+import { verifyJWT } from "../middlewares/auth.middleware.js";
 import { getBatches, addBatch, updateBatch, removeBatch, getBatchById } from '../controllers/batch.controller.js';
+import { ROLES } from '../config/roles.js';
 
 const router = express.Router();
 
+// Basic CRUD operations
+router.route('/')
+    .get(verifyJWT([ROLES.ADMIN, ROLES.TEACHER, ROLES.STUDENT]), getBatches)
+    .post(verifyJWT([ROLES.ADMIN]), addBatch);
 
-// ! routes for admin
-router.route('/admin/get-batches').get(verifyAdminJWT, getBatches);
-router.route('/admin/add').post(verifyAdminJWT, addBatch);
-router.route('/admin/update').put(verifyAdminJWT, updateBatch);
-router.route('/admin/remove').delete(verifyAdminJWT, removeBatch);
-router.route('/admin/get-batch-by-id').get(verifyAdminJWT, getBatchById);
-
-
-// ! routes for teacher
-router.route('/teacher/get-batches').get(verifyTeacherJWT, getBatches);
-router.route('/teacher/get-batch-by-id').get(verifyTeacherJWT, getBatchById);
-
-// ! routes for student
-router.route('/student/get-batches').get(verifyStudentJWT, getBatches);
-router.route('/student/get-batch-by-id').get(verifyStudentJWT, getBatchById);
-
+router.route('/:id')
+    .get(verifyJWT([ROLES.ADMIN, ROLES.TEACHER, ROLES.STUDENT]), getBatchById)
+    .put(verifyJWT([ROLES.ADMIN]), updateBatch)
+    .delete(verifyJWT([ROLES.ADMIN]), removeBatch);
 
 export default router;

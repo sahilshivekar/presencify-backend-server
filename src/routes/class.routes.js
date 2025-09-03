@@ -9,34 +9,28 @@ import {
     getCancelledClasses,
     cancelClass
 } from '../controllers/class.controller.js';
-import { verifyAdminJWT, verifyTeacherJWT, verifyStudentJWT } from '../middlewares/auth.middleware.js';
+import { verifyJWT } from '../middlewares/auth.middleware.js';
+import { ROLES } from '../config/roles.js';
+
 const router = express.Router();
 
-// ! routes for admin
-router.route('/admin/get-classes').get(verifyAdminJWT, getClasses);
-router.route('/admin/cancel-class').post(verifyAdminJWT, cancelClass);
-router.route('/admin/get-class-by-id').get(verifyAdminJWT, getClassById);
-router.route('/admin/add-extra-class').post(verifyAdminJWT, addExtraClass);
-router.route('/admin/get-cancelled-classes').get(verifyAdminJWT, getCancelledClasses);
-router.route('/admin/add-class').post(verifyAdminJWT, addClass);
-router.route('/admin/extend-acitve-till-date-of-class').put(verifyAdminJWT, extendActiveTillDateOfClass);
-router.route('/admin/remove-class').delete(verifyAdminJWT, removeClass);  
+// Basic CRUD operations
+router.route('/')
+    .get(verifyJWT([ROLES.ADMIN, ROLES.TEACHER, ROLES.STUDENT]), getClasses)
+    .post(verifyJWT([ROLES.ADMIN]), addClass)
+    .delete(verifyJWT([ROLES.ADMIN]), removeClass);
 
+router.route('/:id')
+    .get(verifyJWT([ROLES.ADMIN, ROLES.TEACHER, ROLES.STUDENT]), getClassById)
+    .put(verifyJWT([ROLES.ADMIN]), extendActiveTillDateOfClass);
 
+// Extra class operations
+router.route('/extra')
+    .post(verifyJWT([ROLES.ADMIN, ROLES.TEACHER]), addExtraClass);
 
-// ! routes for teacher
-router.route('/teacher/get-classes').get(verifyTeacherJWT, getClasses);
-router.route('/teacher/cancel-class').post(verifyTeacherJWT, cancelClass);
-router.route('/teacher/get-class-by-id').get(verifyTeacherJWT, getClassById);
-router.route('/teacher/add-extra-class').post(verifyTeacherJWT, addExtraClass);
-router.route('/teacher/get-cancelled-classes').get(verifyTeacherJWT, getCancelledClasses);
-
-
-
-// ! routes for student
-router.route('/student/get-classes').get(verifyStudentJWT, getClasses);
-router.route('/student/get-class-by-id').get(verifyStudentJWT, getClassById);
-router.route('/student/get-cancelled-classes').get(verifyStudentJWT, getCancelledClasses);
-
+// Cancelled class operations
+router.route('/cancelled')
+    .get(verifyJWT([ROLES.ADMIN, ROLES.TEACHER, ROLES.STUDENT]), getCancelledClasses)
+    .post(verifyJWT([ROLES.ADMIN, ROLES.TEACHER]), cancelClass);
 
 export default router;

@@ -1,21 +1,18 @@
-import {Router} from 'express';
+import { Router } from 'express';
 import {
     addStudentFCMTokens,
     updateStudentFCMTokens,
     removeStudentFCMTokens
 } from '../controllers/studentFCMToken.controller.js';
-import { verifyAdminJWT, verifyStudentJWT } from '../middlewares/auth.middleware.js';
+import { verifyJWT } from '../middlewares/auth.middleware.js';
+import { ROLES } from '../config/roles.js';
 
 const router = Router();
 
-// ! routes for admin
-router.route('/admin/add-student-fcm-token').post(verifyAdminJWT, addStudentFCMTokens)
-router.route('/admin/update-student-fcm-token').put(verifyAdminJWT, updateStudentFCMTokens)
-router.route('/admin/remove-student-fcm-token').delete(verifyAdminJWT, removeStudentFCMTokens)
+// FCM Token management operations
+router.route('/')
+    .post(verifyJWT([ROLES.ADMIN, ROLES.STUDENT]), addStudentFCMTokens)
+    .put(verifyJWT([ROLES.ADMIN, ROLES.STUDENT]), updateStudentFCMTokens)
+    .delete(verifyJWT([ROLES.ADMIN, ROLES.STUDENT]), removeStudentFCMTokens);
 
-// ! routes for student
-router.route('/student/add-student-fcm-token').post(verifyStudentJWT, addStudentFCMTokens)
-router.route('/student/update-student-fcm-token').put(verifyStudentJWT, updateStudentFCMTokens)
-router.route('/student/remove-student-fcm-token').delete(verifyStudentJWT, removeStudentFCMTokens)
-
-export default router
+export default router;
