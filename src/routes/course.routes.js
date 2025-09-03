@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { verifyAdminJWT, verifyStaffJWT, verifyStudentJWT } from "../middlewares/auth.middleware.js"
+import { verifyAdminJWT, verifyTeacherJWT, verifyStudentJWT } from "../middlewares/auth.middleware.js"
 const router = Router();
 import {
     getCourses,
@@ -25,9 +25,9 @@ router.route('/admin/remove-from-branch-with-semester-number').delete(verifyAdmi
 
 
 
-// ! routes for staff
-router.route('/staff/get-courses').get(verifyStaffJWT, getCourses) 
-router.route('/staff/get-course-by-id').get(verifyStaffJWT, getCourseById);
+// ! routes for teacher
+router.route('/teacher/get-courses').get(verifyTeacherJWT, getCourses) 
+router.route('/teacher/get-course-by-id').get(verifyTeacherJWT, getCourseById);
 
 
 

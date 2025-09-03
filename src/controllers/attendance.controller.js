@@ -5,7 +5,7 @@ import { ApiError } from '../utils/ApiError.js';
 import Class from '../db/models/class.model.js';
 import Room from '../db/models/room.model.js';
 import Course from '../db/models/course.model.js';
-import Staff from '../db/models/staff.model.js';
+import Teacher from '../db/models/teacher.model.js';
 import Batch from '../db/models/batch.model.js';
 import moment from 'moment';
 import Timetable from '../db/models/timetable.model.js';

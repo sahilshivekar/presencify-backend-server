@@ -6,6 +6,7 @@ import StudentBatch from './studentBatch.model.js';
 import StudentSemester from './studentSemester.model.js';
 import { AttendanceStudent } from './attendance.model.js';
 import jwt from 'jsonwebtoken'
+import { ROLES } from '../../config/roles.js';
 
 class Student extends Model { }
 
@@ -323,6 +324,7 @@ Student.prototype.generateAccessToken = function () {
         {
             id: this.id,
             email: this.email,
+            role: ROLES.STUDENT
         },
         process.env.JWT_ACCESS_TOKEN_SECRET,
         {
@@ -336,6 +338,7 @@ Student.prototype.generateRefreshToken = function () {
         {
             id: this.id,
             email: this.email,
+            role: ROLES.STUDENT
         },
         process.env.JWT_REFRESH_TOKEN_SECRET,
         {

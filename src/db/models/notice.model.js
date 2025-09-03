@@ -58,7 +58,7 @@ Notice.init(
             }
         },
         audiences: {
-            type: Sequelize.ENUM('Students', 'Staff', 'Everyone'),
+            type: Sequelize.ENUM('Students', 'Teacher', 'Everyone'),
             allowNull: false,
             field: 'notice_audiences',
             validate: {
@@ -66,8 +66,8 @@ Notice.init(
                     msg: 'Audiences cannot be null'
                 },
                 isIn: {
-                    args: [['Students', 'Staff', 'Everyone']],
-                    msg: 'Audiences must be one of the following: Students, Staff, Everyone'
+                    args: [['Students', 'Teacher', 'Everyone']],
+                    msg: 'Audiences must be one of the following: Students, Teacher, Everyone'
                 }
             }
         },
@@ -76,8 +76,8 @@ Notice.init(
             allowNull: false,
             field: 'uploaded_by',
             references: {
-                model: 'staff',
-                key: 'staff_id',
+                model: 'teacher',
+                key: 'teacher_id',
             },
             validate: {
                 notNull: {

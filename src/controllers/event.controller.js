@@ -10,7 +10,7 @@ import Event from '../db/models/event.model.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { ApiResponse } from '../utils/ApiResponse.js';
 import { ApiError } from '../utils/ApiError.js';
-import Staff from '../db/models/staff.model.js';
+import Teacher from '../db/models/teacher.model.js';
 import { upload } from '../middlewares/multer.middleware.js';
 
 //* Get all events
@@ -63,8 +63,8 @@ const getEvents = asyncHandler(async (req, res) => {
     }
 
     if (uploadedBy) {
-        const staff = await Staff.findByPk(uploadedBy);
-        if (!staff) {
+        const teacher = await Teacher.findByPk(uploadedBy);
+        if (!teacher) {
             throw new ApiError(404, "Invalid value for uploaded by parameter");
         }
         uploadedByFilterClause.uploadedBy = uploadedBy;
@@ -83,7 +83,7 @@ const getEvents = asyncHandler(async (req, res) => {
         },
         include: [
             {
-                model: Staff,
+                model: Teacher,
                 required: true,
                 duplicating: false,
             }
@@ -115,7 +115,7 @@ const getEventById = asyncHandler(async (req, res) => {
         where: { id: eventId },
         include: [
             {
-                model: Staff,
+                model: Teacher,
                 required: true,
             }
         ]
@@ -175,10 +175,10 @@ const addEvent = asyncHandler(async (req, res) => {
         }
     }
 
-    const staff = await Staff.findByPk(uploadedBy);
+    const teacher = await Teacher.findByPk(uploadedBy);
 
-    if (!staff) {
-        throw new ApiError(404, "Staff member with given id in uploaded by field not found");
+    if (!teacher) {
+        throw new ApiError(404, "Teacher member with given id in uploaded by field not found");
     }
 
     if (endDatetime && startDatetime && new Date(startDatetime) > new Date(endDatetime)) {
@@ -273,12 +273,12 @@ const updateEvent = asyncHandler(async (req, res) => {
     }
 
     if (uploadedBy) {
-        const staff = await Staff.findByPk(uploadedBy);
-        if (!staff) {
+        const teacher = await Teacher.findByPk(uploadedBy);
+        if (!teacher) {
             if (eventImageFilePath) {
                 throw new ApiError(500, "Error uploading image");
             }
-            throw new ApiError(404, "Staff member with given id in uploaded by field not found");
+            throw new ApiError(404, "Teacher member with given id in uploaded by field not found");
         }
 
         event.uploadedBy = uploadedBy;

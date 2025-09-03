@@ -50,7 +50,7 @@ const getSchemes = asyncHandler(async (req, res) => {
 //* add scheme
 const addScheme = asyncHandler(async (req, res) => {
 
-    const { name, abbreviation, universityId } = req.body;
+    const { name, universityId } = req.body;
 
     const university = await University.findByPk(universityId);
 
@@ -60,7 +60,6 @@ const addScheme = asyncHandler(async (req, res) => {
 
     const scheme = await Scheme.create({
         name: name || "",
-        abbreviation: abbreviation || "",
         universityId: universityId || null
     });
 
@@ -79,7 +78,7 @@ const addScheme = asyncHandler(async (req, res) => {
 //* update scheme
 const updateScheme = asyncHandler(async (req, res) => {
 
-    const { id, name, abbreviation } = req.body;
+    const { id, name } = req.body;
 
     if (!id) {
         throw new ApiError(400, "Scheme id is required");
@@ -92,7 +91,6 @@ const updateScheme = asyncHandler(async (req, res) => {
     }
 
     scheme.name = name || scheme.name;
-    scheme.abbreviation = abbreviation || scheme.name;
 
     await scheme.save();
 

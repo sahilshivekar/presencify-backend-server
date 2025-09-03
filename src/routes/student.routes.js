@@ -18,7 +18,7 @@ import {
     getStudentDivisionsById,    
     getStudentBatchesById
 } from '../controllers/student.controller.js';
-import { verifyAdminJWT, verifyStaffJWT, verifyStudentJWT } from '../middlewares/auth.middleware.js';
+import { verifyAdminJWT, verifyTeacherJWT, verifyStudentJWT } from '../middlewares/auth.middleware.js';
 import { upload } from '../middlewares/multer.middleware.js';
 const router = express.Router();
 
@@ -41,12 +41,12 @@ router.route('/admin/add-to-batch').post(verifyAdminJWT, addStudentToBatch)
 router.route('/admin/change-batch').put(verifyAdminJWT, changeStudentBatch)
 router.route('/admin/add').post(verifyAdminJWT, upload.single('studentImageFile'), addStudent)
 
-// ! routes for staff
-router.route('/staff/get-students').get(verifyStaffJWT, getStudents)
-router.route('/staff/get-student-details-by-id').get(verifyStaffJWT, getStudentDetailsById)
-router.route('/staff/get-student-semesters-by-id').get(verifyStaffJWT, getStudentSemestersById)
-router.route('/staff/get-student-divisions-by-id').get(verifyStaffJWT, getStudentDivisionsById)
-router.route('/staff/get-student-batches-by-id').get(verifyStaffJWT, getStudentBatchesById)
+// ! routes for teacher
+router.route('/teacher/get-students').get(verifyTeacherJWT, getStudents)
+router.route('/teacher/get-student-details-by-id').get(verifyTeacherJWT, getStudentDetailsById)
+router.route('/teacher/get-student-semesters-by-id').get(verifyTeacherJWT, getStudentSemestersById)
+router.route('/teacher/get-student-divisions-by-id').get(verifyTeacherJWT, getStudentDivisionsById)
+router.route('/teacher/get-student-batches-by-id').get(verifyTeacherJWT, getStudentBatchesById)
 
 
 // ! routes for student

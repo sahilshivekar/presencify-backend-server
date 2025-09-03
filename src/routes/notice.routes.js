@@ -9,7 +9,7 @@ import {
 } from '../controllers/notice.controller.js';
 import { ApiResponse } from '../utils/ApiResponse.js';
 import multer from 'multer';
-import { verifyAdminJWT, verifyStaffJWT, verifyStudentJWT } from '../middlewares/auth.middleware.js';
+import { verifyAdminJWT, verifyTeacherJWT, verifyStudentJWT } from '../middlewares/auth.middleware.js';
 
 
 const router = express.Router();
@@ -29,9 +29,9 @@ router.use((err, req, res, next) => {
 });
 
 
-// ! routes for staff
-router.route('/staff/get-notices').get(verifyStaffJWT, getNotices);
-router.route('/staff/get-notice-by-id').get(verifyStaffJWT, getNoticeById);
+// ! routes for teacher
+router.route('/teacher/get-notices').get(verifyTeacherJWT, getNotices);
+router.route('/teacher/get-notice-by-id').get(verifyTeacherJWT, getNoticeById);
 
 
 

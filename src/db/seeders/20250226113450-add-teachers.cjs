@@ -10,9 +10,9 @@ module.exports = {
             'Teacher@123',
             Number(process.env.BCRYPT_SALT))
 
-        let staffCounter = 1;
+        let teacherCounter = 1;
 
-        const staffMembersDetails = [
+        const teacherMembersDetails = [
             { firstName: "Neha", lastName: "Calhoun", gender: "Female", role: "Principal" },
             { firstName: "Rakesh", lastName: "Cunningham", gender: "Male", role: "Head of Department" },
             { firstName: "Amit", lastName: "Chopra", gender: "Male", role: "Teacher" },
@@ -35,30 +35,30 @@ module.exports = {
             { firstName: "Sonia", lastName: "Clements", gender: "Female", role: "Teacher" }
         ];
 
-        const staffMembers = await Promise.all(staffMembersDetails.map(async (staff, index) => ({
-            // staff_id: index + 1,
-            first_name: staff.firstName,
-            last_name: staff.lastName,
+        const teacherMembers = await Promise.all(teacherMembersDetails.map(async (teacher, index) => ({
+            // teacher_id: index + 1,
+            first_name: teacher.firstName,
+            last_name: teacher.lastName,
             middle_name: null,
-            staff_email: `${staff.firstName.toLowerCase()}.${staff.lastName.toLowerCase()}@gmail.com`,
-            staff_phone_number: `+91${9000000000 + staffCounter++}`,
-            staff_gender: staff.gender,
-            staff_highest_qualification: "M.Tech",
-            staff_role: staff.role,
-            staff_password: password,
+            teacher_email: `${teacher.firstName.toLowerCase()}.${teacher.lastName.toLowerCase()}@gmail.com`,
+            teacher_phone_number: `+91${9000000000 + teacherCounter++}`,
+            teacher_gender: teacher.gender,
+            teacher_highest_qualification: "M.Tech",
+            teacher_role: teacher.role,
+            teacher_password: password,
             is_active: true,
-            staff_image_url: null,
-            staff_image_public_id: null,
+            teacher_image_url: null,
+            teacher_image_public_id: null,
             refresh_token: null,
             created_at: new Date(),
             updated_at: new Date(),
         })));
 
-        await queryInterface.bulkInsert("staff", staffMembers);
+        await queryInterface.bulkInsert("teacher", teacherMembers);
 
     },
 
     async down(queryInterface, Sequelize) {
-        await queryInterface.bulkDelete("staff", null, {})
+        await queryInterface.bulkDelete("teacher", null, {})
     }
 };

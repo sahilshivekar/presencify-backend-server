@@ -2,7 +2,7 @@ import { Sequelize, Model } from 'sequelize';
 import sequelize from '../../config/db.connection.js'; // Your sequelize instance
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
-
+import { ROLES } from '../../config/roles.js';
 
 class Admin extends Model { }
 
@@ -135,9 +135,9 @@ Admin.beforeUpdate(async (admin) => {
     if (admin.changed('password') && admin?.password) {
         admin.password = await bcrypt.hash(admin.password, Number(process.env.BCRYPT_SALT))
     }
-    if(admin.changed('email')){
+    if (admin.changed('email')) {
         admin.email = admin.email.toLowerCase();
-        admin.isVerified = false;   
+        admin.isVerified = false;
     }
 })
 
@@ -147,6 +147,7 @@ Admin.prototype.generateAccessToken = function () {
             id: this.id,
             username: this.username,
             email: this.email,
+            role: ROLES.ADMIN
         },
         process.env.JWT_ACCESS_TOKEN_SECRET,
         {
@@ -161,6 +162,7 @@ Admin.prototype.generateRefreshToken = function () {
             id: this.id,
             username: this.username,
             email: this.email,
+            role: ROLES.ADMIN
         },
         process.env.JWT_REFRESH_TOKEN_SECRET,
         {

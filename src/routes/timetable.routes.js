@@ -6,7 +6,7 @@ import {
     updateTimetable,
     removeTimetable
 } from '../controllers/timetable.controller.js';
-import { verifyAdminJWT, verifyStaffJWT, verifyStudentJWT } from '../middlewares/auth.middleware.js';
+import { verifyAdminJWT, verifyTeacherJWT, verifyStudentJWT } from '../middlewares/auth.middleware.js';
 const router = express.Router();
 
 // ! routes for admin
@@ -16,9 +16,9 @@ router.route('/admin/add-timetable').post(verifyAdminJWT, addTimetable);
 router.route('/admin/update-timetable').put(verifyAdminJWT, updateTimetable);
 router.route('/admin/remove-timetable').delete(verifyAdminJWT, removeTimetable);
 
-// ! routes for staff
-router.route('/staff/get-timetables').get(verifyStaffJWT, getTimetables);
-router.route('/staff/get-timetable-by-id').get(verifyStaffJWT, getTimetableById);
+// ! routes for teacher
+router.route('/teacher/get-timetables').get(verifyTeacherJWT, getTimetables);
+router.route('/teacher/get-timetable-by-id').get(verifyTeacherJWT, getTimetableById);
 
 
 // ! routes for student

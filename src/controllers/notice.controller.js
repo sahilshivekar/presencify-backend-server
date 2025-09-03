@@ -6,7 +6,7 @@ import { Op } from 'sequelize';
 import Semester from '../db/models/semester.model.js';
 import Branch from '../db/models/branch.model.js';
 import Scheme from '../db/models/scheme.model.js';
-import Staff from '../db/models/staff.model.js';
+import Teacher from '../db/models/teacher.model.js';
 import fs from 'fs';
 import { uploadOnCloudinary, deleteFromCloudinary } from '../utils/cloudinary.js';
 
@@ -40,8 +40,8 @@ const getNotices = asyncHandler(async (req, res) => {
     let uploadedByFilterClause = {};
 
     if (audiences) {
-        if (!['Students', 'Staff', 'Everyone'].includes(audiences)) {
-            throw new ApiError(400, "Invalid value for audiences parameter. Must be Students, Staff, or Everyone");
+        if (!['Students', 'Teacher', 'Everyone'].includes(audiences)) {
+            throw new ApiError(400, "Invalid value for audiences parameter. Must be Students, Teacher, or Everyone");
         }
         audiencesFilterClause.audiences = audiences
     }
@@ -77,8 +77,8 @@ const getNotices = asyncHandler(async (req, res) => {
     }
 
     if (uploadedBy) {
-        const staff = await Staff.findByPk(uploadedBy);
-        if (!staff) {
+        const teacher = await Teacher.findByPk(uploadedBy);
+        if (!teacher) {
             throw new ApiError(404, "Invalid value for uploaded by parameter");
         }
         uploadedByFilterClause.uploadedBy = uploadedBy;
@@ -95,7 +95,7 @@ const getNotices = asyncHandler(async (req, res) => {
         },
         include: [
             {
-                model: Staff,
+                model: Teacher,
                 required: true,
                 duplicating: false,
             }
@@ -128,7 +128,7 @@ const getNoticeById = asyncHandler(async (req, res) => {
         where: { id: noticeId },
         include: [
             {
-                model: Staff,
+                model: Teacher,
                 required: true,
             }
         ]
@@ -188,13 +188,13 @@ const addNotice = asyncHandler(async (req, res) => {
         }
     }
 
-    const staff = await Staff.findByPk(uploadedBy);
+    const teacher = await Teacher.findByPk(uploadedBy);
 
-    if (!staff) {
+    if (!teacher) {
         if (noticeImageFilePath) {
             fs.unlinkSync(noticeImageFilePath);
         }
-        throw new ApiError(404, "Staff member with given id in uploaded by field not found");
+        throw new ApiError(404, "Teacher member with given id in uploaded by field not found");
     }
 
     let imageFileUrl = null;
@@ -277,13 +277,13 @@ const updateNotice = asyncHandler(async (req, res) => {
     }
 
     if (uploadedBy) {
-        const staff = await Staff.findByPk(uploadedBy);
+        const teacher = await Teacher.findByPk(uploadedBy);
 
-        if (!staff) {
+        if (!teacher) {
             if (noticeImageFilePath) {
                 fs.unlinkSync(noticeImageFilePath);
             }
-            throw new ApiError(404, "Staff member with given id in uploaded by field not found");
+            throw new ApiError(404, "Teacher member with given id in uploaded by field not found");
         }
     }
 

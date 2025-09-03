@@ -5,7 +5,7 @@ import { ApiError } from '../utils/ApiError.js';
 import Class from '../db/models/class.model.js';
 import Room from '../db/models/room.model.js';
 import Course from '../db/models/course.model.js';
-import Staff from '../db/models/staff.model.js';
+import Teacher from '../db/models/teacher.model.js';
 import Batch from '../db/models/batch.model.js';
 import moment from 'moment';
 import Timetable from '../db/models/timetable.model.js';
@@ -33,7 +33,7 @@ const getYearFromSemesterNumber = (semesterNumber) => {
 const getThrowableConflictMessage = async (conflictType, conflictName) => {
     const conflitCourse = await Course.findByPk(conflictType.courseId)
     const conflictTimeTable = await Timetable.findByPk(conflictType.timetableId)
-    const conflictInstructor = await Staff.findByPk(conflictType.instructorId)
+    const conflictTeacher = await Teacher.findByPk(conflictType.teacherId)
 
     let conflictBatch = null;
     if (conflictType.classType != 'Lecture') {
@@ -44,14 +44,14 @@ const getThrowableConflictMessage = async (conflictType, conflictName) => {
     const conflictSemester = await Semester.findByPk(conflictDivision.semesterId)
     const conflictRoom = await Room.findByPk(conflictType.roomId)
 
-    return `${conflictName} Prof. ${conflictInstructor.firstName} ${conflictInstructor.lastName} is already taking ${conflictType.classType.toLowerCase()} of '${conflitCourse.name}' on ${getYearFromSemesterNumber(conflictSemester.semesterNumber)} ${conflictBatch == null ? "Division" : "Batch"} ${conflictBatch == null ? conflictDivision.divisionCode : conflictBatch.batchCode} in room ${conflictRoom.roomNumber} between ${conflictType.startTime}-${conflictType.endTime} on ${conflictType.dayOfWeek}. (from ${conflictType.activeFrom} to ${conflictType.activeTill})`
+    return `${conflictName} Prof. ${conflictTeacher.firstName} ${conflictTeacher.lastName} is already taking ${conflictType.classType.toLowerCase()} of '${conflitCourse.name}' on ${getYearFromSemesterNumber(conflictSemester.semesterNumber)} ${conflictBatch == null ? "Division" : "Batch"} ${conflictBatch == null ? conflictDivision.divisionCode : conflictBatch.batchCode} in room ${conflictRoom.roomNumber} between ${conflictType.startTime}-${conflictType.endTime} on ${conflictType.dayOfWeek}. (from ${conflictType.activeFrom} to ${conflictType.activeTill})`
 
 
 }
 
 const addClass = asyncHandler(async (req, res) => {
     const {
-        instructorId,
+        teacherId,
         startTime,
         endTime,
         dayOfWeek,
@@ -65,7 +65,7 @@ const addClass = asyncHandler(async (req, res) => {
     } = req.body;
 
     const requiredFields = {
-        "Instructor ID": instructorId,
+        "Teacher ID": teacherId,
         "Start Time": startTime,
         "End Time": endTime,
         "Day of week": dayOfWeek,
@@ -84,10 +84,10 @@ const addClass = asyncHandler(async (req, res) => {
     }
 
     //!check if all id's exists in database
-    const instructor = await Staff.findByPk(instructorId);
+    const teacher = await Teacher.findByPk(teacherId);
 
-    if (!instructor) {
-        throw new ApiError(404, "Instructor not found");
+    if (!teacher) {
+        throw new ApiError(404, "Teacher not found");
     }
 
     const course = await Course.findByPk(courseId);
@@ -180,27 +180,27 @@ const addClass = asyncHandler(async (req, res) => {
         throw new ApiError(400, `Active till date is out of bounds because semester start date is ${semester.startDate} and semester end date is ${semester.endDate}`)
     }
 
-    //! check if course is teached by the instructor
+    //! check if course is teached by the teacher
     if (!course) {
         throw new ApiError(404, "Course not found");
     }
 
     const teacherTeachesCourse = await TeacherTeachesCourse.findOne({
         where: {
-            teacherId: instructorId,
+            teacherId: teacherId,
             courseId: courseId
         }
     })
 
     if (!teacherTeachesCourse) {
-        throw new ApiError(400, "Instructor is not teaching this course")
+        throw new ApiError(400, "Teacher is not teaching this course")
     }
 
-    //!check if instructor is teaching at diff class at same time
-    const instructorConflict = await Class.findOne({
+    //!check if teacher is teaching at diff class at same time
+    const teacherConflict = await Class.findOne({
         where: {
             [Op.and]: [
-                { instructorId: instructorId }, // same instructor
+                { teacherId: teacherId }, // same teacher
                 { isExtraClass: false },
                 { dayOfWeek: dayOfWeek },
                 {
@@ -255,8 +255,8 @@ const addClass = asyncHandler(async (req, res) => {
         }
     })
 
-    if (instructorConflict) {
-        const msg = await getThrowableConflictMessage(instructorConflict, "Instructor unavailable at this time: ")
+    if (teacherConflict) {
+        const msg = await getThrowableConflictMessage(teacherConflict, "Teacher unavailable at this time: ")
         throw new ApiError(400, msg)
     }
 
@@ -476,7 +476,7 @@ const addClass = asyncHandler(async (req, res) => {
 
     const classObj = await Class.create(
         {
-            instructorId: instructorId || null,
+            teacherId: teacherId || null,
             startTime: startTime || null,
             endTime: endTime || null,
             dayOfWeek: dayOfWeek || null,
@@ -502,7 +502,7 @@ const getClasses = asyncHandler(async (req, res) => {
         endTime,
         activeFrom,
         activeTill,
-        instructorId,
+        teacherId,
         dayOfWeek,
         roomId,
         batchId,
@@ -525,7 +525,7 @@ const getClasses = asyncHandler(async (req, res) => {
                 ...(endTime ? [{ endTime: { [Op.lte]: endTime } }] : []),
                 ...(activeFrom ? [{ activeFrom: { [Op.gte]: activeFrom } }] : []),
                 ...(activeTill ? [{ activeTill: { [Op.lte]: activeTill } }] : []),
-                ...(instructorId ? [{ instructorId: instructorId }] : []),
+                ...(teacherId ? [{ teacherId: teacherId }] : []),
                 ...(dayOfWeek ? [{ dayOfWeek: dayOfWeek }] : []),
                 ...(roomId ? [{ roomId: roomId }] : []),
                 ...(batchId ? [{ batchId: batchId }] : []),
@@ -587,7 +587,7 @@ const getClasses = asyncHandler(async (req, res) => {
                 duplicating: false,
             },
             {
-                model: Staff,
+                model: Teacher,
                 required: true,
                 duplicating: false
             }
@@ -650,7 +650,7 @@ const getClassById = asyncHandler(async (req, res) => {
                     duplicating: false,
                 },
                 {
-                    model: Staff,
+                    model: Teacher,
                     required: true,
                     duplicating: false
                 }
@@ -940,7 +940,7 @@ const removeClass = asyncHandler(async (req, res) => {
 
 const addExtraClass = asyncHandler(async (req, res) => {
     const {
-        instructorId,
+        teacherId,
         startTime,
         endTime,
         dayOfWeek, // sometimes extra class can be on every specific day for some days if active From and active till of extra class is not same
@@ -954,7 +954,7 @@ const addExtraClass = asyncHandler(async (req, res) => {
     } = req.body;
 
     const requiredFields = {
-        "Instructor ID": instructorId,
+        "Teacher ID": teacherId,
         "Start Time": startTime,
         "End Time": endTime,
         "Day of week": dayOfWeek,
@@ -973,10 +973,10 @@ const addExtraClass = asyncHandler(async (req, res) => {
     }
 
     //!check if all id's exists in database
-    const instructor = await Staff.findByPk(instructorId);
+    const teacher = await Teacher.findByPk(teacherId);
 
-    if (!instructor) {
-        throw new ApiError(404, "Instructor not found");
+    if (!teacher) {
+        throw new ApiError(404, "Teacher not found");
     }
 
     const course = await Course.findByPk(courseId);
@@ -1070,11 +1070,11 @@ const addExtraClass = asyncHandler(async (req, res) => {
     }
 
 
-    //!check if instructor is teaching at diff class at same time
-    const instructorConflict = await Class.findOne({
+    //!check if teacher is teaching at diff class at same time
+    const teacherConflict = await Class.findOne({
         where: {
             [Op.and]: [
-                { instructorId: instructorId }, // same instructor
+                { teacherId: teacherId }, // same teacher
                 { dayOfWeek: dayOfWeek },
                 { isExtraClass: true },
                 {
@@ -1130,8 +1130,8 @@ const addExtraClass = asyncHandler(async (req, res) => {
     })
 
 
-    if (instructorConflict) {
-        const msg = await getThrowableConflictMessage(instructorConflict, "Instructor unavailable at this time: ")
+    if (teacherConflict) {
+        const msg = await getThrowableConflictMessage(teacherConflict, "Teacher unavailable at this time: ")
         throw new ApiError(400, msg)
     }
 
@@ -1351,7 +1351,7 @@ const addExtraClass = asyncHandler(async (req, res) => {
 
     const classObj = await Class.create(
         {
-            instructorId: instructorId || null,
+            teacherId: teacherId || null,
             startTime: startTime || null,
             endTime: endTime || null,
             dayOfWeek: dayOfWeek || null,

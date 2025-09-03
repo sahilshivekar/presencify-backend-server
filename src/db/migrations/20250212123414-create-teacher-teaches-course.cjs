@@ -17,8 +17,8 @@ module.exports = {
                     allowNull: false,
                     field: 'teacher_id',
                     references: {
-                        model: 'staff',
-                        key: 'staff_id',
+                        model: 'teacher',
+                        key: 'teacher_id',
                     },
                     onUpdate: 'CASCADE',
                     onDelete: 'CASCADE',

@@ -7,7 +7,7 @@ import {
     getCoursesOfSemester,
     getSemesterById
 } from '../controllers/semester.controller.js';
-import { verifyAdminJWT, verifyStaffJWT, verifyStudentJWT } from '../middlewares/auth.middleware.js';
+import { verifyAdminJWT, verifyTeacherJWT, verifyStudentJWT } from '../middlewares/auth.middleware.js';
 
 const router = express.Router();
 
@@ -20,10 +20,10 @@ router.route('/admin/update').put(verifyAdminJWT, updateSemester);
 router.route('/admin/remove').delete(verifyAdminJWT, removeSemester);
 
 
-// ! routes for staff
-router.route('/staff/get-semesters').get(verifyStaffJWT, getSemesters);
-router.route('/staff/get-courses-of-semester').get(verifyStaffJWT, getCoursesOfSemester);
-router.route('/staff/get-semester-by-id').get(verifyStaffJWT, getSemesterById);
+// ! routes for teacher
+router.route('/teacher/get-semesters').get(verifyTeacherJWT, getSemesters);
+router.route('/teacher/get-courses-of-semester').get(verifyTeacherJWT, getCoursesOfSemester);
+router.route('/teacher/get-semester-by-id').get(verifyTeacherJWT, getSemesterById);
 
 // ! routes for student
 router.route('/student/get-semesters').get(verifyStudentJWT, getSemesters);

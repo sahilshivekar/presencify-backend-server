@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { verifyAdminJWT, verifyStaffJWT, verifyStudentJWT } from "../middlewares/auth.middleware.js"
+import { verifyAdminJWT, verifyTeacherJWT, verifyStudentJWT } from "../middlewares/auth.middleware.js"
 
 import {
     getDivisions,
@@ -21,9 +21,9 @@ router.route('/admin/remove').delete(verifyAdminJWT, removeDivision)
 
 
 
-// ! routes for staff
-router.route('/staff/get-divisions').get(verifyStaffJWT, getDivisions)
-router.route('/staff/get-division-by-id').get(verifyStaffJWT, getDivisionById)
+// ! routes for teacher
+router.route('/teacher/get-divisions').get(verifyTeacherJWT, getDivisions)
+router.route('/teacher/get-division-by-id').get(verifyTeacherJWT, getDivisionById)
 
 
 // ! routes for student

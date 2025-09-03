@@ -1,6 +1,6 @@
 import { Sequelize, Model } from 'sequelize';
 import sequelize from '../../config/db.connection.js';
-import Staff from './staff.model.js';
+import Teacher from './teacher.model.js';
 import Course from './course.model.js';
 
 
@@ -19,8 +19,8 @@ TeacherTeachesCourse.init(
             allowNull: false,
             field: 'teacher_id',
             references: {
-                model: 'staff',
-                key: 'staff_id',
+                model: 'teacher',
+                key: 'teacher_id',
             },
             validate: {
                 notNull: {

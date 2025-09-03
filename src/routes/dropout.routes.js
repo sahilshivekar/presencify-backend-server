@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { verifyAdminJWT, verifyStaffJWT, verifyStudentJWT } from "../middlewares/auth.middleware.js"
+import { verifyAdminJWT, verifyTeacherJWT, verifyStudentJWT } from "../middlewares/auth.middleware.js"
 const router = Router();
 import {
     addStudentToDropout,
@@ -16,8 +16,8 @@ router.route('/admin/remove-student-from-dropout').delete(verifyAdminJWT, remove
 router.route('/admin/get-dropout-by-id').get(verifyAdminJWT, getDropoutById);
 router.route('/admin/get-dropout-details-of-student').get(verifyAdminJWT, getDropoutDetailsOfStudent);
 
-// ! routes for staff
-router.route('/staff/get-dropout-details-of-student').get(verifyStaffJWT, getDropoutDetailsOfStudent);
+// ! routes for teacher
+router.route('/teacher/get-dropout-details-of-student').get(verifyTeacherJWT, getDropoutDetailsOfStudent);
 
 // ! routes for student
 router.route('/student/get-dropout-details-of-student').get(verifyStudentJWT, getDropoutDetailsOfStudent);

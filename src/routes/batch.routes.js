@@ -1,5 +1,5 @@
 import express from 'express';
-import { verifyAdminJWT, verifyStaffJWT, verifyStudentJWT } from "../middlewares/auth.middleware.js"
+import { verifyAdminJWT, verifyTeacherJWT, verifyStudentJWT } from "../middlewares/auth.middleware.js"
 
 import { getBatches, addBatch, updateBatch, removeBatch, getBatchById } from '../controllers/batch.controller.js';
 
@@ -14,9 +14,9 @@ router.route('/admin/remove').delete(verifyAdminJWT, removeBatch);
 router.route('/admin/get-batch-by-id').get(verifyAdminJWT, getBatchById);
 
 
-// ! routes for staff
-router.route('/staff/get-batches').get(verifyStaffJWT, getBatches);
-router.route('/staff/get-batch-by-id').get(verifyStaffJWT, getBatchById);
+// ! routes for teacher
+router.route('/teacher/get-batches').get(verifyTeacherJWT, getBatches);
+router.route('/teacher/get-batch-by-id').get(verifyTeacherJWT, getBatchById);
 
 // ! routes for student
 router.route('/student/get-batches').get(verifyStudentJWT, getBatches);

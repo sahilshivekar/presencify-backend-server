@@ -1,6 +1,6 @@
 import express from 'express';
 import { upload } from '../middlewares/multer.middleware.js';
-import { verifyAdminJWT, verifyStaffJWT, verifyStudentJWT } from '../middlewares/auth.middleware.js';
+import { verifyAdminJWT, verifyTeacherJWT, verifyStudentJWT } from '../middlewares/auth.middleware.js';
 import { ApiResponse } from '../utils/ApiResponse.js';
 import {
     getEvents,
@@ -28,9 +28,9 @@ router.use((err, req, res, next) => {
 
 
 
-// ! routes for staff
-router.route('/staff/get-events').get(verifyStaffJWT, getEvents);
-router.route('/staff/get-event-by-id').get(verifyStaffJWT, getEventById);
+// ! routes for teacher
+router.route('/teacher/get-events').get(verifyTeacherJWT, getEvents);
+router.route('/teacher/get-event-by-id').get(verifyTeacherJWT, getEventById);
 
 
 // ! routes for student

@@ -1,22 +1,22 @@
 import { Sequelize, Model } from 'sequelize';
 import sequelize from '../../config/db.connection.js';
 import bcrypt from 'bcrypt';
-
+import { ROLES } from '../../config/roles.js';
 import TeacherTeachesCourse from './teacherTeachesCourse.model.js';
 import Class from './class.model.js';
 import Course from './course.model.js'
 import jwt from 'jsonwebtoken'
 
-class Staff extends Model { }
+class Teacher extends Model { }
 
-Staff.init(
+Teacher.init(
     {
         id: {
             type: Sequelize.INTEGER,
             primaryKey: true,
             allowNull: false,
             autoIncrement: true,
-            field: 'staff_id'
+            field: 'teacher_id'
         },
         firstName: {
             type: Sequelize.STRING(255),
@@ -43,22 +43,22 @@ Staff.init(
                 }
             }
         },
-        staffImageUrl: {
+        teacherImageUrl: {
             type: Sequelize.TEXT,
             allowNull: true,
-            field: 'staff_image_url'
+            field: 'teacher_image_url'
         },
-        staffImagePublicId: {
+        teacherImagePublicId: {
             type: Sequelize.TEXT,
             allowNull: true,
-            field: 'staff_image_public_id'
+            field: 'teacher_image_public_id'
         },
         email: {
             type: Sequelize.STRING(255),
             allowNull: false,
-            field: 'staff_email',
+            field: 'teacher_email',
             unique: {
-                name: 'staff_email_unique',
+                name: 'teacher_email_unique',
                 msg: 'Email already exists'
             },
             validate: {
@@ -73,7 +73,7 @@ Staff.init(
         phoneNumber: {
             type: Sequelize.STRING(15),
             allowNull: false,
-            field: 'staff_phone_number',
+            field: 'teacher_phone_number',
             unique: {
                 msg: 'Phone number already exists'
             },
@@ -86,7 +86,7 @@ Staff.init(
         gender: {
             type: Sequelize.ENUM('Male', 'Female', 'Other'),
             allowNull: false,
-            field: 'staff_gender',
+            field: 'teacher_gender',
             validate: {
                 notEmpty: {
                     msg: 'Gender cannot be empty'
@@ -100,12 +100,12 @@ Staff.init(
         highestQualification: {
             type: Sequelize.STRING(255),
             allowNull: true,
-            field: 'staff_highest_qualification'
+            field: 'teacher_highest_qualification'
         },
         role: {
             type: Sequelize.ENUM('Teacher', 'Head of Department', 'Principal'),
             allowNull: false,
-            field: 'staff_role',
+            field: 'teacher_role',
             validate: {
                 isIn: {
                     args: [['Teacher', 'Head of Department', 'Principal']], // Array of allowed values
@@ -122,7 +122,7 @@ Staff.init(
         password: {
             type: Sequelize.STRING(255),
             allowNull: false,
-            field: 'staff_password',
+            field: 'teacher_password',
             defaultValue: 'Teacher@123',
             validate: {
                 notEmpty: {
@@ -186,46 +186,47 @@ Staff.init(
     {
         sequelize,
         timestamps: true,
-        modelName: 'Staff',
-        tableName: 'staff',
+        modelName: 'Teacher',
+        tableName: 'teacher',
     }
 );
 
-Staff.hasMany(Class, {sourceKey: 'id', foreignKey: 'instructorId'});
-Class.belongsTo(Staff, {targetKey: 'id', foreignKey: 'instructorId'});
+Teacher.hasMany(Class, {sourceKey: 'id', foreignKey: 'teacherId'});
+Class.belongsTo(Teacher, {targetKey: 'id', foreignKey: 'teacherId'});
 
 
 Course.hasMany(TeacherTeachesCourse, { sourceKey: 'id', foreignKey: 'courseId' });
 TeacherTeachesCourse.belongsTo(Course, { foreignKey: 'courseId', targetKey: 'id' });
 
-TeacherTeachesCourse.belongsTo(Staff, { foreignKey: 'teacherId', targetKey: 'id' });
-Staff.hasMany(TeacherTeachesCourse, { sourceKey: 'id', foreignKey: 'teacherId' });
+TeacherTeachesCourse.belongsTo(Teacher, { foreignKey: 'teacherId', targetKey: 'id' });
+Teacher.hasMany(TeacherTeachesCourse, { sourceKey: 'id', foreignKey: 'teacherId' });
 
-Staff.prototype.isPasswordMatching = async function (password) {
+Teacher.prototype.isPasswordMatching = async function (password) {
     return await bcrypt.compare(password, this.password)
 }
 
-Staff.beforeCreate(async (staff) => {
-    if (staff?.password) {
-        staff.password = await bcrypt.hash(staff.password, Number(process.env.BCRYPT_SALT))
+Teacher.beforeCreate(async (teacher) => {
+    if (teacher?.password) {
+        teacher.password = await bcrypt.hash(teacher.password, Number(process.env.BCRYPT_SALT))
     }
 })
 
-Staff.beforeUpdate(async (staff) => {
-    if (staff.changed('password') && staff?.password) {
-        staff.password = await bcrypt.hash(staff.password, Number(process.env.BCRYPT_SALT))
+Teacher.beforeUpdate(async (teacher) => {
+    if (teacher.changed('password') && teacher?.password) {
+        teacher.password = await bcrypt.hash(teacher.password, Number(process.env.BCRYPT_SALT))
     }
-    if(staff.changed('email')){
-        staff.email = staff.email.toLowerCase();
-        staff.isVerified = false;   
+    if(teacher.changed('email')){
+        teacher.email = teacher.email.toLowerCase();
+        teacher.isVerified = false;   
     }
 })
 
-Staff.prototype.generateAccessToken = function () {
+Teacher.prototype.generateAccessToken = function () {
     return jwt.sign(
         {
             id: this.id,
             email: this.email,
+            role: ROLES.TEACHER
         },
         process.env.JWT_ACCESS_TOKEN_SECRET,
         {
@@ -234,11 +235,12 @@ Staff.prototype.generateAccessToken = function () {
     )
 }
 
-Staff.prototype.generateRefreshToken = function () {
+Teacher.prototype.generateRefreshToken = function () {
     return jwt.sign(
         {
             id: this.id,
             email: this.email,
+            role: ROLES.TEACHER
         },
         process.env.JWT_REFRESH_TOKEN_SECRET,
         {
@@ -248,4 +250,4 @@ Staff.prototype.generateRefreshToken = function () {
 }
 
 
-export default Staff;
+export default Teacher;

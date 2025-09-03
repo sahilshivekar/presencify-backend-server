@@ -6,7 +6,7 @@ import {
     updateRoom,
     removeRoom
 } from '../controllers/room.controller.js';
-import { verifyAdminJWT, verifyStaffJWT, verifyStudentJWT } from '../middlewares/auth.middleware.js';
+import { verifyAdminJWT, verifyTeacherJWT, verifyStudentJWT } from '../middlewares/auth.middleware.js';
 const router = express.Router();
 
 // ! routes for admin
@@ -16,9 +16,9 @@ router.route('/admin/add-room').post(verifyAdminJWT, addRoom);
 router.route('/admin/update-room').put(verifyAdminJWT, updateRoom);
 router.route('/admin/remove-room').delete(verifyAdminJWT, removeRoom);
 
-// ! routes for staff
-router.route('/staff/get-rooms').get(verifyStaffJWT, getRooms);
-router.route('/staff/get-room-by-id').get(verifyStaffJWT, getRoomById);
+// ! routes for teacher
+router.route('/teacher/get-rooms').get(verifyTeacherJWT, getRooms);
+router.route('/teacher/get-room-by-id').get(verifyTeacherJWT, getRoomById);
 
 
 // ! routes for student

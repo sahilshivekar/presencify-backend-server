@@ -1,4 +1,4 @@
-import Staff from '../db/models/staff.model.js';
+import Teacher from '../db/models/teacher.model.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { ApiResponse } from '../utils/ApiResponse.js'
 import { ApiError } from '../utils/ApiError.js'
@@ -16,10 +16,10 @@ const options = {
     secure: true,
 };
 
-const generateAccessAndRefreshTokens = async (staff) => {
+const generateAccessAndRefreshTokens = async (teacher) => {
     try {
-        const newAccessToken = await staff.generateAccessToken();
-        const newRefreshToken = await staff.generateRefreshToken();
+        const newAccessToken = await teacher.generateAccessToken();
+        const newRefreshToken = await teacher.generateRefreshToken();
 
         return { newAccessToken, newRefreshToken };
     } catch (err) {
@@ -29,8 +29,8 @@ const generateAccessAndRefreshTokens = async (staff) => {
 
 
 
-//* get all the staff
-const getStaff = asyncHandler(async (req, res) => {
+//* get all the teacher
+const getTeacher = asyncHandler(async (req, res) => {
 
     const {
         searchQuery,
@@ -98,40 +98,40 @@ const getStaff = asyncHandler(async (req, res) => {
         )
     }
 
-    const staff = await Staff.findAndCountAll({
+    const teacher = await Teacher.findAndCountAll({
         where: searchClause,
         include: includeClause,
         ...(limit && getAll == "false" ? { offset: offset, } : {}),
         ...(limit && getAll == "false" ? { limit: parseInt(limit, 10) } : {}),
         distinct: true,
     });
-    console.log(staff.rows)
+    console.log(teacher.rows)
     res
         .status(200)
         .json(
             new ApiResponse(
                 200,
-                "Staffs retrieved successfully.",
+                "Teachers retrieved successfully.",
                 {
-                    staff: staff.rows,
-                    totalStaff: staff.count
+                    teacher: teacher.rows,
+                    totalTeacher: teacher.count
                 }
             )
         );
 
 });
 
-const getStaffById = asyncHandler(async (req, res) => {
-    const { staffId } = req.query;
+const getTeacherById = asyncHandler(async (req, res) => {
+    const { teacherId } = req.query;
 
-    if (!staffId) {
-        throw new ApiError(400, "Staff id is required");
+    if (!teacherId) {
+        throw new ApiError(400, "Teacher id is required");
     }
 
-    const staff = await Staff.findByPk(staffId);
+    const teacher = await Teacher.findByPk(teacherId);
 
-    if (!staff) {
-        throw new ApiError(404, "Staff not found");
+    if (!teacher) {
+        throw new ApiError(404, "Teacher not found");
     }
 
     res
@@ -139,14 +139,14 @@ const getStaffById = asyncHandler(async (req, res) => {
         .json(
             new ApiResponse(
                 200,
-                "Staff fetched successfully",
-                staff
+                "Teacher fetched successfully",
+                teacher
             )
         );
 });
 
-//* add staff
-const addStaff = asyncHandler(async (req, res) => {
+//* add teacher
+const addTeacher = asyncHandler(async (req, res) => {
 
     const {
         firstName,
@@ -162,7 +162,7 @@ const addStaff = asyncHandler(async (req, res) => {
         isActive
     } = req.body;
 
-    const staffImageLocalPath = req.file?.path
+    const teacherImageLocalPath = req.file?.path
 
     const fields = {
         "First Name": firstName,
@@ -177,72 +177,72 @@ const addStaff = asyncHandler(async (req, res) => {
 
     for (const fieldName in fields) {
         if (!fields[fieldName]) {
-            if (staffImageLocalPath) {
-                fs.unlinkSync(staffImageLocalPath)
+            if (teacherImageLocalPath) {
+                fs.unlinkSync(teacherImageLocalPath)
             }
             throw new ApiError(400, `${fieldName} is required`); // Use fieldName here
         }
     }
 
     // if (password !== confirmPassword) {
-    //     if (staffImageLocalPath) {
-    //         fs.unlinkSync(staffImageLocalPath)
+    //     if (teacherImageLocalPath) {
+    //         fs.unlinkSync(teacherImageLocalPath)
     //     }
     //     throw new ApiError(400, "Password and confirm password field do not match");
     // }
 
     if (!['Male', 'Female', 'Other'].includes(gender)) {
-        if (staffImageLocalPath) {
-            fs.unlinkSync(staffImageLocalPath)
+        if (teacherImageLocalPath) {
+            fs.unlinkSync(teacherImageLocalPath)
         }
         throw new ApiError(400, "Invalid gender value. Must be Male, Female, or Other")
     }
 
     if (!['Teacher', 'Head of Department', 'Principal'].includes(role)) {
-        if (staffImageLocalPath) {
-            fs.unlinkSync(staffImageLocalPath)
+        if (teacherImageLocalPath) {
+            fs.unlinkSync(teacherImageLocalPath)
         }
         throw new ApiError(400, "Invalid role value. Must be Teacher, Head of Department, or Principal")
     }
 
     if (!isValidPhoneNumber(phoneNumber)) {
-        if (staffImageLocalPath) {
-            fs.unlinkSync(staffImageLocalPath)
+        if (teacherImageLocalPath) {
+            fs.unlinkSync(teacherImageLocalPath)
         }
         throw new ApiError(400, "Invalid phone number.")
     }
 
-    const existingStaffMember = await Staff.findOne({ where: { email } })
+    const existingTeacherMember = await Teacher.findOne({ where: { email } })
 
-    if (existingStaffMember) {
-        if (staffImageLocalPath) {
-            fs.unlinkSync(staffImageLocalPath)
+    if (existingTeacherMember) {
+        if (teacherImageLocalPath) {
+            fs.unlinkSync(teacherImageLocalPath)
         }
-        throw new ApiError(400, "A staff member with this email already exists")
+        throw new ApiError(400, "A teacher member with this email already exists")
     }
 
-    let staffImageUrl = null;
-    let staffImagePublicId = null;
+    let teacherImageUrl = null;
+    let teacherImagePublicId = null;
 
-    if (staffImageLocalPath) {
+    if (teacherImageLocalPath) {
 
-        const staffImage = await uploadOnCloudinary(staffImageLocalPath)
+        const teacherImage = await uploadOnCloudinary(teacherImageLocalPath)
 
-        if (!staffImage?.url) {
-            fs.unlinkSync(staffImageLocalPath)
+        if (!teacherImage?.url) {
+            fs.unlinkSync(teacherImageLocalPath)
             throw new ApiError(500, "Some issue occured while uploading the image")
         }
 
-        staffImageUrl = staffImage.secure_url
-        staffImagePublicId = staffImage.public_id
+        teacherImageUrl = teacherImage.secure_url
+        teacherImagePublicId = teacherImage.public_id
     }
 
-    const addedStaffMember = await Staff.create({
+    const addedTeacherMember = await Teacher.create({
         firstName: firstName,
         middleName: middleName || null,
         lastName: lastName,
-        staffImageUrl: staffImageUrl,
-        staffImagePublicId: staffImagePublicId,
+        teacherImageUrl: teacherImageUrl,
+        teacherImagePublicId: teacherImagePublicId,
         email: email,
         phoneNumber: phoneNumber,
         gender: gender,
@@ -253,8 +253,8 @@ const addStaff = asyncHandler(async (req, res) => {
     });
 
 
-    if (!addedStaffMember) {
-        throw new ApiError(500, "Some issue occured while adding staff member")
+    if (!addedTeacherMember) {
+        throw new ApiError(500, "Some issue occured while adding teacher member")
     }
 
     res
@@ -262,14 +262,14 @@ const addStaff = asyncHandler(async (req, res) => {
         .json(
             new ApiResponse(
                 201,
-                'Staff member added successfully',
-                addedStaffMember
+                'Teacher member added successfully',
+                addedTeacherMember
             )
         )
 
 });
 
-const updateStaffDetails = asyncHandler(async (req, res) => {
+const updateTeacherDetails = asyncHandler(async (req, res) => {
     const {
         id,
         firstName,
@@ -283,124 +283,124 @@ const updateStaffDetails = asyncHandler(async (req, res) => {
         isActive
     } = req.body;
 
-    if (req.admin && !id) { // will make it (req.admind && !id) || req.staff.id after adding staff
-        throw new ApiError(400, "Staff id is required")
+    if (req.admin && !id) { // will make it (req.admind && !id) || req.teacher.id after adding teacher
+        throw new ApiError(400, "Teacher id is required")
     }
 
-    const staff = await Staff.findByPk(id);
+    const teacher = await Teacher.findByPk(id);
 
-    if (!staff) {
-        throw new ApiError(404, "Staff not found")
+    if (!teacher) {
+        throw new ApiError(404, "Teacher not found")
     }
 
     if (!isValidPhoneNumber(phoneNumber)) {
         throw new ApiError(400, "Invalid phone number.")
     }
 
-    staff.firstName = firstName || staff.firstName;
-    staff.middleName = middleName || staff.middleName;
-    staff.lastName = lastName || staff.lastName;
-    staff.email = email || staff.email;
-    staff.role = role || staff.role;
-    staff.gender = gender || staff.gender;
-    staff.highestQualification = highestQualification || staff.highestQualification;
-    staff.phoneNumber = phoneNumber || staff.phoneNumber;
-    staff.isActive = isActive || staff.isActive;
+    teacher.firstName = firstName || teacher.firstName;
+    teacher.middleName = middleName || teacher.middleName;
+    teacher.lastName = lastName || teacher.lastName;
+    teacher.email = email || teacher.email;
+    teacher.role = role || teacher.role;
+    teacher.gender = gender || teacher.gender;
+    teacher.highestQualification = highestQualification || teacher.highestQualification;
+    teacher.phoneNumber = phoneNumber || teacher.phoneNumber;
+    teacher.isActive = isActive || teacher.isActive;
 
-    await staff.save();
+    await teacher.save();
 
     res
         .status(200)
         .json(
             new ApiResponse(
                 200,
-                "Staff updated successfully",
-                staff
+                "Teacher updated successfully",
+                teacher
             )
         );
 })
 
-const updateStaffPassword = asyncHandler(async (req, res) => {
+const updateTeacherPassword = asyncHandler(async (req, res) => {
     const {
         id,
         password,
         confirmPassword
     } = req.body;
 
-    if (req.admin && !id) { // will make it (req.admind && !id) || req.staff.id after adding staff
-        throw new ApiError(400, "Staff id is required")
+    if (req.admin && !id) { // will make it (req.admind && !id) || req.teacher.id after adding teacher
+        throw new ApiError(400, "Teacher id is required")
     }
 
-    const staff = await Staff.findByPk(id);
+    const teacher = await Teacher.findByPk(id);
 
-    if (!staff) {
-        throw new ApiError(404, "Staff not found")
+    if (!teacher) {
+        throw new ApiError(404, "Teacher not found")
     }
 
     if (password !== confirmPassword) {
         throw new ApiError(400, "Password and confirm password field do not match");
     }
 
-    staff.password = password || '';
+    teacher.password = password || '';
 
-    await staff.save();
+    await teacher.save();
 
     res
         .status(200)
         .json(
             new ApiResponse(
                 200,
-                "Staff password updated successfully",
-                staff
+                "Teacher password updated successfully",
+                teacher
             )
         );
 })
 
 
-const updateStaffImage = asyncHandler(async (req, res) => {
+const updateTeacherImage = asyncHandler(async (req, res) => {
     const {
         id
     } = req.body;
-    const staffImageLocalPath = req.file?.path
+    const teacherImageLocalPath = req.file?.path
 
-    if (req.admin && !id) { // will make it (req.admind && !id) || req.staff.id after adding staff
-        if (staffImageLocalPath) {
-            fs.unlinkSync(staffImageLocalPath)
+    if (req.admin && !id) { // will make it (req.admind && !id) || req.teacher.id after adding teacher
+        if (teacherImageLocalPath) {
+            fs.unlinkSync(teacherImageLocalPath)
         }
-        throw new ApiError(400, "Staff id is required")
+        throw new ApiError(400, "Teacher id is required")
     }
 
-    const staff = await Staff.findByPk(id);
+    const teacher = await Teacher.findByPk(id);
 
-    if (!staff) {
-        if (staffImageLocalPath) {
-            fs.unlinkSync(staffImageLocalPath)
+    if (!teacher) {
+        if (teacherImageLocalPath) {
+            fs.unlinkSync(teacherImageLocalPath)
         }
-        throw new ApiError(404, "Staff not found")
+        throw new ApiError(404, "Teacher not found")
     }
 
-    if (!staffImageLocalPath) {
-        throw new ApiError(400, "Staff image file is required")
+    if (!teacherImageLocalPath) {
+        throw new ApiError(400, "Teacher image file is required")
     }
 
-    const uploadedImageResponse = await uploadOnCloudinary(staffImageLocalPath)
+    const uploadedImageResponse = await uploadOnCloudinary(teacherImageLocalPath)
 
     if (!uploadedImageResponse?.url) {
         throw new ApiError(500, "Some issue occured while uploading the image")
     }
 
-    staff.staffImageUrl = uploadedImageResponse.secure_url
-    staff.staffImagePublicId = uploadedImageResponse.public_id
+    teacher.teacherImageUrl = uploadedImageResponse.secure_url
+    teacher.teacherImagePublicId = uploadedImageResponse.public_id
 
-    await staff.save();
+    await teacher.save();
 
     res
         .status(200)
         .json(
             new ApiResponse(
                 200,
-                "Staff image updated successfully",
-                staff
+                "Teacher image updated successfully",
+                teacher
             )
         );
 })
@@ -409,80 +409,80 @@ const removeImage = asyncHandler(async (req, res) => {
     const { id } = req.query;
 
     if (req.admin && !id) {
-        throw new ApiError(400, "Staff id is required");
+        throw new ApiError(400, "Teacher id is required");
     }
 
-    const staff = await Staff.findByPk(id);
+    const teacher = await Teacher.findByPk(id);
 
-    if (!staff) {
-        throw new ApiError(404, "Staff not found")
+    if (!teacher) {
+        throw new ApiError(404, "Teacher not found")
     }
 
-    const deletedImage = await deleteFromCloudinary(staff.staffImagePublicId)
+    const deletedImage = await deleteFromCloudinary(teacher.teacherImagePublicId)
 
     if (!deletedImage) {
         throw new ApiError(500, "Some issue occured while deleting the image")
     }
 
-    staff.staffImageUrl = null;
-    staff.staffImagePublicId = null;
+    teacher.teacherImageUrl = null;
+    teacher.teacherImagePublicId = null;
 
-    await staff.save();
+    await teacher.save();
 
     res
         .status(200)
         .json(
             new ApiResponse(
                 200,
-                "Staff image deleted successfully",
-                staff
+                "Teacher image deleted successfully",
+                teacher
             )
         );
 })
 
-//* remove staff
-const removeStaff = asyncHandler(async (req, res) => {
+//* remove teacher
+const removeTeacher = asyncHandler(async (req, res) => {
 
     const { id } = req.query;
 
     if (req.admin && !id) {
-        throw new ApiError(400, "Staff id is required");
+        throw new ApiError(400, "Teacher id is required");
     }
 
-    const staff = await Staff.findByPk(id);
+    const teacher = await Teacher.findByPk(id);
 
-    if (!staff) {
-        throw new ApiError(404, "Staff not found");
+    if (!teacher) {
+        throw new ApiError(404, "Teacher not found");
     }
-    if (staff.staffImagePublicId) {
-        const deletedImage = await deleteFromCloudinary(staff.staffImagePublicId)
+    if (teacher.teacherImagePublicId) {
+        const deletedImage = await deleteFromCloudinary(teacher.teacherImagePublicId)
         if (!deletedImage) {
             throw new ApiError(500, "Some issue occured while deleting the image")
         }
     }
 
 
-    await staff.destroy();
+    await teacher.destroy();
 
     res
         .status(200)
         .json(
             new ApiResponse(
                 200,
-                "Staff deleted successfully",
+                "Teacher deleted successfully",
                 null
             )
         );
 });
 
-// const loginStaff = asyncHandler(async (req, res) => {
+// const loginTeacher = asyncHandler(async (req, res) => {
 //     const { emailOrPhoneNumber, password } = req.body; // Changed to emailOrPhoneNumber
 
 //     if (!emailOrPhoneNumber) {
 //         throw new ApiError(400, "Email or Phone Number is needed"); // Updated message
 //     }
 
-//     const staff = await Staff.findOne({
+//     const teacher = await Teacher.findOne({
 //         where: {
 //             [Op.or]: {
 //                 email: emailOrPhoneNumber.toLowerCase(),
@@ -491,37 +491,37 @@ const removeStaff = asyncHandler(async (req, res) => {
 //         },
 //     });
 
-//     if (!staff) {
-//         throw new ApiError(404, "No staff found with entered credentials");
+//     if (!teacher) {
+//         throw new ApiError(404, "No teacher found with entered credentials");
 //     }
 
-//     const isPasswordMatching = await staff.isPasswordMatching(password);
+//     const isPasswordMatching = await teacher.isPasswordMatching(password);
 
 //     if (!isPasswordMatching) {
 //         throw new ApiError(400, "Password didn't match");
 //     }
 
-//     const { newAccessToken, newRefreshToken } = await generateAccessAndRefreshTokens(staff);
+//     const { newAccessToken, newRefreshToken } = await generateAccessAndRefreshTokens(teacher);
 
-//     staff.refreshToken = newRefreshToken;
-//     await staff.save();
+//     teacher.refreshToken = newRefreshToken;
+//     await teacher.save();
 
-//     delete staff.dataValues.password;
-//     delete staff.dataValues.refreshToken;
+//     delete teacher.dataValues.password;
+//     delete teacher.dataValues.refreshToken;
 
 //     res
 //         .status(200)
-//         .cookie("staffAccessToken", newAccessToken, { // Changed cookie name
+//         .cookie("teacherAccessToken", newAccessToken, { // Changed cookie name
 //             ...options,
 //             maxAge: 86400000,
 //         })
-//         .cookie("staffRefreshToken", newRefreshToken, { // Changed cookie name
+//         .cookie("teacherRefreshToken", newRefreshToken, { // Changed cookie name
 //             ...options,
 //             maxAge: 1296000000,
 //         })
 //         .json(
 //             new ApiResponse(200, "Login Successful", {
-//                 staff: staff,
+//                 teacher: teacher,
 //                 accessToken: newAccessToken,
 //                 refreshToken: newRefreshToken,
 //             })
@@ -533,27 +533,27 @@ const removeStaff = asyncHandler(async (req, res) => {
 
 //     await emailSchema.validateAsync(req.body);
 
-//     if (!email && !req?.staff?.email) { // Use req.staff
+//     if (!email && !req?.teacher?.email) { // Use req.teacher
 //         throw new ApiError(400, "Email is required");
 //     }
 
 //     if (email) {
 //         email = email.toLowerCase();
 //     } else {
-//         email = req?.staff?.email.toLowerCase(); // Use req.staff
+//         email = req?.teacher?.email.toLowerCase(); // Use req.teacher
 //     }
 
-//     const staff = await Staff.findOne({ where: { email } });
+//     const teacher = await Teacher.findOne({ where: { email } });
 
-//     if (!staff) {
-//         throw new ApiError(400, "Staff with this email doesn't exist"); // Updated message
+//     if (!teacher) {
+//         throw new ApiError(400, "Teacher with this email doesn't exist"); // Updated message
 //     }
 
 //     const code = generateVerificationCode();
 //     const expiresAt = new Date(Date.now() + 5 * 60 * 1000);
 
 //     const record = await VerificationCode.create({
-//         email: staff.email,
+//         email: teacher.email,
 //         code,
 //         expiresAt,
 //     });
@@ -578,7 +578,7 @@ const removeStaff = asyncHandler(async (req, res) => {
 //     }, 5 * 60 * 1000);
 
 //     res.status(200).json(
-//         new ApiResponse(200, `Verification code sent on ${staff.email}`, {
+//         new ApiResponse(200, `Verification code sent on ${teacher.email}`, {
 //             expiresAt,
 //         })
 //     );
@@ -603,30 +603,30 @@ const removeStaff = asyncHandler(async (req, res) => {
 //         throw new ApiError(400, "Invalid verification code");
 //     }
 
-//     const staff = await Staff.scope('withPassword').findOne({ where: { email: email.toLowerCase() } }); // Use Staff model
+//     const teacher = await Teacher.scope('withPassword').findOne({ where: { email: email.toLowerCase() } }); // Use Teacher model
 
-//     if (!staff.isVerified) {
-//         staff.isVerified = true;
-//         await staff.save();
+//     if (!teacher.isVerified) {
+//         teacher.isVerified = true;
+//         await teacher.save();
 //     }
 
 //     await VerificationCode.destroy({ where: { email: email.toLowerCase() } });
 
-//     const { newAccessToken, newRefreshToken } = await generateAccessAndRefreshTokens(staff);
+//     const { newAccessToken, newRefreshToken } = await generateAccessAndRefreshTokens(teacher);
 
-//     staff.refreshToken = newRefreshToken;
-//     await staff.save();
+//     teacher.refreshToken = newRefreshToken;
+//     await teacher.save();
 
-//     delete staff.dataValues.password;
-//     delete staff.dataValues.refreshToken;
+//     delete teacher.dataValues.password;
+//     delete teacher.dataValues.refreshToken;
 
 //     res
 //         .status(200)
-//         .cookie("staffAccessToken", newAccessToken, { // Changed cookie name
+//         .cookie("teacherAccessToken", newAccessToken, { // Changed cookie name
 //             ...options,
 //             maxAge: 86400000,
 //         })
-//         .cookie("staffRefreshToken", newRefreshToken, { // Changed cookie name
+//         .cookie("teacherRefreshToken", newRefreshToken, { // Changed cookie name
 //             ...options,
 //             maxAge: 1296000000,
 //         })
@@ -649,32 +649,32 @@ const removeStaff = asyncHandler(async (req, res) => {
 
 //     const actualRefreshToken = refreshToken.replace("Bearer ", "");
 
-//     let staffId;
+//     let teacherId;
 //     jwt.verify(actualRefreshToken, process.env.JWT_REFRESH_TOKEN_SECRET, (err, decoded) => {
 //         if (err) {
 //             throw new ApiError(401, "Invalid refresh token");
 //         }
-//         staffId = decoded.id;
+//         teacherId = decoded.id;
 //     });
 
-//     const staff = await Staff.findByPk(staffId);
+//     const teacher = await Teacher.findByPk(teacherId);
 
-//     if (!staff) {
-//         throw new ApiError(401, "Staff with this refresh token doesn't exist"); // Updated message
+//     if (!teacher) {
+//         throw new ApiError(401, "Teacher with this refresh token doesn't exist"); // Updated message
 //     }
 
-//     const { newAccessToken, newRefreshToken } = await generateAccessAndRefreshTokens(staff);
+//     const { newAccessToken, newRefreshToken } = await generateAccessAndRefreshTokens(teacher);
 
-//     staff.refreshToken = newRefreshToken;
-//     await staff.save();
+//     teacher.refreshToken = newRefreshToken;
+//     await teacher.save();
 
 //     res
 //         .status(200)
-//         .cookie("staffAccessToken", newAccessToken, { // Changed cookie name
+//         .cookie("teacherAccessToken", newAccessToken, { // Changed cookie name
 //             ...options,
 //             maxAge: 86400000,
 //         })
-//         .cookie("staffRefreshToken", newRefreshToken, { // Changed cookie name
+//         .cookie("teacherRefreshToken", newRefreshToken, { // Changed cookie name
 //             ...options,
 //             maxAge: 1296000000,
 //         })
@@ -690,16 +690,16 @@ const removeStaff = asyncHandler(async (req, res) => {
 //! logout is remaining
 
 const addTeachingSubject = asyncHandler(async (req, res) => {
-    const { staffId, courseId } = req.body;
+    const { teacherId, courseId } = req.body;
 
-    if (!staffId || !courseId) {
-        throw new ApiError(400, "Staff ID and Course ID are required");
+    if (!teacherId || !courseId) {
+        throw new ApiError(400, "Teacher ID and Course ID are required");
     }
 
-    const staff = await Staff.findByPk(staffId);
+    const teacher = await Teacher.findByPk(teacherId);
 
-    if (!staff) {
-        throw new ApiError(404, "Staff not found");
+    if (!teacher) {
+        throw new ApiError(404, "Teacher not found");
     }
 
     const course = await Course.findByPk(courseId);
@@ -710,17 +710,17 @@ const addTeachingSubject = asyncHandler(async (req, res) => {
 
     const alreadyAssigned = await TeacherTeachesCourse.findOne({
         where: {
-            teacherId: staffId,
+            teacherId: teacherId,
             courseId: courseId,
         }
     });
 
     if(alreadyAssigned) {
-        throw new ApiError(400, "Course is already assigned to this staff member")
+        throw new ApiError(400, "Course is already assigned to this teacher member")
     }
 
     const teacherTeachesCourseEntry = await TeacherTeachesCourse.create({
-        teacherId: staffId,
+        teacherId: teacherId,
         courseId: courseId,
     });
 
@@ -763,13 +763,13 @@ const removeTeachingSubject = asyncHandler(async (req, res) => {
 });
 
 const getTeachingSubjects = asyncHandler(async (req, res) => {
-    const { staffId } = req.query;
+    const { teacherId } = req.query;
 
-    if (!staffId) {
+    if (!teacherId) {
         throw new ApiError(400, "Teacher ID is required");
     }
 
-    const teacher = await Staff.findByPk(staffId);
+    const teacher = await Teacher.findByPk(teacherId);
 
     if (!teacher) {
         throw new ApiError(404, "Teacher not found");
@@ -777,7 +777,7 @@ const getTeachingSubjects = asyncHandler(async (req, res) => {
 
     const teachingSubjects = await TeacherTeachesCourse.findAll({
         where: {
-            teacherId: staffId
+            teacherId: teacherId
         },
         include: [
             {
@@ -806,14 +806,14 @@ const getTeachingSubjects = asyncHandler(async (req, res) => {
 
 
 export {
-    getStaff,
-    addStaff,
-    updateStaffDetails,
-    updateStaffPassword,
-    updateStaffImage,
-    removeStaff,
+    getTeacher,
+    addTeacher,
+    updateTeacherDetails,
+    updateTeacherPassword,
+    updateTeacherImage,
+    removeTeacher,
     removeImage,
-    getStaffById,
+    getTeacherById,
     getTeachingSubjects,
     addTeachingSubject,
     removeTeachingSubject

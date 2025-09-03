@@ -46,7 +46,7 @@ module.exports = {
                     defaultValue: Sequelize.literal('CURRENT_TIMESTAMP')
                 },
                 audiences: {
-                    type: Sequelize.ENUM('Students', 'Staff', 'Everyone'),
+                    type: Sequelize.ENUM('Students', 'Teacher', 'Everyone'),
                     allowNull: false,
                     field: 'notice_audiences',
                 },
@@ -54,8 +54,8 @@ module.exports = {
                     type: Sequelize.INTEGER,
                     allowNull: false,
                     references: {
-                        model: 'staff',
-                        key: 'staff_id',
+                        model: 'teacher',
+                        key: 'teacher_id',
                     },
                     onUpdate: 'CASCADE',
                     onDelete: 'CASCADE',

@@ -3,7 +3,7 @@ import sequelize from '../../config/db.connection.js';
 import BranchCourseSemester from './branchCourseSemester.model.js';
 import Scheme from './scheme.model.js';
 import TeacherTeachesCourse from './teacherTeachesCourse.model.js';
-import Staff from './staff.model.js';
+import Teacher from './teacher.model.js';
 import Class from './class.model.js';
 class Course extends Model { }
 

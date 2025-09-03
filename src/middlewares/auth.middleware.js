@@ -3,7 +3,7 @@ import { asyncHandler } from "../utils/asyncHandler.js"
 import jwt from "jsonwebtoken"
 import Admin from "../db/models/admin.model.js"
 import Student from "../db/models/student.model.js"
-import Staff from "../db/models/staff.model.js"
+import Teacher from "../db/models/teacher.model.js"
 
 const verifyAdminJWT = asyncHandler(async (req, _, next) => {
     try {
@@ -67,10 +67,10 @@ const verifyStudentJWT = asyncHandler(async (req, _, next) => {
 
 })
 
-const verifyStaffJWT = asyncHandler(async (req, _, next) => {
+const verifyTeacherJWT = asyncHandler(async (req, _, next) => {
     try {
 
-        const token = req.cookies?.staffAccessToken || req.header("Authorization")?.replace("Bearer ", "");
+        const token = req.cookies?.teacherAccessToken || req.header("Authorization")?.replace("Bearer ", "");
 
         if (!token) {
             throw new ApiError(401, "Unauthorized request");
@@ -78,24 +78,24 @@ const verifyStaffJWT = asyncHandler(async (req, _, next) => {
 
         const decodedToken = jwt.verify(token, process.env.JWT_ACCESS_TOKEN_SECRET)
 
-        const staff = await Staff.findByPk(decodedToken?.id, {
+        const teacher = await Teacher.findByPk(decodedToken?.id, {
             attributes: { exclude: ['password', 'refreshToken'] }
         });
 
-        if (!staff) {
+        if (!teacher) {
             throw new ApiError(401, "Invalid Access Token")
         }
 
         if (req.method != 'GET') {
-            req.body.staffId = staff.id
-            req.body.teacherId = staff.id
+            req.body.teacherId = teacher.id
+            req.body.teacherId = teacher.id
         }
         
-        req.query.teacherId = staff.id
-        req.teacher = staff.dataValues;
+        req.query.teacherId = teacher.id
+        req.teacher = teacher.dataValues;
 
-        req.query.staffId = staff.id
-        req.staff = staff.dataValues
+        req.query.teacherId = teacher.id
+        req.teacher = teacher.dataValues
         next()
 
     } catch (err) {
@@ -105,4 +105,4 @@ const verifyStaffJWT = asyncHandler(async (req, _, next) => {
 })
 
 
-export { verifyAdminJWT, verifyStudentJWT, verifyStaffJWT }
+export { verifyAdminJWT, verifyStudentJWT, verifyTeacherJWT }

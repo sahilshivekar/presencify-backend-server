@@ -105,7 +105,12 @@ const getCourses = asyncHandler(async (req, res) => {
 //* add course
 const addCourse = asyncHandler(async (req, res) => {
 
-    const { code, name, abbreviation, schemeId } = req.body;
+    const { 
+        code, 
+        name, 
+        optionalSubject,
+        schemeId 
+        } = req.body;
 
     const scheme = await Scheme.findByPk(schemeId);
 
@@ -116,7 +121,7 @@ const addCourse = asyncHandler(async (req, res) => {
     const course = await Course.create({
         code: code || "",
         name: name || "",
-        abbreviation: abbreviation || "",
+        optionalSubject: optionalSubject || null,
         schemeId: schemeId || null,
     });
 

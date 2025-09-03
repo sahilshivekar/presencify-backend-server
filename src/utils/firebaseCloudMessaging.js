@@ -1,5 +1,5 @@
 import admin from 'firebase-admin';
-import serviceAccount from '../config/attendify-FCM-sdk-private-key.json' assert { type: 'json' };
+import serviceAccount from '../config/presencify-FCM-sdk-private-key.json' assert { type: 'json' };
 import StudentFCMToken from '../db/models/studentFCMToken.model.js';
 
 admin.initializeApp({

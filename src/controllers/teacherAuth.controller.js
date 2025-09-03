@@ -1,4 +1,4 @@
-import Staff from '../db/models/staff.model.js';
+import Teacher from '../db/models/teacher.model.js';
 import VerificationCode from '../db/models/verificationCode.model.js'
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { ApiResponse } from '../utils/ApiResponse.js'
@@ -26,11 +26,11 @@ const options = {
     secure: true,
 }
 
-//* generate access and refresh tokens for staffs at the time of login 
-const generateAccessAndRefreshTokens = async (staff) => {
+//* generate access and refresh tokens for teachers at the time of login 
+const generateAccessAndRefreshTokens = async (teacher) => {
     try {
-        const newAccessToken = await staff.generateAccessToken();
-        const newRefreshToken = await staff.generateRefreshToken();
+        const newAccessToken = await teacher.generateAccessToken();
+        const newRefreshToken = await teacher.generateRefreshToken();
 
         return { newAccessToken, newRefreshToken }
     } catch (err) {
@@ -49,35 +49,35 @@ const getAccessToken = asyncHandler(async (req, res) => {
 
     const actualRefreshToken = refreshToken.replace("Bearer ", "");
 
-    let staffId;
+    let teacherId;
     jwt.verify(actualRefreshToken, process.env.JWT_REFRESH_TOKEN_SECRET, (err, decoded) => {
         if (err) {
             throw new ApiError(401, "Invalid refresh token") // Token invalid or expired
         }
-        staffId = decoded.id;
+        teacherId = decoded.id;
     });
 
-    // console.log(staffId)
-    const staff = await Staff.findByPk(staffId);
+    // console.log(teacherId)
+    const teacher = await Teacher.findByPk(teacherId);
 
-    if (!staff) {
-        throw new ApiError(401, "Staff with this refresh token doesn't exist")
+    if (!teacher) {
+        throw new ApiError(401, "Teacher with this refresh token doesn't exist")
     }
 
 
-    const { newAccessToken, newRefreshToken } = await generateAccessAndRefreshTokens(staff)
+    const { newAccessToken, newRefreshToken } = await generateAccessAndRefreshTokens(teacher)
 
-    staff.refreshToken = newRefreshToken;
+    teacher.refreshToken = newRefreshToken;
 
-    await staff.save();
+    await teacher.save();
 
     res
         .status(200)
-        .cookie("staffAccessToken", newAccessToken, {
+        .cookie("teacherAccessToken", newAccessToken, {
             ...options,
             maxAge: 86400000 /** bcz access token expiray is 1 day  */
         })
-        .cookie("staffRefreshToken", newRefreshToken, {
+        .cookie("teacherRefreshToken", newRefreshToken, {
             ...options,
             maxAge: 1296000000 /** bcz refresh token expiray is 15 day  */
         })
@@ -93,8 +93,8 @@ const getAccessToken = asyncHandler(async (req, res) => {
 
 });
 
-//* login staff
-const loginStaff = asyncHandler(async (req, res) => {
+//* login teacher
+const loginTeacher = asyncHandler(async (req, res) => {
     const { email, password } = req.body;
 
     if (!email) {
@@ -102,40 +102,40 @@ const loginStaff = asyncHandler(async (req, res) => {
     }
 
 
-    const staff = await Staff.findOne({
+    const teacher = await Teacher.findOne({
         where: {
             email: email.toLowerCase()
         }
     })
 
-    if (!staff) {
-        throw new ApiError(404, "No staff found with entered credentials")
+    if (!teacher) {
+        throw new ApiError(404, "No teacher found with entered credentials")
     }
 
-    const isPasswordMatching = await staff.isPasswordMatching(password);
+    const isPasswordMatching = await teacher.isPasswordMatching(password);
 
 
     if (!isPasswordMatching) {
         throw new ApiError(400, "Password didn't match")
     }
 
-    const { newAccessToken, newRefreshToken } = await generateAccessAndRefreshTokens(staff);
+    const { newAccessToken, newRefreshToken } = await generateAccessAndRefreshTokens(teacher);
 
     // avoiding the database request for saving time and manually adding the tokens
-    staff.refreshToken = newRefreshToken;
+    teacher.refreshToken = newRefreshToken;
 
-    await staff.save();
+    await teacher.save();
 
-    delete staff.dataValues.password;
-    delete staff.dataValues.refreshToken;
+    delete teacher.dataValues.password;
+    delete teacher.dataValues.refreshToken;
 
     res
         .status(200)
-        .cookie("staffAccessToken", newAccessToken, {
+        .cookie("teacherAccessToken", newAccessToken, {
             ...options,
             maxAge: 86400000 /** bcz access token expiray is 1 day  */
         })
-        .cookie("staffRefreshToken", newRefreshToken, {
+        .cookie("teacherRefreshToken", newRefreshToken, {
             ...options,
             maxAge: 1296000000 /** bcz refresh token expiray is 15 day  */
         })
@@ -144,15 +144,15 @@ const loginStaff = asyncHandler(async (req, res) => {
                 200,
                 "Login Successful",
                 {
-                    staff: staff, accessToken: newAccessToken, refreshToken: newRefreshToken
+                    teacher: teacher, accessToken: newAccessToken, refreshToken: newRefreshToken
                 }
             )
         )
 })
 
 
-//* Change staff password
-const updateStaffPassword = asyncHandler(async (req, res) => {
+//* Change teacher password
+const updateTeacherPassword = asyncHandler(async (req, res) => {
     const { password, confirmPassword } = req.body;
 
     if (!password || !confirmPassword) {
@@ -163,21 +163,21 @@ const updateStaffPassword = asyncHandler(async (req, res) => {
         throw new ApiError(400, "Password and confirm password field do not match");
     }
 
-    const staff = await Staff.findByPk(req.staff.id);
+    const teacher = await Teacher.findByPk(req.teacher.id);
 
-    if (!staff) {
-        throw new ApiError(404, "Staff not found");
+    if (!teacher) {
+        throw new ApiError(404, "Teacher not found");
     }
 
-    const isPasswordMatching = await staff.isPasswordMatching(password);
+    const isPasswordMatching = await teacher.isPasswordMatching(password);
 
     if (isPasswordMatching) {
         throw new ApiError(400, "New password can't be same as old password.")
     }
 
-    staff.password = password;
+    teacher.password = password;
 
-    await staff.save();
+    await teacher.save();
 
     res.status(200).json(
         new ApiResponse(
@@ -191,22 +191,22 @@ const updateStaffPassword = asyncHandler(async (req, res) => {
 
 
 
-//* logout staff (remove cookies tokens)
+//* logout teacher (remove cookies tokens)
 const logout = asyncHandler(async (req, res) => {
 
-    await Staff.update(
+    await Teacher.update(
         { refreshToken: null },
         {
             where: {
-                id: req.staff.id
+                id: req.teacher.id
             }
         }
     )
 
     res
         .status(200)
-        .clearCookie('staffAccessToken')
-        .clearCookie('staffRefreshToken')
+        .clearCookie('teacherAccessToken')
+        .clearCookie('teacherRefreshToken')
         .json(
             new ApiResponse(
                 200,
@@ -229,10 +229,10 @@ const sendVerificationCodeToEmail = asyncHandler(async (req, res) => {
 
     email = email.toLowerCase()
 
-    const staff = await Staff.findOne({ where: { email } })
+    const teacher = await Teacher.findOne({ where: { email } })
 
-    if (!staff) {
-        throw new ApiError(400, "Staff with this email doesn't exists")
+    if (!teacher) {
+        throw new ApiError(400, "Teacher with this email doesn't exists")
     }
 
     // Generate a random verification code (e.g., 6 digits)
@@ -241,7 +241,7 @@ const sendVerificationCodeToEmail = asyncHandler(async (req, res) => {
     const expiresAt = new Date(Date.now() + 5 * 60 * 1000);
 
     const record = await VerificationCode.create({
-        email: staff.email,
+        email: teacher.email,
         code,
         expiresAt
     })
@@ -275,7 +275,7 @@ const sendVerificationCodeToEmail = asyncHandler(async (req, res) => {
         .json(
             new ApiResponse(
                 200,
-                `Verification code sent on ${staff.email}`,
+                `Verification code sent on ${teacher.email}`,
                 {
                     expiresAt
                 }
@@ -303,28 +303,28 @@ const verifyCode = asyncHandler(async (req, res) => {
         throw new ApiError(400, "Invalid verification code")
     }
 
-    const staff = await Staff.findOne({ where: { email: email.toLowerCase() } })
+    const teacher = await Teacher.findOne({ where: { email: email.toLowerCase() } })
 
     await VerificationCode.destroy({ where: { email: email.toLowerCase() } })
 
-    const { newAccessToken, newRefreshToken } = await generateAccessAndRefreshTokens(staff);
+    const { newAccessToken, newRefreshToken } = await generateAccessAndRefreshTokens(teacher);
 
     // avoiding the database request for saving time and manually adding the tokens
-    staff.refreshToken = newRefreshToken;
+    teacher.refreshToken = newRefreshToken;
 
-    await staff.save();
+    await teacher.save();
 
-    delete staff.dataValues.password;
-    delete staff.dataValues.refreshToken;
+    delete teacher.dataValues.password;
+    delete teacher.dataValues.refreshToken;
 
 
     res
         .status(200)
-        .cookie("staffAccessToken", newAccessToken, {
+        .cookie("teacherAccessToken", newAccessToken, {
             ...options,
             maxAge: 86400000 /** bcz access token expiray is 1 day  */
         })
-        .cookie("staffRefreshToken", newRefreshToken, {
+        .cookie("teacherRefreshToken", newRefreshToken, {
             ...options,
             maxAge: 1296000000 /** bcz refresh token expiray is 15 day  */
         })
@@ -341,8 +341,8 @@ const verifyCode = asyncHandler(async (req, res) => {
 
 
 export {
-    updateStaffPassword,
-    loginStaff,
+    updateTeacherPassword,
+    loginTeacher,
     sendVerificationCodeToEmail,
     verifyCode,
     getAccessToken,

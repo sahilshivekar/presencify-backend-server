@@ -70,8 +70,8 @@ module.exports = {
                     allowNull: false,
                     field: 'uploaded_by',
                     references: {
-                        model: 'staff',
-                        key: 'staff_id',
+                        model: 'teacher',
+                        key: 'teacher_id',
                     },
                     onUpdate: 'CASCADE',
                     onDelete: 'CASCADE',

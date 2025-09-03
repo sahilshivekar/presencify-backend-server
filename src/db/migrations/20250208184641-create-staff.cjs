@@ -4,14 +4,14 @@
 module.exports = {
     async up(queryInterface, Sequelize) {
         await queryInterface.createTable(
-            'staff',
+            'teacher',
             {
                 id: {
                     type: Sequelize.INTEGER,
                     primaryKey: true,
                     allowNull: false,
                     autoIncrement: true,
-                    field: 'staff_id',
+                    field: 'teacher_id',
                 },
                 firstName: {
                     type: Sequelize.STRING(255),
@@ -28,47 +28,47 @@ module.exports = {
                     allowNull: false,
                     field: 'last_name',
                 },
-                staffImageUrl: {
+                teacherImageUrl: {
                     type: Sequelize.TEXT,
                     allowNull: true,
-                    field: 'staff_image_url',
+                    field: 'teacher_image_url',
                 },
-                staffImagePublicId: {
+                teacherImagePublicId: {
                     type: Sequelize.TEXT,
                     allowNull: true,
-                    field: 'staff_image_public_id'
+                    field: 'teacher_image_public_id'
                 },
                 email: {
                     type: Sequelize.STRING(255),
                     allowNull: false,
                     unique: true,
-                    field: 'staff_email',
+                    field: 'teacher_email',
                 },
                 phoneNumber: {
                     type: Sequelize.STRING(15),
                     allowNull: false,
-                    field: 'staff_phone_number',
+                    field: 'teacher_phone_number',
                     unique: true,
                 },
                 gender: {
                     type: Sequelize.ENUM('Male', 'Female', 'Other'), // i want enum('Male', 'Female', 'Other')
                     allowNull: false,
-                    field: 'staff_gender',
+                    field: 'teacher_gender',
                 },
                 highestQualification: {
                     type: Sequelize.STRING(255),
                     allowNull: true,
-                    field: 'staff_highest_qualification',
+                    field: 'teacher_highest_qualification',
                 },
                 role: {
                     type: Sequelize.ENUM('Teacher', 'Head of Department', 'Principal'),
                     allowNull: true, // i want enum('teacher', 'hod', 'principal')
-                    field: 'staff_role',
+                    field: 'teacher_role',
                 },
                 password: {
                     type: Sequelize.STRING(255),
                     allowNull: false,
-                    field: 'staff_password',
+                    field: 'teacher_password',
                     defaultValue: 'Teacher@123'
                 },
                 refreshToken: {
@@ -103,6 +103,6 @@ module.exports = {
     },
 
     async down(queryInterface, Sequelize) {
-        await queryInterface.dropTable('staff');
+        await queryInterface.dropTable('teacher');
     },
 };

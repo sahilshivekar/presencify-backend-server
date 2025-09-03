@@ -22,7 +22,7 @@ import schemeRouter from "./routes/scheme.routes.js"
 import courseRouter from "./routes/course.routes.js"
 import branchRouter from "./routes/branch.routes.js"
 import semesterRouter from "./routes/semester.routes.js"
-import staffRouter from "./routes/staff.routes.js"
+import teacherRouter from "./routes/teacher.routes.js"
 import studentRouter from "./routes/student.routes.js"
 import divisionRouter from "./routes/division.routes.js"
 import batchRouter from "./routes/batch.routes.js"
@@ -33,7 +33,7 @@ import attendanceRouter from "./routes/attendance.routes.js"
 import dropoutRouter from "./routes/dropout.routes.js"
 import studentFCMTokenRouter from "./routes/studentFCMToken.routes.js"
 import studentAuthRouter from "./routes/studentAuth.routes.js"
-import staffAuthRouter from "./routes/staffAuth.routes.js"
+import teacherAuthRouter from "./routes/teacherAuth.routes.js"
 
 //! routes declaration
 app.use("/api/v1/admin", adminRouter);
@@ -42,7 +42,7 @@ app.use("/api/v1/scheme", schemeRouter);
 app.use("/api/v1/course", courseRouter);
 app.use("/api/v1/branch", branchRouter);
 app.use("/api/v1/semester", semesterRouter);
-app.use("/api/v1/staff", staffRouter);
+app.use("/api/v1/teacher", teacherRouter);
 app.use("/api/v1/student", studentRouter);
 app.use("/api/v1/division", divisionRouter);
 app.use("/api/v1/batch", batchRouter);
@@ -53,6 +53,6 @@ app.use("/api/v1/attendance", attendanceRouter);
 app.use("/api/v1/dropout", dropoutRouter);
 app.use("/api/v1/student-fcm-token", studentFCMTokenRouter);
 app.use("/api/v1/student-auth", studentAuthRouter);
-app.use("/api/v1/staff-auth", staffAuthRouter);
+app.use("/api/v1/teacher-auth", teacherAuthRouter);
 
 export default app 

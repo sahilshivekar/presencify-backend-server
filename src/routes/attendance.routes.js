@@ -11,7 +11,7 @@ import {
     getAttendance,
     getActiveAttendanceSheet
 } from '../controllers/attendance.controller.js';
-import { verifyAdminJWT, verifyStaffJWT, verifyStudentJWT } from '../middlewares/auth.middleware.js';
+import { verifyAdminJWT, verifyTeacherJWT, verifyStudentJWT } from '../middlewares/auth.middleware.js';
 const router = express.Router();
 
 
@@ -29,16 +29,16 @@ router.route('/admin/get-active-attendance-sheet').get(verifyAdminJWT, getActive
 
 
 
-//! routes for staff
-router.route('/staff/create-attendance').post(verifyStaffJWT, createAttendance);
-router.route('/staff/add-students-to-attendance').post(verifyStaffJWT, addStudentsAttendance);    
-router.route('/staff/remove-attendance').delete(verifyStaffJWT, removeAttendance);
-router.route('/staff/update-student-attendance').put(verifyStaffJWT, updateStudentAttendance);
-router.route('/staff/get-attendance-of-student').get(verifyStaffJWT, getAttendanceOfStudentForSpecificCourseInSemester)
-router.route('/staff/get-attendance-of-all').get(verifyStaffJWT, getAttendanceOfAllForSemesterDivisionBatchCourse)
-router.route('/staff/get-attendance').get(verifyStaffJWT, getAttendance)
-router.route('/staff/send-attendance-report').post(verifyStaffJWT, sendAttendanceReport)
-router.route('/staff/get-active-attendance-sheet').get(verifyStaffJWT, getActiveAttendanceSheet)
+//! routes for teacher
+router.route('/teacher/create-attendance').post(verifyTeacherJWT, createAttendance);
+router.route('/teacher/add-students-to-attendance').post(verifyTeacherJWT, addStudentsAttendance);    
+router.route('/teacher/remove-attendance').delete(verifyTeacherJWT, removeAttendance);
+router.route('/teacher/update-student-attendance').put(verifyTeacherJWT, updateStudentAttendance);
+router.route('/teacher/get-attendance-of-student').get(verifyTeacherJWT, getAttendanceOfStudentForSpecificCourseInSemester)
+router.route('/teacher/get-attendance-of-all').get(verifyTeacherJWT, getAttendanceOfAllForSemesterDivisionBatchCourse)
+router.route('/teacher/get-attendance').get(verifyTeacherJWT, getAttendance)
+router.route('/teacher/send-attendance-report').post(verifyTeacherJWT, sendAttendanceReport)
+router.route('/teacher/get-active-attendance-sheet').get(verifyTeacherJWT, getActiveAttendanceSheet)
 
 
 //! routes for student
