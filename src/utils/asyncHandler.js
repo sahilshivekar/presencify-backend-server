@@ -2,7 +2,7 @@ const asyncHandler = (fn) => async (req, res, next) => {
     try {
         await fn(req, res, next)
     } catch (err) {
-        console.log(err)
+        
         // for direclty adding the validate error message in the err.message 
         // avoiding the multiple validation error messages in one message and als avoiding the "validation_error" prefix
         if (
