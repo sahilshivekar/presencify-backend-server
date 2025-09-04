@@ -1,23 +1,24 @@
 import { Router } from 'express';
 import { verifyJWT } from "../middlewares/auth.middleware.js";
 import {
-    loginAdmin,
+    login,
     updateAdminPassword,
     verifyPassword,
     sendVerificationCodeToEmail,
     verifyCode,
-    getAccessToken,
+    refreshTokens,
     logout,
-} from '../controllers/admin.controller.js';
+} from '../controllers/adminAuth.controller.js';
 import { ROLES } from '../config/roles.js';
+
 
 const router = Router();
 
 // Public routes (no authentication required)
-router.route('/login').post(loginAdmin);
+router.route('/login').post(login);
 router.route('/forgot-password').post(sendVerificationCodeToEmail);
 router.route('/verify-code').post(verifyCode);
-router.route('/access-token').post(getAccessToken);
+router.route('/access-token').post(refreshTokens);
 
 // Authentication and password management
 router.route('/verify-password').post(verifyJWT([ROLES.ADMIN]), verifyPassword);
