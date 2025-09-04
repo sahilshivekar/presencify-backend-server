@@ -1,4 +1,4 @@
-import { Sequelize, Model } from 'sequelize';
+import { Sequelize, Model, UUIDV4 } from 'sequelize';
 import sequelize from '../../config/db.connection.js';
 
 class StudentDivision extends Model { }
@@ -6,14 +6,15 @@ class StudentDivision extends Model { }
 StudentDivision.init(
     {
         id: {
-            type: Sequelize.INTEGER,
+            type: Sequelize.UUID,
+            defaultValue: UUIDV4,
             primaryKey: true,
             allowNull: false,
             autoIncrement: true,
             field: 'student_division_id'
         },
         studentId: {
-            type: Sequelize.INTEGER,
+            type: Sequelize.UUID,
             allowNull: false,
             field: 'student_id',
             references: {
@@ -27,7 +28,7 @@ StudentDivision.init(
             }
         },
         divisionId: {
-            type: Sequelize.INTEGER,
+            type: Sequelize.UUID,
             allowNull: false,
             field: 'division_id',
             references: {

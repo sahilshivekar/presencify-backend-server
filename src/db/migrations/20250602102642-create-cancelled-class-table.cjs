@@ -6,13 +6,13 @@ module.exports = {
         await queryInterface.createTable('cancelled_classes',
             {
                 id: {
-                    field: 'cancelled_class_id',
-                    type: Sequelize.INTEGER,
+                    type: Sequelize.UUID,
+                    defaultValue: Sequelize.UUIDV4,
                     primaryKey: true,
-                    autoIncrement: true,
+                    field: 'cancelled_class_id',
                 },
                 classId: {
-                    type: Sequelize.INTEGER,
+                    type: Sequelize.UUID,
                     allowNull: false,
                     field: 'cancelled_class_class_id',
                     references: {

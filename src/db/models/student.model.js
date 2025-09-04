@@ -1,4 +1,4 @@
-import { Sequelize, Model } from 'sequelize';
+import { Sequelize, Model, UUIDV4 } from 'sequelize';
 import sequelize from '../../config/db.connection.js';
 import bcrypt from 'bcrypt';
 import StudentDivision from './studentDivision.model.js';
@@ -13,7 +13,8 @@ class Student extends Model { }
 Student.init(
     {
         id: {
-            type: Sequelize.INTEGER,
+            type: Sequelize.UUID,
+            defaultValue: UUIDV4,
             primaryKey: true,
             allowNull: false,
             autoIncrement: true,
@@ -203,7 +204,7 @@ Student.init(
             field: 'student_img_public_id',
         },
         schemeId: {
-            type: Sequelize.INTEGER,
+            type: Sequelize.UUID,
             allowNull: false,
             field: 'scheme_id',
             references: {
@@ -217,7 +218,7 @@ Student.init(
             }
         },
         branchId: {
-            type: Sequelize.INTEGER,
+            type: Sequelize.UUID,
             allowNull: false,
             references: {
                 model: 'branches',

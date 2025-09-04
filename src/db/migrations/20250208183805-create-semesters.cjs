@@ -7,21 +7,18 @@ module.exports = {
             'semesters',
             {
                 id: {
-                    type: Sequelize.INTEGER,
+                    type: Sequelize.UUID,
+                    defaultValue: Sequelize.UUIDV4,
                     primaryKey: true,
-                    allowNull: false,
-                    autoIncrement: true,
                     field: 'semester_id',
                 },
                 branchId: {
-                    type: Sequelize.INTEGER,
+                    type: Sequelize.UUID,
                     allowNull: false,
                     references: {
                         model: 'branches', // Table name for branches
                         key: 'branch_id', // Primary key of branches table
-                    },
-                    onUpdate: 'CASCADE',
-                    onDelete: 'CASCADE',
+                    }, onDelete: 'CASCADE',
                     field: 'branch_id',
                 },
                 semesterNumber: {
@@ -40,15 +37,13 @@ module.exports = {
                     field: 'academic_end_year',
                 },
                 schemeId: {
-                    type: Sequelize.INTEGER,
+                    type: Sequelize.UUID,
                     allowNull: false,
                     field: 'scheme_id',
                     references: {
                         model: 'schemes',
                         key: 'scheme_id',
-                    },
-                    onUpdate: 'CASCADE',
-                    onDelete: 'CASCADE',
+                    }, onDelete: 'CASCADE',
                 },
                 startDate: {
                     type: Sequelize.DATEONLY,

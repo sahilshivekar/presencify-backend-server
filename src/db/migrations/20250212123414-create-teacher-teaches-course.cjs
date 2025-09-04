@@ -7,31 +7,29 @@ module.exports = {
             'teacher_teaches_course',
             {
                 id: {
-                    type: Sequelize.INTEGER,
+                    type: Sequelize.UUID,
+                    defaultValue: Sequelize.UUIDV4,
                     primaryKey: true,
                     field: 'teacher_subject_id',
-                    autoIncrement: true,
                 },
                 teacherId: {
-                    type: Sequelize.INTEGER,
+                    type: Sequelize.UUID,
                     allowNull: false,
                     field: 'teacher_id',
                     references: {
                         model: 'teacher',
                         key: 'teacher_id',
                     },
-                    onUpdate: 'CASCADE',
                     onDelete: 'CASCADE',
                 },
                 courseId: {
-                    type: Sequelize.INTEGER,
+                    type: Sequelize.UUID,
                     allowNull: false,
                     field: 'course_id',
                     references: {
                         model: 'courses', // Adjust based on actual course table name
                         key: 'course_id',
                     },
-                    onUpdate: 'CASCADE',
                     onDelete: 'CASCADE',
                 },
                 createdAt: {

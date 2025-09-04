@@ -5,32 +5,29 @@ module.exports = {
     async up(queryInterface, Sequelize) {
         await queryInterface.createTable('semester_courses', {
             id: {
-                type: Sequelize.INTEGER,
+                type: Sequelize.UUID,
+                defaultValue: Sequelize.UUIDV4,
                 primaryKey: true,
-                allowNull: false,
-                autoIncrement: true,
                 field: 'semester_courses_id'
             },
             semesterId: {
-                type: Sequelize.INTEGER,
+                type: Sequelize.UUID,
                 allowNull: false,
                 field: 'semester_id',
                 references: {
                     model: 'semesters',
                     key: 'semester_id',
                 },
-                onUpdate: 'CASCADE',
                 onDelete: 'CASCADE'
             },
             courseId: {
-                type: Sequelize.INTEGER,
+                type: Sequelize.UUID,
                 allowNull: false,
                 field: 'course_id',
                 references: {
                     model: 'courses',
                     key: 'course_id',
                 },
-                onUpdate: 'CASCADE',
                 onDelete: 'CASCADE'
             },
             createdAt: {

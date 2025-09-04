@@ -1,4 +1,4 @@
-import { Sequelize, Model } from 'sequelize';
+import { Sequelize, Model, UUIDV4 } from 'sequelize';
 import sequelize from '../../config/db.connection.js'; // Your sequelize instance
 import Student from './student.model.js';
 
@@ -7,7 +7,8 @@ class StudentFCMToken extends Model { }
 StudentFCMToken.init(
     {
         id: {
-            type: Sequelize.INTEGER,
+            type: Sequelize.UUID,
+            defaultValue: UUIDV4,
             primaryKey: true,
             autoIncrement: true,
             field: 'student_fcm_token_id'
@@ -29,7 +30,7 @@ StudentFCMToken.init(
             },
         },
         studentId: {
-            type: Sequelize.INTEGER,
+            type: Sequelize.UUID,
             allowNull: false,
             field: 'student_id',
             references: {

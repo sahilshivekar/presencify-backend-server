@@ -1,4 +1,4 @@
-import { Sequelize, Model } from 'sequelize';
+import { Sequelize, Model, UUIDV4 } from 'sequelize';
 import sequelize from '../../config/db.connection.js';
 import Teacher from './teacher.model.js';
 import Course from './course.model.js';
@@ -9,13 +9,14 @@ class TeacherTeachesCourse extends Model { }
 TeacherTeachesCourse.init(
     {
         id: {
-            type: Sequelize.INTEGER,
+            type: Sequelize.UUID,
+            defaultValue: UUIDV4,
             primaryKey: true,
             field: 'teacher_subject_id',
             autoIncrement: true,
         },
         teacherId: {
-            type: Sequelize.INTEGER,
+            type: Sequelize.UUID,
             allowNull: false,
             field: 'teacher_id',
             references: {
@@ -33,7 +34,7 @@ TeacherTeachesCourse.init(
             }
         },
         courseId: {
-            type: Sequelize.INTEGER,
+            type: Sequelize.UUID,
             allowNull: false,
             field: 'course_id',
             references: {

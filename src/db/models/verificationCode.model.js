@@ -1,4 +1,4 @@
-import { Sequelize, Model } from 'sequelize';
+import { Sequelize, Model, UUIDV4 } from 'sequelize';
 import sequelize from '../../config/db.connection.js'; // Your sequelize instance
 import Admin from './admin.model.js';
 
@@ -8,7 +8,8 @@ class VerificationCode extends Model { }
 VerificationCode.init(
     {
         id: {
-            type: Sequelize.INTEGER,
+            type: Sequelize.UUID,
+            defaultValue: UUIDV4,
             autoIncrement: true,
             primaryKey: true,
             field: 'verification_code_id'

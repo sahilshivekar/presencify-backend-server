@@ -1,20 +1,33 @@
 'use strict';
 
+const { v4: uuidv4 } = require('uuid'); // Import the uuid function
+
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
     async up(queryInterface, Sequelize) {
-        await queryInterface.sequelize.query(`        
-            INSERT INTO branches (branch_id, branch_name, branch_abbreviation) VALUES
-            (1,'Computer Engineering', 'Comp. Engg.'),
-            (2,'Civil Engineering', 'Civil Engg.');
-        `)
-
-        await queryInterface.sequelize.query(`            
-            ALTER SEQUENCE branches_branch_id_seq RESTART WITH 3;
-        `)
+        await queryInterface.bulkInsert('branches', [
+            {
+                branch_id: uuidv4(), // Generate a UUID
+                branch_name: 'Computer Engineering',
+                branch_abbreviation: 'Comp. Engg.',
+                created_at: new Date(),
+                updated_at: new Date()
+            },
+            {
+                branch_id: uuidv4(), // Generate another UUID
+                branch_name: 'Civil Engineering',
+                branch_abbreviation: 'Civil Engg.',
+                created_at: new Date(),
+                updated_at: new Date()
+            }
+        ]);
     },
 
     async down(queryInterface, Sequelize) {
-        await queryInterface.sequelize.query(`delete from branches`)
+        await queryInterface.bulkDelete('branches', {
+            branch_name: {
+                [Sequelize.Op.in]: ['Computer Engineering', 'Civil Engineering']
+            }
+        });
     }
 };

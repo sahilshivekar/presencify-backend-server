@@ -4,44 +4,41 @@
 module.exports = {
     async up(queryInterface, Sequelize) {
         await queryInterface.createTable('students_divisions', {
-            id: { 
-                type: Sequelize.INTEGER,
+            id: {
+                type: Sequelize.UUID,
+                defaultValue: Sequelize.UUIDV4,
                 primaryKey: true,
-                allowNull: false,
-                autoIncrement: true,
                 field: 'student_division_id'
             },
             studentId: {
-                type: Sequelize.INTEGER,
+                type: Sequelize.UUID,
                 allowNull: false,
                 field: 'student_id',
                 references: {
                     model: 'students',
-                    key: 'student_id' 
+                    key: 'student_id'
                 },
-                onUpdate: 'CASCADE',
                 onDelete: 'CASCADE'
             },
             divisionId: {
-                type: Sequelize.INTEGER,
+                type: Sequelize.UUID,
                 allowNull: false,
                 field: 'division_id',
                 references: {
-                    model: 'divisions', 
-                    key: 'division_id' 
+                    model: 'divisions',
+                    key: 'division_id'
                 },
-                onUpdate: 'CASCADE',
                 onDelete: 'CASCADE'
             },
             startDate: {
-                type: Sequelize.DATEONLY, 
+                type: Sequelize.DATEONLY,
                 allowNull: false,
                 field: 'start_date',
                 defaultValue: Sequelize.literal('CURRENT_TIMESTAMP')
             },
             endDate: {
-                type: Sequelize.DATEONLY, 
-                allowNull: true, 
+                type: Sequelize.DATEONLY,
+                allowNull: true,
                 field: 'end_date'
             },
             createdAt: {

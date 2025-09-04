@@ -9,12 +9,13 @@ export default {
         host: process.env.PG_DEV_DB_HOST,
         port: process.env.PG_DEV_DB_PORT,
         dialect: "postgres",
-        dialectOptions: { 
-            ssl: {
-                require: true,
-                rejectUnauthorized: false // Required for Render.com
-            }
-        },
+        logging: false,
+        // dialectOptions: { 
+        //     ssl: {
+        //         require: false,
+        //         rejectUnauthorized: false // Required for Render.com
+        //     }
+        // },
     },
     test: {
         username: process.env.PG_TEST_DB_USER,
@@ -32,6 +33,7 @@ export default {
         host: process.env.PG_PROD_DB_HOST,
         port: process.env.PG_PROD_DB_PORT,
         dialect: "postgres",
+        logging: false,
         dialectOptions: { 
             ssl: {
                 require: true,

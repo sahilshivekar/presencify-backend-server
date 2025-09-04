@@ -7,32 +7,27 @@ module.exports = {
             'branch_course_semesters',
             {
                 id: {
-                    type: Sequelize.INTEGER,
+                    type: Sequelize.UUID,
+                    defaultValue: Sequelize.UUIDV4,
                     primaryKey: true,
-                    allowNull: false,
-                    autoIncrement: true,
                     field: 'branch_course_semester_id',
                 },
                 branchId: {
-                    type: Sequelize.INTEGER,
+                    type: Sequelize.UUID,
                     allowNull: false,
                     references: {
                         model: 'branches', // Table name for branches
                         key: 'branch_id', // Primary key of branches table
-                    },
-                    onUpdate: 'CASCADE',
-                    onDelete: 'CASCADE',
+                    }, onDelete: 'CASCADE',
                     field: 'branch_id',
                 },
                 courseId: {
-                    type: Sequelize.INTEGER,
+                    type: Sequelize.UUID,
                     allowNull: false,
                     references: {
                         model: 'courses', // Table name for courses
                         key: 'course_id', // Primary key of courses table
-                    },
-                    onUpdate: 'CASCADE',
-                    onDelete: 'CASCADE',
+                    }, onDelete: 'CASCADE',
                     field: 'course_id',
                 },
                 semesterNumber: {

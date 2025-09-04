@@ -4,22 +4,20 @@
 module.exports = {
     async up(queryInterface, Sequelize) {
         await queryInterface.createTable('attendances', {
-            id: { // Added a primary key
-                type: Sequelize.INTEGER,
+            id: {
+                type: Sequelize.UUID,
+                defaultValue: Sequelize.UUIDV4,
                 primaryKey: true,
-                allowNull: false,
-                autoIncrement: true,
                 field: 'attendance_id'
             },
             classId: {
-                type: Sequelize.INTEGER,
+                type: Sequelize.UUID,
                 allowNull: false,
                 field: 'class_id',
                 references: {
                     model: 'classes',
                     key: 'class_id'
                 },
-                onUpdate: 'CASCADE',
                 onDelete: 'CASCADE'
             },
             BLEsessionUUID: {
@@ -50,32 +48,31 @@ module.exports = {
         // Create the join table for students and attendance
         await queryInterface.createTable('attendance_students', {
             id: {
-                type: Sequelize.INTEGER,
+                type: Sequelize.UUID,
+                defaultValue: Sequelize.UUIDV4,
                 primaryKey: true,
-                allowNull: false,
-                autoIncrement: true,
                 field: 'attendance_student_id'
             },
             attendanceId: {
-                type: Sequelize.INTEGER,
+                type: Sequelize.UUID,
                 allowNull: false,
                 field: 'attendance_id',
                 references: {
                     model: 'attendances',
                     key: 'attendance_id'
                 },
-                onUpdate: 'CASCADE',
+
                 onDelete: 'CASCADE'
             },
             studentId: {
-                type: Sequelize.INTEGER,
+                type: Sequelize.UUID,
                 allowNull: false,
                 field: 'student_id',
                 references: {
                     model: 'students',
                     key: 'student_id'
                 },
-                onUpdate: 'CASCADE',
+
                 onDelete: 'CASCADE'
             },
             attendanceStatus: {

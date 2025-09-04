@@ -1,4 +1,4 @@
-import { Sequelize, Model } from 'sequelize';
+import { Sequelize, Model, UUIDV4 } from 'sequelize';
 import sequelize from '../../config/db.connection.js'; // Your sequelize instance
 import Class from './class.model.js';
 
@@ -7,13 +7,14 @@ class CancelledClass extends Model { }
 CancelledClass.init(
     {
         id: {
-            type: Sequelize.INTEGER,
+            type: Sequelize.UUID,
+            defaultValue: UUIDV4,
             autoIncrement: true,
             primaryKey: true,
             field: 'cancelled_class_id'
         },
         classId: {
-            type: Sequelize.INTEGER,
+            type: Sequelize.UUID,
             allowNull: false,
             field: 'cancelled_class_class_id',
             references: {
@@ -50,7 +51,7 @@ CancelledClass.init(
         timestamps: true,
         modelName: 'CancelledClass',
         tableName: 'cancelled_classes'
-    }   
+    }
 );
 
 CancelledClass.belongsTo(Class, { targetKey: 'id', foreignKey: 'classId' })

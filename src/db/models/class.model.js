@@ -1,4 +1,4 @@
-import { Sequelize, Model } from 'sequelize';
+import { Sequelize, Model, UUIDV4 } from 'sequelize';
 import sequelize from '../../config/db.connection.js';
 import { Attendance } from './attendance.model.js';
 
@@ -7,14 +7,15 @@ class Class extends Model { }
 Class.init(
     {
         id: {
-            type: Sequelize.INTEGER,
+            type: Sequelize.UUID,
+            defaultValue: UUIDV4,
             primaryKey: true,
             allowNull: false,
             autoIncrement: true,
             field: 'class_id'
         },
         teacherId: {
-            type: Sequelize.INTEGER,
+            type: Sequelize.UUID,
             allowNull: false,
             field: 'teacher_id',
             references: {
@@ -58,7 +59,7 @@ Class.init(
             }
         },
         roomId: {
-            type: Sequelize.INTEGER,
+            type: Sequelize.UUID,
             allowNull: false,
             field: 'room_id',
             references: {
@@ -72,7 +73,7 @@ Class.init(
             }
         },
         batchId: {
-            type: Sequelize.INTEGER,
+            type: Sequelize.UUID,
             allowNull: true,
             field: 'batch_id',
             references: {
@@ -117,7 +118,7 @@ Class.init(
             }
         },
         courseId: {
-            type: Sequelize.INTEGER,
+            type: Sequelize.UUID,
             allowNull: false,
             field: 'course_id',
             references: {
@@ -151,7 +152,7 @@ Class.init(
             }
         },
         timetableId: {
-            type: Sequelize.INTEGER,
+            type: Sequelize.UUID,
             allowNull: false,
             field: 'timetable_id',
             references: {

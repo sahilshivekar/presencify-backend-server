@@ -1,4 +1,4 @@
-import { Sequelize, Model } from 'sequelize';
+import { Sequelize, Model, UUIDV4 } from 'sequelize';
 import sequelize from '../../config/db.connection.js';
 import Batch from './batch.model.js';
 import StudentDivision from './studentDivision.model.js';
@@ -8,7 +8,8 @@ class Division extends Model { }
 Division.init(
     {
         id: {
-            type: Sequelize.INTEGER,
+            type: Sequelize.UUID,
+            defaultValue: UUIDV4,
             primaryKey: true,
             allowNull: false,
             autoIncrement: true,
@@ -29,7 +30,7 @@ Division.init(
             }
         },
         semesterId: {
-            type: Sequelize.INTEGER,
+            type: Sequelize.UUID,
             allowNull: false,
             field: 'semester_id',
             references: {
@@ -75,14 +76,14 @@ Division.init(
     }
 );
 
-Division.hasMany(Batch, {sourceKey: "id", foreignKey: "divisionId"})
-Batch.belongsTo(Division, {foreignKey: "divisionId", targetKey: "id"})
+Division.hasMany(Batch, { sourceKey: "id", foreignKey: "divisionId" })
+Batch.belongsTo(Division, { foreignKey: "divisionId", targetKey: "id" })
 
 
-Division.hasMany(StudentDivision, {sourceKey: "id", foreignKey: "divisionId"})
-StudentDivision.belongsTo(Division, {foreignKey: "divisionId", targetKey: "id"})
+Division.hasMany(StudentDivision, { sourceKey: "id", foreignKey: "divisionId" })
+StudentDivision.belongsTo(Division, { foreignKey: "divisionId", targetKey: "id" })
 
-Division.hasOne(Timetable, {sourceKey: "id", foreignKey: "divisionId"})
-Timetable.belongsTo(Division, {foreignKey: "divisionId", targetKey: "id"})
+Division.hasOne(Timetable, { sourceKey: "id", foreignKey: "divisionId" })
+Timetable.belongsTo(Division, { foreignKey: "divisionId", targetKey: "id" })
 
 export default Division;

@@ -8,8 +8,8 @@ module.exports = {
             'admins',
             {
                 id: {
-                    type: Sequelize.INTEGER,
-                    autoIncrement: true,
+                    type: Sequelize.UUID,
+                    defaultValue: Sequelize.UUIDV4,
                     primaryKey: true,
                     field: 'admin_id'
                 },
@@ -74,6 +74,12 @@ module.exports = {
                     type: Sequelize.TEXT,
                     allowNull: true,
                     field: 'refresh_token'
+                },
+                isVerified: {
+                    type: Sequelize.BOOLEAN,
+                    allowNull: false,
+                    defaultValue: false,
+                    field: 'is_verified'
                 },
                 createdAt: {
                     type: Sequelize.DATE,

@@ -1,4 +1,4 @@
-import { Sequelize, Model } from 'sequelize';
+import { Sequelize, Model, UUIDV4 } from 'sequelize';
 import sequelize from '../../config/db.connection.js';
 import BranchCourseSemester from './branchCourseSemester.model.js';
 import Scheme from './scheme.model.js';
@@ -12,7 +12,8 @@ class Branch extends Model { }
 Branch.init(
     {
         id: {
-            type: Sequelize.INTEGER,
+            type: Sequelize.UUID,
+            defaultValue: UUIDV4,
             autoIncrement: true,
             primaryKey: true,
             field: 'branch_id'
@@ -74,13 +75,13 @@ Branch.init(
     }
 );
 
-Branch.hasMany(BranchCourseSemester, {sourceKey: 'id', foreignKey: 'branchId'});
-BranchCourseSemester.belongsTo(Branch, {targetKey: 'id', foreignKey: 'branchId'});  
+Branch.hasMany(BranchCourseSemester, { sourceKey: 'id', foreignKey: 'branchId' });
+BranchCourseSemester.belongsTo(Branch, { targetKey: 'id', foreignKey: 'branchId' });
 
 
-Branch.hasMany(Semester, {sourceKey: 'id', foreignKey: 'branchId'});
-Semester.belongsTo(Branch, {targetKey: 'id', foreignKey: 'branchId'});
+Branch.hasMany(Semester, { sourceKey: 'id', foreignKey: 'branchId' });
+Semester.belongsTo(Branch, { targetKey: 'id', foreignKey: 'branchId' });
 
-Branch.hasMany(Student, {sourceKey: 'id', foreignKey: 'branchId'});
-Student.belongsTo(Branch, {targetKey: 'id', foreignKey: 'branchId'});
+Branch.hasMany(Student, { sourceKey: 'id', foreignKey: 'branchId' });
+Student.belongsTo(Branch, { targetKey: 'id', foreignKey: 'branchId' });
 export default Branch;

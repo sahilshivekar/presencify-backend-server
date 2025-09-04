@@ -1,4 +1,4 @@
-import { Sequelize, Model } from "sequelize";
+import { Sequelize, Model, UUIDV4 } from "sequelize";
 import sequelize from "../../config/db.connection.js";
 import Student from "./student.model.js";
 
@@ -7,13 +7,14 @@ class Dropout extends Model { }
 Dropout.init(
     {
         id: {
-            type: Sequelize.INTEGER,
+            type: Sequelize.UUID,
+            defaultValue: UUIDV4,
             primaryKey: true,
             autoIncrement: true,
             field: 'dropout_id'
         },
         studentId: {
-            type: Sequelize.INTEGER,
+            type: Sequelize.UUID,
             allowNull: false,
             field: 'dropout_student_id',
             references: {
@@ -65,7 +66,7 @@ Dropout.init(
         sequelize,
         timestamps: true,
         modelName: 'Dropout',
-        tableName: 'dropouts', 
+        tableName: 'dropouts',
     }
 )
 

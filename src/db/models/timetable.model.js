@@ -1,5 +1,5 @@
 
-import { Sequelize, Model } from 'sequelize';
+import { Sequelize, Model, UUIDV4 } from 'sequelize';
 import sequelize from '../../config/db.connection.js';
 import Class from './class.model.js';
 
@@ -8,14 +8,15 @@ class Timetable extends Model { }
 Timetable.init(
     {
         id: {
-            type: Sequelize.INTEGER,
+            type: Sequelize.UUID,
+            defaultValue: UUIDV4,
             primaryKey: true,
             allowNull: false,
             autoIncrement: true,
             field: 'timetable_id'
         },
         divisionId: {
-            type: Sequelize.INTEGER,
+            type: Sequelize.UUID,
             allowNull: false,
             field: 'division_id',
             references: {

@@ -1,4 +1,4 @@
-import { Sequelize, Model } from 'sequelize';
+import { Sequelize, Model, UUIDV4 } from 'sequelize';
 import sequelize from '../../config/db.connection.js';
 import BranchCourseSemester from './branchCourseSemester.model.js';
 import Scheme from './scheme.model.js';
@@ -10,14 +10,15 @@ class Course extends Model { }
 Course.init(
     {
         id: {
-            type: Sequelize.INTEGER,
+            type: Sequelize.UUID,
+            defaultValue: UUIDV4,
             primaryKey: true,
             allowNull: false,
             autoIncrement: true,
             field: 'course_id'
         },
         schemeId: {
-            type: Sequelize.INTEGER,
+            type: Sequelize.UUID,
             allowNull: false,
             field: 'scheme_id',
             references: {
@@ -92,11 +93,11 @@ Course.hasMany(BranchCourseSemester, {
     sourceKey: 'id',
     foreignKey: 'courseId',
 })
-BranchCourseSemester.belongsTo(Course, {foreignKey: 'courseId', targetKey: 'id'});
+BranchCourseSemester.belongsTo(Course, { foreignKey: 'courseId', targetKey: 'id' });
 
 
-Course.belongsTo(Scheme, {foreignKey: 'schemeId', targetKey: 'id'});
-Scheme.hasMany(Course, {sourceKey: 'id', foreignKey: 'schemeId'});
+Course.belongsTo(Scheme, { foreignKey: 'schemeId', targetKey: 'id' });
+Scheme.hasMany(Course, { sourceKey: 'id', foreignKey: 'schemeId' });
 
 
 Course.hasMany(Class, { sourceKey: 'id', foreignKey: 'courseId' });

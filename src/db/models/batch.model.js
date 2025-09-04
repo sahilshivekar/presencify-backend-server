@@ -1,4 +1,4 @@
-import { Sequelize, Model } from 'sequelize';
+import { Sequelize, Model, UUIDV4 } from 'sequelize';
 import sequelize from '../../config/db.connection.js';
 import StudentBatch from './studentBatch.model.js';
 import Class from './class.model.js';
@@ -9,7 +9,8 @@ class Batch extends Model { }
 Batch.init(
     {
         id: {
-            type: Sequelize.INTEGER,
+            type: Sequelize.UUID,
+            defaultValue: UUIDV4,
             primaryKey: true,
             allowNull: false,
             autoIncrement: true,
@@ -30,7 +31,7 @@ Batch.init(
             }
         },
         divisionId: {
-            type: Sequelize.INTEGER,
+            type: Sequelize.UUID,
             allowNull: false,
             field: 'division_id',
             references: {
@@ -77,10 +78,10 @@ Batch.init(
 );
 
 
-Batch.hasMany(StudentBatch, {sourceKey: "id", foreignKey: "batchId"})
-StudentBatch.belongsTo(Batch, {foreignKey: "batchId", targetKey: "id"})
+Batch.hasMany(StudentBatch, { sourceKey: "id", foreignKey: "batchId" })
+StudentBatch.belongsTo(Batch, { foreignKey: "batchId", targetKey: "id" })
 
-Batch.hasMany(Class, {sourceKey: "id", foreignKey: "batchId"})
-Class.belongsTo(Batch, {foreignKey: "batchId", targetKey: "id"})
+Batch.hasMany(Class, { sourceKey: "id", foreignKey: "batchId" })
+Class.belongsTo(Batch, { foreignKey: "batchId", targetKey: "id" })
 
 export default Batch;

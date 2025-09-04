@@ -7,21 +7,19 @@ module.exports = {
             'timetables',
             {
                 id: {
-                    type: Sequelize.INTEGER,
+                    type: Sequelize.UUID,
+                    defaultValue: Sequelize.UUIDV4,
                     primaryKey: true,
-                    allowNull: false,
-                    autoIncrement: true,
                     field: 'timetable_id'
                 },
                 divisionId: {
-                    type: Sequelize.INTEGER,
+                    type: Sequelize.UUID,
                     allowNull: false,
                     field: 'division_id',
                     references: {
                         model: 'divisions',
                         key: 'division_id'
                     },
-                    onUpdate: 'CASCADE',
                     onDelete: 'CASCADE',
                     unique: true
                 },

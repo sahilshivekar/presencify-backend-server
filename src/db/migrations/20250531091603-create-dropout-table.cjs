@@ -6,13 +6,13 @@ module.exports = {
         await queryInterface.createTable("dropouts",
             {
                 id: {
-                    type: Sequelize.INTEGER,
+                    type: Sequelize.UUID,
+                    defaultValue: Sequelize.UUIDV4,
                     primaryKey: true,
-                    autoIncrement: true,
                     field: 'dropout_id'
                 },
                 studentId: {
-                    type: Sequelize.INTEGER,
+                    type: Sequelize.UUID,
                     allowNull: false,
                     field: 'dropout_student_id',
                     references: {

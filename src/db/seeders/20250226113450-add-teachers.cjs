@@ -1,6 +1,7 @@
 'use strict';
 
 const bcrypt = require('bcrypt');
+const { v4: uuidv4 } = require('uuid'); // Import the uuid function
 
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
@@ -35,8 +36,9 @@ module.exports = {
             { firstName: "Sonia", lastName: "Clements", gender: "Female", role: "Teacher" }
         ];
 
-        const teacherMembers = await Promise.all(teacherMembersDetails.map(async (teacher, index) => ({
-            // teacher_id: index + 1,
+        // The .map is synchronous here since bcrypt.hash is awaited beforehand
+        const teacherMembers = teacherMembersDetails.map((teacher) => ({
+            teacher_id: uuidv4(), // Generate a UUID for each teacher
             first_name: teacher.firstName,
             last_name: teacher.lastName,
             middle_name: null,
@@ -52,10 +54,9 @@ module.exports = {
             refresh_token: null,
             created_at: new Date(),
             updated_at: new Date(),
-        })));
+        }));
 
         await queryInterface.bulkInsert("teacher", teacherMembers);
-
     },
 
     async down(queryInterface, Sequelize) {

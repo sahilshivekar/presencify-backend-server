@@ -1,142 +1,81 @@
 'use strict';
 
+const { v4: uuidv4 } = require('uuid');
+
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
     async up(queryInterface, Sequelize) {
-        await queryInterface.sequelize.query(`
-            
-            -- batches for sem 8 of 2024-2025 (computer)
-            INSERT INTO batches (batch_code, division_id)
-            SELECT 'BA1', divisions.division_id from divisions
-            INNER JOIN semesters ON divisions.semester_id = semesters.semester_id
-            where semesters.semester_number = 8 AND semesters.branch_id = 1 AND divisions.division_code = 'A'
-            limit 1;
+        // 1. Fetch all necessary data to build relationships
+        const branches = await queryInterface.sequelize.query(
+            `SELECT branch_id, branch_name FROM branches;`,
+            { type: queryInterface.sequelize.QueryTypes.SELECT }
+        );
+        const semesters = await queryInterface.sequelize.query(
+            `SELECT semester_id, branch_id, semester_number FROM semesters;`,
+            { type: queryInterface.sequelize.QueryTypes.SELECT }
+        );
+        const divisions = await queryInterface.sequelize.query(
+            `SELECT division_id, semester_id, division_code FROM divisions;`,
+            { type: queryInterface.sequelize.QueryTypes.SELECT }
+        );
 
-            INSERT INTO batches (batch_code, division_id)
-            SELECT 'BA2', divisions.division_id from divisions
-            INNER JOIN semesters ON divisions.semester_id = semesters.semester_id
-            where semesters.semester_number = 8 AND semesters.branch_id = 1 AND divisions.division_code = 'A'
-            limit 1;
+        const compBranchId = branches.find(b => b.branch_name === 'Computer Engineering')?.branch_id;
+        const civilBranchId = branches.find(b => b.branch_name === 'Civil Engineering')?.branch_id;
 
-            INSERT INTO batches (batch_code, division_id)
-            SELECT 'BB1', divisions.division_id from divisions
-            INNER JOIN semesters ON divisions.semester_id = semesters.semester_id
-            where semesters.semester_number = 8 AND semesters.branch_id = 1 AND divisions.division_code = 'B'
-            limit 1;
+        if (!compBranchId || !civilBranchId) {
+            throw new Error('Required branches not found.');
+        }
 
-            INSERT INTO batches (batch_code, division_id)
-            SELECT 'BB2', divisions.division_id from divisions
-            INNER JOIN semesters ON divisions.semester_id = semesters.semester_id
-            where semesters.semester_number = 8 AND semesters.branch_id = 1 AND divisions.division_code = 'B'
-            limit 1;
+        // 2. Helper function to find the correct division UUID
+        const getDivisionId = (branchId, semesterNumber, divisionCode) => {
+            const semester = semesters.find(s => s.branch_id === branchId && s.semester_number === semesterNumber);
+            if (!semester) return null;
+            const division = divisions.find(d => d.semester_id === semester.semester_id && d.division_code === divisionCode);
+            return division ? division.division_id : null;
+        };
 
+        // 3. Define the batches to be created
+        const batchesData = [
+            // Comp Sem 8
+            { batch_code: 'BA1', division_id: getDivisionId(compBranchId, 8, 'A') },
+            { batch_code: 'BA2', division_id: getDivisionId(compBranchId, 8, 'A') },
+            { batch_code: 'BB1', division_id: getDivisionId(compBranchId, 8, 'B') },
+            { batch_code: 'BB2', division_id: getDivisionId(compBranchId, 8, 'B') },
+            // Comp Sem 6
+            { batch_code: 'TA1', division_id: getDivisionId(compBranchId, 6, 'A') },
+            { batch_code: 'TA2', division_id: getDivisionId(compBranchId, 6, 'A') },
+            { batch_code: 'TB1', division_id: getDivisionId(compBranchId, 6, 'B') },
+            { batch_code: 'TB2', division_id: getDivisionId(compBranchId, 6, 'B') },
+            // Comp Sem 4
+            { batch_code: 'SA1', division_id: getDivisionId(compBranchId, 4, 'A') },
+            { batch_code: 'SA2', division_id: getDivisionId(compBranchId, 4, 'A') },
+            { batch_code: 'SB1', division_id: getDivisionId(compBranchId, 4, 'B') },
+            { batch_code: 'SB2', division_id: getDivisionId(compBranchId, 4, 'B') },
+            // Comp Sem 2
+            { batch_code: 'FA1', division_id: getDivisionId(compBranchId, 2, 'A') },
+            { batch_code: 'FA2', division_id: getDivisionId(compBranchId, 2, 'A') },
+            { batch_code: 'FB1', division_id: getDivisionId(compBranchId, 2, 'B') },
+            { batch_code: 'FB2', division_id: getDivisionId(compBranchId, 2, 'B') },
+            // Civil Sem 2
+            { batch_code: 'FA1', division_id: getDivisionId(civilBranchId, 2, 'A') },
+            { batch_code: 'FA2', division_id: getDivisionId(civilBranchId, 2, 'A') },
+            { batch_code: 'FB1', division_id: getDivisionId(civilBranchId, 2, 'B') },
+            { batch_code: 'FB2', division_id: getDivisionId(civilBranchId, 2, 'B') },
+        ];
 
-            -- batches for te sem 6 of 2024-2025 (computer)
-            INSERT INTO batches (batch_code, division_id)
-            SELECT 'TA1', divisions.division_id from divisions
-            INNER JOIN semesters ON divisions.semester_id = semesters.semester_id
-            where semesters.semester_number = 6 AND semesters.branch_id = 1 AND divisions.division_code = 'A'
-            limit 1;
+        const batchesToInsert = batchesData
+            .filter(batch => batch.division_id) // Filter out any batches where the division wasn't found
+            .map(batch => ({
+                batch_id: uuidv4(),
+                ...batch,
+                created_at: new Date(),
+                updated_at: new Date()
+            }));
 
-            INSERT INTO batches (batch_code, division_id)
-            SELECT 'TA2', divisions.division_id from divisions
-            INNER JOIN semesters ON divisions.semester_id = semesters.semester_id
-            where semesters.semester_number = 6 AND semesters.branch_id = 1 AND divisions.division_code = 'A'
-            limit 1;
-
-            INSERT INTO batches (batch_code, division_id)
-            SELECT 'TB1', divisions.division_id from divisions
-            INNER JOIN semesters ON divisions.semester_id = semesters.semester_id
-            where semesters.semester_number = 6 AND semesters.branch_id = 1 AND divisions.division_code = 'B'   
-            limit 1;
-
-            INSERT INTO batches (batch_code, division_id)
-            SELECT 'TB2', divisions.division_id from divisions
-            INNER JOIN semesters ON divisions.semester_id = semesters.semester_id
-            where semesters.semester_number = 6 AND semesters.branch_id = 1 AND divisions.division_code = 'B'   
-            limit 1;
-
-            
-            -- batches for sem 4 of 2024-2025 (computer)
-            INSERT INTO batches (batch_code, division_id)
-            SELECT 'SA1', divisions.division_id from divisions
-            INNER JOIN semesters ON divisions.semester_id = semesters.semester_id
-            where semesters.semester_number = 4 AND semesters.branch_id = 1 AND divisions.division_code = 'A'   
-            limit 1;
-
-            INSERT INTO batches (batch_code, division_id)
-            SELECT 'SA2', divisions.division_id from divisions
-            INNER JOIN semesters ON divisions.semester_id = semesters.semester_id
-            where semesters.semester_number = 4 AND semesters.branch_id = 1 AND divisions.division_code = 'A'   
-            limit 1;
-
-            INSERT INTO batches (batch_code, division_id)
-            SELECT 'SB1', divisions.division_id from divisions
-            INNER JOIN semesters ON divisions.semester_id = semesters.semester_id
-            where semesters.semester_number = 4 AND semesters.branch_id = 1 AND divisions.division_code = 'B'   
-            limit 1;
-
-            INSERT INTO batches (batch_code, division_id)
-            SELECT 'SB2', divisions.division_id from divisions
-            INNER JOIN semesters ON divisions.semester_id = semesters.semester_id
-            where semesters.semester_number = 4 AND semesters.branch_id = 1 AND divisions.division_code = 'B'   
-            limit 1;
-
-
-            -- batches for sem 2 of 2024-2025 (computer)
-            INSERT INTO batches (batch_code, division_id)
-            SELECT 'FA1', divisions.division_id from divisions  
-            INNER JOIN semesters ON divisions.semester_id = semesters.semester_id
-            where semesters.semester_number = 2 AND semesters.branch_id = 1 AND divisions.division_code = 'A'
-            limit 1;
-
-            INSERT INTO batches (batch_code, division_id)
-            SELECT 'FA2', divisions.division_id from divisions  
-            INNER JOIN semesters ON divisions.semester_id = semesters.semester_id
-            where semesters.semester_number = 2 AND semesters.branch_id = 1 AND divisions.division_code = 'A'
-            limit 1;
-
-            INSERT INTO batches (batch_code, division_id)
-            SELECT 'FB1', divisions.division_id from divisions  
-            INNER JOIN semesters ON divisions.semester_id = semesters.semester_id
-            where semesters.semester_number = 2 AND semesters.branch_id = 1 AND divisions.division_code = 'B'
-            limit 1;
-            
-            INSERT INTO batches (batch_code, division_id)
-            SELECT 'FB2', divisions.division_id from divisions  
-            INNER JOIN semesters ON divisions.semester_id = semesters.semester_id
-            where semesters.semester_number = 2 AND semesters.branch_id = 1 AND divisions.division_code = 'B'
-            limit 1;
-
-
-            -- batches for sem 2 of 2024-2025 (civil)
-            INSERT INTO batches (batch_code, division_id)
-            SELECT 'FA1', divisions.division_id from divisions
-            INNER JOIN semesters ON divisions.semester_id = semesters.semester_id
-            where semesters.semester_number = 2 AND semesters.branch_id = 2 AND divisions.division_code = 'A'
-            limit 1;
-
-            INSERT INTO batches (batch_code, division_id)
-            SELECT 'FA2', divisions.division_id from divisions
-            INNER JOIN semesters ON divisions.semester_id = semesters.semester_id
-            where semesters.semester_number = 2 AND semesters.branch_id = 2 AND divisions.division_code = 'A'
-            limit 1;
-
-            INSERT INTO batches (batch_code, division_id)
-            SELECT 'FB1', divisions.division_id from divisions
-            INNER JOIN semesters ON divisions.semester_id = semesters.semester_id
-            where semesters.semester_number = 2 AND semesters.branch_id = 2 AND divisions.division_code = 'B'
-            limit 1;
-
-            INSERT INTO batches (batch_code, division_id)
-            SELECT 'FB2', divisions.division_id from divisions  
-            INNER JOIN semesters ON divisions.semester_id = semesters.semester_id
-            where semesters.semester_number = 2 AND semesters.branch_id = 2 AND divisions.division_code = 'B'
-            limit 1;
-        `)
+        await queryInterface.bulkInsert('batches', batchesToInsert, {});
     },
 
     async down(queryInterface, Sequelize) {
-        await queryInterface.sequelize.query(`delete from batches`)
+        await queryInterface.bulkDelete('batches', null, {});
     }
 };

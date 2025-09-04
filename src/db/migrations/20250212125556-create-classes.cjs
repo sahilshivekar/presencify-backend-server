@@ -5,21 +5,19 @@ module.exports = {
     async up(queryInterface, Sequelize) {
         await queryInterface.createTable('classes', {
             id: {
-                type: Sequelize.INTEGER,
+                type: Sequelize.UUID,
+                defaultValue: Sequelize.UUIDV4,
                 primaryKey: true,
-                allowNull: false,
-                autoIncrement: true,
                 field: 'class_id'
             },
             teacherId: {
-                type: Sequelize.INTEGER,
+                type: Sequelize.UUID,
                 allowNull: false,
                 field: 'teacher_id',
                 references: {
                     model: 'teacher',
                     key: 'teacher_id'
                 },
-                onUpdate: 'CASCADE',
                 onDelete: 'CASCADE'
             },
             startTime: {
@@ -38,25 +36,23 @@ module.exports = {
                 field: 'day_of_week'
             },
             roomId: {
-                type: Sequelize.INTEGER,
+                type: Sequelize.UUID,
                 allowNull: false,
                 field: 'room_id',
                 references: {
                     model: 'rooms',
                     key: 'room_id'
                 },
-                onUpdate: 'CASCADE',
                 onDelete: 'CASCADE'
             },
             batchId: {
-                type: Sequelize.INTEGER,
+                type: Sequelize.UUID,
                 allowNull: true,
                 field: 'batch_id',
                 references: {
                     model: 'batches',
                     key: 'batch_id'
                 },
-                onUpdate: 'CASCADE',
                 onDelete: 'CASCADE'
             },
             activeFrom: {
@@ -75,18 +71,17 @@ module.exports = {
                 field: 'class_type'
             },
             courseId: {
-                type: Sequelize.INTEGER,
+                type: Sequelize.UUID,
                 allowNull: false,
                 field: 'course_id',
                 references: {
                     model: 'courses',
                     key: 'course_id'
                 },
-                onUpdate: 'CASCADE',
                 onDelete: 'CASCADE'
             },
             timetableId: {
-                type: Sequelize.INTEGER,
+                type: Sequelize.UUID,
                 allowNull: false,
                 field: 'timetable_id',
                 references: {

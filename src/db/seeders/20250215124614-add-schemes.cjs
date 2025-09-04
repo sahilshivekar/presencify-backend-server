@@ -1,22 +1,45 @@
 'use strict';
 
+const { v4: uuidv4 } = require('uuid'); // Import the uuid function
+
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
     async up(queryInterface, Sequelize) {
-        await queryInterface.sequelize.query(
-            `INSERT INTO schemes (scheme_id, scheme_name, university_id) VALUES
-            (1, 'REV-2019 ‘C’ Scheme', 1),
-            (2, 'NEP-2020 Scheme', 1);`
-        )
+        // Find the University of Mumbai to get its actual UUID
+        const universities = await queryInterface.sequelize.query(
+            `SELECT university_id FROM universities WHERE university_name = 'University of Mumbai';`,
+            { type: queryInterface.sequelize.QueryTypes.SELECT }
+        );
 
-        await queryInterface.sequelize.query(`            
-            ALTER SEQUENCE schemes_scheme_id_seq RESTART WITH 3;
-        `)
+        const universityOfMumbaiId = universities[0]?.university_id;
+
+        if (!universityOfMumbaiId) {
+            throw new Error('Could not find the University of Mumbai to link schemes to.');
+        }
+
+        await queryInterface.bulkInsert('schemes', [
+            {
+                scheme_id: uuidv4(),
+                scheme_name: 'REV-2019 ‘C’ Scheme',
+                university_id: universityOfMumbaiId, // Use the fetched UUID
+                created_at: new Date(),
+                updated_at: new Date()
+            },
+            {
+                scheme_id: uuidv4(),
+                scheme_name: 'NEP-2020 Scheme',
+                university_id: universityOfMumbaiId, // Use the fetched UUID
+                created_at: new Date(),
+                updated_at: new Date()
+            }
+        ]);
     },
 
     async down(queryInterface, Sequelize) {
-        await queryInterface.sequelize.query(
-            `DELETE FROM schemes WHERE scheme_name = 'REV-2019 ‘C’ Scheme' OR scheme_name = 'NEP-2020 Scheme';`
-        )
+        await queryInterface.bulkDelete('schemes', {
+            scheme_name: {
+                [Sequelize.Op.in]: ['REV-2019 ‘C’ Scheme', 'NEP-2020 Scheme']
+            }
+        });
     }
-};
+}

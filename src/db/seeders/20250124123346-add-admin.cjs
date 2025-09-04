@@ -3,6 +3,7 @@
 /** @type {import('sequelize-cli').Migration} */
 
 const bcrypt = require('bcrypt');
+const { v4: uuidv4 } = require('uuid');
 
 module.exports = {
     async up(queryInterface, Sequelize) {
@@ -16,6 +17,7 @@ module.exports = {
             "admins",
             [
                 {
+                    admin_id: uuidv4(),
                     admin_email: process.env.ADMIN_EMAIL,
                     admin_username: process.env.ADMIN_USERNAME,
                     admin_password: password,

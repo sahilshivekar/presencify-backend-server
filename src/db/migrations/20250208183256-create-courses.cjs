@@ -6,22 +6,19 @@ module.exports = {
         await queryInterface.createTable(
             'courses',
             {
-                courseId: {
-                    type: Sequelize.INTEGER,
+                id: {
+                    type: Sequelize.UUID,
+                    defaultValue: Sequelize.UUIDV4,
                     primaryKey: true,
-                    allowNull: false,
-                    autoIncrement: true,
                     field: 'course_id',
                 },
                 schemeId: {
-                    type: Sequelize.INTEGER,
+                    type: Sequelize.UUID,
                     allowNull: false,
                     references: {
                         model: 'schemes', // Table name for schemes
                         key: 'scheme_id', // Primary key of schemes table
-                    },
-                    onUpdate: 'CASCADE',
-                    onDelete: 'CASCADE',
+                    }, onDelete: 'CASCADE',
                     field: 'scheme_id',
                 },
                 courseCode: {

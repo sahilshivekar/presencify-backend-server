@@ -1,5 +1,7 @@
 'use strict';
 
+const { v4: uuidv4 } = require('uuid'); // Import the uuid function
+
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
     async up(queryInterface, Sequelize) {
@@ -23,7 +25,8 @@ module.exports = {
         // Create room objects
         roomNumbers.forEach((roomNumber) => {
             rooms.push({
-                room_number: roomNumber, 
+                room_id: uuidv4(), // Generate a UUID for each room
+                room_number: roomNumber,
                 sitting_capacity: getRandomCapacity(),
                 created_at: new Date(),
                 updated_at: new Date()

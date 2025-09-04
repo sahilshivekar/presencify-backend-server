@@ -7,10 +7,9 @@ module.exports = {
             'divisions',
             {
                 id: {
-                    type: Sequelize.INTEGER,
+                    type: Sequelize.UUID,
+                    defaultValue: Sequelize.UUIDV4,
                     primaryKey: true,
-                    allowNull: false,
-                    autoIncrement: true,
                     field: 'division_id'
                 },
                 divisionCode: {
@@ -19,14 +18,13 @@ module.exports = {
                     field: 'division_code',
                 },
                 semesterId: {
-                    type: Sequelize.INTEGER,
+                    type: Sequelize.UUID,
                     allowNull: false,
                     field: 'semester_id',
                     references: {
                         model: 'semesters',
-                        key: 'semester_id' 
+                        key: 'semester_id'
                     },
-                    onUpdate: 'CASCADE',
                     onDelete: 'CASCADE',
                 },
                 createdAt: {
@@ -45,9 +43,9 @@ module.exports = {
             {
                 timestamps: true,
                 freezeTableName: true,
-                uniqueKeys: { 
-                    division_unique: { 
-                        fields: ['semester_id','division_code'] 
+                uniqueKeys: {
+                    division_unique: {
+                        fields: ['semester_id', 'division_code']
                     }
                 }
             }

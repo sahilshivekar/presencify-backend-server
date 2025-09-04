@@ -6,9 +6,9 @@ module.exports = {
         await queryInterface.createTable('student_fcm_tokens',
             {
                 id: {
-                    type: Sequelize.INTEGER,
+                    type: Sequelize.UUID,
+                    defaultValue: Sequelize.UUIDV4,
                     primaryKey: true,
-                    autoIncrement: true,
                     field: 'student_fcm_token_id'
                 },
                 fcmToken: {
@@ -28,13 +28,14 @@ module.exports = {
                     },
                 },
                 studentId: {
-                    type: Sequelize.INTEGER,
+                    type: Sequelize.UUID,
                     allowNull: false,
                     field: 'student_id',
                     references: {
                         model: 'students',
                         key: "student_id"
                     },
+                    
                     onDelete: 'CASCADE'
                 },
                 createdAt: {

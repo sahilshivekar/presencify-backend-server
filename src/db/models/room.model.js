@@ -1,4 +1,4 @@
-import { Sequelize, Model } from 'sequelize';
+import { Sequelize, Model, UUIDV4 } from 'sequelize';
 import sequelize from '../../config/db.connection.js';
 import Class from './class.model.js';
 
@@ -7,7 +7,8 @@ class Room extends Model { }
 Room.init(
     {
         id: {
-            type: Sequelize.INTEGER,
+            type: Sequelize.UUID,
+            defaultValue: UUIDV4,
             primaryKey: true,
             allowNull: false,
             autoIncrement: true,
@@ -69,7 +70,7 @@ Room.init(
     }
 );
 
-Room.hasMany(Class, {sourceKey: 'id', foreignKey: 'roomId'});
-Class.belongsTo(Room, {targetKey: 'id', foreignKey: 'roomId'});
+Room.hasMany(Class, { sourceKey: 'id', foreignKey: 'roomId' });
+Class.belongsTo(Room, { targetKey: 'id', foreignKey: 'roomId' });
 
 export default Room;

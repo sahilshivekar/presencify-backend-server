@@ -1,194 +1,82 @@
 'use strict';
 
+const { v4: uuidv4 } = require('uuid');
+
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
     async up(queryInterface, Sequelize) {
-        // adding second semester computer students to division a and b
-        const secondSemesterComp = await queryInterface.sequelize.query(`
-            SELECT * FROM students_semesters 
-            INNER JOIN students ON students_semesters.student_id = students.student_id
-            INNER JOIN semesters ON students_semesters.semester_id = semesters.semester_id
-            WHERE semesters.semester_number = 2 AND semesters.branch_id = 1;
-            `)
+        // 1. Fetch all necessary data to build relationships
+        const branches = await queryInterface.sequelize.query(
+            `SELECT branch_id, branch_name FROM branches;`,
+            { type: queryInterface.sequelize.QueryTypes.SELECT }
+        );
+        const semesters = await queryInterface.sequelize.query(
+            `SELECT semester_id, semester_number, branch_id FROM semesters;`,
+            { type: queryInterface.sequelize.QueryTypes.SELECT }
+        );
+        const divisions = await queryInterface.sequelize.query(
+            `SELECT division_id, semester_id, division_code FROM divisions;`,
+            { type: queryInterface.sequelize.QueryTypes.SELECT }
+        );
+        const students = await queryInterface.sequelize.query(
+            `SELECT student_id, branch_id FROM students;`,
+            { type: queryInterface.sequelize.QueryTypes.SELECT }
+        );
+        const studentSemesters = await queryInterface.sequelize.query(
+            `SELECT student_id, semester_id FROM students_semesters;`,
+            { type: queryInterface.sequelize.QueryTypes.SELECT }
+        );
 
-        const secondSemesterCompDivisions = await queryInterface.sequelize.query(`
-            SELECT * FROM divisions
-            INNER JOIN semesters ON divisions.semester_id = semesters.semester_id
-            WHERE semesters.semester_number = 2;
-            `)
+        const compBranchId = branches.find(b => b.branch_name === 'Computer Engineering')?.branch_id;
+        const civilBranchId = branches.find(b => b.branch_name === 'Civil Engineering')?.branch_id;
 
-        const secondSemesterCompDivisionEntries = []
-
-        for (let i = 0; i < 60; i++) {
-            if (i < 30) {
-                secondSemesterCompDivisionEntries.push(
-                    {
-                        student_id: secondSemesterComp[0][i].student_id,
-                        division_id: secondSemesterCompDivisions[0][0].division_id,
-                        start_date: '2025-01-08',
-                    }
-                )
-            } else {
-                secondSemesterCompDivisionEntries.push(
-                    {
-                        student_id: secondSemesterComp[0][i].student_id,
-                        division_id: secondSemesterCompDivisions[0][1].division_id,
-                        start_date: '2025-01-08',
-                    }
-                )
-            }
+        if (!compBranchId || !civilBranchId) {
+            throw new Error("Required branches not found.");
         }
 
-        // adding fourth semester computer students to division a and b
-        const fourthSemesterComp = await queryInterface.sequelize.query(`
-            SELECT * FROM students_semesters 
-            INNER JOIN students ON students_semesters.student_id = students.student_id
-            INNER JOIN semesters ON students_semesters.semester_id = semesters.semester_id
-            WHERE semesters.semester_number = 4 AND semesters.branch_id = 1;
-            `)
+        const allEntries = [];
 
-        const fourthSemesterCompDivisions = await queryInterface.sequelize.query(`
-            SELECT * FROM divisions
-            INNER JOIN semesters ON divisions.semester_id = semesters.semester_id
-            WHERE semesters.semester_number = 4 AND semesters.branch_id = 1;
-            `)
+        // Helper function to process students for a given semester and branch
+        const processStudentsForSemester = (semesterNumber, branchId) => {
+            const semester = semesters.find(s => s.semester_number === semesterNumber && s.branch_id === branchId);
+            if (!semester) return;
 
-        const fourthSemesterCompDivisionEntries = []
+            const semesterDivisions = divisions.filter(d => d.semester_id === semester.semester_id).sort((a, b) => a.division_code.localeCompare(b.division_code));
+            if (semesterDivisions.length < 2) return; // Expecting at least A and B divisions
 
-        for (let i = 0; i < 60; i++) {
-            if (i < 30) {
-                fourthSemesterCompDivisionEntries.push(
-                    {
-                        student_id: fourthSemesterComp[0][i].student_id,
-                        division_id: fourthSemesterCompDivisions[0][0].division_id,
-                        start_date: '2025-01-08',
-                    }
-                )
-            } else {
-                fourthSemesterCompDivisionEntries.push(
-                    {
-                        student_id: fourthSemesterComp[0][i].student_id,
-                        division_id: fourthSemesterCompDivisions[0][1].division_id,
-                        start_date: '2025-01-08',
-                    }
-                )
-            }
+            const divisionA_Id = semesterDivisions[0].division_id;
+            const divisionB_Id = semesterDivisions[1].division_id;
+
+            const studentsInSemester = studentSemesters
+                .filter(ss => ss.semester_id === semester.semester_id)
+                .map(ss => students.find(s => s.student_id === ss.student_id))
+                .filter(Boolean); // Filter out any undefined students
+
+            studentsInSemester.forEach((student, index) => {
+                allEntries.push({
+                    student_division_id: uuidv4(),
+                    student_id: student.student_id,
+                    division_id: index < 30 ? divisionA_Id : divisionB_Id, // First 30 to Div A, next to Div B
+                    start_date: '2025-01-08',
+                    created_at: new Date(),
+                    updated_at: new Date()
+                });
+            });
+        };
+        
+        // Process for each group of students
+        processStudentsForSemester(2, compBranchId);
+        processStudentsForSemester(4, compBranchId);
+        processStudentsForSemester(6, compBranchId);
+        processStudentsForSemester(8, compBranchId);
+        processStudentsForSemester(2, civilBranchId);
+
+        if (allEntries.length > 0) {
+            await queryInterface.bulkInsert("students_divisions", allEntries, {});
         }
-
-        // adding sixth semester computer students to division a and b
-        const sixthSemesterComp = await queryInterface.sequelize.query(`
-            SELECT * FROM students_semesters 
-            INNER JOIN students ON students_semesters.student_id = students.student_id
-            INNER JOIN semesters ON students_semesters.semester_id = semesters.semester_id
-            WHERE semesters.semester_number = 6 AND semesters.branch_id = 1;
-            `)
-        const sixthSemesterCompDivisions = await queryInterface.sequelize.query(`
-            SELECT * FROM divisions
-            INNER JOIN semesters ON divisions.semester_id = semesters.semester_id
-            WHERE semesters.semester_number = 6 AND semesters.branch_id = 1;
-            `)
-
-        const sixthSemesterCompDivisionEntries = []
-
-        for (let i = 0; i < 60; i++) {
-            if (i < 30) {
-                sixthSemesterCompDivisionEntries.push(
-                    {
-                        student_id: sixthSemesterComp[0][i].student_id,
-                        division_id: sixthSemesterCompDivisions[0][0].division_id,
-                        start_date: '2025-01-08',
-                    }
-                )
-            } else {
-                sixthSemesterCompDivisionEntries.push(
-                    {
-                        student_id: sixthSemesterComp[0][i].student_id,
-                        division_id: sixthSemesterCompDivisions[0][1].division_id,
-                        start_date: '2025-01-08',
-                    }
-                )
-            }
-        }
-
-        // adding eighth semester computer students to division a and b
-        const eightSemesterComp = await queryInterface.sequelize.query(`
-            SELECT * FROM students_semesters 
-            INNER JOIN students ON students_semesters.student_id = students.student_id
-            INNER JOIN semesters ON students_semesters.semester_id = semesters.semester_id
-            WHERE semesters.semester_number = 8 AND semesters.branch_id = 1;
-            `)
-        const eightSemesterCompDivisions = await queryInterface.sequelize.query(`
-                SELECT * FROM divisions
-                INNER JOIN semesters ON divisions.semester_id = semesters.semester_id
-                WHERE semesters.semester_number = 8 AND semesters.branch_id = 1;
-                `)
-
-        const eightSemesterCompDivisionEntries = []
-
-        for (let i = 0; i < 60; i++) {
-            if (i < 30) {
-                eightSemesterCompDivisionEntries.push(
-                    {
-                        student_id: eightSemesterComp[0][i].student_id,
-                        division_id: eightSemesterCompDivisions[0][0].division_id,
-                        start_date: '2025-01-08',
-                    }
-                )
-            } else {
-                eightSemesterCompDivisionEntries.push(
-                    {
-                        student_id: eightSemesterComp[0][i].student_id,
-                        division_id: eightSemesterCompDivisions[0][1].division_id,
-                        start_date: '2025-01-08',
-                    }
-                )
-            }
-        }
-
-        // adding second semester civil students to division a and b
-        const secondSemesterCivil = await queryInterface.sequelize.query(`
-            SELECT * FROM students_semesters 
-            INNER JOIN students ON students_semesters.student_id = students.student_id
-            INNER JOIN semesters ON students_semesters.semester_id = semesters.semester_id              
-            WHERE semesters.semester_number = 2 AND semesters.branch_id = 2;
-            `)
-        const secondSemesterCivilDivisions = await queryInterface.sequelize.query(`
-                SELECT * FROM divisions
-                INNER JOIN semesters ON divisions.semester_id = semesters.semester_id
-                WHERE semesters.semester_number = 2 AND semesters.branch_id = 2;
-                `)
-        const secondSemesterCivilDivisionEntries = []
-        for (let i = 0; i < 60; i++) {
-            if (i < 30) {
-                secondSemesterCivilDivisionEntries.push(
-                    {
-                        student_id: secondSemesterCivil[0][i].student_id,
-                        division_id: secondSemesterCivilDivisions[0][0].division_id,
-                        start_date: '2025-01-08',
-                    }
-                )
-            } else {
-                secondSemesterCivilDivisionEntries.push(
-                    {
-                        student_id: secondSemesterCivil[0][i].student_id,
-                        division_id: secondSemesterCivilDivisions[0][1].division_id,
-                        start_date: '2025-01-08',
-                    }
-                )
-            }
-        }
-
-        await queryInterface.bulkInsert("students_divisions", [
-            ...secondSemesterCompDivisionEntries,
-            ...secondSemesterCivilDivisionEntries,
-            ...fourthSemesterCompDivisionEntries,
-            ...sixthSemesterCompDivisionEntries,
-            ...eightSemesterCompDivisionEntries,
-        ], {})
-
     },
 
     async down(queryInterface, Sequelize) {
-
+        await queryInterface.bulkDelete('students_divisions', null, {});
     }
 };

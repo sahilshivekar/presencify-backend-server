@@ -1,4 +1,4 @@
-import { Sequelize, Model } from 'sequelize';
+import { Sequelize, Model, UUIDV4 } from 'sequelize';
 import sequelize from '../../config/db.connection.js';
 import bcrypt from 'bcrypt';
 import { ROLES } from '../../config/roles.js';
@@ -12,7 +12,8 @@ class Teacher extends Model { }
 Teacher.init(
     {
         id: {
-            type: Sequelize.INTEGER,
+            type: Sequelize.UUID,
+            defaultValue: UUIDV4,
             primaryKey: true,
             allowNull: false,
             autoIncrement: true,
@@ -191,8 +192,8 @@ Teacher.init(
     }
 );
 
-Teacher.hasMany(Class, {sourceKey: 'id', foreignKey: 'teacherId'});
-Class.belongsTo(Teacher, {targetKey: 'id', foreignKey: 'teacherId'});
+Teacher.hasMany(Class, { sourceKey: 'id', foreignKey: 'teacherId' });
+Class.belongsTo(Teacher, { targetKey: 'id', foreignKey: 'teacherId' });
 
 
 Course.hasMany(TeacherTeachesCourse, { sourceKey: 'id', foreignKey: 'courseId' });
@@ -215,9 +216,9 @@ Teacher.beforeUpdate(async (teacher) => {
     if (teacher.changed('password') && teacher?.password) {
         teacher.password = await bcrypt.hash(teacher.password, Number(process.env.BCRYPT_SALT))
     }
-    if(teacher.changed('email')){
+    if (teacher.changed('email')) {
         teacher.email = teacher.email.toLowerCase();
-        teacher.isVerified = false;   
+        teacher.isVerified = false;
     }
 })
 

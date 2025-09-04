@@ -7,10 +7,9 @@ module.exports = {
             'schemes',
             {
                 id: {
-                    type: Sequelize.INTEGER,
+                    type: Sequelize.UUID,
+                    defaultValue: Sequelize.UUIDV4,
                     primaryKey: true,
-                    allowNull: false,
-                    autoIncrement: true,
                     field: "scheme_id",
                 },
                 name: {
@@ -20,14 +19,12 @@ module.exports = {
                     field: 'scheme_name',
                 },
                 universityId: {
-                    type: Sequelize.INTEGER,
+                    type: Sequelize.UUID,
                     allowNull: false,
                     references: {
                         model: 'universities', // Table name for universities
                         key: 'university_id', // Primary key of universities table
-                    },
-                    onUpdate: 'CASCADE',
-                    onDelete: 'CASCADE',
+                    }, onDelete: 'CASCADE',
                     field: 'university_id',
                 },
                 createdAt: {

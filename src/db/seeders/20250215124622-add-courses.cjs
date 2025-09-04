@@ -1,303 +1,254 @@
 'use strict';
 
+const { v4: uuidv4 } = require('uuid');
+
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
     async up(queryInterface, Sequelize) {
-        await queryInterface.sequelize.query(
-            `            
-            -- inserting semester1 courses for scheme nep 2020
-            INSERT INTO Courses(course_code, course_name, scheme_id) VALUES
-                ('BSC101', 'Applied Mathematics - I', 2),
-                ('BSC102', 'Applied Physics', 2),
-                ('BSC103', 'Applied Chemistry', 2),
-                ('ESC101', 'Engineering Mechanics', 2),
-                ('ESC102', 'Basic Electrical & Electronics Engineering', 2),
-                ('BSL101', 'Applied Physics Lab', 2),
-                ('BSL102', 'Applied Chemistry Lab', 2),
-                ('ESL101', 'Engineering Mechanics Lab', 2),
-                ('ESL102', 'Basic Electrical & Electronics Engineering Lab', 2),
-                ('AEC101', 'Professional and Communication Ethics', 2),
-                ('AEL101', 'Professional and Communication Ethics Lab', 2),
-                ('SEC101', 'Engineering Workshop-I', 2),
-                ('VSEC102', 'C Programming', 2),
-                ('CC101', 'Induction cum Universal Human Values', 2);
+        // First, fetch the schemes to get their UUIDs
+        const schemes = await queryInterface.sequelize.query(
+            `SELECT scheme_id, scheme_name FROM schemes WHERE scheme_name IN ('REV-2019 ‘C’ Scheme', 'NEP-2020 Scheme');`,
+            { type: queryInterface.sequelize.QueryTypes.SELECT }
+        );
 
-            -- inserting semester2 courses for scheme nep 2020
-            INSERT INTO Courses(course_code, course_name, scheme_id) VALUES
-                ('BSC201', 'Applied Mathematics - II', 2),
-                ('BSC202X', 'Elective Physics', 2),
-                ('BSC203X', 'Elective Chemistry', 2),
-                ('ESC201', 'Engineering Graphics', 2),
-                ('PCC201X', 'Program Core Course', 2),
-                ('BSL201X', 'Elective Physics Lab', 2),
-                ('BSL202X', 'Elective Chemistry Lab', 2),
-                ('ESL201', 'Engineering Graphics Lab', 2),
-                ('PCL201X', 'Program Core Lab', 2),
-                ('CC201', 'Social Science & Community Services', 2),
-                ('IKS201', 'Indian knowledge System', 2),
-                ('VSEC201', 'Engineering Workshop-II', 2),
-                ('VSEC202', 'Python Programming', 2);
+        const rev2019SchemeId = schemes.find(s => s.scheme_name === 'REV-2019 ‘C’ Scheme')?.scheme_id;
+        const nep2020SchemeId = schemes.find(s => s.scheme_name === 'NEP-2020 Scheme')?.scheme_id;
 
-            -- inserting semester3 courses for scheme rev 2019 c  (comp)
-            INSERT INTO Courses(course_code, course_name, scheme_id) VALUES
-                ('CSC301', 'Engineering Mathematics-III', 1),
-                ('CSC302', 'Discrete Structures and Graph Theory', 1),
-                ('CSC303', 'Data Structure', 1),
-                ('CSC304', 'Digital Logic & Computer Architecture', 1),
-                ('CSC305', 'Computer Graphics', 1),
-                ('CSL301', 'Data Structure Lab', 1),
-                ('CSL302', 'Digital Logic & Computer Architecture Lab', 1),
-                ('CSL303', 'Computer Graphics Lab', 1),
-                ('CSL304', 'Skill base Lab course: Object Oriented Programming with Java', 1),
-                ('CSM301', 'Mini Project - 1A', 1);
+        if (!rev2019SchemeId || !nep2020SchemeId) {
+            throw new Error('Could not find the required schemes to link courses to.');
+        }
 
-            -- inserting semester4 courses for scheme rev 2019 c (comp)
-            INSERT INTO Courses(course_code, course_name, scheme_id) VALUES
-                ('CSC401', 'Engineering Mathematics-IV', 1),
-                ('CSC402', 'Analysis of Algorithm', 1),
-                ('CSC403', 'Database Management System', 1),
-                ('CSC404', 'Operating System', 1),
-                ('CSC405', 'Microprocessor', 1),
-                ('CSL401', 'Analysis of Algorithm Lab', 1),
-                ('CSL402', 'Database Management System Lab', 1),
-                ('CSL403', 'Operating System Lab', 1),
-                ('CSL404', 'Microprocessor Lab', 1),
-                ('CSL405', 'Skill Base Lab Course: Python Programming', 1),
-                ('CSM401', 'Mini Project - 1B', 1);
+        const courses = [
+            // Semester 1 & 2 - NEP 2020 Scheme
+            { course_code: 'BSC101', course_name: 'Applied Mathematics - I', scheme_id: nep2020SchemeId },
+            { course_code: 'BSC102', course_name: 'Applied Physics', scheme_id: nep2020SchemeId },
+            { course_code: 'BSC103', course_name: 'Applied Chemistry', scheme_id: nep2020SchemeId },
+            { course_code: 'ESC101', course_name: 'Engineering Mechanics', scheme_id: nep2020SchemeId },
+            { course_code: 'ESC102', course_name: 'Basic Electrical & Electronics Engineering', scheme_id: nep2020SchemeId },
+            { course_code: 'BSL101', course_name: 'Applied Physics Lab', scheme_id: nep2020SchemeId },
+            { course_code: 'BSL102', course_name: 'Applied Chemistry Lab', scheme_id: nep2020SchemeId },
+            { course_code: 'ESL101', course_name: 'Engineering Mechanics Lab', scheme_id: nep2020SchemeId },
+            { course_code: 'ESL102', course_name: 'Basic Electrical & Electronics Engineering Lab', scheme_id: nep2020SchemeId },
+            { course_code: 'AEC101', course_name: 'Professional and Communication Ethics', scheme_id: nep2020SchemeId },
+            { course_code: 'AEL101', course_name: 'Professional and Communication Ethics Lab', scheme_id: nep2020SchemeId },
+            { course_code: 'SEC101', course_name: 'Engineering Workshop-I', scheme_id: nep2020SchemeId },
+            { course_code: 'VSEC102', course_name: 'C Programming', scheme_id: nep2020SchemeId },
+            { course_code: 'CC101', course_name: 'Induction cum Universal Human Values', scheme_id: nep2020SchemeId },
+            { course_code: 'BSC201', course_name: 'Applied Mathematics - II', scheme_id: nep2020SchemeId },
+            { course_code: 'BSC202X', course_name: 'Elective Physics', scheme_id: nep2020SchemeId },
+            { course_code: 'BSC203X', course_name: 'Elective Chemistry', scheme_id: nep2020SchemeId },
+            { course_code: 'ESC201', course_name: 'Engineering Graphics', scheme_id: nep2020SchemeId },
+            { course_code: 'PCC201X', course_name: 'Program Core Course', scheme_id: nep2020SchemeId },
+            { course_code: 'BSL201X', course_name: 'Elective Physics Lab', scheme_id: nep2020SchemeId },
+            { course_code: 'BSL202X', course_name: 'Elective Chemistry Lab', scheme_id: nep2020SchemeId },
+            { course_code: 'ESL201', course_name: 'Engineering Graphics Lab', scheme_id: nep2020SchemeId },
+            { course_code: 'PCL201X', course_name: 'Program Core Lab', scheme_id: nep2020SchemeId },
+            { course_code: 'CC201', course_name: 'Social Science & Community Services', scheme_id: nep2020SchemeId },
+            { course_code: 'IKS201', course_name: 'Indian knowledge System', scheme_id: nep2020SchemeId },
+            { course_code: 'VSEC201', course_name: 'Engineering Workshop-II', scheme_id: nep2020SchemeId },
+            { course_code: 'VSEC202', course_name: 'Python Programming', scheme_id: nep2020SchemeId },
 
-            -- inserting semester5 courses for scheme rev 2019 c (comp)
-            INSERT INTO Courses(course_code, course_name, scheme_id) VALUES
-                ('CSC501', 'Theoretical Computer Science', 1),
-                ('CSC502', 'Software Engineering', 1),
-                ('CSC503', 'Computer Network', 1),
-                ('CSC504', 'Data Warehousing & Mining', 1),
-                ('CSL501', 'Software Engineering Lab', 1),
-                ('CSL502', 'Computer Network Lab', 1),
-                ('CSL503', 'Data Warehousing & Mining Lab', 1),
-                ('CSL504', 'Business Comm. & Ethics II', 1),
-                ('CSM501', 'Mini Project - 2A', 1);
+            // Semesters 3-8 (Computer) - REV 2019 'C' Scheme
+            { course_code: 'CSC301', course_name: 'Engineering Mathematics-III', scheme_id: rev2019SchemeId },
+            { course_code: 'CSC302', course_name: 'Discrete Structures and Graph Theory', scheme_id: rev2019SchemeId },
+            { course_code: 'CSC303', course_name: 'Data Structure', scheme_id: rev2019SchemeId },
+            { course_code: 'CSC304', course_name: 'Digital Logic & Computer Architecture', scheme_id: rev2019SchemeId },
+            { course_code: 'CSC305', course_name: 'Computer Graphics', scheme_id: rev2019SchemeId },
+            { course_code: 'CSL301', course_name: 'Data Structure Lab', scheme_id: rev2019SchemeId },
+            { course_code: 'CSL302', course_name: 'Digital Logic & Computer Architecture Lab', scheme_id: rev2019SchemeId },
+            { course_code: 'CSL303', course_name: 'Computer Graphics Lab', scheme_id: rev2019SchemeId },
+            { course_code: 'CSL304', course_name: 'Skill base Lab course: Object Oriented Programming with Java', scheme_id: rev2019SchemeId },
+            { course_code: 'CSM301', course_name: 'Mini Project - 1A', scheme_id: rev2019SchemeId },
+            { course_code: 'CSC401', course_name: 'Engineering Mathematics-IV', scheme_id: rev2019SchemeId },
+            { course_code: 'CSC402', course_name: 'Analysis of Algorithm', scheme_id: rev2019SchemeId },
+            { course_code: 'CSC403', course_name: 'Database Management System', scheme_id: rev2019SchemeId },
+            { course_code: 'CSC404', course_name: 'Operating System', scheme_id: rev2019SchemeId },
+            { course_code: 'CSC405', course_name: 'Microprocessor', scheme_id: rev2019SchemeId },
+            { course_code: 'CSL401', course_name: 'Analysis of Algorithm Lab', scheme_id: rev2019SchemeId },
+            { course_code: 'CSL402', course_name: 'Database Management System Lab', scheme_id: rev2019SchemeId },
+            { course_code: 'CSL403', course_name: 'Operating System Lab', scheme_id: rev2019SchemeId },
+            { course_code: 'CSL404', course_name: 'Microprocessor Lab', scheme_id: rev2019SchemeId },
+            { course_code: 'CSL405', course_name: 'Skill Base Lab Course: Python Programming', scheme_id: rev2019SchemeId },
+            { course_code: 'CSM401', course_name: 'Mini Project - 1B', scheme_id: rev2019SchemeId },
+            { course_code: 'CSC501', course_name: 'Theoretical Computer Science', scheme_id: rev2019SchemeId },
+            { course_code: 'CSC502', course_name: 'Software Engineering', scheme_id: rev2019SchemeId },
+            { course_code: 'CSC503', course_name: 'Computer Network', scheme_id: rev2019SchemeId },
+            { course_code: 'CSC504', course_name: 'Data Warehousing & Mining', scheme_id: rev2019SchemeId },
+            { course_code: 'CSL501', course_name: 'Software Engineering Lab', scheme_id: rev2019SchemeId },
+            { course_code: 'CSL502', course_name: 'Computer Network Lab', scheme_id: rev2019SchemeId },
+            { course_code: 'CSL503', course_name: 'Data Warehousing & Mining Lab', scheme_id: rev2019SchemeId },
+            { course_code: 'CSL504', course_name: 'Business Comm. & Ethics II', scheme_id: rev2019SchemeId },
+            { course_code: 'CSM501', course_name: 'Mini Project - 2A', scheme_id: rev2019SchemeId },
+            { course_code: 'CSDLO5011', course_name: 'Probabilistic Graphical Models', scheme_id: rev2019SchemeId, course_optional_subject: 'CSDLO501' },
+            { course_code: 'CSDLO5012', course_name: 'Internet Programming', scheme_id: rev2019SchemeId, course_optional_subject: 'CSDLO501' },
+            { course_code: 'CSDLO5013', course_name: 'Advance Database Management System', scheme_id: rev2019SchemeId, course_optional_subject: 'CSDLO501' },
+            { course_code: 'CSC601', course_name: 'System Programming & Compiler Construction', scheme_id: rev2019SchemeId },
+            { course_code: 'CSC602', course_name: 'Cryptography & System Security', scheme_id: rev2019SchemeId },
+            { course_code: 'CSC603', course_name: 'Mobile Computing', scheme_id: rev2019SchemeId },
+            { course_code: 'CSC604', course_name: 'Artificial Intelligence', scheme_id: rev2019SchemeId },
+            { course_code: 'CSL601', course_name: 'System Programming & Compiler Construction Lab', scheme_id: rev2019SchemeId },
+            { course_code: 'CSL602', course_name: 'Cryptography & System Security Lab', scheme_id: rev2019SchemeId },
+            { course_code: 'CSL603', course_name: 'Mobile Computing Lab', scheme_id: rev2019SchemeId },
+            { course_code: 'CSL604', course_name: 'Artificial Intelligence Lab', scheme_id: rev2019SchemeId },
+            { course_code: 'CSL605', course_name: 'Skill base Lab Course: Cloud Computing', scheme_id: rev2019SchemeId },
+            { course_code: 'CSM601', course_name: 'Mini Project - 2B', scheme_id: rev2019SchemeId },
+            { course_code: 'CSDLO6011', course_name: 'Internet of Things', scheme_id: rev2019SchemeId, course_optional_subject: 'CSDLO601' },
+            { course_code: 'CSDLO6012', course_name: 'Digital Signal & Image Processing', scheme_id: rev2019SchemeId, course_optional_subject: 'CSDLO601' },
+            { course_code: 'CSDLO6013', course_name: 'Quantitative Analysis', scheme_id: rev2019SchemeId, course_optional_subject: 'CSDLO601' },
+            { course_code: 'CSC701', course_name: 'Machine Learning', scheme_id: rev2019SchemeId },
+            { course_code: 'CSC702', course_name: 'Big Data Analytics', scheme_id: rev2019SchemeId },
+            { course_code: 'CSL701', course_name: 'Machine Learning Lab', scheme_id: rev2019SchemeId },
+            { course_code: 'CSL702', course_name: 'Big Data Analytics Lab', scheme_id: rev2019SchemeId },
+            { course_code: 'CSP701', course_name: 'Major Project 1', scheme_id: rev2019SchemeId },
+            { course_code: 'CSDC7011', course_name: 'Machine Vision', scheme_id: rev2019SchemeId, course_optional_subject: 'CSDC701' },
+            { course_code: 'CSDC7012', course_name: 'Quantum Computing', scheme_id: rev2019SchemeId, course_optional_subject: 'CSDC701' },
+            { course_code: 'CSDC7013', course_name: 'Natural Language Processing', scheme_id: rev2019SchemeId, course_optional_subject: 'CSDC701' },
+            { course_code: 'CSDL7011', course_name: 'Machine Vision lab', scheme_id: rev2019SchemeId, course_optional_subject: 'CSDL701' },
+            { course_code: 'CSDL7012', course_name: 'Quantum Computing lab', scheme_id: rev2019SchemeId, course_optional_subject: 'CSDL701' },
+            { course_code: 'CSDL7013', course_name: 'Natural Language Processing lab', scheme_id: rev2019SchemeId, course_optional_subject: 'CSDL701' },
+            { course_code: 'CSDC7021', course_name: 'Augmented and Virtual Reality', scheme_id: rev2019SchemeId, course_optional_subject: 'CSDC702' },
+            { course_code: 'CSDC7022', course_name: 'Block Chain', scheme_id: rev2019SchemeId, course_optional_subject: 'CSDC702' },
+            { course_code: 'CSDC7023', course_name: 'Information Retrieval', scheme_id: rev2019SchemeId, course_optional_subject: 'CSDC702' },
+            { course_code: 'CSDL7021', course_name: 'Augmented and Virtual Reality lab', scheme_id: rev2019SchemeId, course_optional_subject: 'CSDL702' },
+            { course_code: 'CSDL7022', course_name: 'Block Chain lab', scheme_id: rev2019SchemeId, course_optional_subject: 'CSDL702' },
+            { course_code: 'CSDL7023', course_name: 'Information Retrieval lab', scheme_id: rev2019SchemeId, course_optional_subject: 'CSDL702' },
+            { course_code: 'CSC801', course_name: 'Distributed Computing', scheme_id: rev2019SchemeId },
+            { course_code: 'CSL801', course_name: 'Distributed Computing Lab', scheme_id: rev2019SchemeId },
+            { course_code: 'CSP801', course_name: 'Major Project 2', scheme_id: rev2019SchemeId },
+            { course_code: 'CSDC8011', course_name: 'Deep Learning', scheme_id: rev2019SchemeId, course_optional_subject: 'CSDC801' },
+            { course_code: 'CSDC8012', course_name: 'Digital Forensic', scheme_id: rev2019SchemeId, course_optional_subject: 'CSDC801' },
+            { course_code: 'CSDC8013', course_name: 'Applied Data Science', scheme_id: rev2019SchemeId, course_optional_subject: 'CSDC801' },
+            { course_code: 'CSDL8011', course_name: 'Deep Learning Lab', scheme_id: rev2019SchemeId, course_optional_subject: 'CSDL801' },
+            { course_code: 'CSDL8012', course_name: 'Digital Forensic Lab', scheme_id: rev2019SchemeId, course_optional_subject: 'CSDL801' },
+            { course_code: 'CSDL8013', course_name: 'Applied Data Science Lab', scheme_id: rev2019SchemeId, course_optional_subject: 'CSDL801' },
+            { course_code: 'CSDC8021', course_name: 'Optimization in Machine Learning', scheme_id: rev2019SchemeId, course_optional_subject: 'CSDC802' },
+            { course_code: 'CSDC8022', course_name: 'High Performance Computing', scheme_id: rev2019SchemeId, course_optional_subject: 'CSDC802' },
+            { course_code: 'CSDC8023', course_name: 'Social Media Analytics', scheme_id: rev2019SchemeId, course_optional_subject: 'CSDC802' },
+            { course_code: 'CSDL8021', course_name: 'Optimization in Machine Learning Lab', scheme_id: rev2019SchemeId, course_optional_subject: 'CSDL802' },
+            { course_code: 'CSDL8022', course_name: 'High Performance Computing Lab', scheme_id: rev2019SchemeId, course_optional_subject: 'CSDL802' },
+            { course_code: 'CSDL8023', course_name: 'Social Media Analytics Lab', scheme_id: rev2019SchemeId, course_optional_subject: 'CSDL802' },
+            { course_code: 'CEC301', course_name: 'Engineering Mathematics-III', scheme_id: rev2019SchemeId },
+            { course_code: 'CEC302', course_name: 'Mechanics of Solids', scheme_id: rev2019SchemeId },
+            { course_code: 'CEC303', course_name: 'Engineering Geology', scheme_id: rev2019SchemeId },
+            { course_code: 'CEC304', course_name: 'Architectural Planning & Design of Buildings', scheme_id: rev2019SchemeId },
+            { course_code: 'CEC305', course_name: 'Fluid Mechanics- I', scheme_id: rev2019SchemeId },
+            { course_code: 'CEL301', course_name: 'Mechanics of Solids Lab', scheme_id: rev2019SchemeId },
+            { course_code: 'CEL302', course_name: 'Engineering Geology Lab', scheme_id: rev2019SchemeId },
+            { course_code: 'CEL303', course_name: 'Architectural Planning & Design of Buildings Lab', scheme_id: rev2019SchemeId },
+            { course_code: 'CEL304', course_name: 'Fluid Mechanics- I Lab', scheme_id: rev2019SchemeId },
+            { course_code: 'CEL305', course_name: 'Skill Based Lab Course-I', scheme_id: rev2019SchemeId },
+            { course_code: 'CEM301', course_name: 'Mini Project - 1 A', scheme_id: rev2019SchemeId },
+            { course_code: 'CEC401', course_name: 'Engineering Mathematics - IV', scheme_id: rev2019SchemeId },
+            { course_code: 'CEC402', course_name: 'Structural Analysis', scheme_id: rev2019SchemeId },
+            { course_code: 'CEC403', course_name: 'Surveying', scheme_id: rev2019SchemeId },
+            { course_code: 'CEC404', course_name: 'Building Materials & Concrete Technology', scheme_id: rev2019SchemeId },
+            { course_code: 'CEC405', course_name: 'Fluid Mechanics-II', scheme_id: rev2019SchemeId },
+            { course_code: 'CEL401', course_name: 'Structural Analysis Lab', scheme_id: rev2019SchemeId },
+            { course_code: 'CEL402', course_name: 'Surveying Lab', scheme_id: rev2019SchemeId },
+            { course_code: 'CEL403', course_name: 'Building Material Concrete Technology Lab', scheme_id: rev2019SchemeId },
+            { course_code: 'CEL404', course_name: 'Fluid Mechanics-II Lab', scheme_id: rev2019SchemeId },
+            { course_code: 'CEL405', course_name: 'Skill Based lab Course-II', scheme_id: rev2019SchemeId },
+            { course_code: 'CEM401', course_name: 'Mini Project - 1 B', scheme_id: rev2019SchemeId },
+            { course_code: 'CEC501', course_name: 'Theory of Reinforced Concrete Structures', scheme_id: rev2019SchemeId },
+            { course_code: 'CEC502', course_name: 'Applied Hydraulics', scheme_id: rev2019SchemeId },
+            { course_code: 'CEC503', course_name: 'Geotechnical Engineering-I', scheme_id: rev2019SchemeId },
+            { course_code: 'CEC504', course_name: 'Transportation Engineering', scheme_id: rev2019SchemeId },
+            { course_code: 'CEL501', course_name: 'Theory of Reinforced Concrete Structures Lab', scheme_id: rev2019SchemeId },
+            { course_code: 'CEL502', course_name: 'Applied Hydraulics Lab', scheme_id: rev2019SchemeId },
+            { course_code: 'CEL503', course_name: 'Geotechnical Engineering-I Lab', scheme_id: rev2019SchemeId },
+            { course_code: 'CEL504', course_name: 'Transportation Engineering Lab', scheme_id: rev2019SchemeId },
+            { course_code: 'CEL505', course_name: 'Professional Communication and Ethics Lab', scheme_id: rev2019SchemeId },
+            { course_code: 'CEM501', course_name: 'Mini Project - 2A', scheme_id: rev2019SchemeId },
+            { course_code: 'CEDLO5011', course_name: 'Modern Surveying Instruments and Techniques', scheme_id: rev2019SchemeId, course_optional_subject: 'CEDLO501' },
+            { course_code: 'CEDLO5012', course_name: 'Building Services & Repairs', scheme_id: rev2019SchemeId, course_optional_subject: 'CEDLO501' },
+            { course_code: 'CEDLO5013', course_name: 'Sustainable Building Materials', scheme_id: rev2019SchemeId, course_optional_subject: 'CEDLO501' },
+            { course_code: 'CEDLO5014', course_name: 'Advanced Structural Mechanics', scheme_id: rev2019SchemeId, course_optional_subject: 'CEDLO501' },
+            { course_code: 'CEDLO5015', course_name: 'Air and Noise Pollution & Control', scheme_id: rev2019SchemeId, course_optional_subject: 'CEDLO501' },
+            { course_code: 'CEDLO5016', course_name: 'Transportation Planning & Economics', scheme_id: rev2019SchemeId, course_optional_subject: 'CEDLO501' },
+            { course_code: 'CEDLO5017', course_name: 'Advanced Concrete Technology', scheme_id: rev2019SchemeId, course_optional_subject: 'CEDLO501' },
+            { course_code: 'CEC601', course_name: 'Design & Drawing of Steel Structures', scheme_id: rev2019SchemeId },
+            { course_code: 'CEC602', course_name: 'Water Resources Engineering', scheme_id: rev2019SchemeId },
+            { course_code: 'CEC603', course_name: 'Geotechnical Engineering-II', scheme_id: rev2019SchemeId },
+            { course_code: 'CEC604', course_name: 'Environmental Engineering', scheme_id: rev2019SchemeId },
+            { course_code: 'CEL601', course_name: 'Design & Drawing of Steel Structures Lab', scheme_id: rev2019SchemeId },
+            { course_code: 'CEL602', course_name: 'Water Resources Engineering Lab', scheme_id: rev2019SchemeId },
+            { course_code: 'CEL603', course_name: 'Geotechnical Engineering-II Lab', scheme_id: rev2019SchemeId },
+            { course_code: 'CEL604', course_name: 'Environmental Engineering Lab', scheme_id: rev2019SchemeId },
+            { course_code: 'CEL605', course_name: 'Skill Based Lab Course - III', scheme_id: rev2019SchemeId },
+            { course_code: 'CEM601', course_name: 'Mini Project-2B', scheme_id: rev2019SchemeId },
+            { course_code: 'CEDLO6011', course_name: 'Rock Mechanics', scheme_id: rev2019SchemeId, course_optional_subject: 'CEDLO601' },
+            { course_code: 'CEDLO6012', course_name: 'Biological Processes & Contaminant Removal', scheme_id: rev2019SchemeId, course_optional_subject: 'CEDLO601' },
+            { course_code: 'CEDLO6013', course_name: 'Construction Equipment & Techniques', scheme_id: rev2019SchemeId, course_optional_subject: 'CEDLO601' },
+            { course_code: 'CEDLO6014', course_name: 'Urban Infrastructure Planning', scheme_id: rev2019SchemeId, course_optional_subject: 'CEDLO601' },
+            { course_code: 'CEDLO6015', course_name: 'Open Channel Flow', scheme_id: rev2019SchemeId, course_optional_subject: 'CEDLO601' },
+            { course_code: 'CEDLO6016', course_name: 'Computational Structural Analysis', scheme_id: rev2019SchemeId, course_optional_subject: 'CEDLO601' },
+            { course_code: 'CEDLO6017', course_name: 'Traffic Engineering and Management', scheme_id: rev2019SchemeId, course_optional_subject: 'CEDLO601' },
+            { course_code: 'CEDLO6018', course_name: 'Introduction to Offshore Engineering', scheme_id: rev2019SchemeId, course_optional_subject: 'CEDLO601' },
+            { course_code: 'CEC701', course_name: 'Design & Drawing of Reinforced Concrete Structures', scheme_id: rev2019SchemeId },
+            { course_code: 'CEC702', course_name: 'Quantity Survey, Estimation and Valuation', scheme_id: rev2019SchemeId },
+            { course_code: 'CEL701', course_name: 'Design & Drawing of Reinforced Concrete Structures Lab', scheme_id: rev2019SchemeId },
+            { course_code: 'CEL702', course_name: 'Quantity Survey, Estimation and Valuation Lab', scheme_id: rev2019SchemeId },
+            { course_code: 'CEP701', course_name: 'Major Project-Part I', scheme_id: rev2019SchemeId },
+            { course_code: 'CEDLO7011', course_name: 'Pre-stressed Concrete', scheme_id: rev2019SchemeId, course_optional_subject: 'CEDLO701' },
+            { course_code: 'CEDLO7012', course_name: 'Applied Hydrology and Flood Control', scheme_id: rev2019SchemeId, course_optional_subject: 'CEDLO701' },
+            { course_code: 'CEDLO7013', course_name: 'Appraisal and Implementation of Infra Projects', scheme_id: rev2019SchemeId, course_optional_subject: 'CEDLO701' },
+            { course_code: 'CEDLO7014', course_name: 'Analysis of Offshore Structures', scheme_id: rev2019SchemeId, course_optional_subject: 'CEDLO701' },
+            { course_code: 'CEDLO7015', course_name: 'Advanced Construction Technology', scheme_id: rev2019SchemeId, course_optional_subject: 'CEDLO701' },
+            { course_code: 'CEDLO7016', course_name: 'Pavement Materials Construction and Maintenance', scheme_id: rev2019SchemeId, course_optional_subject: 'CEDLO701' },
+            { course_code: 'CEDLO7021', course_name: 'Foundation Analysis and Design', scheme_id: rev2019SchemeId, course_optional_subject: 'CEDLO702' },
+            { course_code: 'CEDLO7022', course_name: 'Solid and Hazardous Waste Management', scheme_id: rev2019SchemeId, course_optional_subject: 'CEDLO702' },
+            { course_code: 'CEDLO7023', course_name: 'Ground Improvement techniques', scheme_id: rev2019SchemeId, course_optional_subject: 'CEDLO702' },
+            { course_code: 'CEDLO7024', course_name: 'Green building constructions', scheme_id: rev2019SchemeId, course_optional_subject: 'CEDLO702' },
+            { course_code: 'CEDLO7025', course_name: 'Legal Aspects in constructions', scheme_id: rev2019SchemeId, course_optional_subject: 'CEDLO702' },
+            { course_code: 'CEDLO7026', course_name: 'Environmental impact assessment', scheme_id: rev2019SchemeId, course_optional_subject: 'CEDLO702' },
+            { course_code: 'CEDLO7027', course_name: 'Advanced Design of Steel Structures', scheme_id: rev2019SchemeId, course_optional_subject: 'CEDLO702' },
+            { course_code: 'ILO7011', course_name: 'Product Lifecycle Management', scheme_id: rev2019SchemeId, course_optional_subject: 'ILO701' },
+            { course_code: 'ILO7012', course_name: 'Reliability Engineering', scheme_id: rev2019SchemeId, course_optional_subject: 'ILO701' },
+            { course_code: 'ILO7013', course_name: 'Management Information Systems', scheme_id: rev2019SchemeId, course_optional_subject: 'ILO701' },
+            { course_code: 'ILO7014', course_name: 'Design of Experiments', scheme_id: rev2019SchemeId, course_optional_subject: 'ILO701' },
+            { course_code: 'ILO7015', course_name: 'Operations Research', scheme_id: rev2019SchemeId, course_optional_subject: 'ILO701' },
+            { course_code: 'ILO7016', course_name: 'Cyber Security and Laws', scheme_id: rev2019SchemeId, course_optional_subject: 'ILO701' },
+            { course_code: 'ILO7017', course_name: 'Disaster Management and Mitigation Measures', scheme_id: rev2019SchemeId, course_optional_subject: 'ILO701' },
+            { course_code: 'ILO7018', course_name: 'Energy Audit and Management', scheme_id: rev2019SchemeId, course_optional_subject: 'ILO701' },
+            { course_code: 'ILO7019', course_name: 'Development Engineering', scheme_id: rev2019SchemeId, course_optional_subject: 'ILO701' },
+            { course_code: 'CEC801', course_name: 'Construction Management', scheme_id: rev2019SchemeId },
+            { course_code: 'CEL801', course_name: 'Construction Management Lab', scheme_id: rev2019SchemeId },
+            { course_code: 'CEP801', course_name: 'Major Project - Part II', scheme_id: rev2019SchemeId },
+            { course_code: 'CEDLO8011', course_name: 'Bridge Engineering', scheme_id: rev2019SchemeId, course_optional_subject: 'CEDLO801' },
+            { course_code: 'CEDLO8012', course_name: 'Design of Hydraulics Structures', scheme_id: rev2019SchemeId, course_optional_subject: 'CEDLO801' },
+            { course_code: 'CEDLO8013', course_name: 'Construction Safety', scheme_id: rev2019SchemeId, course_optional_subject: 'CEDLO801' },
+            { course_code: 'CEDLO8014', course_name: 'Pavement Design', scheme_id: rev2019SchemeId, course_optional_subject: 'CEDLO801' },
+            { course_code: 'CEDLO8015', course_name: 'Industrial Waste Treatment', scheme_id: rev2019SchemeId, course_optional_subject: 'CEDLO801' },
+            { course_code: 'CEDLO8016', course_name: 'Soil Dynamics', scheme_id: rev2019SchemeId, course_optional_subject: 'CEDLO801' },
+            { course_code: 'CEDLO8021', course_name: 'Repairs, Rehabilitation and Retrofitting of structures', scheme_id: rev2019SchemeId, course_optional_subject: 'CEDLO802' },
+            { course_code: 'CEDLO8022', course_name: 'Physico-Chemical Treatment of Water and Waste Water', scheme_id: rev2019SchemeId, course_optional_subject: 'CEDLO802' },
+            { course_code: 'CEDLO8023', course_name: 'Transportation System Engineering', scheme_id: rev2019SchemeId, course_optional_subject: 'CEDLO802' },
+            { course_code: 'CEDLO8024', course_name: 'Smart Building Materials', scheme_id: rev2019SchemeId, course_optional_subject: 'CEDLO802' },
+            { course_code: 'CEDLO8025', course_name: 'Structural Dynamics', scheme_id: rev2019SchemeId, course_optional_subject: 'CEDLO802' },
+            { course_code: 'CEDLO8026', course_name: 'Ground Water Engineering', scheme_id: rev2019SchemeId, course_optional_subject: 'CEDLO802' },
+            { course_code: 'ILO8021', course_name: 'Project Management', scheme_id: rev2019SchemeId, course_optional_subject: 'ILO802' },
+            { course_code: 'ILO8022', course_name: 'Finance Management', scheme_id: rev2019SchemeId, course_optional_subject: 'ILO802' },
+            { course_code: 'ILO8023', course_name: 'Entrepreneurship Development and Management', scheme_id: rev2019SchemeId, course_optional_subject: 'ILO802' },
+            { course_code: 'ILO8024', course_name: 'Human Resource Management', scheme_id: rev2019SchemeId, course_optional_subject: 'ILO802' },
+            { course_code: 'ILO8025', course_name: 'Professional Ethics and CSR', scheme_id: rev2019SchemeId, course_optional_subject: 'ILO802' },
+            { course_code: 'ILO8026', course_name: 'Research Methodology', scheme_id: rev2019SchemeId, course_optional_subject: 'ILO802' },
+            { course_code: 'ILO8027', course_name: 'IPR and Patenting', scheme_id: rev2019SchemeId, course_optional_subject: 'ILO802' },
+            { course_code: 'ILO8028', course_name: 'Digital Business Management', scheme_id: rev2019SchemeId, course_optional_subject: 'ILO802' },
+            { course_code: 'ILO8029', course_name: 'Environmental Management', scheme_id: rev2019SchemeId, course_optional_subject: 'ILO802' },
+        ];
 
-            INSERT INTO Courses(course_code, course_name, scheme_id, course_optional_subject) VALUES
-                ('CSDLO5011', 'Probabilistic Graphical Models', 1, 'CSDLO501'),
-                ('CSDLO5012', 'Internet Programming', 1, 'CSDLO501'),
-                ('CSDLO5013', 'Advance Database Management System', 1, 'CSDLO501');
+        // Add UUID and timestamps to each course
+        const coursesToInsert = courses.map(course => ({
+            ...course,
+            course_id: uuidv4(),
+            created_at: new Date(),
+            updated_at: new Date()
+        }));
 
-            -- inserting semester6 courses for scheme rev 2019 c (comp)
-            INSERT INTO Courses(course_code, course_name, scheme_id) VALUES
-                ('CSC601', 'System Programming & Compiler Construction', 1),
-                ('CSC602', 'Cryptography & System Security', 1),
-                ('CSC603', 'Mobile Computing', 1),
-                ('CSC604', 'Artificial Intelligence', 1),
-                ('CSL601', 'System Programming & Compiler Construction Lab', 1),
-                ('CSL602', 'Cryptography & System Security Lab', 1),
-                ('CSL603', 'Mobile Computing Lab', 1),
-                ('CSL604', 'Artificial Intelligence Lab', 1),
-                ('CSL605', 'Skill base Lab Course: Cloud Computing', 1),
-                ('CSM601', 'Mini Project - 2B', 1);
-
-            INSERT INTO Courses(course_code, course_name, scheme_id, course_optional_subject) VALUES
-                ('CSDLO6011', 'Internet of Things', 1, 'CSDLO601'),
-                ('CSDLO6012', 'Digital Signal & Image Processing', 1, 'CSDLO601'),
-                ('CSDLO6013', 'Quantitative Analysis', 1, 'CSDLO601');
-
-            -- inserting semester7 courses for scheme rev 2019 c (comp)
-            INSERT INTO Courses(course_code, course_name, scheme_id) VALUES
-                ('CSC701', 'Machine Learning', 1),
-                ('CSC702', 'Big Data Analytics', 1),
-                ('CSL701', 'Machine Learning Lab', 1),
-                ('CSL702', 'Big Data Analytics Lab', 1),
-                ('CSP701', 'Major Project 1', 1);
-
-            INSERT INTO Courses(course_code, course_name, scheme_id, course_optional_subject) VALUES
-                ('CSDC7011', 'Machine Vision', 1, 'CSDC701'),
-                ('CSDC7012', 'Quantum Computing', 1, 'CSDC701'),
-                ('CSDC7013', 'Natural Language Processing', 1, 'CSDC701'),
-
-                ('CSDL7011', 'Machine Vision lab', 1, 'CSDL701'),
-                ('CSDL7012', 'Quantum Computing lab', 1, 'CSDL701'),
-                ('CSDL7013', 'Natural Language Processing lab', 1, 'CSDL701'),
-
-                ('CSDC7021', 'Augmented and Virtual Reality', 1, 'CSDC702'),
-                ('CSDC7022', 'Block Chain', 1, 'CSDC702'),
-                ('CSDC7023', 'Information Retrieval', 1, 'CSDC702'),
-
-                ('CSDL7021', 'Augmented and Virtual Reality lab', 1, 'CSDL702'),
-                ('CSDL7022', 'Block Chain lab', 1, 'CSDL702'),
-                ('CSDL7023', 'Information Retrieval lab', 1, 'CSDL702');
-
-
-            -- inserting semester8 courses for scheme rev 2019 c (comp)
-            INSERT INTO Courses(course_code, course_name, scheme_id) VALUES
-                ('CSC801', 'Distributed Computing', 1),
-                ('CSL801', 'Distributed Computing Lab', 1),
-                ('CSP801', 'Major Project 2', 1);
-
-            INSERT INTO Courses(course_code, course_name, scheme_id, course_optional_subject) VALUES
-                ('CSDC8011', 'Deep Learning', 1, 'CSDC801'),
-                ('CSDC8012', 'Digital Forensic', 1, 'CSDC801'),
-                ('CSDC8013', 'Applied Data Science', 1, 'CSDC801'),
-
-                ('CSDL8011', 'Deep Learning Lab', 1, 'CSDL801'),
-                ('CSDL8012', 'Digital Forensic Lab', 1, 'CSDL801'),
-                ('CSDL8013', 'Applied Data Science Lab', 1, 'CSDL801'),
-
-                ('CSDC8021', 'Optimization in Machine Learning', 1, 'CSDC802'),
-                ('CSDC8022', 'High Performance Computing', 1, 'CSDC802'),
-                ('CSDC8023', 'Social Media Analytics', 1, 'CSDC802'),
-
-                ('CSDL8021', 'Optimization in Machine Learning Lab', 1, 'CSDL802'),
-                ('CSDL8022', 'High Performance Computing Lab', 1, 'CSDL802'),
-                ('CSDL8023', 'Social Media Analytics Lab', 1, 'CSDL802');
-
-            -- inserting semester3 courses for scheme rev 2019 c (civil)
-            INSERT INTO Courses(course_code, course_name, scheme_id) VALUES
-                ('CEC301', 'Engineering Mathematics-III', 1),
-                ('CEC302', 'Mechanics of Solids', 1),
-                ('CEC303', 'Engineering Geology', 1),
-                ('CEC304', 'Architectural Planning & Design of Buildings', 1),
-                ('CEC305', 'Fluid Mechanics- I', 1),
-                ('CEL301', 'Mechanics of Solids Lab', 1),
-                ('CEL302', 'Engineering Geology Lab', 1),
-                ('CEL303', 'Architectural Planning & Design of Buildings Lab', 1),
-                ('CEL304', 'Fluid Mechanics- I Lab', 1),
-                ('CEL305', 'Skill Based Lab Course-I', 1),
-                ('CEM301', 'Mini Project - 1 A', 1);
-
-            -- inserting semester4 courses for scheme rev 2019 c (civil)
-            INSERT INTO Courses(course_code, course_name, scheme_id) VALUES
-                ('CEC401', 'Engineering Mathematics - IV', 1),
-                ('CEC402', 'Structural Analysis', 1),
-                ('CEC403', 'Surveying', 1),
-                ('CEC404', 'Building Materials & Concrete Technology', 1),
-                ('CEC405', 'Fluid Mechanics-II', 1),
-                ('CEL401', 'Structural Analysis Lab', 1),
-                ('CEL402', 'Surveying Lab', 1),
-                ('CEL403', 'Building Material Concrete Technology Lab', 1),
-                ('CEL404', 'Fluid Mechanics-II Lab', 1),
-                ('CEL405', 'Skill Based lab Course-II', 1),
-                ('CEM401', 'Mini Project - 1 B', 1);
-
-            -- inserting semester5 courses for scheme rev 2019 c (civil)
-            INSERT INTO Courses(course_code, course_name, scheme_id) VALUES
-                ('CEC501', 'Theory of Reinforced Concrete Structures', 1),
-                ('CEC502', 'Applied Hydraulics', 1),
-                ('CEC503', 'Geotechnical Engineering-I', 1),
-                ('CEC504', 'Transportation Engineering', 1),
-                ('CEL501', 'Theory of Reinforced Concrete Structures Lab', 1),
-                ('CEL502', 'Applied Hydraulics Lab', 1),
-                ('CEL503', 'Geotechnical Engineering-I Lab', 1),
-                ('CEL504', 'Transportation Engineering Lab', 1),
-                ('CEL505', 'Professional Communication and Ethics Lab', 1),
-                ('CEM501', 'Mini Project - 2A', 1);
-
-            INSERT INTO Courses(course_code, course_name, scheme_id, course_optional_subject) VALUES
-                ('CEDLO5011', 'Modern Surveying Instruments and Techniques', 1, 'CEDLO501'),
-                ('CEDLO5012', 'Building Services & Repairs', 1, 'CEDLO501'),
-                ('CEDLO5013', 'Sustainable Building Materials', 1, 'CEDLO501'),
-                ('CEDLO5014', 'Advanced Structural Mechanics', 1, 'CEDLO501'),
-                ('CEDLO5015', 'Air and Noise Pollution & Control', 1, 'CEDLO501'),
-                ('CEDLO5016', 'Transportation Planning & Economics', 1, 'CEDLO501'),
-                ('CEDLO5017', 'Advanced Concrete Technology', 1, 'CEDLO501');
-
-            -- inserting semester6 courses for scheme rev 2019 c (civil)
-            INSERT INTO Courses(course_code, course_name, scheme_id) VALUES
-                ('CEC601', 'Design & Drawing of Steel Structures', 1),
-                ('CEC602', 'Water Resources Engineering', 1),
-                ('CEC603', 'Geotechnical Engineering-II', 1),
-                ('CEC604', 'Environmental Engineering', 1),
-                ('CEL601', 'Design & Drawing of Steel Structures Lab', 1),
-                ('CEL602', 'Water Resources Engineering Lab', 1),
-                ('CEL603', 'Geotechnical Engineering-II Lab', 1),
-                ('CEL604', 'Environmental Engineering Lab', 1),
-                ('CEL605', 'Skill Based Lab Course - III', 1),
-                ('CEM601', 'Mini Project-2B', 1);
-
-            INSERT INTO Courses(course_code, course_name, scheme_id, course_optional_subject) VALUES
-                ('CEDLO6011', 'Rock Mechanics', 1, 'CEDLO601'),
-                ('CEDLO6012', 'Biological Processes & Contaminant Removal', 1, 'CEDLO601'),
-                ('CEDLO6013', 'Construction Equipment & Techniques', 1, 'CEDLO601'),
-                ('CEDLO6014', 'Urban Infrastructure Planning', 1, 'CEDLO601'),
-                ('CEDLO6015', 'Open Channel Flow', 1, 'CEDLO601'),
-                ('CEDLO6016', 'Computational Structural Analysis', 1, 'CEDLO601'),
-                ('CEDLO6017', 'Traffic Engineering and Management', 1, 'CEDLO601'),
-                ('CEDLO6018', 'Introduction to Offshore Engineering', 1, 'CEDLO601');
-
-            -- inserting semester7 courses for scheme rev 2019 c (civil)
-            INSERT INTO Courses(course_code, course_name, scheme_id) VALUES
-                ('CEC701', 'Design & Drawing of Reinforced Concrete Structures', 1),
-                ('CEC702', 'Quantity Survey, Estimation and Valuation', 1),
-                ('CEL701', 'Design & Drawing of Reinforced Concrete Structures Lab', 1),
-                ('CEL702', 'Quantity Survey, Estimation and Valuation Lab', 1),
-                ('CEP701', 'Major Project-Part I', 1);
-
-            INSERT INTO Courses(course_code, course_name, scheme_id, course_optional_subject) VALUES
-                ('CEDLO7011', 'Pre-stressed Concrete', 1, 'CEDLO701'),
-                ('CEDLO7012', 'Applied Hydrology and Flood Control', 1, 'CEDLO701'),
-                ('CEDLO7013', 'Appraisal and Implementation of Infra Projects', 1, 'CEDLO701'),
-                ('CEDLO7014', 'Analysis of Offshore Structures', 1, 'CEDLO701'),
-                ('CEDLO7015', 'Advanced Construction Technology', 1, 'CEDLO701'),
-                ('CEDLO7016', 'Pavement Materials Construction and Maintenance', 1, 'CEDLO701'),
-
-                ('CEDLO7021', 'Foundation Analysis and Design', 1, 'CEDLO702'),
-                ('CEDLO7022', 'Solid and Hazardous Waste Management', 1, 'CEDLO702'),
-                ('CEDLO7023', 'Ground Improvement techniques', 1, 'CEDLO702'),
-                ('CEDLO7024', 'Green building constructions', 1, 'CEDLO702'),
-                ('CEDLO7025', 'Legal Aspects in constructions', 1, 'CEDLO702'),
-                ('CEDLO7026', 'Environmental impact assessment', 1, 'CEDLO702'),
-                ('CEDLO7027', 'Advanced Design of Steel Structures', 1, 'CEDLO702');
-
-            -- inserting semester 7 optional subject for both civil and comp 
-            INSERT INTO Courses(course_code, course_name, scheme_id, course_optional_subject) VALUES
-                ('ILO7011', 'Product Lifecycle Management', 1, 'ILO701'),  
-                ('ILO7012', 'Reliability Engineering', 1, 'ILO701'),
-                ('ILO7013', 'Management Information Systems', 1, 'ILO701'),
-                ('ILO7014', 'Design of Experiments', 1, 'ILO701'),
-                ('ILO7015', 'Operations Research', 1, 'ILO701'),
-                ('ILO7016', 'Cyber Security and Laws', 1, 'ILO701'),
-                ('ILO7017', 'Disaster Management and Mitigation Measures', 1, 'ILO701'),
-                ('ILO7018', 'Energy Audit and Management', 1, 'ILO701'),
-                ('ILO7019', 'Development Engineering', 1, 'ILO701');
-
-
-            -- inserting semester8 courses for scheme rev 2019 c (civil)
-            INSERT INTO Courses(course_code, course_name, scheme_id) VALUES
-                ('CEC801', 'Construction Management', 1),
-                ('CEL801', 'Construction Management Lab', 1),
-                ('CEP801', 'Major Project - Part II', 1);
-
-            INSERT INTO Courses(course_code, course_name, scheme_id, course_optional_subject) VALUES
-                ('CEDLO8011', 'Bridge Engineering', 1, 'CEDLO801'),
-                ('CEDLO8012', 'Design of Hydraulics Structures', 1, 'CEDLO801'),
-                ('CEDLO8013', 'Construction Safety', 1, 'CEDLO801'),
-                ('CEDLO8014', 'Pavement Design', 1, 'CEDLO801'),
-                ('CEDLO8015', 'Industrial Waste Treatment', 1, 'CEDLO801'),
-                ('CEDLO8016', 'Soil Dynamics', 1, 'CEDLO801'),
-
-                ('CEDLO8021', 'Repairs, Rehabilitation and Retrofitting of structures', 1, 'CEDLO802'),
-                ('CEDLO8022', 'Physico-Chemical Treatment of Water and Waste Water', 1, 'CEDLO802'),
-                ('CEDLO8023', 'Transportation System Engineering', 1, 'CEDLO802'),
-                ('CEDLO8024', 'Smart Building Materials', 1, 'CEDLO802'),
-                ('CEDLO8025', 'Structural Dynamics', 1, 'CEDLO802'),
-                ('CEDLO8026', 'Ground Water Engineering', 1, 'CEDLO802');
-
-            -- inserting semester 8 optional courses for both civil and comp
-            INSERT INTO Courses(course_code, course_name, scheme_id, course_optional_subject) VALUES
-                ('ILO8021', 'Project Management', 1, 'ILO802'),  
-                ('ILO8022', 'Finance Management', 1, 'ILO802'),
-                ('ILO8023', 'Entrepreneurship Development and Management', 1, 'ILO802'),
-                ('ILO8024', 'Human Resource Management', 1, 'ILO802'),
-                ('ILO8025', 'Professional Ethics and CSR', 1, 'ILO802'),
-                ('ILO8026', 'Research Methodology', 1, 'ILO802'),
-                ('ILO8027', 'IPR and Patenting', 1, 'ILO802'),
-                ('ILO8028', 'Digital Business Management', 1, 'ILO802'),
-                ('ILO8029', 'Environmental Management', 1, 'ILO802');
-            `
-        )
+        await queryInterface.bulkInsert('courses', coursesToInsert, {});
     },
 
     async down(queryInterface, Sequelize) {
-        await queryInterface.sequelize.query(
-            `Delete from courses`
-        )
+        await queryInterface.bulkDelete('courses', null, {});
     }
 };

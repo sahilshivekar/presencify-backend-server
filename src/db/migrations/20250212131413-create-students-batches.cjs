@@ -5,32 +5,29 @@ module.exports = {
     async up(queryInterface, Sequelize) {
         await queryInterface.createTable('students_batches', {
             id: {
-                type: Sequelize.INTEGER,
+                type: Sequelize.UUID,
+                defaultValue: Sequelize.UUIDV4,
                 primaryKey: true,
-                allowNull: false,
-                autoIncrement: true,
                 field: 'student_batch_id'
             },
             studentId: {
-                type: Sequelize.INTEGER,
+                type: Sequelize.UUID,
                 allowNull: false,
                 field: 'student_id',
                 references: {
                     model: 'students', // Name of the students table
                     key: 'student_id' // Primary key of the students table
                 },
-                onUpdate: 'CASCADE',
                 onDelete: 'CASCADE'
             },
             batchId: {
-                type: Sequelize.INTEGER,  // Changed to INTEGER to match batches table
+                type: Sequelize.UUID,  // Changed to INTEGER to match batches table
                 allowNull: false,
                 field: 'batch_id',
                 references: {
                     model: 'batches', // Name of the batches table
                     key: 'batch_id' // Primary key of the batches table
                 },
-                onUpdate: 'CASCADE',
                 onDelete: 'CASCADE'
             },
             startDate: {

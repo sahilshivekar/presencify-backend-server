@@ -1,4 +1,4 @@
-import { Sequelize, Model } from 'sequelize';
+import { Sequelize, Model, UUIDV4 } from 'sequelize';
 import sequelize from '../../config/db.connection.js';
 
 
@@ -7,14 +7,15 @@ class BranchCourseSemester extends Model { }
 BranchCourseSemester.init(
     {
         id: {
-            type: Sequelize.INTEGER,
+            type: Sequelize.UUID,
+            defaultValue: UUIDV4,
             primaryKey: true,
             allowNull: false,
             autoIncrement: true,
             field: 'branch_course_semester_id'
         },
         branchId: {
-            type: Sequelize.INTEGER,
+            type: Sequelize.UUID,
             allowNull: false,
             field: 'branch_id',
             references: {
@@ -28,7 +29,7 @@ BranchCourseSemester.init(
             }
         },
         courseId: {
-            type: Sequelize.INTEGER,
+            type: Sequelize.UUID,
             allowNull: false,
             field: 'course_id',
             references: {

@@ -1,64 +1,58 @@
 'use strict';
 
+const { v4: uuidv4 } = require('uuid');
+
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
     async up(queryInterface, Sequelize) {
-        await queryInterface.sequelize.query(`     
-            -- below's insertion are for academic year 2024-2025
-            -- div a for 8th semester comp
-            INSERT INTO divisions (division_code, semester_id)
-            SELECT 'A', semester_id from semesters
-            where semester_number = 8 AND branch_id = 1;
+        // 1. Fetch all necessary data to create relationships
+        const branches = await queryInterface.sequelize.query(
+            `SELECT branch_id, branch_name FROM branches;`,
+            { type: queryInterface.sequelize.QueryTypes.SELECT }
+        );
+        const semesters = await queryInterface.sequelize.query(
+            `SELECT semester_id, branch_id, semester_number FROM semesters;`,
+            { type: queryInterface.sequelize.QueryTypes.SELECT }
+        );
 
-            -- div b for 8th semester comp
-            INSERT INTO divisions (division_code, semester_id)
-            SELECT 'B', semester_id from semesters
-            where semester_number = 8 AND branch_id = 1;
+        const compBranchId = branches.find(b => b.branch_name === 'Computer Engineering')?.branch_id;
+        const civilBranchId = branches.find(b => b.branch_name === 'Civil Engineering')?.branch_id;
 
-            -- div a for 6th semester comp
-            INSERT INTO divisions (division_code, semester_id)
-            SELECT 'A', semester_id from semesters
-            where semester_number = 6 AND branch_id = 1;
+        if (!compBranchId || !civilBranchId) {
+            throw new Error('Required branches not found.');
+        }
 
-            -- div b for 6th semester comp
-            INSERT INTO divisions (division_code, semester_id)
-            SELECT 'B', semester_id from semesters
-            where semester_number = 6 AND branch_id = 1;
+        // Helper function to find the correct semester UUID
+        const getSemesterId = (branchId, semesterNumber) => {
+            const semester = semesters.find(s => s.branch_id === branchId && s.semester_number === semesterNumber);
+            return semester ? semester.semester_id : null;
+        };
 
-            -- div a for 4th semester comp
-            INSERT INTO divisions (division_code, semester_id)
-            SELECT 'A', semester_id from semesters
-            where semester_number = 4 AND branch_id = 1;
+        // 2. Prepare the division data for insertion
+        const divisionsToInsert = [
+            // Comp Divisions
+            { division_code: 'A', semester_id: getSemesterId(compBranchId, 8) },
+            { division_code: 'B', semester_id: getSemesterId(compBranchId, 8) },
+            { division_code: 'A', semester_id: getSemesterId(compBranchId, 6) },
+            { division_code: 'B', semester_id: getSemesterId(compBranchId, 6) },
+            { division_code: 'A', semester_id: getSemesterId(compBranchId, 4) },
+            { division_code: 'B', semester_id: getSemesterId(compBranchId, 4) },
+            { division_code: 'A', semester_id: getSemesterId(compBranchId, 2) },
+            { division_code: 'B', semester_id: getSemesterId(compBranchId, 2) },
+            // Civil Divisions
+            { division_code: 'A', semester_id: getSemesterId(civilBranchId, 2) },
+            { division_code: 'B', semester_id: getSemesterId(civilBranchId, 2) },
+        ].map(div => ({
+            division_id: uuidv4(),
+            ...div,
+            created_at: new Date(),
+            updated_at: new Date()
+        }));
 
-            -- div b for 4th semester comp
-            INSERT INTO divisions (division_code, semester_id)
-            SELECT 'B', semester_id from semesters
-            where semester_number = 4 AND branch_id = 1;
-
-            -- div a for 2th semester comp
-            INSERT INTO divisions (division_code, semester_id)
-            SELECT 'A', semester_id from semesters
-            where semester_number = 2 AND branch_id = 1;
-
-            -- div b for 2th semester comp
-            INSERT INTO divisions (division_code, semester_id)
-            SELECT 'B', semester_id from semesters
-            where semester_number = 2 AND branch_id = 1;
-
-            -- div a for 2th semester civil
-            INSERT INTO divisions (division_code, semester_id)
-            SELECT 'A', semester_id from semesters
-            where semester_number = 2 AND branch_id = 2;
-
-            -- div b for 2th semester civil
-            INSERT INTO divisions (division_code, semester_id)
-            SELECT 'B', semester_id from semesters
-            where semester_number = 2 AND branch_id = 2;
-
-        `)
+        await queryInterface.bulkInsert('divisions', divisionsToInsert, {});
     },
 
     async down(queryInterface, Sequelize) {
-        await queryInterface.sequelize.query(`delete from divisions`)
+        await queryInterface.bulkDelete('divisions', null, {});
     }
 };

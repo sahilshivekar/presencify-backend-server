@@ -7,8 +7,8 @@ module.exports = {
             'verification_codes',
             {
                 id: {
-                    type: Sequelize.INTEGER,
-                    autoIncrement: true,
+                    type: Sequelize.UUID,
+                    defaultValue: Sequelize.UUIDV4,
                     primaryKey: true,
                     field: 'verification_code_id'
                 },
@@ -27,7 +27,6 @@ module.exports = {
                             msg: 'Must be a valid email address',
                         }
                     },
-                    onUpdate: 'CASCADE',
                     onDelete: 'CASCADE',
                     field: 'admin_email',
                 },

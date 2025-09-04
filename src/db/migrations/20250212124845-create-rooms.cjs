@@ -7,10 +7,9 @@ module.exports = {
             'rooms',
             {
                 id: {
-                    type: Sequelize.INTEGER,
+                    type: Sequelize.UUID,
+                    defaultValue: Sequelize.UUIDV4,
                     primaryKey: true,
-                    allowNull: false,
-                    autoIncrement: true,
                     field: 'room_id'
                 },
                 roomNumber: {

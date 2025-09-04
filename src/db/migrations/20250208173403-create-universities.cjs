@@ -7,21 +7,21 @@ module.exports = {
             'universities',
             {
                 id: {
-                    type: Sequelize.INTEGER,
-                    autoIncrement: true,
+                    type: Sequelize.UUID,
+                    defaultValue: Sequelize.UUIDV4,
                     primaryKey: true,
                     field: 'university_id'
                 },
                 universityName: {
                     type: Sequelize.STRING(255),
                     allowNull: false,
-                    unique: true, 
+                    unique: true,
                     field: "university_name"
                 },
                 universityAbbreviation: {
                     type: Sequelize.STRING(255),
                     allowNull: false,
-                    unique: true, 
+                    unique: true,
                     field: 'university_abbreviation'
                 },
                 createdAt: {

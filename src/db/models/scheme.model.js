@@ -1,4 +1,4 @@
-import { Sequelize, Model } from 'sequelize';
+import { Sequelize, Model, UUIDV4 } from 'sequelize';
 import sequelize from '../../config/db.connection.js';
 import University from './university.model.js';
 import Semester from './semester.model.js';
@@ -9,7 +9,8 @@ class Scheme extends Model { }
 Scheme.init(
     {
         id: {
-            type: Sequelize.INTEGER,
+            type: Sequelize.UUID,
+            defaultValue: UUIDV4,
             autoIncrement: true,
             primaryKey: true,
             field: 'scheme_id'
@@ -29,7 +30,7 @@ Scheme.init(
             }
         },
         universityId: {
-            type: Sequelize.INTEGER,
+            type: Sequelize.UUID,
             allowNull: false,
             field: 'university_id',
             references: {
@@ -71,13 +72,13 @@ Scheme.init(
     }
 );
 
-Scheme.belongsTo(University, {foreignKey: 'universityId', targetKey: 'id'});
-University.hasMany(Scheme, {sourceKey: 'id', foreignKey: 'universityId'});
+Scheme.belongsTo(University, { foreignKey: 'universityId', targetKey: 'id' });
+University.hasMany(Scheme, { sourceKey: 'id', foreignKey: 'universityId' });
 
-Scheme.hasMany(Semester, {sourceKey: 'id', foreignKey: 'schemeId'});
-Semester.belongsTo(Scheme, {targetKey: 'id', foreignKey: 'schemeId'});
+Scheme.hasMany(Semester, { sourceKey: 'id', foreignKey: 'schemeId' });
+Semester.belongsTo(Scheme, { targetKey: 'id', foreignKey: 'schemeId' });
 
-Scheme.hasMany(Student, {sourceKey: 'id', foreignKey: 'schemeId'});
-Student.belongsTo(Scheme, {targetKey: 'id', foreignKey: 'schemeId'});
+Scheme.hasMany(Student, { sourceKey: 'id', foreignKey: 'schemeId' });
+Student.belongsTo(Scheme, { targetKey: 'id', foreignKey: 'schemeId' });
 
 export default Scheme;

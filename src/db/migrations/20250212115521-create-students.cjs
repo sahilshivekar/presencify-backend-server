@@ -10,10 +10,9 @@ module.exports = {
             'students',
             {
                 id: {
-                    type: Sequelize.INTEGER,
+                    type: Sequelize.UUID,
+                    defaultValue: Sequelize.UUIDV4,
                     primaryKey: true,
-                    autoIncrement: true,
-                    allowNull: false,
                     field: 'student_id',
                 },
                 prn: {
@@ -65,11 +64,6 @@ module.exports = {
                     unique: false,
                     field: 'parent_email',
                 },
-                // academicStatus: {
-                //     type: Sequelize.ENUM('Active', 'Graduated'),
-                //     allowNull: false,
-                //     field: 'academic_status',
-                // },
                 admissionYear: {
                     type: Sequelize.INTEGER,
                     allowNull: false,
@@ -102,24 +96,21 @@ module.exports = {
                     field: 'student_img_public_id',
                 },
                 schemeId: {
-                    type: Sequelize.INTEGER,
+                    type: Sequelize.UUID,
                     allowNull: false,
                     references: {
                         model: 'schemes', // Ensure 'schemes' table exists
                         key: 'scheme_id',
-                    },
-                    onUpdate: 'CASCADE',
-                    onDelete: 'CASCADE',
+                    }, onDelete: 'CASCADE',
                     field: 'scheme_id',
                 },
                 branchId: {
-                    type: Sequelize.INTEGER,
+                    type: Sequelize.UUID,
                     allowNull: false,
                     references: {
                         model: 'branches', // Ensure 'branches' table exists
                         key: 'branch_id',
                     },
-                    onUpdate: 'CASCADE',
                     onDelete: 'CASCADE',
                     field: 'branch_id',
                 },
