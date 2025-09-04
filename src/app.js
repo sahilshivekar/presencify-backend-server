@@ -4,9 +4,12 @@ import cookieParser from "cookie-parser"
 import { config } from './config/config.js';
 const app = express()
 import xss from 'xss-clean';
-import { successHandler, errorHandler } from './config/morgan.js';
+import morgan from './config/morgan.js';
 import helmet from 'helmet';
 import compression from 'compression';
+import { authLimiter } from './middlewares/rateLimiter.js';
+import { errorConverter, errorHandler } from './middlewares/error.js';
+import { ApiError } from "./utils/ApiError.js";
 
 
 app.use(cors({
@@ -15,8 +18,8 @@ app.use(cors({
 }))
 
 if (config.env !== 'test') {
-    app.use(successHandler);
-    app.use(errorHandler);
+    app.use(morgan.successHandler);
+    app.use(morgan.errorHandler);
 }
 
 // set security HTTP headers
@@ -81,5 +84,18 @@ app.use("/api/v1/classes", classRouter);
 app.use("/api/v1/attendances", attendanceRouter);
 app.use("/api/v1/dropouts", dropoutRouter);
 app.use("/api/v1/student-fcm-tokens", studentFCMTokenRouter);
+
+
+app.use((req, res, next) => {
+    next(new ApiError(httpStatus.NOT_FOUND, 'Not found'));
+});
+
+
+// convert error to ApiError, if needed
+app.use(errorConverter);
+
+// handle error
+app.use(errorHandler);
+
 
 export default app 
