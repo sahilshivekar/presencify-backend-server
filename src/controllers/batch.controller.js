@@ -16,9 +16,9 @@ const getBatches = asyncHandler(async (req, res) => {
         academicStartYear,
         academicEndYear,
         searchQuery,
-        page = 1,
-        limit = 10,
-        getAll = "false",
+        page,
+        limit,
+        getAll,
     } = req.query;
 
     const searchClause = {}
@@ -89,8 +89,8 @@ const getBatches = asyncHandler(async (req, res) => {
                 },
             ]
         },
-        ...(limit && getAll == "false" ? { offset: offset, } : {}),
-        ...(limit && getAll == "false" ? { limit } : {})
+        ...(limit && !getAll ? { offset: offset, } : {}),
+        ...(limit && !getAll ? { limit } : {})
     });
     
     res.status(200).json(new ApiResponse(200, "Batches fetched successfully", {
@@ -102,10 +102,6 @@ const getBatches = asyncHandler(async (req, res) => {
 
 const getBatchById = asyncHandler(async (req, res) => {
     const { batchId } = req.query;
-
-    if (!batchId) {
-        throw new ApiError(400, "Batch id is required");
-    }
 
     const batch = await Batch.findOne({
         where: { id: batchId },
@@ -155,9 +151,6 @@ const addBatch = asyncHandler(async (req, res) => {
         semesterId,
     } = req.body;
 
-    if (!batchCode || !semesterId) {
-        throw new ApiError(400, "Batch code and semester id are required");
-    }
 
     const semester = await Semester.findByPk(semesterId);
     if (!semester) {
@@ -178,19 +171,11 @@ const addBatch = asyncHandler(async (req, res) => {
 
 const updateBatch = asyncHandler(async (req, res) => {
     const {
-        id,
+        batchId,
         batchCode
     } = req.body;
 
-    if (!id) {
-        throw new ApiError(400, "Batch id is required");
-    }
-
-    if (!batchCode) {
-        throw new ApiError(400, "Batch code is required");
-    }
-
-    const batch = await Batch.findByPk(id);
+    const batch = await Batch.findByPk(batchId);
 
     if (!batch) {
         throw new ApiError(404, "Batch not found");
@@ -205,13 +190,9 @@ const updateBatch = asyncHandler(async (req, res) => {
 
 
 const removeBatch = asyncHandler(async (req, res) => {
-    const { id } = req.body;
+    const { batchId } = req.body;
 
-    if (!id) {
-        throw new ApiError(400, "Batch id is required");
-    }
-
-    const batch = await Batch.findByPk(id);
+    const batch = await Batch.findByPk(batchId);
 
     if (!batch) {
         throw new ApiError(404, "Batch not found");

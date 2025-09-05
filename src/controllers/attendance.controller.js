@@ -34,7 +34,6 @@ const realtimeAttendanceHelper = async (
     const io = getIO();
     const openRooms = io.of("/attendance").adapter.rooms.keys()
     const openRoomsList = [...openRooms]
-    console.log(openRoomsList)
     // ! For individual student attendance
     let studentRooms = openRoomsList.filter(openRoom => openRoom.includes("student_attendance"))
 
@@ -46,15 +45,11 @@ const realtimeAttendanceHelper = async (
         const batchId = roomName.split("_")[11]
         const startDate = roomName.split("_")[13]
         const endDate = roomName.split("_")[15]
-        console.log(currStudentIds.includes(Number(studentId)), currStudentIds)
-        console.log(currCourseId == courseId, courseId)
-        console.log(currSemesterId == semesterId, currSemesterId, semesterId)
         if (
             currStudentIds.includes(Number(studentId)) &&
             currCourseId == courseId &&
             currSemesterId == semesterId
         ) {
-            console.log("here")
             const attendance = await getAttendanceOfStudentForSpecificCourseInSemesterQuery(
                 studentId,
                 courseId,
@@ -108,24 +103,8 @@ const realtimeAttendanceHelper = async (
 const createAttendance = asyncHandler(async (req, res) => {
     const {
         classId,
-        BLEsessionUUID,
-        date,
-        addAttendanceManually
+        date
     } = req.body;
-
-
-    if (!classId || !date) {
-        throw new ApiError(400, "Class ID and Date are required")
-    }
-
-    if (!addAttendanceManually && !BLEsessionUUID) {
-        throw new ApiError(400, "BLE Session UUID is required")
-    }
-
-    if (!moment(date, 'YYYY-MM-DD', true).isValid()) {
-        throw new ApiError(400, "Invalid date format")
-    }
-
 
     const classObj = await Class.findByPk(classId);
 
@@ -152,76 +131,15 @@ const createAttendance = asyncHandler(async (req, res) => {
 
     if (checkIfAttendaceAlreadyCreatedForTodaysClass) {
         res.status(201).json(new ApiResponse(201, "Attendance was already created successfully", checkIfAttendaceAlreadyCreatedForTodaysClass));
-    } else {
-        const attendance = await Attendance.create({
-            classId: classId,
-            BLEsessionUUID: BLEsessionUUID || null,
-            date: date
-        });
-        if (!addAttendanceManually) {
-            // send notification on phone to students
-            let studentsToNotify = []
-            let batch = null;
-            if (classObj.batchId) {
-                batch = await Batch.findByPk(classObj.batchId);
-            }
-            const course = await Course.findByPk(classObj.courseId);
-
-
-            if (batch) {
-                studentsToNotify = await StudentBatch.findAll({
-                    where: {
-                        batchId: batch.id,
-                        endDate: null
-                    }
-                })
-            } else {
-                studentsToNotify = await StudentDivision.findAll({
-                    where: {
-                        divisionId: timetable.divisionId,
-                        endDate: null
-                    }
-                })
-            }
-
-            studentsToNotify = studentsToNotify.map(student => student.studentId)
-
-            // mark all of them initially absent so that they can be notified to update their attendance status
-            await AttendanceStudent.bulkCreate(
-                [...studentsToNotify.map(studentId => ({
-                    attendanceId: attendance.id,
-                    studentId: studentId,
-                    attendanceStatus: false
-                }))]
-            )
-
-            const studentsWithFCMToken = await StudentFCMToken.findAll({
-                where: {
-                    studentId: {
-                        [Op.in]: studentsToNotify
-                    }
-                }
-            })
-
-            studentsWithFCMToken.forEach(studentWithFCMToken => {
-                sendNotification(
-                    studentWithFCMToken.fcmToken,
-                    "Mark attendance",
-                    `Mark attendance of ${course.name} in the next 5 minutes`,
-                    {
-                        type: "AttendanceAlert",
-                        classId: classObj.id,
-                        attendanceId: attendance.id
-                    }
-                )
-            })
-
-
-        }
-
-
-        res.status(201).json(new ApiResponse(201, "Attendance created successfully", attendance));
     }
+
+    const attendance = await Attendance.create({
+        classId: classId,
+        date: date
+    });
+
+    res.status(201).json(new ApiResponse(201, "Attendance created successfully", attendance));
+
 })
 
 
@@ -234,16 +152,6 @@ const addStudentsAttendance = asyncHandler(async (req, res) => {
         presentStudentIds,
         absentStudentIds
     } = req.body;
-
-    if (!attendanceId || !presentStudentIds || !absentStudentIds) {
-        throw new ApiError(400, "Attendance ID, Present Student IDs and Absent Student IDs are required")
-    }
-
-    const duplicateStudentIds = presentStudentIds.filter(studentId => absentStudentIds.includes(studentId))
-
-    if (duplicateStudentIds.length > 0) {
-        throw new ApiError(400, `These student ids are in both present and absent student ids: ${duplicateStudentIds}`)
-    }
 
     const attendance = await Attendance.findByPk(attendanceId)
 
@@ -290,7 +198,7 @@ const addStudentsAttendance = asyncHandler(async (req, res) => {
         division.id
     )
 
-    res.status(201).json(new ApiResponse(201, "Students attendance added successfully", {}));
+    res.status(201).json(new ApiResponse(201, "Students attendance added successfully", null));
 })
 
 
@@ -303,15 +211,6 @@ const updateStudentAttendance = asyncHandler(async (req, res) => {
         studentId,
         newAttendanceStatus
     } = req.body;
-
-    if (!attendanceId || !studentId) {
-        throw new ApiError(400, "Attendance ID and Student ID are required")
-    }
-
-    // adding this check separately because if the value is false it won't enter in the controller
-    if (newAttendanceStatus !== true && newAttendanceStatus !== false) {
-        throw new ApiError(400, "New attendance status must be true or false")
-    }
 
     const attendance = await Attendance.findByPk(attendanceId)
 
@@ -353,80 +252,10 @@ const updateStudentAttendance = asyncHandler(async (req, res) => {
 })
 
 
-// ! this will be used only by the student to send the appropriate BLEsessionUUID to mark his attendance
-const markStudentAttendanceByBLEsessionUUID = asyncHandler(async (req, res) => {
-    const {
-        BLEsessionUUID,
-        studentId
-    } = req.body;
-
-    if (!BLEsessionUUID || !studentId) {
-        throw new ApiError(400, "BLE Session UUID and Student ID are required")
-    }
-
-
-    const attendanceSheet = await Attendance.findOne({
-        where: {
-            BLEsessionUUID: BLEsessionUUID
-        }
-    })
-
-    if (!attendanceSheet) {
-        throw new ApiError(404, "BLE session UUID is not valid")
-    }
-
-    const attendanceSheetCreatedAt = new Date(attendanceSheet.createdAt)
-    // console.log(attendanceSheetCreatedAt)
-
-    const fiveMinAfterTimeStamp = new Date(attendanceSheetCreatedAt.getTime() + (5 * 60 * 1000))
-
-    // console.log(fiveMinAfterTimeStamp)
-
-    const currentTimeStamp = new Date()
-
-    if (currentTimeStamp > fiveMinAfterTimeStamp) {
-        throw new ApiError(400, "Deadline to mark attendance is over")
-    }
-
-    // if (attendanceSheet.createdAt < ) {
-
-    await AttendanceStudent.update(
-        {
-            attendanceStatus: true
-        },
-        {
-            where: {
-                studentId: studentId,
-                attendanceId: attendanceSheet.id
-            }
-        }
-    )
-
-    const classObj = await Class.findByPk(attendanceSheet.classId);
-    const timetable = await Timetable.findByPk(classObj.timetableId);
-    const division = await Division.findByPk(timetable.divisionId);
-
-    realtimeAttendanceHelper(
-        [studentId],
-        classObj.courseId,
-        division.semesterId,
-        classObj?.batchId,
-        timetable.divisionId
-    )
-
-    res
-        .status(200)
-        .json(new ApiResponse(200, "Attendance marked successfully", null));
-})
-
 const removeAttendance = asyncHandler(async (req, res) => {
     const {
         attendanceId
     } = req.query;
-
-    if (!attendanceId) {
-        throw new ApiError(400, "Attendance ID is required")
-    }
 
     const attendance = await Attendance.findByPk(attendanceId)
 
@@ -503,9 +332,6 @@ const getAttendanceOfStudentForSpecificCourseInSemesterQuery = async (
     endDate
 ) => {
 
-    if (!studentId && !courseId && !semesterId && !divisionId && !batchId && !startDate && !endDate) {
-        throw new ApiError(400, "One of the parameters is required: studentId, courseId, semesterId, divisionId, batchId, startDate, endDate")
-    }
 
     // for getting total and attended lectures of a student for a specific course
 
@@ -539,9 +365,6 @@ const getAttendanceOfStudentForSpecificCourseInSemesterQuery = async (
         courses.course_name;
         `
     )
-    // console.log(aggregatedAttendance) 
-    //! [ { course_id: 101, total_lectures: '18', attended_lectures: '0' } ]
-
 
     // for getting detail with each attendance_id and status
     const detailedAttendance = await sequelize.query(
@@ -570,9 +393,6 @@ const getAttendanceOfStudentForSpecificCourseInSemesterQuery = async (
         attendances.attendance_date;
         `
     )
-    // console.log(detailedAttendance) 
-    //!  { attendance_id: 1, date: '2025-01-08', attendance_status: false },
-    //!  { attendance_id: 2, date: '2025-01-09', attendance_status: false },
 
 
     if (!aggregatedAttendance || !detailedAttendance) {
@@ -650,10 +470,6 @@ const sendAttendanceReport = asyncHandler(async (req, res) => {
         courseIds,
         semesterId
     } = req.body;
-
-    if (!studentIds && !courseIds && !semesterId) {
-        throw new ApiError(400, "These parameters are required: studentId, courseId, semesterId")
-    }
 
     let studentWithNoParentEmail = []
 
@@ -749,12 +565,6 @@ const getAttendance = asyncHandler(async (req, res) => {
         startDate,
         endDate
     } = req.query;
-
-    if (date) {
-        if (!moment(date, 'YYYY-MM-DD', true).isValid()) {
-            throw new ApiError(400, "Invalid date format")
-        }
-    }
 
     if (studentId) {
         const student = await Student.findByPk(studentId);
@@ -896,13 +706,9 @@ const getActiveAttendanceSheet = asyncHandler(async (req, res) => {
         divisionId
     } = req.query;
 
-    if (!studentId || !divisionId) {
-        throw new ApiError(400, "Student ID and Division ID are required")
-    }
-
     const student = await Student.findByPk(studentId);
 
-    if (!student) { 
+    if (!student) {
         throw new ApiError(404, "Student not found")
     }
 
@@ -917,11 +723,11 @@ const getActiveAttendanceSheet = asyncHandler(async (req, res) => {
     if (!studentDivision) {
         throw new ApiError(404, "Student's division not found")
     }
-    console.log(studentDivision)
+
     const timetable = await Timetable.findOne({
         where: {
             divisionId: studentDivision.divisionId
-        } 
+        }
     });
 
     if (!timetable) {
@@ -972,7 +778,6 @@ export {
     createAttendance,
     getAttendanceOfStudentForSpecificCourseInSemester,
     getAttendanceOfAllForSemesterDivisionBatchCourse,
-    markStudentAttendanceByBLEsessionUUID,
     sendAttendanceReport,
     getAttendance,
     getActiveAttendanceSheet
