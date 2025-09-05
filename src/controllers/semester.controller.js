@@ -21,7 +21,7 @@ const getSemesters = asyncHandler(async (req, res) => {
         schemeId,
         page = 1,
         limit = 10,
-        getAll = "false",
+        getAll = false,
     } = req.query;
 
     const whereClause = {};
@@ -71,8 +71,8 @@ const getSemesters = asyncHandler(async (req, res) => {
                 duplicating: false,
             }
         ],
-        ...(limit && getAll == "false" ? { offset: offset, } : {}),
-        ...(limit && getAll == "false" ? { limit } : {})
+        ...(limit && getAll === false ? { offset: offset, } : {}),
+        ...(limit && getAll === false ? { limit } : {})
     });
 
     res
@@ -325,13 +325,13 @@ const getCoursesOfSemester = asyncHandler(async (req, res) => {
 
 //! updating the semester will make the optional courses and other courses invalid, hence it is very error prone so use delete and then create new semester instead of updating
 const updateSemester = asyncHandler(async (req, res) => {
+    const { id } = req.params;
     const {
-        semesterId,
         startDate,
         endDate
     } = req.body;
 
-    if(!semesterId) {
+    if(!id) {
         throw new ApiError(400, "Semester id is required");
     }
 
@@ -339,7 +339,7 @@ const updateSemester = asyncHandler(async (req, res) => {
         throw new ApiError(400, "Start date and end date are required");
     }
 
-    const semester = await Semester.findByPk(semesterId);
+    const semester = await Semester.findByPk(id);
 
     if (!semester) {
         throw new ApiError(404, "Semester not found");
@@ -381,7 +381,7 @@ const updateSemester = asyncHandler(async (req, res) => {
 //* remove semester
 const removeSemester = asyncHandler(async (req, res) => {
 
-    const { id } = req.body;
+    const { id } = req.params;
 
     if (!id) {
         throw new ApiError(400, "Semester id is required");
@@ -408,14 +408,14 @@ const removeSemester = asyncHandler(async (req, res) => {
 
 
 const getSemesterById = asyncHandler(async (req, res) => {
-    const { semesterId } = req.query;
+    const { id } = req.params;
 
     if (!semesterId) {
         throw new ApiError(400, "Semester id is required");
     }
 
     const semester = await Semester.findOne({
-        where: { id: semesterId },
+        where: { id: id },
         include: [
             {
                 model: Branch,

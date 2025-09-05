@@ -9,17 +9,19 @@ import {
 } from '../controllers/studentAuth.controller.js';
 import { verifyJWT } from '../middlewares/auth.middleware.js';
 import { ROLES } from '../config/roles.js';
+import validate from '../middlewares/validate.js';
+import studentAuthValidation from '../validators/studentAuth.validation.js';
 
 const router = Router();
 
 // Public authentication routes (no authentication required)
-router.route('/login').post(loginStudent);
-router.route('/send-verification-code').post(sendVerificationCodeToEmail);
-router.route('/access-token').get(getAccessToken);
+router.route('/login').post(validate(studentAuthValidation.loginStudent), loginStudent);
+router.route('/send-verification-code').post(validate(studentAuthValidation.sendVerificationCodeToEmail), sendVerificationCodeToEmail);
+router.route('/access-token').get(validate(studentAuthValidation.getAccessToken), getAccessToken);
 
 // Secured authentication routes (student authentication required)
-router.route('/update-password').put(verifyJWT([ROLES.STUDENT]), updateStudentPassword);
-router.route('/verify-code').post(verifyJWT([ROLES.STUDENT]), verifyCode);
+router.route('/update-password').put(verifyJWT([ROLES.STUDENT]), validate(studentAuthValidation.updateStudentPassword), updateStudentPassword);
+router.route('/verify-code').post(verifyJWT([ROLES.STUDENT]), validate(studentAuthValidation.verifyCode), verifyCode);
 router.route('/logout').post(verifyJWT([ROLES.STUDENT]), logout);
 
 export default router;

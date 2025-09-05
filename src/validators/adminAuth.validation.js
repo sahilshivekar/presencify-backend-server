@@ -1,5 +1,7 @@
 
 
+import Joi from 'joi';
+
 const sendVerificationCodeToEmail = {
     body: Joi.object().keys({
         email: Joi.string()

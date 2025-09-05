@@ -21,7 +21,7 @@ const getCourses = asyncHandler(async (req, res) => {
         schemeId,
         page = 1,
         limit = 10,
-        getAll = "false",
+        getAll = false,
         // how to show optional subject while adding courses for semester will be handled in frontend
     } = req.query;
 
@@ -83,8 +83,8 @@ const getCourses = asyncHandler(async (req, res) => {
                 }
             }
         ],
-        ...(limit && getAll == "false" ? { offset: offset, } : {}),
-        ...(limit && getAll == "false" ? { limit: parseInt(limit, 10) } : {})
+        ...(limit && getAll === false ? { offset: offset, } : {}),
+        ...(limit && getAll === false ? { limit: parseInt(limit, 10) } : {})
     });
 
     res
@@ -202,7 +202,8 @@ const removeCourseFromBranchWithSemesterNumber = asyncHandler(async (req, res) =
 //* update course
 const updateCourse = asyncHandler(async (req, res) => {
 
-    const { id, code, name, abbreviation, schemeId } = req.body;
+    const { id } = req.params;
+    const { code, name, abbreviation, schemeId } = req.body;
 
     if (!id) {
         throw new ApiError(400, "Course id is required");
@@ -235,7 +236,7 @@ const updateCourse = asyncHandler(async (req, res) => {
 //* remove course
 const removeCourse = asyncHandler(async (req, res) => {
 
-    const { id } = req.body;
+    const { id } = req.params;
 
     if (!id) {
         throw new ApiError(400, "Course id is required");
@@ -261,14 +262,14 @@ const removeCourse = asyncHandler(async (req, res) => {
 });
 
 const getCourseById = asyncHandler(async (req, res) => {
-    const { courseId } = req.query;
+    const { id } = req.params;
 
-    if (!courseId) {
+    if (!id) {
         throw new ApiError(400, "Course id is required");
     }
 
     const course = await Course.findOne({
-        where: { id: courseId },
+        where: { id: id },
         include: [
             {
                 model: Scheme,

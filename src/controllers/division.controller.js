@@ -17,7 +17,7 @@ const getDivisions = asyncHandler(async (req, res) => {
         searchQuery,
         page = 1,
         limit = 10,
-        getAll = "false",
+        getAll = false,
     } = req.query;
 
     const searchClause = {}
@@ -81,7 +81,7 @@ const getDivisions = asyncHandler(async (req, res) => {
             ]
         },
         ...(limit ? { offset: offset, } : {}),
-        ...(limit && getAll == "false" ? { limit } : {})
+        ...(limit && getAll === false ? { limit } : {})
     });
 
     res.status(200).json(new ApiResponse(200, "Divisions fetched successfully", {
@@ -118,9 +118,9 @@ const addDivision = asyncHandler(async (req, res) => {
 
 const updateDivision = asyncHandler(async (req, res) => {
     const {
-        id,
-        divisionCode
-    } = req.body;
+        id
+    } = req.params;
+    const { divisionCode } = req.body;
 
     if (!id) {
         throw new ApiError(400, "Division id is required");
@@ -145,7 +145,7 @@ const updateDivision = asyncHandler(async (req, res) => {
 
 
 const removeDivision = asyncHandler(async (req, res) => {
-    const { id } = req.body;
+    const { id } = req.params;
 
     if (!id) {
         throw new ApiError(400, "Division id is required");
@@ -164,14 +164,14 @@ const removeDivision = asyncHandler(async (req, res) => {
 
 
 const getDivisionById = asyncHandler(async (req, res) => {
-    const { divisionId } = req.query;
+    const { id } = req.params;
 
     if (!divisionId) {
         throw new ApiError(400, "Division id is required");
     }
 
     const division = await Division.findOne({
-        where: { id: divisionId },
+        where: { id: id },
         include: [
             {
                 model: Semester,

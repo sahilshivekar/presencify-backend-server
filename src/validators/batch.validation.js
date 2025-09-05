@@ -1,4 +1,3 @@
-// validations/batch.validation.js
 import Joi from 'joi';
 
 const getBatches = {
@@ -84,8 +83,8 @@ const getBatches = {
 };
 
 const getBatchById = {
-    query: Joi.object().keys({
-        batchId: Joi.string()
+    params: Joi.object().keys({
+        id: Joi.string()
             .uuid()
             .required()
             .messages({
@@ -118,15 +117,17 @@ const addBatch = {
 };
 
 const updateBatch = {
-    body: Joi.object().keys({
-        batchId: Joi.string()
+    params: Joi.object().keys({
+        id: Joi.string()
             .uuid()
             .required()
             .messages({
                 'string.guid': 'Batch ID must be a valid UUID',
                 'any.required': 'Batch ID is required',
                 'string.base': 'Batch ID must be a string'
-            }),
+            })
+    }),
+    body: Joi.object().keys({
         batchCode: Joi.string()
             .required()
             .trim()
@@ -139,8 +140,8 @@ const updateBatch = {
 };
 
 const removeBatch = {
-    body: Joi.object().keys({
-        batchId: Joi.string()
+    params: Joi.object().keys({
+        id: Joi.string()
             .uuid()
             .required()
             .messages({

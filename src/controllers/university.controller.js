@@ -47,7 +47,7 @@ const addUniversity = asyncHandler(async (req, res) => {
 //* update university
 const updateUniversity = asyncHandler(async (req, res) => {
 
-    const {id, name, abbreviation } = req.body;
+    const { id } = req.params; const { name, abbreviation } = req.body;
 
     if(!id) {
         throw new ApiError(400, "University id is required");
@@ -78,7 +78,7 @@ const updateUniversity = asyncHandler(async (req, res) => {
 //* remove university
 const removeUniversity = asyncHandler(async (req, res) => {
 
-    const { id } = req.body;
+    const { id } = req.params;
 
     if(!id) {
         throw new ApiError(400, "University id is required");
@@ -104,13 +104,13 @@ const removeUniversity = asyncHandler(async (req, res) => {
 });
 
 const getUniversityById = asyncHandler(async (req, res) => {
-    const { universityId } = req.query;
+    const { id } = req.params;
 
-    if (!universityId) {
+    if (!id) {
         throw new ApiError(400, "University id is required");
     }
 
-    const university = await University.findByPk(universityId);
+    const university = await University.findByPk(id);
 
     if (!university) {
         throw new ApiError(404, "University not found");

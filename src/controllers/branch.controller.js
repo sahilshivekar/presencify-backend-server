@@ -60,7 +60,8 @@ const addBranch = asyncHandler(async (req, res) => {
 //* update branch
 const updateBranch = asyncHandler(async (req, res) => {
 
-    const { id, name, abbreviation } = req.body;
+    const { id } = req.params;
+    const { name, abbreviation } = req.body;
 
     if (!id) {
         throw new ApiError(400, "Branch id is required");
@@ -91,7 +92,7 @@ const updateBranch = asyncHandler(async (req, res) => {
 //* remove branch
 const removeBranch = asyncHandler(async (req, res) => {
 
-    const { id } = req.body;
+    const { id } = req.params;
 
     if (!id) {
         throw new ApiError(400, "Branch id is required");
@@ -117,13 +118,13 @@ const removeBranch = asyncHandler(async (req, res) => {
 });
 
 const getBranchById = asyncHandler(async (req, res) => {    
-    const { branchId } = req.query;
+    const { id } = req.params;
 
-    if (!branchId) {
+    if (!id) {
         throw new ApiError(400, "Branch id is required");
     }
 
-    const branch = await Branch.findByPk(branchId);
+    const branch = await Branch.findByPk(id);
 
     if (!branch) {
         throw new ApiError(404, "Branch not found");

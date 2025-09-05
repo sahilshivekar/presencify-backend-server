@@ -100,14 +100,14 @@ const getTimetables = asyncHandler(async (req, res) => {
 
 //! Get timetable by id
 const getTimetableById = asyncHandler(async (req, res) => {
-    const { timetableId } = req.query;
+    const { id } = req.params;
 
-    if (!timetableId) {
+    if (!id) {
         throw new ApiError(400, "Timetable id is required");
     }
 
     const timetable = await Timetable.findOne({
-        where: { id: timetableId },
+        where: { id: id },
         include: [
             {
                 model: Division,
@@ -180,9 +180,10 @@ const addTimetable = asyncHandler(async (req, res) => {
 
 //* Update timetable
 const updateTimetable = asyncHandler(async (req, res) => {
-    const { timetableId, timetableVersion } = req.body;
+    const { id } = req.params;
+    const { timetableVersion } = req.body;
 
-    if (!timetableId) {
+    if (!id) {
         throw new ApiError(400, "Timetable id is required");
     }
 
@@ -194,7 +195,7 @@ const updateTimetable = asyncHandler(async (req, res) => {
         throw new ApiError(400, "Timetable version must be a number");
     }
 
-    const timetable = await Timetable.findByPk(timetableId);
+    const timetable = await Timetable.findByPk(id);
 
     if (!timetable) {
         throw new ApiError(404, "Timetable not found");
@@ -213,13 +214,13 @@ const updateTimetable = asyncHandler(async (req, res) => {
 
 //* Remove timetable
 const removeTimetable = asyncHandler(async (req, res) => {
-    const { timetableId } = req.query;
+    const { id } = req.params;
 
-    if (!timetableId) {
+    if (!id) {
         throw new ApiError(400, "Timetable id is required");
     }
 
-    const timetable = await Timetable.findByPk(timetableId);
+    const timetable = await Timetable.findByPk(id);
 
     if (!timetable) {
         throw new ApiError(404, "Timetable not found");

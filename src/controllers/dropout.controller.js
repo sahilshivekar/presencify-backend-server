@@ -111,15 +111,15 @@ const removeStudentFromDropout = asyncHandler(async (req, res) => {
 })
 
 const getDropoutById = asyncHandler(async (req, res) => {
-    const { dropoutId } = req.query
+    const { id } = req.params
 
-    if (!dropoutId) {
+    if (!id) {
         throw new ApiError(400, "Dropout id is required")
     }
 
     const dropout = await Dropout.findOne({
         where: {
-            id: dropoutId
+            id: id
         },
         include: {
             model: Student,

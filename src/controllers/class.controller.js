@@ -512,7 +512,7 @@ const getClasses = asyncHandler(async (req, res) => {
         isExtraClass,
         page = 1,
         limit = 10,
-        getAll = "false",
+        getAll = false,
     } = req.query;
 
     const offset = (parseInt(page, 10) - 1) * parseInt(limit, 10);
@@ -530,7 +530,7 @@ const getClasses = asyncHandler(async (req, res) => {
                 ...(roomId ? [{ roomId: roomId }] : []),
                 ...(batchId ? [{ batchId: batchId }] : []),
                 ...(classType ? [{ classType: classType }] : []),
-                ...(isExtraClass == "true" ? [{ isExtraClass: true }] : []),
+                ...(isExtraClass === true ? [{ isExtraClass: true }] : []),
             ]
         },
         include: [
@@ -592,8 +592,8 @@ const getClasses = asyncHandler(async (req, res) => {
                 duplicating: false
             }
         ],
-        ...(limit && getAll == "false" ? { offset: offset, } : {}),
-        ...(limit && getAll == "false" ? { limit: parseInt(limit, 10) } : {})
+        ...(limit && getAll === false ? { offset: offset, } : {}),
+        ...(limit && getAll === false ? { limit: parseInt(limit, 10) } : {})
     })
 
     res.status(200).json(new ApiResponse(200, "Classes retrieved successfully.", {
@@ -603,14 +603,14 @@ const getClasses = asyncHandler(async (req, res) => {
 });
 
 const getClassById = asyncHandler(async (req, res) => {
-    const { classId } = req.query;
+    const { id } = req.params;
 
-    if (!classId) {
+    if (!id) {
         throw new ApiError(400, "Class id is required");
     }
 
     const classObj = await Class.findByPk(
-        classId,
+        id,
         {
             include: [
                 {
@@ -671,17 +671,17 @@ const getClassById = asyncHandler(async (req, res) => {
 });
 
 const extendActiveTillDateOfClass = asyncHandler(async (req, res) => {
+    const { id } = req.params;
     const {
-        classId,
         newActiveTill,
     } = req.body;
 
     //!check if active from is less than active till
-    if (!classId) {
+    if (!id) {
         throw new ApiError(400, "Class id is required");
     }
 
-    const classObj = await Class.findByPk(classId);
+    const classObj = await Class.findByPk(id);
 
     const timetable = await Timetable.findByPk(classObj.timetableId)
     const division = await Division.findByPk(timetable.divisionId)
@@ -921,13 +921,13 @@ const extendActiveTillDateOfClass = asyncHandler(async (req, res) => {
 });
 
 const removeClass = asyncHandler(async (req, res) => {
-    const { classId } = req.query;
+    const { id } = req.params;
 
-    if (!classId) {
+    if (!id) {
         throw new ApiError(400, "Class id is required");
     }
 
-    const classObj = await Class.findByPk(classId);
+    const classObj = await Class.findByPk(id);
 
     if (!classObj) throw new ApiError(404, "Class not found");
 
@@ -1518,7 +1518,7 @@ const getCancelledClasses = asyncHandler(async (req, res) => {
         date,
         page = 1,
         limit = 10,
-        getAll = "false",
+        getAll = false,
     } = req.query;
 
     const offset = (parseInt(page, 10) - 1) * parseInt(limit, 10);
@@ -1559,8 +1559,8 @@ const getCancelledClasses = asyncHandler(async (req, res) => {
                 }
             }
         ],
-        ...(limit && getAll == "false" ? { offset: offset, } : {}),
-        ...(limit && getAll == "false" ? { limit: parseInt(limit, 10) } : {})
+        ...(limit && getAll === false ? { offset: offset, } : {}),
+        ...(limit && getAll === false ? { limit: parseInt(limit, 10) } : {})
     })
 
     res.status(200).json(new ApiResponse(200, "Cancelled classes retrieved successfully.", {

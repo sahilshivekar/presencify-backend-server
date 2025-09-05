@@ -26,7 +26,7 @@ const getRooms = asyncHandler(async (req, res) => {
         sortOrder = 'ASC',
         page = 1,
         limit = 10,
-        getAll = "false",
+        getAll = false,
     } = req.query;
 
 
@@ -52,8 +52,8 @@ const getRooms = asyncHandler(async (req, res) => {
     const rooms = await Room.findAndCountAll({
         where: searchClause,
         order: [[sortBy, sortOrder]],
-        ...(limit && getAll == "false" ? { limit } : {}),
-        ...(limit && getAll == "false" ? { offset } : {})
+        ...(limit && getAll === false ? { limit } : {}),
+        ...(limit && getAll === false ? { offset } : {})
     });
 
     res.status(200).json(new ApiResponse(200, "Rooms retrieved successfully.", {
@@ -63,13 +63,13 @@ const getRooms = asyncHandler(async (req, res) => {
 });
 
 const getRoomById = asyncHandler(async (req, res) => {
-    const { roomId } = req.query;
+    const { id } = req.params;
 
-    if (!roomId) {
+    if (!id) {
         throw new ApiError(400, "Room id is required");
     }
 
-    const room = await Room.findByPk(roomId);
+    const room = await Room.findByPk(id);
 
     if (!room) throw new ApiError(404, "Room not found");
 
@@ -85,13 +85,13 @@ const getRoomById = asyncHandler(async (req, res) => {
 });
 
 const updateRoom = asyncHandler(async (req, res) => {
-    const { roomId, roomNumber, sittingCapacity } = req.body;
+    const { id } = req.params; const { roomNumber, sittingCapacity } = req.body;
 
-    if (!roomId) {
+    if (!id) {
         throw new ApiError(400, "Room id is required");
     }
 
-    const room = await Room.findByPk(roomId);
+    const room = await Room.findByPk(id);
 
     if (!room) throw new ApiError(404, "Room not found");
 
@@ -104,13 +104,13 @@ const updateRoom = asyncHandler(async (req, res) => {
 });
 
 const removeRoom = asyncHandler(async (req, res) => {
-    const { roomId } = req.query;
+    const { id } = req.params;
 
-    if (!roomId) {
+    if (!id) {
         throw new ApiError(400, "Room id is required");
     }
 
-    const room = await Room.findByPk(roomId);
+    const room = await Room.findByPk(id);
 
     if (!room) throw new ApiError(404, "Room not found");
 

@@ -89,8 +89,8 @@ const getBatches = asyncHandler(async (req, res) => {
                 },
             ]
         },
-        ...(limit && !getAll ? { offset: offset, } : {}),
-        ...(limit && !getAll ? { limit } : {})
+        ...(limit && getAll === false ? { offset: offset, } : {}),
+        ...(limit && getAll === false ? { limit } : {})
     });
     
     res.status(200).json(new ApiResponse(200, "Batches fetched successfully", {
@@ -101,10 +101,10 @@ const getBatches = asyncHandler(async (req, res) => {
 })
 
 const getBatchById = asyncHandler(async (req, res) => {
-    const { batchId } = req.query;
+    const { id } = req.params;
 
     const batch = await Batch.findOne({
-        where: { id: batchId },
+        where: { id: id },
         include: [
             {
                 model: Division,
@@ -170,12 +170,10 @@ const addBatch = asyncHandler(async (req, res) => {
 });
 
 const updateBatch = asyncHandler(async (req, res) => {
-    const {
-        batchId,
-        batchCode
-    } = req.body;
+    const { id } = req.params;
+    const { batchCode } = req.body;
 
-    const batch = await Batch.findByPk(batchId);
+    const batch = await Batch.findByPk(id);
 
     if (!batch) {
         throw new ApiError(404, "Batch not found");
@@ -190,9 +188,9 @@ const updateBatch = asyncHandler(async (req, res) => {
 
 
 const removeBatch = asyncHandler(async (req, res) => {
-    const { batchId } = req.body;
+    const { id } = req.params;
 
-    const batch = await Batch.findByPk(batchId);
+    const batch = await Batch.findByPk(id);
 
     if (!batch) {
         throw new ApiError(404, "Batch not found");

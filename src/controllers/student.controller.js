@@ -35,14 +35,14 @@ const getStudents = asyncHandler(async (req, res) => {
         dropoutAcademicEndYear,
         admissionTypes,
         admissionYear,
-        currentBatch, // can be true or false 
-        currentDivision, // can be true or false
-        currentSemester, // can be true or false
+        currentBatch = false,
+        currentDivision = false,
+        currentSemester = false,
         divisionCode,
         batchCode,
         page = 1,
         limit = 10,
-        getAll = "false"
+        getAll = false
     } = req.query;
 
     // converting form data raw values to arrays bcz if there is only one value in parameter then it will not be converted to array
@@ -185,7 +185,7 @@ const getStudents = asyncHandler(async (req, res) => {
                                         [Op.in]: semesterNumbers
                                     }
                                 }] : []),
-                                ...(currentSemester == 'true' ? [{
+                                ...(currentSemester === true ? [{
                                     endDate: {
                                         [Op.gte]: currentDate
                                     },
@@ -224,8 +224,8 @@ const getStudents = asyncHandler(async (req, res) => {
                 duplicating: false,
                 where: {
                     [Op.and]: [
-                        ...(divisionId ? [{ divisionId: Number(divisionId) }] : []),
-                        ...(currentDivision == 'true' ? [{ endDate: null }] : []) // need to write true in 
+                        ...(divisionId ? [{ divisionId: divisionId }] : []),
+                        ...(currentDivision === true ? [{ endDate: null }] : [])
                     ]
                 },
                 include: [
@@ -247,8 +247,8 @@ const getStudents = asyncHandler(async (req, res) => {
                 duplicating: false,
                 where: {
                     [Op.and]: [
-                        ...(batchId ? [{ batchId: Number(batchId) }] : []),
-                        ...(currentBatch == 'true' ? [{ endDate: null }] : [])
+                        ...(batchId ? [{ batchId: batchId }] : []),
+                        ...(currentBatch === true ? [{ endDate: null }] : [])
                     ]
                 },
                 include: [
@@ -286,8 +286,8 @@ const getStudents = asyncHandler(async (req, res) => {
                 }
             }
         ],
-        ...(limit && getAll == "false" ? { offset: offset, } : {}),
-        ...(limit && getAll == "false" ? { limit: parseInt(limit, 10) } : {})
+        ...(limit && getAll === false ? { offset: offset, } : {}),
+        ...(limit && getAll === false ? { limit: parseInt(limit, 10) } : {})
     });
     // const studentNames = students.rows.map(student => student.firstName + " " + student.lastName);
     // console.log(studentNames)
