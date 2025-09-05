@@ -110,7 +110,6 @@ const getAdmins = {
             .integer()
             .min(1)
             .default(1)
-            .cast('number')
             .messages({
                 'number.base': 'Page must be a number',
                 'number.integer': 'Page must be an integer',
@@ -121,7 +120,6 @@ const getAdmins = {
             .min(1)
             .max(100)
             .default(10)
-            .cast('number')
             .messages({
                 'number.base': 'Limit must be a number',
                 'number.integer': 'Limit must be an integer',

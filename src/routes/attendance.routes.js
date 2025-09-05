@@ -6,7 +6,6 @@ import {
     createAttendance,
     getAttendanceOfStudentForSpecificCourseInSemester,
     getAttendanceOfAllForSemesterDivisionBatchCourse,
-    markStudentAttendanceByBLEsessionUUID,
     sendAttendanceReport,
     getAttendance,
     getActiveAttendanceSheet

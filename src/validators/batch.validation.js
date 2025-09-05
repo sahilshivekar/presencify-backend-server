@@ -6,7 +6,6 @@ const getBatches = {
             .integer()
             .positive()
             .optional()
-            .cast('number')
             .messages({
                 'number.base': 'Semester number must be a number',
                 'number.integer': 'Semester number must be an integer',
@@ -31,7 +30,6 @@ const getBatches = {
         academicStartYear: Joi.number()
             .integer()
             .optional()
-            .cast('number')
             .messages({
                 'number.base': 'Academic start year must be a number',
                 'number.integer': 'Academic start year must be an integer'
@@ -39,7 +37,6 @@ const getBatches = {
         academicEndYear: Joi.number()
             .integer()
             .optional()
-            .cast('number')
             .messages({
                 'number.base': 'Academic end year must be a number',
                 'number.integer': 'Academic end year must be an integer'
@@ -54,7 +51,6 @@ const getBatches = {
             .integer()
             .min(1)
             .default(1)
-            .cast('number')
             .messages({
                 'number.base': 'Page must be a number',
                 'number.integer': 'Page must be an integer',
@@ -65,7 +61,6 @@ const getBatches = {
             .min(1)
             .max(100)
             .default(10)
-            .cast('number')
             .messages({
                 'number.base': 'Limit must be a number',
                 'number.integer': 'Limit must be an integer',
@@ -152,7 +147,7 @@ const removeBatch = {
     })
 };
 
-export {
+export default {
     getBatches,
     getBatchById,
     addBatch,

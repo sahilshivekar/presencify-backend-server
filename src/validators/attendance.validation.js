@@ -442,7 +442,7 @@ const getActiveAttendanceSheet = {
 
 
 
-export {
+export default {
     createAttendance,
     addStudentsAttendance,
     updateStudentAttendance,

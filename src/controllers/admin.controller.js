@@ -5,7 +5,6 @@ import { ApiResponse } from '../utils/ApiResponse.js'
 import { ApiError } from '../utils/ApiError.js'
 import { Op } from 'sequelize'
 import { sendVerificationCode } from '../utils/email.js';
-import { getAdminsSchema, emailSchema } from '../validators/admin.validators.js';
 import crypto from 'crypto';
 import jwt from 'jsonwebtoken'
 import { type } from 'os';
