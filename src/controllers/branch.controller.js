@@ -4,6 +4,7 @@ import { ApiResponse } from '../utils/ApiResponse.js'
 import { ApiError } from '../utils/ApiError.js'
 import { Op } from 'sequelize'
 
+
 //* get all the branches
 const getBranches = asyncHandler(async (req, res) => {
 
@@ -57,15 +58,12 @@ const addBranch = asyncHandler(async (req, res) => {
 
 });
 
+
 //* update branch
 const updateBranch = asyncHandler(async (req, res) => {
 
     const { id } = req.params;
     const { name, abbreviation } = req.body;
-
-    if (!id) {
-        throw new ApiError(400, "Branch id is required");
-    }
 
     const branch = await Branch.findByPk(id);
 
@@ -89,14 +87,11 @@ const updateBranch = asyncHandler(async (req, res) => {
         );
 });
 
+
 //* remove branch
 const removeBranch = asyncHandler(async (req, res) => {
 
     const { id } = req.params;
-
-    if (!id) {
-        throw new ApiError(400, "Branch id is required");
-    }
 
     const branch = await Branch.findByPk(id);
 
@@ -117,12 +112,9 @@ const removeBranch = asyncHandler(async (req, res) => {
         );
 });
 
+
 const getBranchById = asyncHandler(async (req, res) => {    
     const { id } = req.params;
-
-    if (!id) {
-        throw new ApiError(400, "Branch id is required");
-    }
 
     const branch = await Branch.findByPk(id);
 
@@ -140,6 +132,7 @@ const getBranchById = asyncHandler(async (req, res) => {
             )
         );
 });
+
 
 export {
     getBranches,

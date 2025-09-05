@@ -6,14 +6,9 @@ import { ApiError } from '../utils/ApiError.js';
 import StudentFCMToken from '../db/models/studentFCMToken.model.js';
 
 const addStudentFCMTokens = asyncHandler(async (req, res) => {
-    const {
-        studentId,
-        fcmToken
-    } = req.body;
+    const { studentId, fcmToken } = req.body;
 
-    if (!studentId || !fcmToken) {
-        throw new ApiError(400, "Student id and fcm token are required");
-    }
+    // Input validation is handled by @studentFCMToken.validation.js
 
     const student = await Student.findByPk(studentId);
 
@@ -50,14 +45,9 @@ const addStudentFCMTokens = asyncHandler(async (req, res) => {
 
 
 const updateStudentFCMTokens = asyncHandler(async (req, res) => {
-    const {
-        studentId,
-        fcmToken
-    } = req.body;
+    const { studentId, fcmToken } = req.body;
 
-    if (!studentId || !fcmToken) {
-        throw new ApiError(400, "Student id and fcm token are required");
-    }
+    // Input validation is handled by @studentFCMToken.validation.js
 
     const student = await Student.findByPk(studentId);
 
@@ -92,13 +82,9 @@ const updateStudentFCMTokens = asyncHandler(async (req, res) => {
 })
 
 const removeStudentFCMTokens = asyncHandler(async (req, res) => {
-    const {
-        studentId
-    } = req.query;
+    const { studentId } = req.query;
 
-    if (!studentId) {
-        throw new ApiError(400, "Student id is required");
-    }
+    // Input validation is handled by @studentFCMToken.validation.js
 
     const student = await Student.findByPk(studentId);
 
@@ -134,4 +120,3 @@ export {
     updateStudentFCMTokens,
     removeStudentFCMTokens
 }
-

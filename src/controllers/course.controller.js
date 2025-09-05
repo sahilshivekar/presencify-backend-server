@@ -2,7 +2,7 @@ import Course from '../db/models/course.model.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { ApiResponse } from '../utils/ApiResponse.js'
 import { ApiError } from '../utils/ApiError.js'
-import { Op, where } from 'sequelize'
+import { Op } from 'sequelize'
 import University from '../db/models/university.model.js';
 import Scheme from '../db/models/scheme.model.js';
 import BranchCourseSemester from '../db/models/branchCourseSemester.model.js';
@@ -13,7 +13,6 @@ import Semester from '../db/models/semester.model.js';
 
 //* get all the courses
 const getCourses = asyncHandler(async (req, res) => {
-
     const {
         searchQuery,
         branchId,
@@ -22,9 +21,7 @@ const getCourses = asyncHandler(async (req, res) => {
         page = 1,
         limit = 10,
         getAll = false,
-        // how to show optional subject while adding courses for semester will be handled in frontend
     } = req.query;
-
 
     const whereClause = {};
 
@@ -104,14 +101,14 @@ const getCourses = asyncHandler(async (req, res) => {
 
 //* add course
 const addCourse = asyncHandler(async (req, res) => {
-
     const { 
         code, 
         name, 
         optionalSubject,
         schemeId 
-        } = req.body;
+    } = req.body;
 
+    // Only check for existence of related scheme, not input validation
     const scheme = await Scheme.findByPk(schemeId);
 
     if (!scheme) {
@@ -134,16 +131,14 @@ const addCourse = asyncHandler(async (req, res) => {
                 course
             )
         )
-
 });
 
 const addCourseToBranchWithSemesterNumber = asyncHandler(async (req, res) => {
     const { courseId, branchId, semesterNumber } = req.body;
 
-    if(semesterNumber < 1 || semesterNumber > 8) {  
-        throw new ApiError(400, "Semester number must be between 1 and 8");
-    }
+    // Remove input validation for semesterNumber range, handled by validator
 
+    // Only check for existence of related records
     const course = await Course.findByPk(courseId);
 
     if (!course) {
@@ -176,9 +171,7 @@ const addCourseToBranchWithSemesterNumber = asyncHandler(async (req, res) => {
 const removeCourseFromBranchWithSemesterNumber = asyncHandler(async (req, res) => {
     const { branchCourseSemesterId } = req.params;
 
-    if (!branchCourseSemesterId) {
-        throw new ApiError(400, "branchCourseSemester id is required");
-    }
+    // Remove input validation for presence, handled by validator
 
     const branchCourseSemester = await BranchCourseSemester.findByPk(branchCourseSemesterId);
 
@@ -201,13 +194,10 @@ const removeCourseFromBranchWithSemesterNumber = asyncHandler(async (req, res) =
 
 //* update course
 const updateCourse = asyncHandler(async (req, res) => {
-
     const { id } = req.params;
     const { code, name, abbreviation, schemeId } = req.body;
 
-    if (!id) {
-        throw new ApiError(400, "Course id is required");
-    }
+    // Remove input validation for presence, handled by validator
 
     const course = await Course.findByPk(id);
 
@@ -235,12 +225,9 @@ const updateCourse = asyncHandler(async (req, res) => {
 
 //* remove course
 const removeCourse = asyncHandler(async (req, res) => {
-
     const { id } = req.params;
 
-    if (!id) {
-        throw new ApiError(400, "Course id is required");
-    }
+    // Remove input validation for presence, handled by validator
 
     const course = await Course.findByPk(id);
 
@@ -264,9 +251,7 @@ const removeCourse = asyncHandler(async (req, res) => {
 const getCourseById = asyncHandler(async (req, res) => {
     const { id } = req.params;
 
-    if (!id) {
-        throw new ApiError(400, "Course id is required");
-    }
+    // Remove input validation for presence, handled by validator
 
     const course = await Course.findOne({
         where: { id: id },

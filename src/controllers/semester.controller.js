@@ -104,10 +104,9 @@ const addSemester = asyncHandler(async (req, res) => {
         optionalCourseIds
     } = req.body;
 
-    if (!branchId || !semesterNumber || !academicStartYear || !academicEndYear || !schemeId || !startDate || !endDate) {
-        throw new ApiError(400, "branchId, semesterNumber, academicStartYear, academicEndYear, startDate, endDate, schemeId must be provided")
-    }
+    // Remove input validation already handled by @semester.validation.js
 
+    // Only keep business logic validation that depends on DB or cross-field logic
     if (academicEndYear < academicStartYear) {
         throw new ApiError(400, "Academic end year cannot be less than academic start year");
     }
@@ -150,8 +149,6 @@ const addSemester = asyncHandler(async (req, res) => {
         schemeClause = { schemeId: schemeId }
     }
 
-
-
     const courses = await Course.findAll({
         where: {
             [Op.and]: [
@@ -171,13 +168,6 @@ const addSemester = asyncHandler(async (req, res) => {
                     duplicating: false,
                 }
             }
-            // },
-            // {
-            //     model: Scheme,
-            //     required: true,
-            //     where: schemeClause,
-            //     duplicating: false,
-            // }
         ]
     });
 
@@ -195,16 +185,9 @@ const addSemester = asyncHandler(async (req, res) => {
 
     // if the semester contains optional courses then we must check if the courses that are being added are valid
     if (countOfRequiredOptionalCourses > 0) {
+        // optionalCourseIds presence/type/array validation is handled by @semester.validation.js
 
-        if (!optionalCourseIds) {
-            throw new ApiError(400, `optional courses must be provided for semester ${semesterNumber}`)
-        }
-        if (!Array.isArray(optionalCourseIds)) {
-            throw new ApiError(400, "optionalCourseIds must be a array of CourseId")
-        }
-
-
-        if (optionalCourseIds.length <= 0 || optionalCourseIds.length != countOfRequiredOptionalCourses) {
+        if (optionalCourseIds.length !== countOfRequiredOptionalCourses) {
             throw new ApiError(400, `Please give ${countOfRequiredOptionalCourses} optional courses`)
         }
 
@@ -225,8 +208,6 @@ const addSemester = asyncHandler(async (req, res) => {
         }
     }
 
-
-
     const semester = await Semester.create({
         branchId: branchId || null,
         semesterNumber: semesterNumber || null,
@@ -237,12 +218,10 @@ const addSemester = asyncHandler(async (req, res) => {
         endDate: endDate || null,
     });
 
-
     if (optionalCourseIds && optionalCourseIds.length > 0) {
-
         // adding entry of optional courses for the specific semester
         for (let optionalCourseId of optionalCourseIds) {
-            const addedOptionalCourse = await SemesterCourse.create({
+            await SemesterCourse.create({
                 semesterId: semester.id,
                 courseId: optionalCourseId
             });
@@ -272,9 +251,7 @@ const addSemester = asyncHandler(async (req, res) => {
 const getCoursesOfSemester = asyncHandler(async (req, res) => {
     const { semesterId } = req.query;
 
-    if (!semesterId) {
-        throw new ApiError(400, "Semester id is required");
-    }
+    // Remove input validation already handled by @semester.validation.js
 
     const semester = await Semester.findByPk(semesterId);
     if (!semester) {
@@ -331,13 +308,7 @@ const updateSemester = asyncHandler(async (req, res) => {
         endDate
     } = req.body;
 
-    if(!id) {
-        throw new ApiError(400, "Semester id is required");
-    }
-
-    if(!startDate || !endDate) {
-        throw new ApiError(400, "Start date and end date are required");
-    }
+    // Remove input validation already handled by @semester.validation.js
 
     const semester = await Semester.findByPk(id);
 
@@ -347,7 +318,6 @@ const updateSemester = asyncHandler(async (req, res) => {
     
     const startDateObj = new Date(startDate);
     const endDateObj = new Date(endDate);
-
 
     if(startDateObj >= endDateObj) {
         throw new ApiError(400, "End date cannot be less than or equal to start date");
@@ -360,7 +330,6 @@ const updateSemester = asyncHandler(async (req, res) => {
     if(endDateObj.getFullYear() > semester.academicEndYear) {
         throw new ApiError(400, "End date cannot be greater than academic end year");
     }
-
 
     semester.endDate = endDate || semester.endDate;
     semester.startDate = startDate || semester.startDate;
@@ -383,9 +352,7 @@ const removeSemester = asyncHandler(async (req, res) => {
 
     const { id } = req.params;
 
-    if (!id) {
-        throw new ApiError(400, "Semester id is required");
-    }
+    // Remove input validation already handled by @semester.validation.js
 
     const semester = await Semester.findByPk(id);
 
@@ -410,9 +377,7 @@ const removeSemester = asyncHandler(async (req, res) => {
 const getSemesterById = asyncHandler(async (req, res) => {
     const { id } = req.params;
 
-    if (!semesterId) {
-        throw new ApiError(400, "Semester id is required");
-    }
+    // Remove input validation already handled by @semester.validation.js
 
     const semester = await Semester.findOne({
         where: { id: id },

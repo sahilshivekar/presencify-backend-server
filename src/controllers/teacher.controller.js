@@ -5,11 +5,11 @@ import { ApiError } from '../utils/ApiError.js'
 import { Op } from 'sequelize'
 import { uploadOnCloudinary, deleteFromCloudinary } from '../utils/cloudinary.js';
 import fs from "fs"
-import { isValidPhoneNumber, parsePhoneNumberWithError } from 'libphonenumber-js';
 import Course from '../db/models/course.model.js';
 import TeacherTeachesCourse from '../db/models/teacherTeachesCourse.model.js';
 import Scheme from '../db/models/scheme.model.js';
 
+// All input validation is now handled in @teacher.validation.js
 
 const options = {
     httpOnly: true,
@@ -26,8 +26,6 @@ const generateAccessAndRefreshTokens = async (teacher) => {
         throw new ApiError(500, "Something went wrong while generating tokens");
     }
 };
-
-
 
 //* get all the teacher
 const getTeacher = asyncHandler(async (req, res) => {
@@ -124,9 +122,7 @@ const getTeacher = asyncHandler(async (req, res) => {
 const getTeacherById = asyncHandler(async (req, res) => {
     const { teacherId } = req.query;
 
-    if (!teacherId) {
-        throw new ApiError(400, "Teacher id is required");
-    }
+    // Validation moved to @teacher.validation.js
 
     const teacher = await Teacher.findByPk(teacherId);
 
@@ -164,53 +160,7 @@ const addTeacher = asyncHandler(async (req, res) => {
 
     const teacherImageLocalPath = req.file?.path
 
-    const fields = {
-        "First Name": firstName,
-        "Last Name": lastName,
-        "Email": email,
-        "Phone Number": phoneNumber,
-        "Gender": gender,
-        "Role": role,
-        // "Password": password,
-        // "Confirm Password": confirmPassword
-    };
-
-    for (const fieldName in fields) {
-        if (!fields[fieldName]) {
-            if (teacherImageLocalPath) {
-                fs.unlinkSync(teacherImageLocalPath)
-            }
-            throw new ApiError(400, `${fieldName} is required`); // Use fieldName here
-        }
-    }
-
-    // if (password !== confirmPassword) {
-    //     if (teacherImageLocalPath) {
-    //         fs.unlinkSync(teacherImageLocalPath)
-    //     }
-    //     throw new ApiError(400, "Password and confirm password field do not match");
-    // }
-
-    if (!['Male', 'Female', 'Other'].includes(gender)) {
-        if (teacherImageLocalPath) {
-            fs.unlinkSync(teacherImageLocalPath)
-        }
-        throw new ApiError(400, "Invalid gender value. Must be Male, Female, or Other")
-    }
-
-    if (!['Teacher', 'Head of Department', 'Principal'].includes(role)) {
-        if (teacherImageLocalPath) {
-            fs.unlinkSync(teacherImageLocalPath)
-        }
-        throw new ApiError(400, "Invalid role value. Must be Teacher, Head of Department, or Principal")
-    }
-
-    if (!isValidPhoneNumber(phoneNumber)) {
-        if (teacherImageLocalPath) {
-            fs.unlinkSync(teacherImageLocalPath)
-        }
-        throw new ApiError(400, "Invalid phone number.")
-    }
+    // All input validation is now handled in @teacher.validation.js
 
     const existingTeacherMember = await Teacher.findOne({ where: { email } })
 
@@ -283,18 +233,12 @@ const updateTeacherDetails = asyncHandler(async (req, res) => {
         isActive
     } = req.body;
 
-    if (req.admin && !id) { // will make it (req.admind && !id) || req.teacher.id after adding teacher
-        throw new ApiError(400, "Teacher id is required")
-    }
+    // Validation moved to @teacher.validation.js
 
     const teacher = await Teacher.findByPk(id);
 
     if (!teacher) {
         throw new ApiError(404, "Teacher not found")
-    }
-
-    if (!isValidPhoneNumber(phoneNumber)) {
-        throw new ApiError(400, "Invalid phone number.")
     }
 
     teacher.firstName = firstName || teacher.firstName;
@@ -327,18 +271,12 @@ const updateTeacherPassword = asyncHandler(async (req, res) => {
         confirmPassword
     } = req.body;
 
-    if (req.admin && !id) { // will make it (req.admind && !id) || req.teacher.id after adding teacher
-        throw new ApiError(400, "Teacher id is required")
-    }
+    // Validation moved to @teacher.validation.js
 
     const teacher = await Teacher.findByPk(id);
 
     if (!teacher) {
         throw new ApiError(404, "Teacher not found")
-    }
-
-    if (password !== confirmPassword) {
-        throw new ApiError(400, "Password and confirm password field do not match");
     }
 
     teacher.password = password || '';
@@ -363,12 +301,7 @@ const updateTeacherImage = asyncHandler(async (req, res) => {
     } = req.body;
     const teacherImageLocalPath = req.file?.path
 
-    if (req.admin && !id) { // will make it (req.admind && !id) || req.teacher.id after adding teacher
-        if (teacherImageLocalPath) {
-            fs.unlinkSync(teacherImageLocalPath)
-        }
-        throw new ApiError(400, "Teacher id is required")
-    }
+    // Validation moved to @teacher.validation.js
 
     const teacher = await Teacher.findByPk(id);
 
@@ -408,9 +341,7 @@ const updateTeacherImage = asyncHandler(async (req, res) => {
 const removeImage = asyncHandler(async (req, res) => {
     const { id } = req.query;
 
-    if (req.admin && !id) {
-        throw new ApiError(400, "Teacher id is required");
-    }
+    // Validation moved to @teacher.validation.js
 
     const teacher = await Teacher.findByPk(id);
 
@@ -445,9 +376,7 @@ const removeTeacher = asyncHandler(async (req, res) => {
 
     const { id } = req.query;
 
-    if (req.admin && !id) {
-        throw new ApiError(400, "Teacher id is required");
-    }
+    // Validation moved to @teacher.validation.js
 
     const teacher = await Teacher.findByPk(id);
 
@@ -475,226 +404,12 @@ const removeTeacher = asyncHandler(async (req, res) => {
         );
 });
 
-// const loginTeacher = asyncHandler(async (req, res) => {
-//     const { emailOrPhoneNumber, password } = req.body; // Changed to emailOrPhoneNumber
-
-//     if (!emailOrPhoneNumber) {
-//         throw new ApiError(400, "Email or Phone Number is needed"); // Updated message
-//     }
-
-//     const teacher = await Teacher.findOne({
-//         where: {
-//             [Op.or]: {
-//                 email: emailOrPhoneNumber.toLowerCase(),
-//                 phoneNumber: emailOrPhoneNumber, // Added phone number check
-//             },
-//         },
-//     });
-
-//     if (!teacher) {
-//         throw new ApiError(404, "No teacher found with entered credentials");
-//     }
-
-//     const isPasswordMatching = await teacher.isPasswordMatching(password);
-
-//     if (!isPasswordMatching) {
-//         throw new ApiError(400, "Password didn't match");
-//     }
-
-//     const { newAccessToken, newRefreshToken } = await generateAccessAndRefreshTokens(teacher);
-
-//     teacher.refreshToken = newRefreshToken;
-//     await teacher.save();
-
-//     delete teacher.dataValues.password;
-//     delete teacher.dataValues.refreshToken;
-
-//     res
-//         .status(200)
-//         .cookie("teacherAccessToken", newAccessToken, { // Changed cookie name
-//             ...options,
-//             maxAge: 86400000,
-//         })
-//         .cookie("teacherRefreshToken", newRefreshToken, { // Changed cookie name
-//             ...options,
-//             maxAge: 1296000000,
-//         })
-//         .json(
-//             new ApiResponse(200, "Login Successful", {
-//                 teacher: teacher,
-//                 accessToken: newAccessToken,
-//                 refreshToken: newRefreshToken,
-//             })
-//         );
-// });
-
-// const sendVerificationCodeToEmail = asyncHandler(async (req, res) => {
-//     let { email } = req.body;
-
-//     await emailSchema.validateAsync(req.body);
-
-//     if (!email && !req?.teacher?.email) { // Use req.teacher
-//         throw new ApiError(400, "Email is required");
-//     }
-
-//     if (email) {
-//         email = email.toLowerCase();
-//     } else {
-//         email = req?.teacher?.email.toLowerCase(); // Use req.teacher
-//     }
-
-//     const teacher = await Teacher.findOne({ where: { email } });
-
-//     if (!teacher) {
-//         throw new ApiError(400, "Teacher with this email doesn't exist"); // Updated message
-//     }
-
-//     const code = generateVerificationCode();
-//     const expiresAt = new Date(Date.now() + 5 * 60 * 1000);
-
-//     const record = await VerificationCode.create({
-//         email: teacher.email,
-//         code,
-//         expiresAt,
-//     });
-
-//     if (!record) {
-//         throw new ApiError(500, "Some issue occurred while generating code");
-//     }
-
-//     const emailSent = await sendVerificationCode(email, code);
-
-//     if (!emailSent) {
-//         throw new ApiError(500, "Error sending verification email");
-//     }
-
-//     setTimeout(async () => {
-//         await VerificationCode.destroy({
-//             where: {
-//                 [Op.and]: [{ email }, { code }],
-//             },
-//         });
-//         console.log(`Verification code for ${email} is deleted due to timeout`);
-//     }, 5 * 60 * 1000);
-
-//     res.status(200).json(
-//         new ApiResponse(200, `Verification code sent on ${teacher.email}`, {
-//             expiresAt,
-//         })
-//     );
-// });
-
-// const verifyCode = asyncHandler(async (req, res) => {
-//     const { email, code } = req.body;
-
-//     await emailSchema.validateAsync({ email });
-
-//     if (!code) {
-//         throw new ApiError(400, "Please enter the code");
-//     }
-
-//     const codeRecord = await VerificationCode.findOne({
-//         where: {
-//             [Op.and]: [{ email: email.toLowerCase() }, { code }],
-//         },
-//     });
-
-//     if (!codeRecord) {
-//         throw new ApiError(400, "Invalid verification code");
-//     }
-
-//     const teacher = await Teacher.scope('withPassword').findOne({ where: { email: email.toLowerCase() } }); // Use Teacher model
-
-//     if (!teacher.isVerified) {
-//         teacher.isVerified = true;
-//         await teacher.save();
-//     }
-
-//     await VerificationCode.destroy({ where: { email: email.toLowerCase() } });
-
-//     const { newAccessToken, newRefreshToken } = await generateAccessAndRefreshTokens(teacher);
-
-//     teacher.refreshToken = newRefreshToken;
-//     await teacher.save();
-
-//     delete teacher.dataValues.password;
-//     delete teacher.dataValues.refreshToken;
-
-//     res
-//         .status(200)
-//         .cookie("teacherAccessToken", newAccessToken, { // Changed cookie name
-//             ...options,
-//             maxAge: 86400000,
-//         })
-//         .cookie("teacherRefreshToken", newRefreshToken, { // Changed cookie name
-//             ...options,
-//             maxAge: 1296000000,
-//         })
-//         .json(
-//             new ApiResponse(200, "Verification successful!", {
-//                 accessToken: newAccessToken,
-//                 refreshToken: newRefreshToken,
-//             })
-//         );
-// });
-
-
-
-// const getAccessToken = asyncHandler(async (req, res) => {
-//     const { refreshToken } = req.body;
-
-//     if (!refreshToken) {
-//         throw new ApiError(401, "Refresh token is required");
-//     }
-
-//     const actualRefreshToken = refreshToken.replace("Bearer ", "");
-
-//     let teacherId;
-//     jwt.verify(actualRefreshToken, process.env.JWT_REFRESH_TOKEN_SECRET, (err, decoded) => {
-//         if (err) {
-//             throw new ApiError(401, "Invalid refresh token");
-//         }
-//         teacherId = decoded.id;
-//     });
-
-//     const teacher = await Teacher.findByPk(teacherId);
-
-//     if (!teacher) {
-//         throw new ApiError(401, "Teacher with this refresh token doesn't exist"); // Updated message
-//     }
-
-//     const { newAccessToken, newRefreshToken } = await generateAccessAndRefreshTokens(teacher);
-
-//     teacher.refreshToken = newRefreshToken;
-//     await teacher.save();
-
-//     res
-//         .status(200)
-//         .cookie("teacherAccessToken", newAccessToken, { // Changed cookie name
-//             ...options,
-//             maxAge: 86400000,
-//         })
-//         .cookie("teacherRefreshToken", newRefreshToken, { // Changed cookie name
-//             ...options,
-//             maxAge: 1296000000,
-//         })
-//         .json(
-//             new ApiResponse(200, "Access token refreshed successfully", {
-//                 accessToken: newAccessToken,
-//                 refreshToken: newRefreshToken,
-//             })
-//         );
-// });
-
-
 //! logout is remaining
 
 const addTeachingSubject = asyncHandler(async (req, res) => {
     const { teacherId, courseId } = req.body;
 
-    if (!teacherId || !courseId) {
-        throw new ApiError(400, "Teacher ID and Course ID are required");
-    }
+    // Validation moved to @teacher.validation.js
 
     const teacher = await Teacher.findByPk(teacherId);
 
@@ -739,9 +454,7 @@ const addTeachingSubject = asyncHandler(async (req, res) => {
 const removeTeachingSubject = asyncHandler(async (req, res) => {
     const { teacherSubjectId } = req.query;
 
-    if (!teacherSubjectId) {
-        throw new ApiError(400, "Teacher subject ID is required");
-    }
+    // Validation moved to @teacher.validation.js
 
     const teacherSubject = await TeacherTeachesCourse.findByPk(teacherSubjectId);
 
@@ -765,9 +478,7 @@ const removeTeachingSubject = asyncHandler(async (req, res) => {
 const getTeachingSubjects = asyncHandler(async (req, res) => {
     const { teacherId } = req.query;
 
-    if (!teacherId) {
-        throw new ApiError(400, "Teacher ID is required");
-    }
+    // Validation moved to @teacher.validation.js
 
     const teacher = await Teacher.findByPk(teacherId);
 

@@ -5,7 +5,7 @@ import Student from '../db/models/student.model.js'
 import { ApiResponse } from '../utils/ApiResponse.js';
 import { ApiError } from '../utils/ApiError.js';
 import { uploadOnCloudinary, deleteFromCloudinary } from '../utils/cloudinary.js';
-import { isValidPhoneNumber, parsePhoneNumberWithError } from 'libphonenumber-js';
+import { isValidPhoneNumber } from 'libphonenumber-js';
 import Scheme from "../db/models/scheme.model.js"
 import moment from "moment"
 import Semester from '../db/models/semester.model.js';
@@ -45,7 +45,7 @@ const getStudents = asyncHandler(async (req, res) => {
         getAll = false
     } = req.query;
 
-    // converting form data raw values to arrays bcz if there is only one value in parameter then it will not be converted to array
+    // Only convert to arrays, don't validate here
     if (branchIds && !Array.isArray(branchIds)) {
         branchIds = [branchIds];
     }
@@ -54,7 +54,6 @@ const getStudents = asyncHandler(async (req, res) => {
         semesterNumbers = [semesterNumbers];
     }
     if (semesterNumbers) {
-        // here it will be already a array
         semesterNumbers = semesterNumbers.map(semesterNumber => Number(semesterNumber))
     }
     if (admissionTypes && !Array.isArray(admissionTypes)) {
@@ -77,15 +76,11 @@ const getStudents = asyncHandler(async (req, res) => {
     }
 
     let admissionYearFilterClause = {};
-    // let academicStatusFilterClause = {};
     let admissionTypeFilterClause = {};
     let schemeFilterClause = {};
     let branchFilterClause = {};
 
     if (admissionYear) {
-        if (isNaN(Number(admissionYear))) {
-            throw new ApiError(400, "Admission year must be a number");
-        }
         admissionYearFilterClause.admissionYear = {
             [Op.eq]: Number(admissionYear)
         }
@@ -107,52 +102,19 @@ const getStudents = asyncHandler(async (req, res) => {
         };
     }
 
-    if (semesterNumbers) {
-        semesterNumbers.forEach(semesterNumber => {
-            if (isNaN(Number(semesterNumber))) {
-                throw new ApiError(400, "Semester number must be a number");
-            }
-            if (![1, 2, 3, 4, 5, 6, 7, 8].includes(Number(semesterNumber))) {
-                throw new ApiError(400, "Invalid semester number");
-            }
-        })
-    }
-
     if (academicStartYearOfSemester) {
-        if (isNaN(Number(academicStartYearOfSemester))) {
-            throw new ApiError(400, "Academic start year must be a number");
-        }
         academicStartYearOfSemester = Number(academicStartYearOfSemester)
     }
 
     if (academicEndYearOfSemester) {
-        if (isNaN(Number(academicEndYearOfSemester))) {
-            throw new ApiError(400, "Academic end year must be a number");
-        }
-        if (academicStartYearOfSemester && !isNaN(Number(academicStartYearOfSemester))) {
-            if (Number(academicEndYearOfSemester) <= Number(academicStartYearOfSemester)) {
-                throw new ApiError(400, "Academic end year must be greater than academic start year");
-            }
-        }
         academicEndYearOfSemester = Number(academicEndYearOfSemester)
     }
 
     if (dropoutAcademicStartYear) {
-        if (isNaN(Number(dropoutAcademicStartYear))) {
-            throw new ApiError(400, "dropout academic start year must be a number");
-        }
         dropoutAcademicStartYear = Number(dropoutAcademicStartYear)
     }
 
     if (dropoutAcademicEndYear) {
-        if (isNaN(Number(dropoutAcademicEndYear))) {
-            throw new ApiError(400, "dropout academic end year must be a number");
-        }
-        if (dropoutAcademicStartYear && !isNaN(Number(dropoutAcademicStartYear))) {
-            if (Number(dropoutAcademicEndYear) <= Number(dropoutAcademicStartYear)) {
-                throw new ApiError(400, "dropout academic end year must be greater than dropout academic start year");
-            }
-        }
         dropoutAcademicEndYear = Number(dropoutAcademicEndYear)
     }
 
@@ -163,7 +125,6 @@ const getStudents = asyncHandler(async (req, res) => {
             [Op.and]: [
                 searchClause,
                 admissionTypeFilterClause,
-                // academicStatusFilterClause, //! here
                 admissionYearFilterClause,
                 branchFilterClause
             ]
@@ -289,10 +250,7 @@ const getStudents = asyncHandler(async (req, res) => {
         ...(limit && getAll === false ? { offset: offset, } : {}),
         ...(limit && getAll === false ? { limit: parseInt(limit, 10) } : {})
     });
-    // const studentNames = students.rows.map(student => student.firstName + " " + student.lastName);
-    // console.log(studentNames)
-    // console.log("rows length", students.rows.length)
-    // console.log("count from returned object", students.count)
+
     res
         .status(200)
         .json(
@@ -319,63 +277,15 @@ const addStudent = asyncHandler(async (req, res) => {
         phoneNumber,
         gender,
         dob,
-        // password,
-        // confirmPassword,
         schemeId,
-        // academicStatus,
         admissionYear,
         admissionType,
         branchId,
         parentEmail
     } = req.body;
     const studentImageLocalPath = req?.file?.path
-    const fields = {
-        "PRN": prn,
-        "First Name": firstName,
-        "Last Name": lastName,
-        "Email": email,
-        "Phone Number": phoneNumber,
-        // "Password": password,
-        // "Confirm Password": confirmPassword,
-        // "Academic Status": academicStatus,
-        "Scheme": schemeId,
-        "Admission Year": admissionYear,
-        "Admission Type": admissionType,
-        "Branch ID": branchId
-    };
 
-    for (const fieldName in fields) {
-        if (!fields[fieldName]) {
-            if (studentImageLocalPath) fs.unlinkSync(studentImageLocalPath);
-            throw new ApiError(400, `${fieldName} is required`);
-        }
-    }
-
-    if (isNaN(Number(admissionYear))) {
-        if (studentImageLocalPath) fs.unlinkSync(studentImageLocalPath);
-        throw new ApiError(400, "Admission year must be a number");
-    }
-
-    // if (password !== confirmPassword) {
-    //     if (studentImageLocalPath) fs.unlinkSync(studentImageLocalPath);
-    //     throw new ApiError(400, "Password and confirm password do not match");
-    // }
-
-    if (!['Male', 'Female', 'Other'].includes(gender)) {
-        if (studentImageLocalPath) fs.unlinkSync(studentImageLocalPath);
-        throw new ApiError(400, "Invalid gender value. Must be Male, Female, or Other");
-    }
-
-    // if (!['Active', 'Drop out', 'Graduated'].includes(academicStatus)) {
-    //     if (studentImageLocalPath) fs.unlinkSync(studentImageLocalPath);
-    //     throw new ApiError(400, "Invalid academic status. Must be 'Active', 'Drop out', 'Graduated'");
-    // }
-
-    if (!isValidPhoneNumber(phoneNumber)) {
-        if (studentImageLocalPath) fs.unlinkSync(studentImageLocalPath);
-        console.log(phoneNumber)
-        throw new ApiError(400, "Invalid phone number.");
-    }
+    // Remove all field validation, assume already validated
 
     const existingStudent = await Student.findOne({ where: { email } });
 
@@ -428,8 +338,6 @@ const addStudent = asyncHandler(async (req, res) => {
         dob: dobForDB,
         studentImgUrl: studentImageUrl,
         studentImgPublicId: studentImagePublicId,
-        // password,
-        // academicStatus,
         schemeId,
         admissionYear: Number(admissionYear) || null,
         admissionType: admissionType,
@@ -455,7 +363,6 @@ const updateStudentDetails = asyncHandler(async (req, res) => {
         phoneNumber,
         dob,
         schemeId,
-        // academicStatus,
         branchId,
         parentEmail,
         prn,
@@ -463,12 +370,10 @@ const updateStudentDetails = asyncHandler(async (req, res) => {
         admissionType
     } = req.body;
 
-    if (!id) throw new ApiError(400, "Student ID is required");
+    // Remove input validation, assume already validated
 
     const student = await Student.findByPk(id);
     if (!student) throw new ApiError(404, "Student not found");
-
-    if (!isValidPhoneNumber(phoneNumber)) throw new ApiError(400, "Invalid phone number.");
 
     let dobForDB = null
     if (dob) {
@@ -500,7 +405,6 @@ const updateStudentDetails = asyncHandler(async (req, res) => {
     student.gender = gender || student.gender;
     student.phoneNumber = phoneNumber || student.phoneNumber;
     student.dob = dobForDB || student.dob;
-    // student.academicStatus = academicStatus || student.academicStatus;
     student.schemeId = schemeId || student.schemeId;
     student.branchId = branchId || student.branchId;
     student.parentEmail = parentEmail || student.parentEmail;
@@ -517,12 +421,10 @@ const updateStudentDetails = asyncHandler(async (req, res) => {
 const updateStudentPassword = asyncHandler(async (req, res) => {
     const { id, password, confirmPassword } = req.body;
 
-    if (!id) throw new ApiError(400, "Student ID is required");
+    // Remove input validation, assume already validated
 
     const student = await Student.findByPk(id);
     if (!student) throw new ApiError(404, "Student not found");
-
-    if (password !== confirmPassword) throw new ApiError(400, "Password and confirm password do not match");
 
     student.password = password;
     await student.save();
@@ -535,10 +437,7 @@ const updateStudentImage = asyncHandler(async (req, res) => {
     const { id } = req.body;
     const studentImageLocalPath = req.file?.path;
 
-    if (!id) {
-        if (studentImageLocalPath) fs.unlinkSync(studentImageLocalPath);
-        throw new ApiError(400, "Student ID is required");
-    }
+    // Remove input validation, assume already validated
 
     const student = await Student.findByPk(id);
     if (!student) {
@@ -563,7 +462,7 @@ const updateStudentImage = asyncHandler(async (req, res) => {
 const removeStudentImage = asyncHandler(async (req, res) => {
     const { studentId } = req.query;
 
-    if (!studentId) throw new ApiError(400, "Student ID is required");
+    // Remove input validation, assume already validated
     
     const student = await Student.findByPk(studentId);
     if (!student) throw new ApiError(404, "Student not found");
@@ -584,7 +483,7 @@ const removeStudentImage = asyncHandler(async (req, res) => {
 const removeStudent = asyncHandler(async (req, res) => {
     const { id } = req.params;
 
-    if (!id) throw new ApiError(400, "Student ID is required");
+    // Remove input validation, assume already validated
 
     const student = await Student.findByPk(id);
     if (!student) throw new ApiError(404, "Student not found");
@@ -598,9 +497,7 @@ const removeStudent = asyncHandler(async (req, res) => {
 const getStudentDetailsById = asyncHandler(async (req, res) => {
     const { studentId } = req.query;
 
-    if (!studentId) {
-        throw new ApiError(400, "Student id is required");
-    }
+    // Remove input validation, assume already validated
 
     const student = await Student.findOne({
         where: {
@@ -635,9 +532,7 @@ const getStudentDetailsById = asyncHandler(async (req, res) => {
 const getStudentSemestersById = asyncHandler(async (req, res) => {
     const { studentId } = req.query;
 
-    if (!studentId) {
-        throw new ApiError(400, "Student id is required");
-    }
+    // Remove input validation, assume already validated
 
     const student = await Student.findByPk(studentId);
 
@@ -669,19 +564,13 @@ const getStudentSemestersById = asyncHandler(async (req, res) => {
 const getStudentDivisionsById = asyncHandler(async (req, res) => {
     const { studentId, semesterNumber } = req.query;
 
-    if (!studentId) {
-        throw new ApiError(400, "Student id is required");
-    }
+    // Remove input validation, assume already validated
 
     const student = await Student.findByPk(studentId);
 
     if (!student) throw new ApiError(404, "Student not found");
 
     const semesterNumberClause = {}
-
-    if (semesterNumber && isNaN(Number(semesterNumber))) {
-        throw new ApiError(400, "Semester number must be a number");
-    }
 
     if (semesterNumber) {
         semesterNumberClause.semesterNumber = semesterNumber;
@@ -720,19 +609,13 @@ const getStudentDivisionsById = asyncHandler(async (req, res) => {
 const getStudentBatchesById = asyncHandler(async (req, res) => {
     const { studentId, semesterNumber } = req.query;
 
-    if (!studentId) {
-        throw new ApiError(400, "Student id is required");
-    }
+    // Remove input validation, assume already validated
 
     const student = await Student.findByPk(studentId);
 
     if (!student) throw new ApiError(404, "Student not found");
 
     const semesterNumberClause = {}
-
-    if (semesterNumber && isNaN(Number(semesterNumber))) {
-        throw new ApiError(400, "Semester number must be a number");
-    }
 
     if (semesterNumber) {
         semesterNumberClause.semesterNumber = semesterNumber;
@@ -778,9 +661,7 @@ const getStudentBatchesById = asyncHandler(async (req, res) => {
 const addStudentToSemester = asyncHandler(async (req, res) => {
     const { studentId, semesterId } = req.body;
 
-    if (!studentId || !semesterId) {
-        throw new ApiError(400, "Student id and semester id are required");
-    }
+    // Remove input validation, assume already validated
 
     const student = await Student.findByPk(studentId);
 
@@ -891,9 +772,7 @@ const addStudentToSemester = asyncHandler(async (req, res) => {
 const removeStudentFromSemester = asyncHandler(async (req, res) => {
     const { studentSemesterId } = req.query;
 
-    if (!studentSemesterId) {
-        throw new ApiError(400, "StudentSemester id is required");
-    }
+    // Remove input validation, assume already validated
 
     const studentSemester = await StudentSemester.findByPk(studentSemesterId);
 
@@ -953,9 +832,7 @@ const removeStudentFromSemester = asyncHandler(async (req, res) => {
 const addStudentToDivision = asyncHandler(async (req, res) => {
     const { studentId, divisionId } = req.body;
 
-    if (!studentId || !divisionId) {
-        throw new ApiError(400, "Student id and division id are required");
-    }
+    // Remove input validation, assume already validated
 
     const student = await Student.findByPk(studentId);
 
@@ -1035,13 +912,7 @@ const addStudentToDivision = asyncHandler(async (req, res) => {
 const changeStudentDivision = asyncHandler(async (req, res) => {
     const { studentDivisionId, divisionId, newDivisionStartDate } = req.body;
 
-    if (!studentDivisionId || !divisionId) {
-        throw new Error("StudentDivision ID or Division ID is not provided");
-    }
-
-    if (!newDivisionStartDate) {
-        throw new ApiError(400, "New division start date is required");
-    }
+    // Remove input validation, assume already validated
 
     const studentDivision = await StudentDivision.findByPk(studentDivisionId);
 
@@ -1093,11 +964,6 @@ const changeStudentDivision = asyncHandler(async (req, res) => {
 
     const endDateOfPrevDivision = new Date(startDateOfNewDivision.getFullYear(), startDateOfNewDivision.getMonth(), startDateOfNewDivision.getDate() - 1);
 
-    // console.log("in the start end date object creations")
-    // console.log(startDateOfNewDivision)
-    // console.log(endDateOfPrevDivision) // this will print date as 30
-    // console.log(endDateOfPrevDivision.getDate()) // this will print date as 31 bcz of the way its printing the whole date in iso
-
     const batchesOfCurrentDivision = await Batch.findAll({
         where: {
             divisionId: studentDivision.divisionId,
@@ -1116,15 +982,10 @@ const changeStudentDivision = asyncHandler(async (req, res) => {
     });
 
     if (studentBatch) {
-        // if the admin adds the student in a diff batch in the future date.
-        // then the student batch added for future will be deleted and there previous batch's end date will be set to end date of the previous division
         if (studentBatch.startDate > startDateOfNewDivision.toISOString().split('T')[0]) {
 
             const futureBatchStartDateObj = new Date(studentBatch.startDate)
             const prevBatchEndDateObj = new Date(futureBatchStartDateObj.getFullYear(), futureBatchStartDateObj.getMonth(), futureBatchStartDateObj.getDate());
-
-            // console.log(`prev date: ${prevBatchEndDateObj.toISOString()}`) // this will print privious date even if i haven't did getDate() - 1 in the expression the reason is during creation its getting created locally and the printing is done in iso format
-            // console.log(`future start date: ${futureBatchStartDateObj.toISOString()}`)
 
             const previousBatch = await StudentBatch.findOne({
                 where: {
@@ -1142,17 +1003,9 @@ const changeStudentDivision = asyncHandler(async (req, res) => {
                 ]
             });
 
-            // console.log(`future batch is ${studentBatch.toJSON()}`)
-            if (previousBatch) {
-                // console.log(`previous batch is ${previousBatch.toJSON()}`)
-            } else {
-                // console.log("prev batch is null")
-            }
-
             await studentBatch.destroy();
 
             if (previousBatch) {
-                // console.log(`setting end date of prev batch to ${endDateOfPrevDivision}`)
                 previousBatch.endDate = endDateOfPrevDivision;
                 await previousBatch.save();
             }
@@ -1162,7 +1015,6 @@ const changeStudentDivision = asyncHandler(async (req, res) => {
         }
     }
 
-    // console.log(`setting end date of prev division to ${endDateOfPrevDivision}`)
     studentDivision.endDate = endDateOfPrevDivision;
 
     await studentDivision.save();
@@ -1193,9 +1045,7 @@ const changeStudentDivision = asyncHandler(async (req, res) => {
 const addStudentToBatch = asyncHandler(async (req, res) => {
     const { studentId, batchId } = req.body;
 
-    if (!studentId || !batchId) {
-        throw new ApiError(400, "Student id and batch id are required");
-    }
+    // Remove input validation, assume already validated
 
     const student = await Student.findByPk(studentId);
 
@@ -1280,13 +1130,7 @@ const changeStudentBatch = asyncHandler(async (req, res, next) => {
 
     const { studentBatchId, batchId, newBatchStartDate } = req.body;
 
-    if (!studentBatchId || !batchId) {
-        throw new Error("StudentBatch ID or Batch ID is not provided");
-    }
-
-    if (!newBatchStartDate) {
-        throw new ApiError(400, "New batch start date is required");
-    }
+    // Remove input validation, assume already validated
 
     const studentBatch = await StudentBatch.findByPk(studentBatchId);
 

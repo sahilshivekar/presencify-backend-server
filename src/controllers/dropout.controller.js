@@ -5,21 +5,10 @@ import { ApiError } from '../utils/ApiError.js';
 import { ApiResponse } from '../utils/ApiResponse.js';
 import Dropout from '../db/models/dropout.model.js'
 
-
 const addStudentToDropout = asyncHandler(async (req, res) => {
     const { studentId, academicStartYear, academicEndYear } = req.body
 
-    if (!studentId || !academicEndYear || !academicStartYear) {
-        throw new ApiError(400, "StudentId and academic year is required")
-    }
-
-    if (isNaN(academicEndYear) || isNaN(academicStartYear)) {
-        throw new ApiError(400, "Academic year must be a number")
-    }
-
-    if (academicStartYear >= academicEndYear) {
-        throw new ApiError(400, "Academic start year cannot be greater than or same academic end year")
-    }
+    // Input validation is handled by @dropout.validation.js
 
     const student = await Student.findByPk(studentId)
 
@@ -63,17 +52,7 @@ const addStudentToDropout = asyncHandler(async (req, res) => {
 const removeStudentFromDropout = asyncHandler(async (req, res) => {
     const { studentId, academicStartYear, academicEndYear } = req.query
 
-    if (!studentId || !academicEndYear || !academicStartYear) {
-        throw new ApiError(400, "StudentId and academic year is required")
-    }
-
-    if (isNaN(academicEndYear) || isNaN(academicStartYear)) {
-        throw new ApiError(400, "Academic year must be a number")
-    }
-
-    if (academicStartYear >= academicEndYear) {
-        throw new ApiError(400, "Academic start year cannot be greater than or same academic end year")
-    }
+    // Input validation is handled by @dropout.validation.js
 
     const student = await Student.findByPk(studentId)
 
@@ -113,9 +92,7 @@ const removeStudentFromDropout = asyncHandler(async (req, res) => {
 const getDropoutById = asyncHandler(async (req, res) => {
     const { id } = req.params
 
-    if (!id) {
-        throw new ApiError(400, "Dropout id is required")
-    }
+    // Input validation is handled by @dropout.validation.js
 
     const dropout = await Dropout.findOne({
         where: {
@@ -146,9 +123,7 @@ const getDropoutById = asyncHandler(async (req, res) => {
 const getDropoutDetailsOfStudent = asyncHandler(async (req, res) => {
     const { studentId } = req.query
 
-    if (!studentId) {
-        throw new ApiError(400, "Student id is required")
-    }
+    // Input validation is handled by @dropout.validation.js
 
     const dropouts = await Dropout.findAll({
         where: {

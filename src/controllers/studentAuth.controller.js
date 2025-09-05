@@ -10,7 +10,6 @@ import jwt from 'jsonwebtoken'
 import { type } from 'os';
 
 
-
 //* generate verfication code for verifying email and forgot password
 const generateVerificationCode = (length = 6) => {
     let code = '';
@@ -43,9 +42,7 @@ const generateAccessAndRefreshTokens = async (student) => {
 const getAccessToken = asyncHandler(async (req, res) => {
     const { refreshToken } = req.body;
 
-    if (!refreshToken) {
-        throw new ApiError(401, "Refresh token is required")
-    }
+    // Validation is handled by middleware
 
     const actualRefreshToken = refreshToken.replace("Bearer ", "");
 
@@ -57,13 +54,11 @@ const getAccessToken = asyncHandler(async (req, res) => {
         studentId = decoded.id;
     });
     
-    // console.log(studentId)
     const student = await Student.findByPk(studentId);
 
     if (!student) {
         throw new ApiError(401, "Student with this refresh token doesn't exist")
     }
-
 
     const { newAccessToken, newRefreshToken } = await generateAccessAndRefreshTokens(student)
 
@@ -97,10 +92,7 @@ const getAccessToken = asyncHandler(async (req, res) => {
 const loginStudent = asyncHandler(async (req, res) => {
     const { emailOrPRN, password } = req.body;
 
-    if (!emailOrPRN) {
-        throw new ApiError(400, "Email or PRN is needed")
-    }
-    
+    // Validation is handled by middleware
 
     const student = await Student.findOne({
         where: {
@@ -116,7 +108,6 @@ const loginStudent = asyncHandler(async (req, res) => {
     }
 
     const isPasswordMatching = await student.isPasswordMatching(password);
-
 
     if (!isPasswordMatching) {
         throw new ApiError(400, "Password didn't match")
@@ -158,13 +149,7 @@ const loginStudent = asyncHandler(async (req, res) => {
 const updateStudentPassword = asyncHandler(async (req, res) => {
     const { password, confirmPassword } = req.body;
 
-    if (!password || !confirmPassword) {
-        throw new ApiError(400, "Both password and confirm password are required");
-    }
-
-    if (password !== confirmPassword) {
-        throw new ApiError(400, "Password and confirm password field do not match");
-    }
+    // Validation is handled by middleware
 
     const student = await Student.findByPk(req.student.id);
 
@@ -224,11 +209,7 @@ const sendVerificationCodeToEmail = asyncHandler(async (req, res) => {
 
     let { email } = req.body;
 
-    
-    // check the routers file if didn't get why we are taking emails this way
-    if (!email) {
-        throw new ApiError(400, "Email is required");
-    }
+    // Validation is handled by middleware
 
     email = email.toLowerCase()
     
@@ -292,9 +273,7 @@ const verifyCode = asyncHandler(async (req, res) => {
 
     const { email, code } = req.body;
 
-    if (!code) {
-        throw new ApiError(400, "Please provide the code")
-    }
+    // Validation is handled by middleware
 
     const codeRecord = await VerificationCode.findOne({
         where: {

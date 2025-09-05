@@ -45,9 +45,9 @@ const getThrowableConflictMessage = async (conflictType, conflictName) => {
     const conflictRoom = await Room.findByPk(conflictType.roomId)
 
     return `${conflictName} Prof. ${conflictTeacher.firstName} ${conflictTeacher.lastName} is already taking ${conflictType.classType.toLowerCase()} of '${conflitCourse.name}' on ${getYearFromSemesterNumber(conflictSemester.semesterNumber)} ${conflictBatch == null ? "Division" : "Batch"} ${conflictBatch == null ? conflictDivision.divisionCode : conflictBatch.batchCode} in room ${conflictRoom.roomNumber} between ${conflictType.startTime}-${conflictType.endTime} on ${conflictType.dayOfWeek}. (from ${conflictType.activeFrom} to ${conflictType.activeTill})`
-
-
 }
+
+// Input validation for required fields, types, and formats is handled by @class.validation.js
 
 const addClass = asyncHandler(async (req, res) => {
     const {
@@ -64,26 +64,9 @@ const addClass = asyncHandler(async (req, res) => {
         timetableId
     } = req.body;
 
-    const requiredFields = {
-        "Teacher ID": teacherId,
-        "Start Time": startTime,
-        "End Time": endTime,
-        "Day of week": dayOfWeek,
-        "Room ID": roomId,
-        "Active From": activeFrom,
-        "Active Till": activeTill,
-        "Class Type": classType,
-        "Course ID": courseId,
-        "Timetable ID": timetableId
-    }
+    // Only check for DB existence and business logic, not input validation
 
-    for (const fieldName in requiredFields) {
-        if (!requiredFields[fieldName]) {
-            throw new ApiError(400, `${fieldName} is required`)
-        }
-    }
-
-    //!check if all id's exists in database
+    // Check if all referenced IDs exist in the database
     const teacher = await Teacher.findByPk(teacherId);
 
     if (!teacher) {
@@ -91,70 +74,25 @@ const addClass = asyncHandler(async (req, res) => {
     }
 
     const course = await Course.findByPk(courseId);
-
-    if (!course) {
-        throw new ApiError(404, "Course not found");
-    }
+    if (!course) throw new ApiError(404, "Course not found");
 
     const room = await Room.findByPk(roomId);
-
-    if (!room) {
-        throw new ApiError(404, "Room not found");
-    }
+    if (!room) throw new ApiError(404, "Room not found");
 
     const timetable = await Timetable.findByPk(timetableId);
+    if (!timetable) throw new ApiError(404, "Timetable not found");
 
-    if (!timetable) {
-        throw new ApiError(404, "Timetable not found");
-    }
-
-    //!chekc if the class type is valid
-    if (!['Lecture', 'Tutorial', 'Practical'].includes(classType)) {
-        throw new ApiError(400, "Invalid class type. Must be 'Lecture', 'Tutorial' or 'Practical'");
-    }
-
-    //!check if batchId is provided when the class type is not lecture && class type is practical || tutorial
+    // Check batch only for practical/tutorial
     let batch = null;
-    if (classType == "Tutorial" || classType == "Practical") {
-        if (!batchId) {
-            throw new ApiError(400, "Batch information is required if class type is practical or tutorial");
-        }
+    if (classType === "Tutorial" || classType === "Practical") {
         batch = await Batch.findByPk(batchId);
-        if (!batch) {
-            throw new ApiError(404, "Batch not found");
-        }
-
+        if (!batch) throw new ApiError(404, "Batch not found");
         if (batch.divisionId != timetable.divisionId) {
             throw new ApiError(400, "Batch doesn't belong to the same division as the timetable")
         }
     }
 
-    //! check if the time is in correct format
-    if (!moment(startTime, 'HH:mm:ss', true).isValid()) {
-        throw new ApiError(400, "Invalid time format for start time");
-    }
-    if (!moment(endTime, 'HH:mm:ss', true).isValid()) {
-        throw new ApiError(400, "Invalid time format for end time");
-    }
-
-    if (startTime > endTime) {
-        throw new ApiError(400, "Start time should be before end time");
-    }
-
-    //!check if active from is less than active till
-    if (!moment(activeFrom, 'YYYY-MM-DD', true).isValid()) {
-        throw new ApiError(400, "Invalid date format for active from field");
-    }
-    if (!moment(activeTill, 'YYYY-MM-DD', true).isValid()) {
-        throw new ApiError(400, "Invalid date format for active till field");
-    }
-
-    if (activeFrom > activeTill) {
-        throw new ApiError(400, "Active from date should be before active till date");
-    }
-
-
-    //!check if the course is available for that particular semester number in that branch (also for the optoinal course condition)
+    // Check if the course is available for that particular semester number in that branch
     const division = await Division.findByPk(timetable.divisionId)
     const semester = await Semester.findByPk(division.semesterId)
     const branch = await Branch.findByPk(semester.branchId)
@@ -171,308 +109,152 @@ const addClass = asyncHandler(async (req, res) => {
         throw new ApiError(400, `Course '${course.name}' is not in syllabus for semester ${semester.semesterNumber} of branch ${branch.name}`)
     }
 
-    //!check if dates are in bounds of semesters dates
+    // Check if dates are in bounds of semester dates
     if (activeFrom < semester.startDate || activeFrom > semester.endDate) {
         throw new ApiError(400, `Active from date is out of bounds because semester start date is ${semester.startDate} and semester end date is ${semester.endDate}`)
     }
-
     if (activeTill > semester.endDate || activeTill < semester.startDate) {
         throw new ApiError(400, `Active till date is out of bounds because semester start date is ${semester.startDate} and semester end date is ${semester.endDate}`)
     }
 
-    //! check if course is teached by the teacher
-    if (!course) {
-        throw new ApiError(404, "Course not found");
-    }
-
+    // Check if teacher teaches the course
     const teacherTeachesCourse = await TeacherTeachesCourse.findOne({
         where: {
             teacherId: teacherId,
             courseId: courseId
         }
     })
-
     if (!teacherTeachesCourse) {
         throw new ApiError(400, "Teacher is not teaching this course")
     }
 
-    //!check if teacher is teaching at diff class at same time
+    // Check for teacher conflict
     const teacherConflict = await Class.findOne({
         where: {
             [Op.and]: [
-                { teacherId: teacherId }, // same teacher
+                { teacherId: teacherId },
                 { isExtraClass: false },
                 { dayOfWeek: dayOfWeek },
                 {
                     [Op.or]: [
-                        {
-                            startTime: {
-                                [Op.gt]: startTime, // Existing class starts inside the new class
-                                [Op.lt]: endTime
-                            }
-                        },
-                        {
-                            endTime: {
-                                [Op.gt]: startTime,  // Existing class ends inside the new class
-                                [Op.lt]: endTime
-                            }
-                        },
-                        {
-                            startTime: {
-                                [Op.lte]: startTime // Existing class fully contains the new class
-                            },
-                            endTime: {
-                                [Op.gte]: endTime // Existing class fully contains the new class
-                            }
-                        }
-                    ],
+                        { startTime: { [Op.gt]: startTime, [Op.lt]: endTime } },
+                        { endTime: { [Op.gt]: startTime, [Op.lt]: endTime } },
+                        { startTime: { [Op.lte]: startTime }, endTime: { [Op.gte]: endTime } }
+                    ]
                 },
                 {
                     [Op.or]: [
-                        {
-                            activeFrom: {
-                                [Op.gte]: activeFrom,  // Existing class starts inside the new class period
-                                [Op.lte]: activeTill
-                            }
-                        },
-                        {
-                            activeTill: {
-                                [Op.gte]: activeFrom,  // Existing class ends inside the new class period
-                                [Op.lte]: activeTill
-                            }
-                        },
-                        {
-                            activeFrom: {
-                                [Op.lte]: activeFrom  // Existing class fully contains the new class
-                            },
-                            activeTill: {
-                                [Op.gte]: activeTill
-                            }
-                        }
-                    ],
+                        { activeFrom: { [Op.gte]: activeFrom, [Op.lte]: activeTill } },
+                        { activeTill: { [Op.gte]: activeFrom, [Op.lte]: activeTill } },
+                        { activeFrom: { [Op.lte]: activeFrom }, activeTill: { [Op.gte]: activeTill } }
+                    ]
                 }
             ]
         }
     })
-
     if (teacherConflict) {
         const msg = await getThrowableConflictMessage(teacherConflict, "Teacher unavailable at this time: ")
         throw new ApiError(400, msg)
     }
 
-    //!check if at the same time there is only one class going on in a room
+    // Check for room conflict
     const roomConflict = await Class.findOne({
         where: {
             [Op.and]: [
-                { roomId: roomId }, // same room
+                { roomId: roomId },
                 { isExtraClass: false },
                 { dayOfWeek: dayOfWeek },
                 {
                     [Op.or]: [
-                        {
-                            startTime: {
-                                [Op.gt]: startTime, // Existing class starts inside the new class
-                                [Op.lt]: endTime
-                            }
-                        },
-                        {
-                            endTime: {
-                                [Op.gt]: startTime,  // Existing class ends inside the new class
-                                [Op.lt]: endTime
-                            }
-                        },
-                        {
-                            startTime: {
-                                [Op.lte]: startTime // Existing class fully contains the new class
-                            },
-                            endTime: {
-                                [Op.gte]: endTime // Existing class fully contains the new class
-                            }
-                        }
+                        { startTime: { [Op.gt]: startTime, [Op.lt]: endTime } },
+                        { endTime: { [Op.gt]: startTime, [Op.lt]: endTime } },
+                        { startTime: { [Op.lte]: startTime }, endTime: { [Op.gte]: endTime } }
                     ]
                 },
                 {
                     [Op.or]: [
-                        {
-                            activeFrom: {
-                                [Op.gte]: activeFrom,  // Existing class starts inside the new class period
-                                [Op.lte]: activeTill
-                            }
-                        },
-                        {
-                            activeTill: {
-                                [Op.gte]: activeFrom,  // Existing class ends inside the new class period
-                                [Op.lte]: activeTill
-                            }
-                        },
-                        {
-                            activeFrom: {
-                                [Op.lte]: activeFrom  // Existing class fully contains the new class
-                            },
-                            activeTill: {
-                                [Op.gte]: activeTill
-                            }
-                        }
+                        { activeFrom: { [Op.gte]: activeFrom, [Op.lte]: activeTill } },
+                        { activeTill: { [Op.gte]: activeFrom, [Op.lte]: activeTill } },
+                        { activeFrom: { [Op.lte]: activeFrom }, activeTill: { [Op.gte]: activeTill } }
                     ]
                 }
             ]
         }
     })
-
     if (roomConflict) {
         const msg = await getThrowableConflictMessage(roomConflict, "Room unavailable at this time: ")
         throw new ApiError(400, msg)
     }
 
-
-    //!check if at the same time there is another class going on for same division
+    // Check for division conflict (lecture)
     if (batch == null) {
         const multipleLecturesConflict = await Class.findOne({
             where: {
                 [Op.and]: [
-                    { timetableId: timetableId }, // same division
+                    { timetableId: timetableId },
                     { isExtraClass: false },
                     { dayOfWeek: dayOfWeek },
-                    // { classType: "Lecture" },
                     {
                         [Op.or]: [
-                            {
-                                startTime: {
-                                    [Op.gt]: startTime, // Existing class starts inside the new class
-                                    [Op.lt]: endTime
-                                }
-                            },
-                            {
-                                endTime: {
-                                    [Op.gt]: startTime,  // Existing class ends inside the new class
-                                    [Op.lt]: endTime
-                                }
-                            },
-                            {
-                                startTime: {
-                                    [Op.lte]: startTime // Existing class fully contains the new class
-                                },
-                                endTime: {
-                                    [Op.gte]: endTime // Existing class fully contains the new class
-                                }
-                            }
-                        ],
+                            { startTime: { [Op.gt]: startTime, [Op.lt]: endTime } },
+                            { endTime: { [Op.gt]: startTime, [Op.lt]: endTime } },
+                            { startTime: { [Op.lte]: startTime }, endTime: { [Op.gte]: endTime } }
+                        ]
                     },
                     {
                         [Op.or]: [
-                            {
-                                activeFrom: {
-                                    [Op.gte]: activeFrom,  // Existing class starts inside the new class period
-                                    [Op.lte]: activeTill
-                                }
-                            },
-                            {
-                                activeTill: {
-                                    [Op.gte]: activeFrom,  // Existing class ends inside the new class period
-                                    [Op.lte]: activeTill
-                                }
-                            },
-                            {
-                                activeFrom: {
-                                    [Op.lte]: activeFrom  // Existing class fully contains the new class
-                                },
-                                activeTill: {
-                                    [Op.gte]: activeTill
-                                }
-                            }
-                        ],
+                            { activeFrom: { [Op.gte]: activeFrom, [Op.lte]: activeTill } },
+                            { activeTill: { [Op.gte]: activeFrom, [Op.lte]: activeTill } },
+                            { activeFrom: { [Op.lte]: activeFrom }, activeTill: { [Op.gte]: activeTill } }
+                        ]
                     }
                 ]
             }
         })
-
         if (multipleLecturesConflict) {
             const msg = await getThrowableConflictMessage(multipleLecturesConflict, "Time slot isn't free: ")
             throw new ApiError(400, msg)
         }
     }
 
-    //!check if at the same time there is another practical added for same batch
-
+    // Check for batch conflict (practical/tutorial)
     if (batch != null) {
         const multiplePracticalsConflict = await Class.findOne({
             where: {
                 [Op.and]: [
-                    { timetableId: timetableId }, // same division
+                    { timetableId: timetableId },
                     { isExtraClass: false },
                     {
                         batchId: {
                             [Op.or]: [
-                                { [Op.eq]: null }, // no batch means a lecture is going on
-                                { [Op.eq]: batchId } // same batch's practical is going on
+                                { [Op.eq]: null },
+                                { [Op.eq]: batchId }
                             ]
                         }
                     },
                     { dayOfWeek: dayOfWeek },
-                    // {
-                    //     classType: {
-                    //         [Op.in]: ["Tutorial", "Practical"]
-                    //     }
-                    // },
                     {
                         [Op.or]: [
-                            {
-                                startTime: {
-                                    [Op.gt]: startTime, // Existing class starts inside the new class
-                                    [Op.lt]: endTime
-                                }
-                            },
-                            {
-                                endTime: {
-                                    [Op.gt]: startTime,  // Existing class ends inside the new class
-                                    [Op.lt]: endTime
-                                }
-                            },
-                            {
-                                startTime: {
-                                    [Op.lte]: startTime // Existing class fully contains the new class
-                                },
-                                endTime: {
-                                    [Op.gte]: endTime // Existing class fully contains the new class
-                                }
-                            }
+                            { startTime: { [Op.gt]: startTime, [Op.lt]: endTime } },
+                            { endTime: { [Op.gt]: startTime, [Op.lt]: endTime } },
+                            { startTime: { [Op.lte]: startTime }, endTime: { [Op.gte]: endTime } }
                         ]
                     },
                     {
                         [Op.or]: [
-                            {
-                                activeFrom: {
-                                    [Op.gte]: activeFrom,  // Existing class starts inside the new class period
-                                    [Op.lte]: activeTill
-                                }
-                            },
-                            {
-                                activeTill: {
-                                    [Op.gte]: activeFrom,  // Existing class ends inside the new class period
-                                    [Op.lte]: activeTill
-                                }
-                            },
-                            {
-                                activeFrom: {
-                                    [Op.lte]: activeFrom  // Existing class fully contains the new class
-                                },
-                                activeTill: {
-                                    [Op.gte]: activeTill
-                                }
-                            }
+                            { activeFrom: { [Op.gte]: activeFrom, [Op.lte]: activeTill } },
+                            { activeTill: { [Op.gte]: activeFrom, [Op.lte]: activeTill } },
+                            { activeFrom: { [Op.lte]: activeFrom }, activeTill: { [Op.gte]: activeTill } }
                         ]
                     }
                 ]
-
             }
         })
-
         if (multiplePracticalsConflict) {
             const msg = await getThrowableConflictMessage(multiplePracticalsConflict, "Time slot isn't free: ")
             throw new ApiError(400, msg)
         }
     }
-
 
     const classObj = await Class.create(
         {
@@ -605,9 +387,7 @@ const getClasses = asyncHandler(async (req, res) => {
 const getClassById = asyncHandler(async (req, res) => {
     const { id } = req.params;
 
-    if (!id) {
-        throw new ApiError(400, "Class id is required");
-    }
+    // Input validation for id is handled by @class.validation.js
 
     const classObj = await Class.findByPk(
         id,
@@ -676,10 +456,7 @@ const extendActiveTillDateOfClass = asyncHandler(async (req, res) => {
         newActiveTill,
     } = req.body;
 
-    //!check if active from is less than active till
-    if (!id) {
-        throw new ApiError(400, "Class id is required");
-    }
+    // Input validation for id and newActiveTill is handled by @class.validation.js
 
     const classObj = await Class.findByPk(id);
 
@@ -690,10 +467,6 @@ const extendActiveTillDateOfClass = asyncHandler(async (req, res) => {
     if (!classObj) throw new ApiError(404, "Class not found");
 
     if (newActiveTill) {
-        if (!moment(newActiveTill, 'YYYY-MM-DD', true).isValid()) {
-            throw new ApiError(400, "Invalid date format for active till field");
-        }
-
         if (newActiveTill <= classObj.activeTill) {
             throw new ApiError(400, "New active till date should be after the old active till date");
         }
@@ -703,213 +476,99 @@ const extendActiveTillDateOfClass = asyncHandler(async (req, res) => {
         classObj.activeTill = newActiveTill;
     }
 
-    //!check if at the same time there is only one class going on in a room
+    // Check for room conflict
     const roomConflict = await Class.findOne({
         where: {
             [Op.and]: [
-                { id: { [Op.ne]: classObj.id } }, // not the same class
-                { roomId: classObj.roomId }, // same room
+                { id: { [Op.ne]: classObj.id } },
+                { roomId: classObj.roomId },
                 { dayOfWeek: classObj.dayOfWeek },
                 {
                     [Op.or]: [
-                        {
-                            startTime: {
-                                [Op.gt]: classObj.startTime, // Existing class starts inside the new class
-                                [Op.lt]: classObj.endTime
-                            }
-                        },
-                        {
-                            endTime: {
-                                [Op.gt]: classObj.startTime,  // Existing class ends inside the new class
-                                [Op.lt]: classObj.endTime
-                            }
-                        },
-                        {
-                            startTime: {
-                                [Op.lte]: classObj.startTime // Existing class fully contains the new class
-                            },
-                            endTime: {
-                                [Op.gte]: classObj.endTime // Existing class fully contains the new class   
-                            }
-                        }
+                        { startTime: { [Op.gt]: classObj.startTime, [Op.lt]: classObj.endTime } },
+                        { endTime: { [Op.gt]: classObj.startTime, [Op.lt]: classObj.endTime } },
+                        { startTime: { [Op.lte]: classObj.startTime }, endTime: { [Op.gte]: classObj.endTime } }
                     ]
                 },
                 {
                     [Op.or]: [
-                        {
-                            activeFrom: {
-                                [Op.gte]: classObj.activeFrom,  // Existing class starts inside the new class period
-                                [Op.lte]: classObj.activeTill
-                            }
-                        },
-                        {
-                            activeTill: {
-                                [Op.gte]: classObj.activeFrom,  // Existing class ends inside the new class period
-                                [Op.lte]: classObj.activeTill
-                            }
-                        },
-                        {
-                            activeFrom: {
-                                [Op.lte]: classObj.activeFrom  // Existing class fully contains the new class
-                            },
-                            activeTill: {
-                                [Op.gte]: classObj.activeTill
-                            }
-                        }
+                        { activeFrom: { [Op.gte]: classObj.activeFrom, [Op.lte]: classObj.activeTill } },
+                        { activeTill: { [Op.gte]: classObj.activeFrom, [Op.lte]: classObj.activeTill } },
+                        { activeFrom: { [Op.lte]: classObj.activeFrom }, activeTill: { [Op.gte]: classObj.activeTill } }
                     ]
                 }
             ]
         }
     })
-
     if (roomConflict) {
         const msg = await getThrowableConflictMessage(roomConflict, "Room unavailable at this time: ")
         throw new ApiError(400, msg)
     }
 
-
-    //!check if at the same time there is another class going on for same division
+    // Check for division conflict (lecture)
     if (classObj.batchId == null) {
         const multipleLecturesConflict = await Class.findOne({
             where: {
                 [Op.and]: [
                     { id: { [Op.ne]: classObj.id } },
-                    { timetableId: classObj.timetableId }, // same division
+                    { timetableId: classObj.timetableId },
                     { dayOfWeek: classObj.dayOfWeek },
-                    // { classType: "Lecture" },
                     {
                         [Op.or]: [
-                            {
-                                startTime: {
-                                    [Op.gt]: classObj.startTime, // Existing class starts inside the new class
-                                    [Op.lt]: classObj.endTime
-                                }
-                            },
-                            {
-                                endTime: {
-                                    [Op.gt]: classObj.startTime,  // Existing class ends inside the new class
-                                    [Op.lt]: classObj.endTime
-                                }
-                            },
-                            {
-                                startTime: {
-                                    [Op.lte]: classObj.startTime // Existing class fully contains the new class
-                                },
-                                endTime: {
-                                    [Op.gte]: classObj.endTime // Existing class fully contains the new class   
-                                }
-                            }
+                            { startTime: { [Op.gt]: classObj.startTime, [Op.lt]: classObj.endTime } },
+                            { endTime: { [Op.gt]: classObj.startTime, [Op.lt]: classObj.endTime } },
+                            { startTime: { [Op.lte]: classObj.startTime }, endTime: { [Op.gte]: classObj.endTime } }
                         ]
                     },
                     {
                         [Op.or]: [
-                            {
-                                activeFrom: {
-                                    [Op.gte]: classObj.activeFrom,  // Existing class starts inside the new class period
-                                    [Op.lte]: classObj.activeTill
-                                }
-                            },
-                            {
-                                activeTill: {
-                                    [Op.gte]: classObj.activeFrom,  // Existing class ends inside the new class period
-                                    [Op.lte]: classObj.activeTill
-                                }
-                            },
-                            {
-                                activeFrom: {
-                                    [Op.lte]: classObj.activeFrom  // Existing class fully contains the new class
-                                },
-                                activeTill: {
-                                    [Op.gte]: classObj.activeTill
-                                }
-                            }
+                            { activeFrom: { [Op.gte]: classObj.activeFrom, [Op.lte]: classObj.activeTill } },
+                            { activeTill: { [Op.gte]: classObj.activeFrom, [Op.lte]: classObj.activeTill } },
+                            { activeFrom: { [Op.lte]: classObj.activeFrom }, activeTill: { [Op.gte]: classObj.activeTill } }
                         ]
                     }
                 ]
             }
         })
-
         if (multipleLecturesConflict) {
             const msg = await getThrowableConflictMessage(multipleLecturesConflict, "Time slot isn't free: ")
             throw new ApiError(400, msg)
         }
     }
 
-    //!check if at the same time there is another practical added for same batch
-
+    // Check for batch conflict (practical/tutorial)
     if (classObj.batchId != null) {
         const multiplePracticalsConflict = await Class.findOne({
             where: {
                 [Op.and]: [
                     { id: { [Op.ne]: classObj.id } },
-                    { timetableId: classObj.timetableId }, // same division
+                    { timetableId: classObj.timetableId },
                     {
                         batchId: {
                             [Op.or]: [
-                                { [Op.eq]: null }, // no batch means a lecture is going on
-                                { [Op.eq]: classObj.batchId } // same batch's practical is going on
+                                { [Op.eq]: null },
+                                { [Op.eq]: classObj.batchId }
                             ]
                         }
                     },
                     { dayOfWeek: classObj.dayOfWeek },
-                    // {
-                    //     classType: {
-                    //         [Op.in]: ["Tutorial", "Practical"]
-                    //     }
-                    // },
                     {
                         [Op.or]: [
-                            {
-                                startTime: {
-                                    [Op.gt]: classObj.startTime, // Existing class starts inside the new class
-                                    [Op.lt]: classObj.endTime
-                                }
-                            },
-                            {
-                                endTime: {
-                                    [Op.gt]: classObj.startTime,  // Existing class ends inside the new class
-                                    [Op.lt]: classObj.endTime
-                                }
-                            },
-                            {
-                                startTime: {
-                                    [Op.lte]: classObj.startTime // Existing class fully contains the new class
-                                },
-                                endTime: {
-                                    [Op.gte]: classObj.endTime // Existing class fully contains the new class   
-                                }
-                            }
+                            { startTime: { [Op.gt]: classObj.startTime, [Op.lt]: classObj.endTime } },
+                            { endTime: { [Op.gt]: classObj.startTime, [Op.lt]: classObj.endTime } },
+                            { startTime: { [Op.lte]: classObj.startTime }, endTime: { [Op.gte]: classObj.endTime } }
                         ]
                     },
                     {
                         [Op.or]: [
-                            {
-                                activeFrom: {
-                                    [Op.gte]: classObj.activeFrom,  // Existing class starts inside the new class period
-                                    [Op.lte]: classObj.activeTill
-                                }
-                            },
-                            {
-                                activeTill: {
-                                    [Op.gte]: classObj.activeFrom,  // Existing class ends inside the new class period
-                                    [Op.lte]: classObj.activeTill
-                                }
-                            },
-                            {
-                                activeFrom: {
-                                    [Op.lte]: classObj.activeFrom  // Existing class fully contains the new class
-                                },
-                                activeTill: {
-                                    [Op.gte]: classObj.activeTill
-                                }
-                            }
+                            { activeFrom: { [Op.gte]: classObj.activeFrom, [Op.lte]: classObj.activeTill } },
+                            { activeTill: { [Op.gte]: classObj.activeFrom, [Op.lte]: classObj.activeTill } },
+                            { activeFrom: { [Op.lte]: classObj.activeFrom }, activeTill: { [Op.gte]: classObj.activeTill } }
                         ]
                     }
                 ]
-
             }
         })
-
         if (multiplePracticalsConflict) {
             const msg = await getThrowableConflictMessage(multiplePracticalsConflict, "Time slot isn't free: ")
             throw new ApiError(400, msg)
@@ -923,9 +582,7 @@ const extendActiveTillDateOfClass = asyncHandler(async (req, res) => {
 const removeClass = asyncHandler(async (req, res) => {
     const { id } = req.params;
 
-    if (!id) {
-        throw new ApiError(400, "Class id is required");
-    }
+    // Input validation for id is handled by @class.validation.js
 
     const classObj = await Class.findByPk(id);
 
@@ -936,114 +593,47 @@ const removeClass = asyncHandler(async (req, res) => {
     res.status(200).json(new ApiResponse(200, "Class deleted successfully", null));
 });
 
-
-
 const addExtraClass = asyncHandler(async (req, res) => {
     const {
         teacherId,
         startTime,
         endTime,
-        dayOfWeek, // sometimes extra class can be on every specific day for some days if active From and active till of extra class is not same
+        dayOfWeek,
         roomId,
         batchId,
         activeFrom,
-        activeTill, // will be same as active from if extra class is only for one day
+        activeTill,
         classType,
         courseId,
         timetableId
     } = req.body;
 
-    const requiredFields = {
-        "Teacher ID": teacherId,
-        "Start Time": startTime,
-        "End Time": endTime,
-        "Day of week": dayOfWeek,
-        "Room ID": roomId,
-        "Active From": activeFrom,
-        "Active Till": activeTill,
-        "Class Type": classType,
-        "Course ID": courseId,
-        "Timetable ID": timetableId
-    }
+    // Only check for DB existence and business logic, not input validation
 
-    for (const fieldName in requiredFields) {
-        if (!requiredFields[fieldName]) {
-            throw new ApiError(400, `${fieldName} is required`)
-        }
-    }
-
-    //!check if all id's exists in database
+    // Check if all referenced IDs exist in the database
     const teacher = await Teacher.findByPk(teacherId);
-
-    if (!teacher) {
-        throw new ApiError(404, "Teacher not found");
-    }
+    if (!teacher) throw new ApiError(404, "Teacher not found");
 
     const course = await Course.findByPk(courseId);
-
-    if (!course) {
-        throw new ApiError(404, "Course not found");
-    }
+    if (!course) throw new ApiError(404, "Course not found");
 
     const room = await Room.findByPk(roomId);
-
-    if (!room) {
-        throw new ApiError(404, "Room not found");
-    }
+    if (!room) throw new ApiError(404, "Room not found");
 
     const timetable = await Timetable.findByPk(timetableId);
+    if (!timetable) throw new ApiError(404, "Timetable not found");
 
-    if (!timetable) {
-        throw new ApiError(404, "Timetable not found");
-    }
-
-    //!chekc if the class type is valid
-    if (!['Lecture', 'Tutorial', 'Practical'].includes(classType)) {
-        throw new ApiError(400, "Invalid class type. Must be 'Lecture', 'Tutorial' or 'Practical'");
-    }
-
-    //!check if batchId is provided when the class type is not lecture && class type is practical || tutorial
+    // Check batch only for practical/tutorial
     let batch = null;
-    if (classType == "Tutorial" || classType == "Practical") {
-        if (!batchId) {
-            throw new ApiError(400, "Batch information is required if class type is practical or tutorial");
-        }
+    if (classType === "Tutorial" || classType === "Practical") {
         batch = await Batch.findByPk(batchId);
-        if (!batch) {
-            throw new ApiError(404, "Batch not found");
-        }
-
+        if (!batch) throw new ApiError(404, "Batch not found");
         if (batch.divisionId != timetable.divisionId) {
             throw new ApiError(400, "Batch doesn't belong to the same division as the timetable")
         }
     }
 
-    //! check if the time is in correct format
-    if (!moment(startTime, 'HH:mm:ss', true).isValid()) {
-        throw new ApiError(400, "Invalid time format for start time");
-    }
-    if (!moment(endTime, 'HH:mm:ss', true).isValid()) {
-        throw new ApiError(400, "Invalid time format for end time");
-    }
-
-    if (startTime > endTime) {
-        throw new ApiError(400, "Start time should be before end time");
-    }
-
-    //!check if active from is less than active till
-    if (!moment(activeFrom, 'YYYY-MM-DD', true).isValid()) {
-        throw new ApiError(400, "Invalid date format for active from field");
-    }
-    if (!moment(activeTill, 'YYYY-MM-DD', true).isValid()) {
-        throw new ApiError(400, "Invalid date format for active till field");
-    }
-
-    if (activeFrom > activeTill) {
-        throw new ApiError(400, "Active from date should be before active till date");
-    }
-
-
-    //!check if the course is available for that particular semester number in that branch (also for the optoinal course condition)
+    // Check if the course is available for that particular semester number in that branch
     const division = await Division.findByPk(timetable.divisionId)
     const semester = await Semester.findByPk(division.semesterId)
     const branch = await Branch.findByPk(semester.branchId)
@@ -1060,289 +650,136 @@ const addExtraClass = asyncHandler(async (req, res) => {
         throw new ApiError(400, `Course '${course.name}' is not in syllabus for semester ${semester.semesterNumber} of branch ${branch.name}`)
     }
 
-    //!check if dates are in bounds of semesters dates
+    // Check if dates are in bounds of semester dates
     if (activeFrom < semester.startDate || activeFrom > semester.endDate) {
         throw new ApiError(400, `Active from date is out of bounds because semester start date is ${semester.startDate} and semester end date is ${semester.endDate}`)
     }
-
     if (activeTill > semester.endDate || activeTill < semester.startDate) {
         throw new ApiError(400, `Active till date is out of bounds because semester start date is ${semester.startDate} and semester end date is ${semester.endDate}`)
     }
 
-
-    //!check if teacher is teaching at diff class at same time
+    // Check for teacher conflict
     const teacherConflict = await Class.findOne({
         where: {
             [Op.and]: [
-                { teacherId: teacherId }, // same teacher
+                { teacherId: teacherId },
                 { dayOfWeek: dayOfWeek },
                 { isExtraClass: true },
                 {
                     [Op.or]: [
-                        {
-                            startTime: {
-                                [Op.gt]: startTime, // Existing class starts inside the new class
-                                [Op.lt]: endTime
-                            }
-                        },
-                        {
-                            endTime: {
-                                [Op.gt]: startTime,  // Existing class ends inside the new class
-                                [Op.lt]: endTime
-                            }
-                        },
-                        {
-                            startTime: {
-                                [Op.lte]: startTime // Existing class fully contains the new class
-                            },
-                            endTime: {
-                                [Op.gte]: endTime // Existing class fully contains the new class
-                            }
-                        }
-                    ],
+                        { startTime: { [Op.gt]: startTime, [Op.lt]: endTime } },
+                        { endTime: { [Op.gt]: startTime, [Op.lt]: endTime } },
+                        { startTime: { [Op.lte]: startTime }, endTime: { [Op.gte]: endTime } }
+                    ]
                 },
                 {
                     [Op.or]: [
-                        {
-                            activeFrom: {
-                                [Op.gte]: activeFrom,  // Existing class starts inside the new class period
-                                [Op.lte]: activeTill
-                            }
-                        },
-                        {
-                            activeTill: {
-                                [Op.gte]: activeFrom,  // Existing class ends inside the new class period
-                                [Op.lte]: activeTill
-                            }
-                        },
-                        {
-                            activeFrom: {
-                                [Op.lte]: activeFrom  // Existing class fully contains the new class
-                            },
-                            activeTill: {
-                                [Op.gte]: activeTill
-                            }
-                        }
-                    ],
+                        { activeFrom: { [Op.gte]: activeFrom, [Op.lte]: activeTill } },
+                        { activeTill: { [Op.gte]: activeFrom, [Op.lte]: activeTill } },
+                        { activeFrom: { [Op.lte]: activeFrom }, activeTill: { [Op.gte]: activeTill } }
+                    ]
                 }
             ]
         }
     })
-
-
     if (teacherConflict) {
         const msg = await getThrowableConflictMessage(teacherConflict, "Teacher unavailable at this time: ")
         throw new ApiError(400, msg)
     }
 
-    //!check if at the same time there is only one class going on in a room
+    // Check for room conflict
     const roomConflict = await Class.findOne({
         where: {
             [Op.and]: [
-                { roomId: roomId }, // same room
+                { roomId: roomId },
                 { isExtraClass: true },
                 { dayOfWeek: dayOfWeek },
                 {
                     [Op.or]: [
-                        {
-                            startTime: {
-                                [Op.gt]: startTime, // Existing class starts inside the new class
-                                [Op.lt]: endTime
-                            }
-                        },
-                        {
-                            endTime: {
-                                [Op.gt]: startTime,  // Existing class ends inside the new class
-                                [Op.lt]: endTime
-                            }
-                        },
-                        {
-                            startTime: {
-                                [Op.lte]: startTime // Existing class fully contains the new class
-                            },
-                            endTime: {
-                                [Op.gte]: endTime // Existing class fully contains the new class
-                            }
-                        }
+                        { startTime: { [Op.gt]: startTime, [Op.lt]: endTime } },
+                        { endTime: { [Op.gt]: startTime, [Op.lt]: endTime } },
+                        { startTime: { [Op.lte]: startTime }, endTime: { [Op.gte]: endTime } }
                     ]
                 },
                 {
                     [Op.or]: [
-                        {
-                            activeFrom: {
-                                [Op.gte]: activeFrom,  // Existing class starts inside the new class period
-                                [Op.lte]: activeTill
-                            }
-                        },
-                        {
-                            activeTill: {
-                                [Op.gte]: activeFrom,  // Existing class ends inside the new class period
-                                [Op.lte]: activeTill
-                            }
-                        },
-                        {
-                            activeFrom: {
-                                [Op.lte]: activeFrom  // Existing class fully contains the new class
-                            },
-                            activeTill: {
-                                [Op.gte]: activeTill
-                            }
-                        }
+                        { activeFrom: { [Op.gte]: activeFrom, [Op.lte]: activeTill } },
+                        { activeTill: { [Op.gte]: activeFrom, [Op.lte]: activeTill } },
+                        { activeFrom: { [Op.lte]: activeFrom }, activeTill: { [Op.gte]: activeTill } }
                     ]
                 }
             ]
         }
     })
-
     if (roomConflict) {
         const msg = await getThrowableConflictMessage(roomConflict, "Room unavailable at this time: ")
         throw new ApiError(400, msg)
     }
 
-
-    //!check if at the same time there is another class going on for same division
+    // Check for division conflict (lecture)
     if (batch == null) {
         const multipleLecturesConflict = await Class.findOne({
             where: {
                 [Op.and]: [
-                    { timetableId: timetableId }, // same division
+                    { timetableId: timetableId },
                     { isExtraClass: true },
                     { dayOfWeek: dayOfWeek },
-                    // { classType: "Lecture" },
                     {
                         [Op.or]: [
-                            {
-                                startTime: {
-                                    [Op.gt]: startTime, // Existing class starts inside the new class
-                                    [Op.lt]: endTime
-                                }
-                            },
-                            {
-                                endTime: {
-                                    [Op.gt]: startTime,  // Existing class ends inside the new class
-                                    [Op.lt]: endTime
-                                }
-                            },
-                            {
-                                startTime: {
-                                    [Op.lte]: startTime // Existing class fully contains the new class
-                                },
-                                endTime: {
-                                    [Op.gte]: endTime // Existing class fully contains the new class
-                                }
-                            }
-                        ],
+                            { startTime: { [Op.gt]: startTime, [Op.lt]: endTime } },
+                            { endTime: { [Op.gt]: startTime, [Op.lt]: endTime } },
+                            { startTime: { [Op.lte]: startTime }, endTime: { [Op.gte]: endTime } }
+                        ]
                     },
                     {
                         [Op.or]: [
-                            {
-                                activeFrom: {
-                                    [Op.gte]: activeFrom,  // Existing class starts inside the new class period
-                                    [Op.lte]: activeTill
-                                }
-                            },
-                            {
-                                activeTill: {
-                                    [Op.gte]: activeFrom,  // Existing class ends inside the new class period
-                                    [Op.lte]: activeTill
-                                }
-                            },
-                            {
-                                activeFrom: {
-                                    [Op.lte]: activeFrom  // Existing class fully contains the new class
-                                },
-                                activeTill: {
-                                    [Op.gte]: activeTill
-                                }
-                            }
-                        ],
+                            { activeFrom: { [Op.gte]: activeFrom, [Op.lte]: activeTill } },
+                            { activeTill: { [Op.gte]: activeFrom, [Op.lte]: activeTill } },
+                            { activeFrom: { [Op.lte]: activeFrom }, activeTill: { [Op.gte]: activeTill } }
+                        ]
                     }
                 ]
             }
         })
-
         if (multipleLecturesConflict) {
             const msg = await getThrowableConflictMessage(multipleLecturesConflict, "Time slot isn't free: ")
             throw new ApiError(400, msg)
         }
     }
 
-
-    //!check if at the same time there is another practical added for same batch
-
+    // Check for batch conflict (practical/tutorial)
     if (batch != null) {
         const multiplePracticalsConflict = await Class.findOne({
             where: {
                 [Op.and]: [
-                    { timetableId: timetableId }, // same division
+                    { timetableId: timetableId },
                     { isExtraClass: true },
                     {
                         batchId: {
                             [Op.or]: [
-                                { [Op.eq]: null }, // no batch means a lecture is going on
-                                { [Op.eq]: batchId } // same batch's practical is going on
+                                { [Op.eq]: null },
+                                { [Op.eq]: batchId }
                             ]
                         }
                     },
                     { dayOfWeek: dayOfWeek },
-                    // {
-                    //     classType: {
-                    //         [Op.in]: ["Tutorial", "Practical"]
-                    //     }
-                    // },
                     {
                         [Op.or]: [
-                            {
-                                startTime: {
-                                    [Op.gt]: startTime, // Existing class starts inside the new class
-                                    [Op.lt]: endTime
-                                }
-                            },
-                            {
-                                endTime: {
-                                    [Op.gt]: startTime,  // Existing class ends inside the new class
-                                    [Op.lt]: endTime
-                                }
-                            },
-                            {
-                                startTime: {
-                                    [Op.lte]: startTime // Existing class fully contains the new class
-                                },
-                                endTime: {
-                                    [Op.gte]: endTime // Existing class fully contains the new class
-                                }
-                            }
+                            { startTime: { [Op.gt]: startTime, [Op.lt]: endTime } },
+                            { endTime: { [Op.gt]: startTime, [Op.lt]: endTime } },
+                            { startTime: { [Op.lte]: startTime }, endTime: { [Op.gte]: endTime } }
                         ]
                     },
                     {
                         [Op.or]: [
-                            {
-                                activeFrom: {
-                                    [Op.gte]: activeFrom,  // Existing class starts inside the new class period
-                                    [Op.lte]: activeTill
-                                }
-                            },
-                            {
-                                activeTill: {
-                                    [Op.gte]: activeFrom,  // Existing class ends inside the new class period
-                                    [Op.lte]: activeTill
-                                }
-                            },
-                            {
-                                activeFrom: {
-                                    [Op.lte]: activeFrom  // Existing class fully contains the new class
-                                },
-                                activeTill: {
-                                    [Op.gte]: activeTill
-                                }
-                            }
+                            { activeFrom: { [Op.gte]: activeFrom, [Op.lte]: activeTill } },
+                            { activeTill: { [Op.gte]: activeFrom, [Op.lte]: activeTill } },
+                            { activeFrom: { [Op.lte]: activeFrom }, activeTill: { [Op.gte]: activeTill } }
                         ]
                     }
                 ]
-
             }
         })
-
         if (multiplePracticalsConflict) {
             const msg = await getThrowableConflictMessage(multiplePracticalsConflict, "Time slot isn't free: ")
             throw new ApiError(400, msg)
@@ -1406,9 +843,7 @@ const addExtraClass = asyncHandler(async (req, res) => {
     })
 
     res.status(201).json(new ApiResponse(201, "Class added successfully", classObj));
-
 })
-
 
 const cancelClass = asyncHandler(async (req, res) => {
     const {
@@ -1417,17 +852,7 @@ const cancelClass = asyncHandler(async (req, res) => {
         date
     } = req.body;
 
-    if (!date) {
-        throw new ApiError(400, "Date is required");
-    }
-
-    if (!moment(date, 'YYYY-MM-DD', true).isValid()) {
-        throw new ApiError(400, "Invalid date format");
-    }
-
-    if (!classId) {
-        throw new ApiError(400, "Class id is required");
-    }
+    // Input validation for classId and date is handled by @class.validation.js
 
     const classObj = await Class.findByPk(classId);
 
@@ -1456,8 +881,7 @@ const cancelClass = asyncHandler(async (req, res) => {
         }
     );
 
-
-    //! sending notification to the students
+    // sending notification to the students
     let studentsToNotify = []
     let batch = null;
     if (classObj.batchId) {
@@ -1465,7 +889,6 @@ const cancelClass = asyncHandler(async (req, res) => {
     }
     const timetable = await Timetable.findByPk(classObj.timetableId);
     const course = await Course.findByPk(classObj.courseId);
-
 
     if (batch) {
         studentsToNotify = await StudentBatch.findAll({
@@ -1509,11 +932,9 @@ const cancelClass = asyncHandler(async (req, res) => {
     res.status(200).json(new ApiResponse(200, "Class marked as cancelled successfully", null));
 });
 
-
-// should check for the division and batch too
 const getCancelledClasses = asyncHandler(async (req, res) => {
     const {
-        divisionId,  // must provide either division or batch
+        divisionId,
         batchId,
         date,
         page = 1,
@@ -1523,10 +944,7 @@ const getCancelledClasses = asyncHandler(async (req, res) => {
 
     const offset = (parseInt(page, 10) - 1) * parseInt(limit, 10);
 
-
-    if (date && !moment(date, 'YYYY-MM-DD', true).isValid()) {
-        throw new ApiError(400, "Invalid date format");
-    }
+    // Input validation for date is handled by @class.validation.js
 
     let timetableOfDivision = null
     if (divisionId) {
@@ -1568,7 +986,6 @@ const getCancelledClasses = asyncHandler(async (req, res) => {
         totalCount: cancelledClasses.count
     }));
 });
-
 
 export {
     addClass,

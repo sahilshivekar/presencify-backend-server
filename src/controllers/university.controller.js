@@ -6,7 +6,6 @@ import { Op } from 'sequelize'
 
 //* get all the universities
 const getUniversities = asyncHandler(async (req, res) => {
-
     const universities = await University.findAll();
 
     res
@@ -18,17 +17,14 @@ const getUniversities = asyncHandler(async (req, res) => {
                 universities
             )
         );
-
 });
-
 
 //* add university
 const addUniversity = asyncHandler(async (req, res) => {
-
     const { name, abbreviation } = req.body;
 
     const university = await University.create({
-        name: name || "",
+        name,
         abbreviation: abbreviation || ""
     });
 
@@ -41,26 +37,21 @@ const addUniversity = asyncHandler(async (req, res) => {
                 university
             )
         )
-
 });
 
 //* update university
 const updateUniversity = asyncHandler(async (req, res) => {
-
-    const { id } = req.params; const { name, abbreviation } = req.body;
-
-    if(!id) {
-        throw new ApiError(400, "University id is required");
-    }
+    const { id } = req.params;
+    const { name, abbreviation } = req.body;
 
     const university = await University.findByPk(id);
-    
+
     if (!university) {
         throw new ApiError(404, "University not found");
     }
 
-    university.name = name || university.name;
-    university.abbreviation = abbreviation || abbreviation;
+    if (name !== undefined) university.name = name;
+    if (abbreviation !== undefined) university.abbreviation = abbreviation;
 
     await university.save();
 
@@ -77,12 +68,7 @@ const updateUniversity = asyncHandler(async (req, res) => {
 
 //* remove university
 const removeUniversity = asyncHandler(async (req, res) => {
-
     const { id } = req.params;
-
-    if(!id) {
-        throw new ApiError(400, "University id is required");
-    }
 
     const university = await University.findByPk(id);
 
@@ -105,10 +91,6 @@ const removeUniversity = asyncHandler(async (req, res) => {
 
 const getUniversityById = asyncHandler(async (req, res) => {
     const { id } = req.params;
-
-    if (!id) {
-        throw new ApiError(400, "University id is required");
-    }
 
     const university = await University.findByPk(id);
 

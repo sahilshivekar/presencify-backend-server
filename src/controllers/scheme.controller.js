@@ -5,13 +5,11 @@ import { ApiError } from '../utils/ApiError.js'
 import { Op } from 'sequelize'
 import University from '../db/models/university.model.js';
 
-
 //* get all the schemes
 const getSchemes = asyncHandler(async (req, res) => {
-
     const { searchQuery } = req.query;
 
-    const searchClause = {};
+    let searchClause = {};
 
     if (searchQuery) {
         searchClause = {
@@ -43,13 +41,10 @@ const getSchemes = asyncHandler(async (req, res) => {
                 schemes
             )
         );
-
 });
-
 
 //* add scheme
 const addScheme = asyncHandler(async (req, res) => {
-
     const { name, universityId } = req.body;
 
     const university = await University.findByPk(universityId);
@@ -72,18 +67,14 @@ const addScheme = asyncHandler(async (req, res) => {
                 scheme
             )
         )
-
 });
 
 //* update scheme
 const updateScheme = asyncHandler(async (req, res) => {
-
     const { id } = req.params;
     const { name } = req.body;
 
-    if (!id) {
-        throw new ApiError(400, "Scheme id is required");
-    }
+    // Input validation is handled by @scheme.validation.js
 
     const scheme = await Scheme.findByPk(id);
 
@@ -108,12 +99,9 @@ const updateScheme = asyncHandler(async (req, res) => {
 
 //* remove scheme
 const removeScheme = asyncHandler(async (req, res) => {
-
     const { id } = req.params;
 
-    if (!id) {
-        throw new ApiError(400, "Scheme id is required");
-    }
+    // Input validation is handled by @scheme.validation.js
 
     const scheme = await Scheme.findByPk(id);
 
@@ -137,9 +125,7 @@ const removeScheme = asyncHandler(async (req, res) => {
 const getSchemeById = asyncHandler(async (req, res) => {
     const { id } = req.params;
 
-    if (!schemeId) {
-        throw new ApiError(400, "Scheme id is required");
-    }
+    // Input validation is handled by @scheme.validation.js
 
     const scheme = await Scheme.findOne({
         where: { id: id },

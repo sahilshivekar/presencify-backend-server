@@ -25,30 +25,16 @@ const getTimetables = asyncHandler(async (req, res) => {
     let academicEndYearOfSemesterFilterClause = {};
 
     if (semesterNumber) {
-        if (isNaN(Number(semesterNumber))) {
-            throw new ApiError(400, "Semester number must be a number");
-        }
         semesterFilterClause.semesterNumber = Number(semesterNumber);
     }
 
     if (academicStartYearOfSemester) {
-        if (isNaN(Number(academicStartYearOfSemester))) {
-            throw new ApiError(400, "Academic start year must be a number");
-        }
         academicStartYearOfSemesterFilterClause.academicStartYear = {
             [Op.gte]: academicStartYearOfSemester
         }
     }   
 
     if (academicEndYearOfSemester) {
-        if (isNaN(Number(academicEndYearOfSemester))) {
-            throw new ApiError(400, "Academic end year must be a number");
-        }
-        if (academicStartYearOfSemester && !isNaN(Number(academicStartYearOfSemester))) {
-            if (Number(academicEndYearOfSemester) <= Number(academicStartYearOfSemester)) {
-                throw new ApiError(400, "Academic end year must be greater than academic start year");
-            }
-        }
         academicEndYearOfSemesterFilterClause.academicEndYear = {
             [Op.lte]: academicEndYearOfSemester
         }
@@ -102,10 +88,6 @@ const getTimetables = asyncHandler(async (req, res) => {
 const getTimetableById = asyncHandler(async (req, res) => {
     const { id } = req.params;
 
-    if (!id) {
-        throw new ApiError(400, "Timetable id is required");
-    }
-
     const timetable = await Timetable.findOne({
         where: { id: id },
         include: [
@@ -156,14 +138,6 @@ const addTimetable = asyncHandler(async (req, res) => {
         timetableVersion = 1
     } = req.body;
 
-    if (!divisionId) {
-        throw new ApiError(400, "Division id is required");
-    }
-
-    if (timetableVersion && isNaN(Number(timetableVersion))) {
-        throw new ApiError(400, "Timetable version must be a number");
-    }
-
     const division = await Division.findByPk(divisionId);
 
     if (!division) {
@@ -182,18 +156,6 @@ const addTimetable = asyncHandler(async (req, res) => {
 const updateTimetable = asyncHandler(async (req, res) => {
     const { id } = req.params;
     const { timetableVersion } = req.body;
-
-    if (!id) {
-        throw new ApiError(400, "Timetable id is required");
-    }
-
-    if (!timetableVersion) {
-        throw new ApiError(400, "Timetable version is required");
-    }
-
-    if (isNaN(Number(timetableVersion))) {
-        throw new ApiError(400, "Timetable version must be a number");
-    }
 
     const timetable = await Timetable.findByPk(id);
 
@@ -215,10 +177,6 @@ const updateTimetable = asyncHandler(async (req, res) => {
 //* Remove timetable
 const removeTimetable = asyncHandler(async (req, res) => {
     const { id } = req.params;
-
-    if (!id) {
-        throw new ApiError(400, "Timetable id is required");
-    }
 
     const timetable = await Timetable.findByPk(id);
 

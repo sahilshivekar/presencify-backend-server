@@ -6,8 +6,8 @@ import { Op } from 'sequelize';
 import Semester from '../db/models/semester.model.js';
 import Branch from '../db/models/branch.model.js';
 import Scheme from '../db/models/scheme.model.js';
-const getDivisions = asyncHandler(async (req, res) => {
 
+const getDivisions = asyncHandler(async (req, res) => {
     const {
         semesterNumber,
         branchId,
@@ -20,7 +20,7 @@ const getDivisions = asyncHandler(async (req, res) => {
         getAll = false,
     } = req.query;
 
-    const searchClause = {}
+    const searchClause = {};
 
     if (searchQuery) {
         searchClause.divisionCode = {
@@ -28,7 +28,7 @@ const getDivisions = asyncHandler(async (req, res) => {
         }
     }
 
-    const semesterWhereClause = {}
+    const semesterWhereClause = {};
 
     if (semesterNumber) {
         semesterWhereClause.semesterNumber = {
@@ -95,9 +95,8 @@ const addDivision = asyncHandler(async (req, res) => {
         divisionCode,
         semesterId,
     } = req.body;
-    if (!divisionCode || !semesterId) {
-        throw new ApiError(400, "Division code and semester id are required");
-    }
+
+    // Input validation is handled by @division.validation.js
 
     const semester = await Semester.findByPk(semesterId);
     if (!semester) {
@@ -117,18 +116,10 @@ const addDivision = asyncHandler(async (req, res) => {
 });
 
 const updateDivision = asyncHandler(async (req, res) => {
-    const {
-        id
-    } = req.params;
+    const { id } = req.params;
     const { divisionCode } = req.body;
 
-    if (!id) {
-        throw new ApiError(400, "Division id is required");
-    }
-
-    if(!divisionCode){
-        throw new ApiError(400, "Division code is required");
-    }
+    // Input validation is handled by @division.validation.js
 
     const division = await Division.findByPk(id);
 
@@ -143,13 +134,10 @@ const updateDivision = asyncHandler(async (req, res) => {
     res.status(200).json(new ApiResponse(200, "Division updated successfully", division));
 });
 
-
 const removeDivision = asyncHandler(async (req, res) => {
     const { id } = req.params;
 
-    if (!id) {
-        throw new ApiError(400, "Division id is required");
-    }
+    // Input validation is handled by @division.validation.js
 
     const division = await Division.findByPk(id);
 
@@ -162,13 +150,10 @@ const removeDivision = asyncHandler(async (req, res) => {
     res.status(200).json(new ApiResponse(200, "Division deleted successfully", null));
 });
 
-
 const getDivisionById = asyncHandler(async (req, res) => {
     const { id } = req.params;
 
-    if (!divisionId) {
-        throw new ApiError(400, "Division id is required");
-    }
+    // Input validation is handled by @division.validation.js
 
     const division = await Division.findOne({
         where: { id: id },
