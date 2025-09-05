@@ -3,6 +3,7 @@ import { asyncHandler } from '../utils/asyncHandler.js';
 import { ApiResponse } from '../utils/ApiResponse.js'
 import { ApiError } from '../utils/ApiError.js'
 import { Op } from 'sequelize'
+import httpStatus from 'http-status';
 
 
 //* get all the branches
@@ -25,10 +26,10 @@ const getBranches = asyncHandler(async (req, res) => {
     });
 
     res
-        .status(200)
+        .status(httpStatus.OK)
         .json(
             new ApiResponse(
-                200,
+                httpStatus.OK,
                 "Branches retrieved successfully.",
                 branches
             )
@@ -47,10 +48,10 @@ const addBranch = asyncHandler(async (req, res) => {
     });
 
     res
-        .status(201)
+        .status(httpStatus.CREATED)
         .json(
             new ApiResponse(
-                201,
+                httpStatus.CREATED,
                 'Branch added successfully',
                 branch
             )
@@ -68,7 +69,7 @@ const updateBranch = asyncHandler(async (req, res) => {
     const branch = await Branch.findByPk(id);
 
     if (!branch) {
-        throw new ApiError(404, "Branch not found");
+        throw new ApiError(httpStatus.NOT_FOUND, "Branch not found");
     }
 
     branch.name = name || branch.name;
@@ -77,10 +78,10 @@ const updateBranch = asyncHandler(async (req, res) => {
     await branch.save();
 
     res
-        .status(200)
+        .status(httpStatus.OK)
         .json(
             new ApiResponse(
-                200,
+                httpStatus.OK,
                 "Branch updated successfully",
                 branch
             )
@@ -96,16 +97,16 @@ const removeBranch = asyncHandler(async (req, res) => {
     const branch = await Branch.findByPk(id);
 
     if (!branch) {
-        throw new ApiError(404, "Branch not found");
+        throw new ApiError(httpStatus.NOT_FOUND, "Branch not found");
     }
 
     await branch.destroy();
 
     res
-        .status(200)
+        .status(httpStatus.NO_CONTENT)
         .json(
             new ApiResponse(
-                200,
+                httpStatus.NO_CONTENT,
                 "Branch deleted successfully",
                 null
             )
@@ -119,14 +120,14 @@ const getBranchById = asyncHandler(async (req, res) => {
     const branch = await Branch.findByPk(id);
 
     if (!branch) {
-        throw new ApiError(404, "Branch not found");
+        throw new ApiError(httpStatus.NOT_FOUND, "Branch not found");
     }
 
     res
-        .status(200)
+        .status(httpStatus.OK)
         .json(
             new ApiResponse(
-                200,
+                httpStatus.OK,
                 "Branch retrieved successfully",
                 branch
             )

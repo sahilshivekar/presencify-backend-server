@@ -4,6 +4,7 @@ import Student from '../db/models/student.model.js'
 import { ApiResponse } from '../utils/ApiResponse.js';
 import { ApiError } from '../utils/ApiError.js';
 import StudentFCMToken from '../db/models/studentFCMToken.model.js';
+import httpStatus from 'http-status';
 
 const addStudentFCMTokens = asyncHandler(async (req, res) => {
     const { studentId, fcmToken } = req.body;
@@ -13,7 +14,7 @@ const addStudentFCMTokens = asyncHandler(async (req, res) => {
     const student = await Student.findByPk(studentId);
 
     if (!student) {
-        throw new ApiError(404, "Student not found");
+        throw new ApiError(httpStatus.NOT_FOUND, "Student not found");
     }
 
     const studentFCMToken = await StudentFCMToken.findOne({
@@ -24,7 +25,7 @@ const addStudentFCMTokens = asyncHandler(async (req, res) => {
     })
 
     if (studentFCMToken) {
-        throw new ApiError(400, "FCM token is already added for this student");
+        throw new ApiError(httpStatus.CONFLICT, "FCM token is already added for this student");
     }
 
     const studentFCMTokenEntry = await StudentFCMToken.create({
@@ -33,10 +34,10 @@ const addStudentFCMTokens = asyncHandler(async (req, res) => {
     });
 
     res
-        .status(200)
+        .status(httpStatus.CREATED)
         .json(
             new ApiResponse(
-                200,
+                httpStatus.CREATED,
                 "FCM token added successfully",
                 studentFCMTokenEntry
             )
@@ -52,7 +53,7 @@ const updateStudentFCMTokens = asyncHandler(async (req, res) => {
     const student = await Student.findByPk(studentId);
 
     if (!student) {
-        throw new ApiError(404, "Student not found");
+        throw new ApiError(httpStatus.NOT_FOUND, "Student not found");
     }
 
     const studentFCMToken = await StudentFCMToken.findOne({
@@ -63,7 +64,7 @@ const updateStudentFCMTokens = asyncHandler(async (req, res) => {
     })
 
     if (!studentFCMToken) {
-        throw new ApiError(404, "FCM token is not added for this student");
+        throw new ApiError(httpStatus.NOT_FOUND, "FCM token is not added for this student");
     }
 
     studentFCMToken.fcmToken = fcmToken;
@@ -71,10 +72,10 @@ const updateStudentFCMTokens = asyncHandler(async (req, res) => {
     await studentFCMToken.save();
 
     res
-        .status(200)
+        .status(httpStatus.OK)
         .json(
             new ApiResponse(
-                200,
+                httpStatus.OK,
                 "FCM token updated successfully",
                 studentFCMToken
             )
@@ -89,7 +90,7 @@ const removeStudentFCMTokens = asyncHandler(async (req, res) => {
     const student = await Student.findByPk(studentId);
 
     if (!student) {
-        throw new ApiError(404, "Student not found");
+        throw new ApiError(httpStatus.NOT_FOUND, "Student not found");
     }
 
     const studentFCMToken = await StudentFCMToken.findOne({
@@ -99,16 +100,16 @@ const removeStudentFCMTokens = asyncHandler(async (req, res) => {
     })
 
     if (!studentFCMToken) {
-        throw new ApiError(404, "FCM token is not added for this student");
+        throw new ApiError(httpStatus.NOT_FOUND, "FCM token is not added for this student");
     }
 
     await studentFCMToken.destroy();
 
     res
-        .status(200)
+        .status(httpStatus.OK)
         .json(
             new ApiResponse(
-                200,
+                httpStatus.OK,
                 "FCM token deleted successfully",
                 null
             )

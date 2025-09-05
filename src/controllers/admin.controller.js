@@ -9,6 +9,7 @@ import { getAdminsSchema, emailSchema } from '../validators/admin.validators.js'
 import crypto from 'crypto';
 import jwt from 'jsonwebtoken'
 import { type } from 'os';
+import httpStatus from 'http-status';
 
 
 //* generate verfication code for verifying email and forgot password
@@ -41,14 +42,14 @@ const addAdmin = asyncHandler(async (req, res) => {
     const newAdmin = await Admin.findOne({ email })
 
     if (!newAdmin) {
-        throw new ApiError(500, "Some issue occuered while adding admin")
+        throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, "Some issue occuered while adding admin")
     }
 
     res
-        .status(201)
+        .status(httpStatus.CREATED)
         .json(
             new ApiResponse(
-                201,
+                httpStatus.CREATED,
                 'Admin added successfully',
                 newAdmin
             )
@@ -62,7 +63,7 @@ const updateAdminDetails = asyncHandler(async (req, res) => {
     const { email, username } = req.body;
 
     if (req.admin.username == username && req.admin.email == email) {
-        throw new ApiError(400, "No changes detected. The username and email are the same as the current ones.")
+        throw new ApiError(httpStatus.BAD_REQUEST, "No changes detected. The username and email are the same as the current ones.")
     }
 
     const admin = await Admin.findByPk(req.admin.id);
@@ -72,10 +73,10 @@ const updateAdminDetails = asyncHandler(async (req, res) => {
     await admin.save();
 
     res
-        .status(200)
+        .status(httpStatus.OK)
         .json(
             new ApiResponse(
-                200,
+                httpStatus.OK,
                 "Admin details updated successfully",
                 admin
             )
@@ -91,18 +92,18 @@ const removeAdmin = asyncHandler(async (req, res) => {
     const admin = await Admin.findByPk(req.admin.id);
 
     if (!admin) {
-        throw new ApiError(404, "Admin not found");
+        throw new ApiError(httpStatus.NOT_FOUND, "Admin not found");
     }
 
     await admin.destroy();
 
     res
-        .status(200)
+        .status(httpStatus.OK)
         .clearCookie("adminAccessToken")
         .clearCookie("adminRefreshToken")
         .json(
             new ApiResponse(
-                200,
+                httpStatus.OK,
                 "Admin account deleted successfully",
                 "If you are not accessing this api from a browser then you must manually remove the tokens stored"
             )
@@ -154,10 +155,10 @@ const getAdmins = asyncHandler(async (req, res) => {
 
     // Return the list of admins
     res
-        .status(200)
+        .status(httpStatus.OK)
         .json(
             new ApiResponse(
-                200,
+                httpStatus.OK,
                 "Admins retrieved successfully.",
                 admins
             )
@@ -172,12 +173,12 @@ const getAdminDetails = asyncHandler(async (req, res) => {
     const admin = await Admin.scope("withPassword").findByPk(req.admin.id);
 
     if (!admin) {
-        throw new ApiError(400, "Admin not found")
+        throw new ApiError(httpStatus.NOT_FOUND, "Admin not found")
     }
 
-    res.status(200).json(
+    res.status(httpStatus.OK).json(
         new ApiResponse(
-            200,
+            httpStatus.OK,
             "Admin details retrieved successfully",
             admin
         )

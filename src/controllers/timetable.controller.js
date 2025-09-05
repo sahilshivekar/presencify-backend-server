@@ -7,6 +7,7 @@ import { Op } from 'sequelize';
 import Branch from '../db/models/branch.model.js';
 import Semester from '../db/models/semester.model.js';
 import Scheme from '../db/models/scheme.model.js';
+import httpStatus from 'http-status';
 
 //! Get all timetables
 const getTimetables = asyncHandler(async (req, res) => {
@@ -78,7 +79,7 @@ const getTimetables = asyncHandler(async (req, res) => {
         limit: parseInt(limit, 10)
     });
 
-    res.status(200).json(new ApiResponse(200, "Timetables retrieved successfully.", {
+    res.status(httpStatus.OK).json(new ApiResponse(httpStatus.OK, "Timetables retrieved successfully.", {
         timetables: timetables.rows,
         totalCount: timetables.count
     }));
@@ -118,13 +119,13 @@ const getTimetableById = asyncHandler(async (req, res) => {
         ]
     });
 
-    if (!timetable) throw new ApiError(404, "Timetable not found");
+    if (!timetable) throw new ApiError(httpStatus.NOT_FOUND, "Timetable not found");
 
     res
-        .status(200)
+        .status(httpStatus.OK)
         .json(
             new ApiResponse(
-                200,
+                httpStatus.OK,
                 "Timetable fetched successfully",
                 timetable
             )
@@ -141,7 +142,7 @@ const addTimetable = asyncHandler(async (req, res) => {
     const division = await Division.findByPk(divisionId);
 
     if (!division) {
-        throw new ApiError(404, "Division not found");
+        throw new ApiError(httpStatus.NOT_FOUND, "Division not found");
     }
 
     const timetable = await Timetable.create({
@@ -149,7 +150,7 @@ const addTimetable = asyncHandler(async (req, res) => {
         timetableVersion: timetableVersion
     });
 
-    res.status(201).json(new ApiResponse(201, "Timetable added successfully", timetable));
+    res.status(httpStatus.CREATED).json(new ApiResponse(httpStatus.CREATED, "Timetable added successfully", timetable));
 });
 
 //* Update timetable
@@ -160,18 +161,18 @@ const updateTimetable = asyncHandler(async (req, res) => {
     const timetable = await Timetable.findByPk(id);
 
     if (!timetable) {
-        throw new ApiError(404, "Timetable not found");
+        throw new ApiError(httpStatus.NOT_FOUND, "Timetable not found");
     }
 
     if (timetable.timetableVersion >= timetableVersion) {
-        throw new ApiError(400, "Timetable version must be greater than current version");
+        throw new ApiError(httpStatus.BAD_REQUEST, "Timetable version must be greater than current version");
     }
 
     timetable.timetableVersion = timetableVersion;
 
     await timetable.save();
 
-    res.status(200).json(new ApiResponse(200, "Timetable updated successfully", timetable));
+    res.status(httpStatus.OK).json(new ApiResponse(httpStatus.OK, "Timetable updated successfully", timetable));
 });
 
 //* Remove timetable
@@ -181,12 +182,12 @@ const removeTimetable = asyncHandler(async (req, res) => {
     const timetable = await Timetable.findByPk(id);
 
     if (!timetable) {
-        throw new ApiError(404, "Timetable not found");
+        throw new ApiError(httpStatus.NOT_FOUND, "Timetable not found");
     }
 
     await timetable.destroy();
 
-    res.status(200).json(new ApiResponse(200, "Timetable deleted successfully", null));
+    res.status(httpStatus.NO_CONTENT).json(new ApiResponse(httpStatus.NO_CONTENT, "Timetable deleted successfully", null));
 });
 
 export {

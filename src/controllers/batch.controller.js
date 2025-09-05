@@ -7,6 +7,7 @@ import { ApiResponse } from '../utils/ApiResponse.js';
 import Branch from '../db/models/branch.model.js';
 import Scheme from '../db/models/scheme.model.js';
 import Division from '../db/models/division.model.js';
+import httpStatus from 'http-status';
 
 const getBatches = asyncHandler(async (req, res) => {
     const {
@@ -93,7 +94,7 @@ const getBatches = asyncHandler(async (req, res) => {
         ...(limit && getAll === false ? { limit } : {})
     });
     
-    res.status(200).json(new ApiResponse(200, "Batches fetched successfully", {
+    res.status(httpStatus.OK).json(new ApiResponse(httpStatus.OK, "Batches fetched successfully", {
         batches: batches.rows,
         totalCount: batches.count
     }));
@@ -130,14 +131,14 @@ const getBatchById = asyncHandler(async (req, res) => {
     });
 
     if (!batch) {
-        throw new ApiError(404, "Batch not found");
+        throw new ApiError(httpStatus.NOT_FOUND, "Batch not found");
     }
 
     res
-        .status(200)
+        .status(httpStatus.OK)
         .json(
             new ApiResponse(
-                200,
+                httpStatus.OK,
                 "Batch retrieved successfully",
                 batch
             )
@@ -154,7 +155,7 @@ const addBatch = asyncHandler(async (req, res) => {
 
     const semester = await Semester.findByPk(semesterId);
     if (!semester) {
-        throw new ApiError(404, "Semester not found");
+        throw new ApiError(httpStatus.NOT_FOUND, "Semester not found");
     }
 
     const batch = await Batch.create({
@@ -163,10 +164,10 @@ const addBatch = asyncHandler(async (req, res) => {
     });
 
     if (!batch) {
-        throw new ApiError(500, "Some issue occured while adding batch");
+        throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, "Some issue occured while adding batch");
     }
 
-    res.status(201).json(new ApiResponse(201, "Batch added successfully", { batch }));
+    res.status(httpStatus.CREATED).json(new ApiResponse(httpStatus.CREATED, "Batch added successfully", { batch }));
 });
 
 const updateBatch = asyncHandler(async (req, res) => {
@@ -176,14 +177,14 @@ const updateBatch = asyncHandler(async (req, res) => {
     const batch = await Batch.findByPk(id);
 
     if (!batch) {
-        throw new ApiError(404, "Batch not found");
+        throw new ApiError(httpStatus.NOT_FOUND, "Batch not found");
     }
 
     batch.batchCode = batchCode;
 
     await batch.save();
 
-    res.status(200).json(new ApiResponse(200, "Batch updated successfully", batch));
+    res.status(httpStatus.OK).json(new ApiResponse(httpStatus.OK, "Batch updated successfully", batch));
 });
 
 
@@ -193,12 +194,12 @@ const removeBatch = asyncHandler(async (req, res) => {
     const batch = await Batch.findByPk(id);
 
     if (!batch) {
-        throw new ApiError(404, "Batch not found");
+        throw new ApiError(httpStatus.NOT_FOUND, "Batch not found");
     }
 
     await batch.destroy();
 
-    res.status(200).json(new ApiResponse(200, "Batch deleted successfully", null));
+    res.status(httpStatus.OK).json(new ApiResponse(httpStatus.OK, "Batch deleted successfully", null));
 });
 
 export {

@@ -8,6 +8,7 @@ import { sendVerificationCode } from '../utils/email.js';
 import crypto from 'crypto';
 import jwt from 'jsonwebtoken'
 import { type } from 'os';
+import httpStatus from 'http-status';
 
 
 //* generate verfication code for verifying email and forgot password
@@ -34,7 +35,7 @@ const generateAccessAndRefreshTokens = async (student) => {
         return { newAccessToken, newRefreshToken }
     } catch (err) {
         console.log(err)
-        throw new ApiError(500, "Something went wrong while generating tokens")
+        throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, "Something went wrong while generating tokens")
     }
 }
 
@@ -49,7 +50,7 @@ const getAccessToken = asyncHandler(async (req, res) => {
     let studentId;
     jwt.verify(actualRefreshToken, process.env.JWT_REFRESH_TOKEN_SECRET, (err, decoded) => {
         if (err) {
-            throw new ApiError(401, "Invalid refresh token") // Token invalid or expired
+            throw new ApiError(httpStatus.UNAUTHORIZED, "Invalid refresh token") // Token invalid or expired
         }
         studentId = decoded.id;
     });
@@ -57,7 +58,7 @@ const getAccessToken = asyncHandler(async (req, res) => {
     const student = await Student.findByPk(studentId);
 
     if (!student) {
-        throw new ApiError(401, "Student with this refresh token doesn't exist")
+        throw new ApiError(httpStatus.UNAUTHORIZED, "Student with this refresh token doesn't exist")
     }
 
     const { newAccessToken, newRefreshToken } = await generateAccessAndRefreshTokens(student)
@@ -67,7 +68,7 @@ const getAccessToken = asyncHandler(async (req, res) => {
     await student.save();
 
     res
-        .status(200)
+        .status(httpStatus.OK)
         .cookie("studentAccessToken", newAccessToken, {
             ...options,
             maxAge: 86400000 /** bcz access token expiray is 1 day  */
@@ -78,7 +79,7 @@ const getAccessToken = asyncHandler(async (req, res) => {
         })
         .json(
             new ApiResponse(
-                200,
+                httpStatus.OK,
                 "Access token refreshed successfully",
                 {
                     accessToken: newAccessToken,
@@ -104,13 +105,13 @@ const loginStudent = asyncHandler(async (req, res) => {
     })
 
     if (!student) {
-        throw new ApiError(404, "No student found with entered credentials")
+        throw new ApiError(httpStatus.NOT_FOUND, "No student found with entered credentials")
     }
 
     const isPasswordMatching = await student.isPasswordMatching(password);
 
     if (!isPasswordMatching) {
-        throw new ApiError(400, "Password didn't match")
+        throw new ApiError(httpStatus.UNAUTHORIZED, "Password didn't match")
     }
 
     const { newAccessToken, newRefreshToken } = await generateAccessAndRefreshTokens(student);
@@ -124,7 +125,7 @@ const loginStudent = asyncHandler(async (req, res) => {
     delete student.dataValues.refreshToken;
 
     res
-        .status(200)
+        .status(httpStatus.OK)
         .cookie("studentAccessToken", newAccessToken, {
             ...options,
             maxAge: 86400000 /** bcz access token expiray is 1 day  */
@@ -135,7 +136,7 @@ const loginStudent = asyncHandler(async (req, res) => {
         })
         .json(
             new ApiResponse(
-                200,
+                httpStatus.OK,
                 "Login Successful",
                 {
                     student: student, accessToken: newAccessToken, refreshToken: newRefreshToken
@@ -154,22 +155,22 @@ const updateStudentPassword = asyncHandler(async (req, res) => {
     const student = await Student.findByPk(req.student.id);
 
     if (!student) {
-        throw new ApiError(404, "Student not found");
+        throw new ApiError(httpStatus.NOT_FOUND, "Student not found");
     }
 
     const isPasswordMatching = await student.isPasswordMatching(password);
 
     if (isPasswordMatching) {
-        throw new ApiError(400, "New password can't be same as old password.")
+        throw new ApiError(httpStatus.BAD_REQUEST, "New password can't be same as old password.")
     }
 
     student.password = password;
 
     await student.save();
 
-    res.status(200).json(
+    res.status(httpStatus.OK).json(
         new ApiResponse(
-            200,
+            httpStatus.OK,
             "Password updated successfully",
             null
         )
@@ -192,12 +193,12 @@ const logout = asyncHandler(async (req, res) => {
     )
 
     res
-        .status(200)
+        .status(httpStatus.OK)
         .clearCookie('studentAccessToken')
         .clearCookie('studentRefreshToken')
         .json(
             new ApiResponse(
-                200,
+                httpStatus.OK,
                 "Logged out successfully",
                 "If you are not accessing this api from a browser then you must manually remove the tokens stored"
             )
@@ -216,7 +217,7 @@ const sendVerificationCodeToEmail = asyncHandler(async (req, res) => {
     const student = await Student.findOne({ where: { email } })
 
     if (!student) {
-        throw new ApiError(400, "Student with this email doesn't exists")
+        throw new ApiError(httpStatus.NOT_FOUND, "Student with this email doesn't exists")
     }
 
     // Generate a random verification code (e.g., 6 digits)
@@ -231,14 +232,14 @@ const sendVerificationCodeToEmail = asyncHandler(async (req, res) => {
     })
 
     if (!record) {
-        throw new ApiError(500, "Some issue occured while generating code")
+        throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, "Some issue occured while generating code")
     }
 
     // Call the email utility function to send the email
     const emailSent = await sendVerificationCode(email, code);
 
     if (!emailSent) {
-        throw new ApiError(500, "Error sending verification email");
+        throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, "Error sending verification email");
     }
 
     setTimeout(
@@ -255,10 +256,10 @@ const sendVerificationCodeToEmail = asyncHandler(async (req, res) => {
 
 
     res
-        .status(200)
+        .status(httpStatus.OK)
         .json(
             new ApiResponse(
-                200,
+                httpStatus.OK,
                 `Verification code sent on ${student.email}`,
                 {
                     expiresAt
@@ -282,7 +283,7 @@ const verifyCode = asyncHandler(async (req, res) => {
     })
 
     if (!codeRecord) {
-        throw new ApiError(400, "Invalid verification code")
+        throw new ApiError(httpStatus.UNAUTHORIZED, "Invalid verification code")
     }
 
     const student = await Student.findOne({ where: { email:email.toLowerCase() } })
@@ -301,7 +302,7 @@ const verifyCode = asyncHandler(async (req, res) => {
 
 
     res
-        .status(200)
+        .status(httpStatus.OK)
         .cookie("studentAccessToken", newAccessToken, {
             ...options,
             maxAge: 86400000 /** bcz access token expiray is 1 day  */
@@ -312,7 +313,7 @@ const verifyCode = asyncHandler(async (req, res) => {
         })
         .json(
             new ApiResponse(
-                200,
+                httpStatus.OK,
                 "Verification successful!",
                 {
                     accessToken: newAccessToken, refreshToken: newRefreshToken

@@ -18,6 +18,7 @@ import Batch from '../db/models/batch.model.js';
 import { get } from 'http';
 import { getDateStringFromObj } from "../utils/date.js";
 import Dropout from '../db/models/dropout.model.js'
+import httpStatus from 'http-status';
 
 //* Get all students
 const getStudents = asyncHandler(async (req, res) => {
@@ -252,10 +253,10 @@ const getStudents = asyncHandler(async (req, res) => {
     });
 
     res
-        .status(200)
+        .status(httpStatus.OK)
         .json(
             new ApiResponse(
-                200,
+                httpStatus.OK,
                 "Students retrieved successfully.",
                 {
                     students: students.rows,
@@ -291,19 +292,19 @@ const addStudent = asyncHandler(async (req, res) => {
 
     if (existingStudent) {
         if (studentImageLocalPath) fs.unlinkSync(studentImageLocalPath);
-        throw new ApiError(400, "A student with this email already exists");
+        throw new ApiError(httpStatus.BAD_REQUEST, "A student with this email already exists");
     }
 
     const scheme = await Scheme.findByPk(schemeId)
     if (!scheme) {
         if (studentImageLocalPath) fs.unlinkSync(studentImageLocalPath);
-        throw new ApiError(404, "Scheme not found")
+        throw new ApiError(httpStatus.NOT_FOUND, "Scheme not found")
     }
 
     const branch = await Branch.findByPk(branchId)
     if (!branch) {
         if (studentImageLocalPath) fs.unlinkSync(studentImageLocalPath);
-        throw new ApiError(404, "Branch not found")
+        throw new ApiError(httpStatus.NOT_FOUND, "Branch not found")
     }
 
     let studentImageUrl = null;
@@ -312,7 +313,7 @@ const addStudent = asyncHandler(async (req, res) => {
     if (studentImageLocalPath) {
         const studentImage = await uploadOnCloudinary(studentImageLocalPath);
         if (!studentImage?.url) {
-            throw new ApiError(500, "Error uploading image");
+            throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, "Error uploading image");
         }
         studentImageUrl = studentImage.secure_url;
         studentImagePublicId = studentImage.public_id;
@@ -323,7 +324,7 @@ const addStudent = asyncHandler(async (req, res) => {
         dobForDB = moment(dob, "YYYY/MM/DD").toDate();
 
         if (new Date() < dobForDB) {
-            throw new ApiError(400, "Date of birth cannot be in the future")
+            throw new ApiError(httpStatus.BAD_REQUEST, "Date of birth cannot be in the future")
         }
     }
     const addedStudent = await Student.create({
@@ -347,7 +348,7 @@ const addStudent = asyncHandler(async (req, res) => {
         console.log("student added")
         console.log(addedStudent)
     }
-    res.status(201).json(new ApiResponse(201, "Student added successfully", addedStudent));
+    res.status(httpStatus.CREATED).json(new ApiResponse(httpStatus.CREATED, "Student added successfully", addedStudent));
 });
 
 
@@ -373,28 +374,28 @@ const updateStudentDetails = asyncHandler(async (req, res) => {
     // Remove input validation, assume already validated
 
     const student = await Student.findByPk(id);
-    if (!student) throw new ApiError(404, "Student not found");
+    if (!student) throw new ApiError(httpStatus.NOT_FOUND, "Student not found");
 
     let dobForDB = null
     if (dob) {
         dobForDB = moment(dob, "YYYY/MM/DD").toDate();
 
         if (new Date() < dobForDB) {
-            throw new ApiError(400, "Date of birth cannot be in the future")
+            throw new ApiError(httpStatus.BAD_REQUEST, "Date of birth cannot be in the future")
         }
     }
 
     if (schemeId) {
         const scheme = await Scheme.findByPk(schemeId)
         if (!scheme) {
-            throw new ApiError(404, "Scheme not found")
+            throw new ApiError(httpStatus.NOT_FOUND, "Scheme not found")
         }
     }
 
     if (branchId) {
         const branch = await Branch.findByPk(branchId)
         if (!branch) {
-            throw new ApiError(404, "Branch not found")
+            throw new ApiError(httpStatus.NOT_FOUND, "Branch not found")
         }
     }
 
@@ -414,7 +415,7 @@ const updateStudentDetails = asyncHandler(async (req, res) => {
 
     await student.save();
 
-    res.status(200).json(new ApiResponse(200, "Student updated successfully", student));
+    res.status(httpStatus.OK).json(new ApiResponse(httpStatus.OK, "Student updated successfully", student));
 });
 
 //* Update student password
@@ -424,12 +425,12 @@ const updateStudentPassword = asyncHandler(async (req, res) => {
     // Remove input validation, assume already validated
 
     const student = await Student.findByPk(id);
-    if (!student) throw new ApiError(404, "Student not found");
+    if (!student) throw new ApiError(httpStatus.NOT_FOUND, "Student not found");
 
     student.password = password;
     await student.save();
 
-    res.status(200).json(new ApiResponse(200, "Student password updated successfully", student));
+    res.status(httpStatus.OK).json(new ApiResponse(httpStatus.OK, "Student password updated successfully", student));
 });
 
 //* Update student image
@@ -442,20 +443,20 @@ const updateStudentImage = asyncHandler(async (req, res) => {
     const student = await Student.findByPk(id);
     if (!student) {
         if (studentImageLocalPath) fs.unlinkSync(studentImageLocalPath);
-        throw new ApiError(404, "Student not found");
+        throw new ApiError(httpStatus.NOT_FOUND, "Student not found");
     }
 
-    if (!studentImageLocalPath) throw new ApiError(400, "Student image file is required");
+    if (!studentImageLocalPath) throw new ApiError(httpStatus.BAD_REQUEST, "Student image file is required");
 
     const uploadedImageResponse = await uploadOnCloudinary(studentImageLocalPath);
-    if (!uploadedImageResponse?.url) throw new ApiError(500, "Error uploading image");
+    if (!uploadedImageResponse?.url) throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, "Error uploading image");
 
     student.studentImgUrl = uploadedImageResponse.secure_url;
     student.studentImgPublicId = uploadedImageResponse.public_id;
 
     await student.save();
 
-    res.status(200).json(new ApiResponse(200, "Student image updated successfully", student));
+    res.status(httpStatus.OK).json(new ApiResponse(httpStatus.OK, "Student image updated successfully", student));
 });
 
 //* Remove student image
@@ -465,18 +466,18 @@ const removeStudentImage = asyncHandler(async (req, res) => {
     // Remove input validation, assume already validated
     
     const student = await Student.findByPk(studentId);
-    if (!student) throw new ApiError(404, "Student not found");
+    if (!student) throw new ApiError(httpStatus.NOT_FOUND, "Student not found");
 
-    if (student.studentImgPublicId == null) throw new ApiError(400, "There is no student image uploaded to remove");
+    if (student.studentImgPublicId == null) throw new ApiError(httpStatus.BAD_REQUEST, "There is no student image uploaded to remove");
     const deletedImage = await deleteFromCloudinary(student.studentImgPublicId);
-    if (!deletedImage) throw new ApiError(500, "Error deleting image");
+    if (!deletedImage) throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, "Error deleting image");
 
     student.studentImgUrl = null;
     student.studentImgPublicId = null;
 
     await student.save();
     console.log(student)
-    res.status(200).json(new ApiResponse(200, "Student image deleted successfully", student));
+    res.status(httpStatus.OK).json(new ApiResponse(httpStatus.OK, "Student image deleted successfully", student));
 });
 
 //* Remove student
@@ -486,12 +487,12 @@ const removeStudent = asyncHandler(async (req, res) => {
     // Remove input validation, assume already validated
 
     const student = await Student.findByPk(id);
-    if (!student) throw new ApiError(404, "Student not found");
+    if (!student) throw new ApiError(httpStatus.NOT_FOUND, "Student not found");
 
     await deleteFromCloudinary(student.studentImagePublicId);
     await student.destroy();
 
-    res.status(200).json(new ApiResponse(200, "Student deleted successfully", null));
+    res.status(httpStatus.OK).json(new ApiResponse(httpStatus.OK, "Student deleted successfully", null));
 });
 
 const getStudentDetailsById = asyncHandler(async (req, res) => {
@@ -515,13 +516,13 @@ const getStudentDetailsById = asyncHandler(async (req, res) => {
         ]
     });
     console.log(student)
-    if (!student) throw new ApiError(404, "Student not found");
+    if (!student) throw new ApiError(httpStatus.NOT_FOUND, "Student not found");
 
     res
-        .status(200)
+        .status(httpStatus.OK)
         .json(
             new ApiResponse(
-                200,
+                httpStatus.OK,
                 "Student fetched successfully",
                 student
             )
@@ -536,7 +537,7 @@ const getStudentSemestersById = asyncHandler(async (req, res) => {
 
     const student = await Student.findByPk(studentId);
 
-    if (!student) throw new ApiError(404, "Student not found");
+    if (!student) throw new ApiError(httpStatus.NOT_FOUND, "Student not found");
 
     const studentSemesters = await StudentSemester.findAll({
         where: {
@@ -551,10 +552,10 @@ const getStudentSemestersById = asyncHandler(async (req, res) => {
     });
 
     res
-        .status(200)
+        .status(httpStatus.OK)
         .json(
             new ApiResponse(
-                200,
+                httpStatus.OK,
                 "Student fetched successfully",
                 studentSemesters
             )
@@ -568,7 +569,7 @@ const getStudentDivisionsById = asyncHandler(async (req, res) => {
 
     const student = await Student.findByPk(studentId);
 
-    if (!student) throw new ApiError(404, "Student not found");
+    if (!student) throw new ApiError(httpStatus.NOT_FOUND, "Student not found");
 
     const semesterNumberClause = {}
 
@@ -596,10 +597,10 @@ const getStudentDivisionsById = asyncHandler(async (req, res) => {
     });
 
     res
-        .status(200)
+        .status(httpStatus.OK)
         .json(
             new ApiResponse(
-                200,
+                httpStatus.OK,
                 "Student's divisions fetched successfully",
                 studentDivisions
             )
@@ -613,7 +614,7 @@ const getStudentBatchesById = asyncHandler(async (req, res) => {
 
     const student = await Student.findByPk(studentId);
 
-    if (!student) throw new ApiError(404, "Student not found");
+    if (!student) throw new ApiError(httpStatus.NOT_FOUND, "Student not found");
 
     const semesterNumberClause = {}
 
@@ -647,10 +648,10 @@ const getStudentBatchesById = asyncHandler(async (req, res) => {
     });
 
     res
-        .status(200)
+        .status(httpStatus.OK)
         .json(
             new ApiResponse(
-                200,
+                httpStatus.OK,
                 "Student's batches fetched successfully",
                 studentBatches
             )
@@ -666,18 +667,18 @@ const addStudentToSemester = asyncHandler(async (req, res) => {
     const student = await Student.findByPk(studentId);
 
     if (!student) {
-        throw new ApiError(404, "Student not found");
+        throw new ApiError(httpStatus.NOT_FOUND, "Student not found");
     }
 
     const semester = await Semester.findByPk(semesterId);
 
     if (!semester) {
-        throw new ApiError(404, "Semester not found");
+        throw new ApiError(httpStatus.NOT_FOUND, "Semester not found");
     }
 
 
     if (student.branchId !== semester.branchId) {
-        throw new ApiError(400, `Student is not present in the same branch as the semester`)
+        throw new ApiError(httpStatus.BAD_REQUEST, `Student is not present in the same branch as the semester`)
     }
 
     const alreadyExists = await StudentSemester.findOne({
@@ -688,7 +689,7 @@ const addStudentToSemester = asyncHandler(async (req, res) => {
     });
 
     if (alreadyExists) {
-        throw new ApiError(400, `Student is already present in this semester`);
+        throw new ApiError(httpStatus.BAD_REQUEST, `Student is already present in this semester`);
     }
 
     const semesterNumberToAdd = semester.semesterNumber;
@@ -737,7 +738,7 @@ const addStudentToSemester = asyncHandler(async (req, res) => {
     });
 
     if (alreadyExistsInOtherSemesterForSameAcademicYear) {
-        throw new ApiError(400, `Student is already added in other semester of another year for the same academic year`);
+        throw new ApiError(httpStatus.BAD_REQUEST, `Student is already added in other semester of another year for the same academic year`);
     }
 
     // check if student is in dropout for same semester academic year
@@ -750,7 +751,7 @@ const addStudentToSemester = asyncHandler(async (req, res) => {
     })
 
     if (studentDropout) {
-        throw new ApiError(400, `Student is in drop-out list for the same academic year of semester's`)
+        throw new ApiError(httpStatus.BAD_REQUEST, `Student is in drop-out list for the same academic year of semester's`)
     }
 
     const studentSemesterEntry = await StudentSemester.create({
@@ -759,10 +760,10 @@ const addStudentToSemester = asyncHandler(async (req, res) => {
     });
 
     res
-        .status(200)
+        .status(httpStatus.OK)
         .json(
             new ApiResponse(
-                200,
+                httpStatus.OK,
                 "Student added successfully",
                 studentSemesterEntry
             )
@@ -777,7 +778,7 @@ const removeStudentFromSemester = asyncHandler(async (req, res) => {
     const studentSemester = await StudentSemester.findByPk(studentSemesterId);
 
     if (!studentSemester) {
-        throw new ApiError(404, "StudentSemester not found");
+        throw new ApiError(httpStatus.NOT_FOUND, "StudentSemester not found");
     }
     const divisionsThatBelongToThisSemester = await Division.findAll({
         where: {
@@ -813,16 +814,16 @@ const removeStudentFromSemester = asyncHandler(async (req, res) => {
     })
 
     if (!studentSemester) {
-        throw new ApiError(404, "StudentSemester entry with given Id is not found");
+        throw new ApiError(httpStatus.NOT_FOUND, "StudentSemester entry with given Id is not found");
     }
 
     await studentSemester.destroy();
 
     res
-        .status(200)
+        .status(httpStatus.OK)
         .json(
             new ApiResponse(
-                200,
+                httpStatus.OK,
                 `Student is removed from the semester`,
                 null
             )
@@ -837,7 +838,7 @@ const addStudentToDivision = asyncHandler(async (req, res) => {
     const student = await Student.findByPk(studentId);
 
     if (!student) {
-        throw new ApiError(404, "Student not found");
+        throw new ApiError(httpStatus.NOT_FOUND, "Student not found");
     }
 
     const division = await Division.findByPk(divisionId);
@@ -852,7 +853,7 @@ const addStudentToDivision = asyncHandler(async (req, res) => {
     });
 
     if (!isStudentInSameSemesterAsDivision) {
-        throw new ApiError(400, "Student is not present in the same semester as the division")
+        throw new ApiError(httpStatus.BAD_REQUEST, "Student is not present in the same semester as the division")
     }
 
     const alreadyExists = await StudentDivision.findOne({
@@ -864,7 +865,7 @@ const addStudentToDivision = asyncHandler(async (req, res) => {
     });
 
     if (alreadyExists) {
-        throw new ApiError(400, "Student is already present in this division")
+        throw new ApiError(httpStatus.BAD_REQUEST, "Student is already present in this division")
     }
 
     const divisionsOfTheSemester = await Division.findAll({
@@ -887,7 +888,7 @@ const addStudentToDivision = asyncHandler(async (req, res) => {
     })
 
     if (studentPresentInOtherDivisions) {
-        throw new ApiError(400, "Student is already present in other divisions of the same semester. Please use the change division feature for moving student to different divsion.")
+        throw new ApiError(httpStatus.BAD_REQUEST, "Student is already present in other divisions of the same semester. Please use the change division feature for moving student to different divsion.")
     }
 
     const studentDivisionEntry = await StudentDivision.create({
@@ -898,10 +899,10 @@ const addStudentToDivision = asyncHandler(async (req, res) => {
 
 
     res
-        .status(200)
+        .status(httpStatus.OK)
         .json(
             new ApiResponse(
-                200,
+                httpStatus.OK,
                 "Student added successfully",
                 studentDivisionEntry
             )
@@ -917,22 +918,22 @@ const changeStudentDivision = asyncHandler(async (req, res) => {
     const studentDivision = await StudentDivision.findByPk(studentDivisionId);
 
     if (!studentDivision) {
-        throw new Error("Student's previous division is not found");
+        throw new ApiError(httpStatus.NOT_FOUND, "Student's previous division is not found");
     }
 
     if (studentDivision.endDate != null) {
-        throw new Error("Invalid previous division.");
+        throw new ApiError(httpStatus.BAD_REQUEST, "Invalid previous division.");
     }
 
     const division = await Division.findByPk(divisionId);
 
     if (!division) {
-        throw new Error("Division is not found");
+        throw new ApiError(httpStatus.NOT_FOUND, "Division is not found");
     }
 
 
     if (studentDivision.divisionId === divisionId) {
-        throw new Error("Student's new division can't be same as previous division");
+        throw new ApiError(httpStatus.BAD_REQUEST, "Student's new division can't be same as previous division");
     }
 
     const isStudentInSameSemesterAsDivision = await StudentSemester.findOne({
@@ -943,23 +944,23 @@ const changeStudentDivision = asyncHandler(async (req, res) => {
     });
 
     if (!isStudentInSameSemesterAsDivision) {
-        throw new ApiError(400, "Student is not present in the same semester as the new division")
+        throw new ApiError(httpStatus.BAD_REQUEST, "Student is not present in the same semester as the new division")
     }
 
     const startDateOfNewDivision = new Date(newDivisionStartDate);
 
     if (isNaN(startDateOfNewDivision.getTime())) {
-        throw new ApiError(400, "Invalid date format for new division start date");
+        throw new ApiError(httpStatus.BAD_REQUEST, "Invalid date format for new division start date");
     }
 
     const semester = await Semester.findByPk(division.semesterId);
 
     if (startDateOfNewDivision.toISOString().split('T')[0] <= studentDivision.startDate) {
-        throw new ApiError(400, "New division start date cannot be lesser than or same as previous division start date");
+        throw new ApiError(httpStatus.BAD_REQUEST, "New division start date cannot be lesser than or same as previous division start date");
     }
 
     if (startDateOfNewDivision.toISOString().split('T')[0] >= semester.endDate) {
-        throw new ApiError(400, "New division start date cannot be greater than end date of the semester");
+        throw new ApiError(httpStatus.BAD_REQUEST, "New division start date cannot be greater than end date of the semester");
     }
 
     const endDateOfPrevDivision = new Date(startDateOfNewDivision.getFullYear(), startDateOfNewDivision.getMonth(), startDateOfNewDivision.getDate() - 1);
@@ -1027,14 +1028,14 @@ const changeStudentDivision = asyncHandler(async (req, res) => {
     });
 
     if (!newStudentDivision) {
-        throw new ApiError(500, "Some issue occured while changing division");
+        throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, "Some issue occured while changing division");
     }
 
     res
-        .status(200)
+        .status(httpStatus.OK)
         .json(
             new ApiResponse(
-                200,
+                httpStatus.OK,
                 "Student's division is changed successfully",
                 newStudentDivision
             )
@@ -1050,13 +1051,13 @@ const addStudentToBatch = asyncHandler(async (req, res) => {
     const student = await Student.findByPk(studentId);
 
     if (!student) {
-        throw new ApiError(404, "Student not found");
+        throw new ApiError(httpStatus.NOT_FOUND, "Student not found");
     }
 
     const batch = await Batch.findByPk(batchId);
 
     if (!batch) {
-        throw new ApiError(404, "Batch not found");
+        throw new ApiError(httpStatus.NOT_FOUND, "Batch not found");
     }
 
     const isStudentInSameDivisionAsBatch = await StudentDivision.findOne({
@@ -1068,7 +1069,7 @@ const addStudentToBatch = asyncHandler(async (req, res) => {
     });
 
     if (!isStudentInSameDivisionAsBatch) {
-        throw new ApiError(400, "Student is not present in the same division as the batch")
+        throw new ApiError(httpStatus.BAD_REQUEST, "Student is not present in the same division as the batch")
     }
 
 
@@ -1081,7 +1082,7 @@ const addStudentToBatch = asyncHandler(async (req, res) => {
     });
 
     if (alreadyExists) {
-        throw new ApiError(400, "Student is already present in this batch")
+        throw new ApiError(httpStatus.BAD_REQUEST, "Student is already present in this batch")
     }
 
     const batchesOfTheDivision = await Batch.findAll({
@@ -1105,7 +1106,7 @@ const addStudentToBatch = asyncHandler(async (req, res) => {
     })
 
     if (studentPresentInOtherBatches) {
-        throw new ApiError(400, "Student is already present in other batches of the same division. Please use the change division feature for moving student to different batch.")
+        throw new ApiError(httpStatus.BAD_REQUEST, "Student is already present in other batches of the same division. Please use the change division feature for moving student to different batch.")
     }
 
     const studentBatchEntry = await StudentBatch.create({
@@ -1115,10 +1116,10 @@ const addStudentToBatch = asyncHandler(async (req, res) => {
     });
 
     res
-        .status(200)
+        .status(httpStatus.OK)
         .json(
             new ApiResponse(
-                200,
+                httpStatus.OK,
                 "Student added to batch successfully",
                 studentBatchEntry
             )
@@ -1135,21 +1136,21 @@ const changeStudentBatch = asyncHandler(async (req, res, next) => {
     const studentBatch = await StudentBatch.findByPk(studentBatchId);
 
     if (!studentBatch) {
-        throw new Error("Student's previous batch is not found");
+        throw new ApiError(httpStatus.NOT_FOUND, "Student's previous batch is not found");
     }
 
     if (studentBatch.endDate != null) {
-        throw new Error("Invalid previous batch.");
+        throw new ApiError(httpStatus.BAD_REQUEST, "Invalid previous batch.");
     }
 
     const batch = await Batch.findByPk(batchId);
 
     if (!batch) {
-        throw new Error("Batch is not found");
+        throw new ApiError(httpStatus.NOT_FOUND, "Batch is not found");
     }
 
     if (studentBatch.batchId === batchId) {
-        throw new Error("Student's new batch can't be same as previous batch");
+        throw new ApiError(httpStatus.BAD_REQUEST, "Student's new batch can't be same as previous batch");
     }
 
     const isStudentInSameDivisionAsBatch = await StudentDivision.findOne({
@@ -1161,7 +1162,7 @@ const changeStudentBatch = asyncHandler(async (req, res, next) => {
     });
 
     if (!isStudentInSameDivisionAsBatch) {
-        throw new ApiError(400, "Student is not present in the same division as the batch")
+        throw new ApiError(httpStatus.BAD_REQUEST, "Student is not present in the same division as the batch")
     }
 
     const division = await Division.findByPk(batch.divisionId);
@@ -1170,21 +1171,21 @@ const changeStudentBatch = asyncHandler(async (req, res, next) => {
     const startDateOfNewBatch = new Date(newBatchStartDate);
 
     if (isNaN(startDateOfNewBatch.getTime())) {
-        throw new ApiError(400, "Invalid date format for new division start date");
+        throw new ApiError(httpStatus.BAD_REQUEST, "Invalid date format for new division start date");
     }
 
     if (startDateOfNewBatch.toISOString().split('T')[0] > semester.endDate) {
-        throw new ApiError(400, "New batch start date cannot be greater than end date of the semester");
+        throw new ApiError(httpStatus.BAD_REQUEST, "New batch start date cannot be greater than end date of the semester");
     }
 
     if (startDateOfNewBatch.toISOString().split('T')[0] <= studentBatch.startDate) {
-        throw new ApiError(400, "New batch start date cannot be lesser than or same as previous batch start date");
+        throw new ApiError(httpStatus.BAD_REQUEST, "New batch start date cannot be lesser than or same as previous batch start date");
     }
 
     const endDateOfPrevBatch = new Date(startDateOfNewBatch.getFullYear(), startDateOfNewBatch.getMonth(), startDateOfNewBatch.getDate() - 1);
 
     if (studentBatch.startDate >= startDateOfNewBatch.toISOString().split('T')[0]) {
-        throw new ApiError(400, "New batch start date cannot be lesser than or same as previous batch start date");
+        throw new ApiError(httpStatus.BAD_REQUEST, "New batch start date cannot be lesser than or same as previous batch start date");
     }
 
     studentBatch.endDate = endDateOfPrevBatch;
@@ -1198,10 +1199,10 @@ const changeStudentBatch = asyncHandler(async (req, res, next) => {
     });
 
     res
-        .status(200)
+        .status(httpStatus.OK)
         .json(
             new ApiResponse(
-                200,
+                httpStatus.OK,
                 "Student's batch is changed successfully",
                 newStudentBatch
             )

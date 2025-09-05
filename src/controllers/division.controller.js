@@ -6,6 +6,7 @@ import { Op } from 'sequelize';
 import Semester from '../db/models/semester.model.js';
 import Branch from '../db/models/branch.model.js';
 import Scheme from '../db/models/scheme.model.js';
+import httpStatus from 'http-status';
 
 const getDivisions = asyncHandler(async (req, res) => {
     const {
@@ -84,7 +85,7 @@ const getDivisions = asyncHandler(async (req, res) => {
         ...(limit && getAll === false ? { limit } : {})
     });
 
-    res.status(200).json(new ApiResponse(200, "Divisions fetched successfully", {
+    res.status(httpStatus.OK).json(new ApiResponse(httpStatus.OK, "Divisions fetched successfully", {
         divisions: divisions.rows,
         totalCount: divisions.count
     }));
@@ -100,7 +101,7 @@ const addDivision = asyncHandler(async (req, res) => {
 
     const semester = await Semester.findByPk(semesterId);
     if (!semester) {
-        throw new ApiError(404, "Semester not found");
+        throw new ApiError(httpStatus.NOT_FOUND, "Semester not found");
     }
 
     const division = await Division.create({
@@ -109,10 +110,10 @@ const addDivision = asyncHandler(async (req, res) => {
     });
 
     if (!division) {
-        throw new ApiError(500, "Some issue occured while adding division");
+        throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, "Some issue occured while adding division");
     }
 
-    res.status(201).json(new ApiResponse(201, "Division added successfully", { division }));
+    res.status(httpStatus.CREATED).json(new ApiResponse(httpStatus.CREATED, "Division added successfully", { division }));
 });
 
 const updateDivision = asyncHandler(async (req, res) => {
@@ -124,14 +125,14 @@ const updateDivision = asyncHandler(async (req, res) => {
     const division = await Division.findByPk(id);
 
     if (!division) {
-        throw new ApiError(404, "Division not found");
+        throw new ApiError(httpStatus.NOT_FOUND, "Division not found");
     }
 
     division.divisionCode = divisionCode;
 
     await division.save();
 
-    res.status(200).json(new ApiResponse(200, "Division updated successfully", division));
+    res.status(httpStatus.OK).json(new ApiResponse(httpStatus.OK, "Division updated successfully", division));
 });
 
 const removeDivision = asyncHandler(async (req, res) => {
@@ -142,12 +143,12 @@ const removeDivision = asyncHandler(async (req, res) => {
     const division = await Division.findByPk(id);
 
     if (!division) {
-        throw new ApiError(404, "Division not found");
+        throw new ApiError(httpStatus.NOT_FOUND, "Division not found");
     }
 
     await division.destroy();
 
-    res.status(200).json(new ApiResponse(200, "Division deleted successfully", null));
+    res.status(httpStatus.OK).json(new ApiResponse(httpStatus.OK, "Division deleted successfully", null));
 });
 
 const getDivisionById = asyncHandler(async (req, res) => {
@@ -176,14 +177,14 @@ const getDivisionById = asyncHandler(async (req, res) => {
     });
 
     if (!division) {
-        throw new ApiError(404, "Division not found");
+        throw new ApiError(httpStatus.NOT_FOUND, "Division not found");
     }
 
     res
-        .status(200)
+        .status(httpStatus.OK)
         .json(
             new ApiResponse(
-                200,
+                httpStatus.OK,
                 "Division retrieved successfully",
                 division
             )

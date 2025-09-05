@@ -8,6 +8,7 @@ import fs from "fs"
 import Course from '../db/models/course.model.js';
 import TeacherTeachesCourse from '../db/models/teacherTeachesCourse.model.js';
 import Scheme from '../db/models/scheme.model.js';
+import httpStatus from 'http-status';
 
 // All input validation is now handled in @teacher.validation.js
 
@@ -23,7 +24,7 @@ const generateAccessAndRefreshTokens = async (teacher) => {
 
         return { newAccessToken, newRefreshToken };
     } catch (err) {
-        throw new ApiError(500, "Something went wrong while generating tokens");
+        throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, "Something went wrong while generating tokens");
     }
 };
 
@@ -105,10 +106,10 @@ const getTeacher = asyncHandler(async (req, res) => {
     });
     console.log(teacher.rows)
     res
-        .status(200)
+        .status(httpStatus.OK)
         .json(
             new ApiResponse(
-                200,
+                httpStatus.OK,
                 "Teachers retrieved successfully.",
                 {
                     teacher: teacher.rows,
@@ -127,14 +128,14 @@ const getTeacherById = asyncHandler(async (req, res) => {
     const teacher = await Teacher.findByPk(teacherId);
 
     if (!teacher) {
-        throw new ApiError(404, "Teacher not found");
+        throw new ApiError(httpStatus.NOT_FOUND, "Teacher not found");
     }
 
     res
-        .status(200)
+        .status(httpStatus.OK)
         .json(
             new ApiResponse(
-                200,
+                httpStatus.OK,
                 "Teacher fetched successfully",
                 teacher
             )
@@ -168,7 +169,7 @@ const addTeacher = asyncHandler(async (req, res) => {
         if (teacherImageLocalPath) {
             fs.unlinkSync(teacherImageLocalPath)
         }
-        throw new ApiError(400, "A teacher member with this email already exists")
+        throw new ApiError(httpStatus.BAD_REQUEST, "A teacher member with this email already exists")
     }
 
     let teacherImageUrl = null;
@@ -180,7 +181,7 @@ const addTeacher = asyncHandler(async (req, res) => {
 
         if (!teacherImage?.url) {
             fs.unlinkSync(teacherImageLocalPath)
-            throw new ApiError(500, "Some issue occured while uploading the image")
+            throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, "Some issue occured while uploading the image")
         }
 
         teacherImageUrl = teacherImage.secure_url
@@ -204,14 +205,14 @@ const addTeacher = asyncHandler(async (req, res) => {
 
 
     if (!addedTeacherMember) {
-        throw new ApiError(500, "Some issue occured while adding teacher member")
+        throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, "Some issue occured while adding teacher member")
     }
 
     res
-        .status(201)
+        .status(httpStatus.CREATED)
         .json(
             new ApiResponse(
-                201,
+                httpStatus.CREATED,
                 'Teacher member added successfully',
                 addedTeacherMember
             )
@@ -238,7 +239,7 @@ const updateTeacherDetails = asyncHandler(async (req, res) => {
     const teacher = await Teacher.findByPk(id);
 
     if (!teacher) {
-        throw new ApiError(404, "Teacher not found")
+        throw new ApiError(httpStatus.NOT_FOUND, "Teacher not found")
     }
 
     teacher.firstName = firstName || teacher.firstName;
@@ -254,10 +255,10 @@ const updateTeacherDetails = asyncHandler(async (req, res) => {
     await teacher.save();
 
     res
-        .status(200)
+        .status(httpStatus.OK)
         .json(
             new ApiResponse(
-                200,
+                httpStatus.OK,
                 "Teacher updated successfully",
                 teacher
             )
@@ -276,7 +277,7 @@ const updateTeacherPassword = asyncHandler(async (req, res) => {
     const teacher = await Teacher.findByPk(id);
 
     if (!teacher) {
-        throw new ApiError(404, "Teacher not found")
+        throw new ApiError(httpStatus.NOT_FOUND, "Teacher not found")
     }
 
     teacher.password = password || '';
@@ -284,10 +285,10 @@ const updateTeacherPassword = asyncHandler(async (req, res) => {
     await teacher.save();
 
     res
-        .status(200)
+        .status(httpStatus.OK)
         .json(
             new ApiResponse(
-                200,
+                httpStatus.OK,
                 "Teacher password updated successfully",
                 teacher
             )
@@ -309,17 +310,17 @@ const updateTeacherImage = asyncHandler(async (req, res) => {
         if (teacherImageLocalPath) {
             fs.unlinkSync(teacherImageLocalPath)
         }
-        throw new ApiError(404, "Teacher not found")
+        throw new ApiError(httpStatus.NOT_FOUND, "Teacher not found")
     }
 
     if (!teacherImageLocalPath) {
-        throw new ApiError(400, "Teacher image file is required")
+        throw new ApiError(httpStatus.BAD_REQUEST, "Teacher image file is required")
     }
 
     const uploadedImageResponse = await uploadOnCloudinary(teacherImageLocalPath)
 
     if (!uploadedImageResponse?.url) {
-        throw new ApiError(500, "Some issue occured while uploading the image")
+        throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, "Some issue occured while uploading the image")
     }
 
     teacher.teacherImageUrl = uploadedImageResponse.secure_url
@@ -328,10 +329,10 @@ const updateTeacherImage = asyncHandler(async (req, res) => {
     await teacher.save();
 
     res
-        .status(200)
+        .status(httpStatus.OK)
         .json(
             new ApiResponse(
-                200,
+                httpStatus.OK,
                 "Teacher image updated successfully",
                 teacher
             )
@@ -346,13 +347,13 @@ const removeImage = asyncHandler(async (req, res) => {
     const teacher = await Teacher.findByPk(id);
 
     if (!teacher) {
-        throw new ApiError(404, "Teacher not found")
+        throw new ApiError(httpStatus.NOT_FOUND, "Teacher not found")
     }
 
     const deletedImage = await deleteFromCloudinary(teacher.teacherImagePublicId)
 
     if (!deletedImage) {
-        throw new ApiError(500, "Some issue occured while deleting the image")
+        throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, "Some issue occured while deleting the image")
     }
 
     teacher.teacherImageUrl = null;
@@ -361,10 +362,10 @@ const removeImage = asyncHandler(async (req, res) => {
     await teacher.save();
 
     res
-        .status(200)
+        .status(httpStatus.OK)
         .json(
             new ApiResponse(
-                200,
+                httpStatus.OK,
                 "Teacher image deleted successfully",
                 teacher
             )
@@ -381,12 +382,12 @@ const removeTeacher = asyncHandler(async (req, res) => {
     const teacher = await Teacher.findByPk(id);
 
     if (!teacher) {
-        throw new ApiError(404, "Teacher not found");
+        throw new ApiError(httpStatus.NOT_FOUND, "Teacher not found");
     }
     if (teacher.teacherImagePublicId) {
         const deletedImage = await deleteFromCloudinary(teacher.teacherImagePublicId)
         if (!deletedImage) {
-            throw new ApiError(500, "Some issue occured while deleting the image")
+            throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, "Some issue occured while deleting the image")
         }
     }
 
@@ -394,10 +395,10 @@ const removeTeacher = asyncHandler(async (req, res) => {
     await teacher.destroy();
 
     res
-        .status(200)
+        .status(httpStatus.NO_CONTENT)
         .json(
             new ApiResponse(
-                200,
+                httpStatus.NO_CONTENT,
                 "Teacher deleted successfully",
                 null
             )
@@ -414,13 +415,13 @@ const addTeachingSubject = asyncHandler(async (req, res) => {
     const teacher = await Teacher.findByPk(teacherId);
 
     if (!teacher) {
-        throw new ApiError(404, "Teacher not found");
+        throw new ApiError(httpStatus.NOT_FOUND, "Teacher not found");
     }
 
     const course = await Course.findByPk(courseId);
 
     if (!course) {
-        throw new ApiError(404, "Course not found");
+        throw new ApiError(httpStatus.NOT_FOUND, "Course not found");
     }
 
     const alreadyAssigned = await TeacherTeachesCourse.findOne({
@@ -431,7 +432,7 @@ const addTeachingSubject = asyncHandler(async (req, res) => {
     });
 
     if(alreadyAssigned) {
-        throw new ApiError(400, "Course is already assigned to this teacher member")
+        throw new ApiError(httpStatus.BAD_REQUEST, "Course is already assigned to this teacher member")
     }
 
     const teacherTeachesCourseEntry = await TeacherTeachesCourse.create({
@@ -440,10 +441,10 @@ const addTeachingSubject = asyncHandler(async (req, res) => {
     });
 
     res
-        .status(201)
+        .status(httpStatus.CREATED)
         .json(
             new ApiResponse(
-                201,
+                httpStatus.CREATED,
                 "Teaching subject added successfully",
                 teacherTeachesCourseEntry
             )
@@ -459,16 +460,16 @@ const removeTeachingSubject = asyncHandler(async (req, res) => {
     const teacherSubject = await TeacherTeachesCourse.findByPk(teacherSubjectId);
 
     if (!teacherSubject) {
-        throw new ApiError(404, "Teacher subject not found");
+        throw new ApiError(httpStatus.NOT_FOUND, "Teacher subject not found");
     }
 
     await teacherSubject.destroy();
 
     res
-        .status(200)
+        .status(httpStatus.NO_CONTENT)
         .json(
             new ApiResponse(
-                200,
+                httpStatus.NO_CONTENT,
                 "Teaching subject deleted successfully",
                 null
             )
@@ -483,7 +484,7 @@ const getTeachingSubjects = asyncHandler(async (req, res) => {
     const teacher = await Teacher.findByPk(teacherId);
 
     if (!teacher) {
-        throw new ApiError(404, "Teacher not found");
+        throw new ApiError(httpStatus.NOT_FOUND, "Teacher not found");
     }
 
     const teachingSubjects = await TeacherTeachesCourse.findAll({
@@ -505,10 +506,10 @@ const getTeachingSubjects = asyncHandler(async (req, res) => {
     });
 
     res
-        .status(200)
+        .status(httpStatus.OK)
         .json(
             new ApiResponse(
-                200,
+                httpStatus.OK,
                 "Teaching subjects retrieved successfully",
                 teachingSubjects
             )

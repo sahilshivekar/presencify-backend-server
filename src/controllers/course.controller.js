@@ -10,6 +10,7 @@ import Branch from '../db/models/branch.model.js';
 import sequelize from '../config/db.connection.js';
 import { parse } from 'path';
 import Semester from '../db/models/semester.model.js';
+import httpStatus from 'http-status';
 
 //* get all the courses
 const getCourses = asyncHandler(async (req, res) => {
@@ -85,10 +86,10 @@ const getCourses = asyncHandler(async (req, res) => {
     });
 
     res
-        .status(200)
+        .status(httpStatus.OK)
         .json(
             new ApiResponse(
-                200,
+                httpStatus.OK,
                 "Courses retrieved successfully.",
                 {
                     courses: courses.rows,
@@ -112,7 +113,7 @@ const addCourse = asyncHandler(async (req, res) => {
     const scheme = await Scheme.findByPk(schemeId);
 
     if (!scheme) {
-        throw new ApiError(404, "Scheme not found");
+        throw new ApiError(httpStatus.NOT_FOUND, "Scheme not found");
     }
 
     const course = await Course.create({
@@ -123,10 +124,10 @@ const addCourse = asyncHandler(async (req, res) => {
     });
 
     res
-        .status(201)
+        .status(httpStatus.CREATED)
         .json(
             new ApiResponse(
-                201,
+                httpStatus.CREATED,
                 'Course added successfully',
                 course
             )
@@ -142,13 +143,13 @@ const addCourseToBranchWithSemesterNumber = asyncHandler(async (req, res) => {
     const course = await Course.findByPk(courseId);
 
     if (!course) {
-        throw new ApiError(404, "Course not found");
+        throw new ApiError(httpStatus.NOT_FOUND, "Course not found");
     }
 
     const branch = await Branch.findByPk(branchId);
 
     if (!branch) {
-        throw new ApiError(404, "Branch not found");
+        throw new ApiError(httpStatus.NOT_FOUND, "Branch not found");
     }
 
     const addedCourseToBranchEntry = await BranchCourseSemester.create({
@@ -158,10 +159,10 @@ const addCourseToBranchWithSemesterNumber = asyncHandler(async (req, res) => {
     });
 
     res
-        .status(200)
+        .status(httpStatus.CREATED)
         .json(
             new ApiResponse(
-                200,
+                httpStatus.CREATED,
                 "Course added successfully",
                 addedCourseToBranchEntry
             )
@@ -176,16 +177,16 @@ const removeCourseFromBranchWithSemesterNumber = asyncHandler(async (req, res) =
     const branchCourseSemester = await BranchCourseSemester.findByPk(branchCourseSemesterId);
 
     if (!branchCourseSemester) {
-        throw new ApiError(404, "BranchCourseSemester not found");
+        throw new ApiError(httpStatus.NOT_FOUND, "BranchCourseSemester not found");
     }
 
     await branchCourseSemester.destroy();
 
     res
-        .status(200)
+        .status(httpStatus.NO_CONTENT)
         .json(
             new ApiResponse(
-                200,
+                httpStatus.NO_CONTENT,
                 "BranchCourseSemester deleted successfully",
                 null
             )
@@ -202,7 +203,7 @@ const updateCourse = asyncHandler(async (req, res) => {
     const course = await Course.findByPk(id);
 
     if (!course) {
-        throw new ApiError(404, "Course not found");
+        throw new ApiError(httpStatus.NOT_FOUND, "Course not found");
     }
 
     course.name = name || course.name;
@@ -213,10 +214,10 @@ const updateCourse = asyncHandler(async (req, res) => {
     await course.save();
 
     res
-        .status(200)
+        .status(httpStatus.OK)
         .json(
             new ApiResponse(
-                200,
+                httpStatus.OK,
                 "Course updated successfully",
                 course
             )
@@ -232,16 +233,16 @@ const removeCourse = asyncHandler(async (req, res) => {
     const course = await Course.findByPk(id);
 
     if (!course) {
-        throw new ApiError(404, "Course not found");
+        throw new ApiError(httpStatus.NOT_FOUND, "Course not found");
     }
 
     await course.destroy();
 
     res
-        .status(200)
+        .status(httpStatus.NO_CONTENT)
         .json(
             new ApiResponse(
-                200,
+                httpStatus.NO_CONTENT,
                 "Course deleted successfully",
                 null
             )
@@ -264,14 +265,14 @@ const getCourseById = asyncHandler(async (req, res) => {
     })
 
     if (!course) {
-        throw new ApiError(404, "Course not found");
+        throw new ApiError(httpStatus.NOT_FOUND, "Course not found");
     }
 
     res
-        .status(200)
+        .status(httpStatus.OK)
         .json(
             new ApiResponse(
-                200,
+                httpStatus.OK,
                 "Course retrieved successfully",
                 course
             )

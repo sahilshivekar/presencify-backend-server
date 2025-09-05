@@ -3,16 +3,17 @@ import { asyncHandler } from '../utils/asyncHandler.js';
 import { ApiResponse } from '../utils/ApiResponse.js'
 import { ApiError } from '../utils/ApiError.js'
 import { Op } from 'sequelize'
+import httpStatus from 'http-status';
 
 //* get all the universities
 const getUniversities = asyncHandler(async (req, res) => {
     const universities = await University.findAll();
 
     res
-        .status(200)
+        .status(httpStatus.OK)
         .json(
             new ApiResponse(
-                200,
+                httpStatus.OK,
                 "Universities retrieved successfully.",
                 universities
             )
@@ -29,10 +30,10 @@ const addUniversity = asyncHandler(async (req, res) => {
     });
 
     res
-        .status(201)
+        .status(httpStatus.CREATED)
         .json(
             new ApiResponse(
-                201,
+                httpStatus.CREATED,
                 'University added successfully',
                 university
             )
@@ -47,7 +48,7 @@ const updateUniversity = asyncHandler(async (req, res) => {
     const university = await University.findByPk(id);
 
     if (!university) {
-        throw new ApiError(404, "University not found");
+        throw new ApiError(httpStatus.NOT_FOUND, "University not found");
     }
 
     if (name !== undefined) university.name = name;
@@ -56,10 +57,10 @@ const updateUniversity = asyncHandler(async (req, res) => {
     await university.save();
 
     res
-        .status(200)
+        .status(httpStatus.OK)
         .json(
             new ApiResponse(
-                200,
+                httpStatus.OK,
                 "University updated successfully",
                 university
             )
@@ -73,16 +74,16 @@ const removeUniversity = asyncHandler(async (req, res) => {
     const university = await University.findByPk(id);
 
     if (!university) {
-        throw new ApiError(404, "University not found");
+        throw new ApiError(httpStatus.NOT_FOUND, "University not found");
     }
 
     await university.destroy();
 
     res
-        .status(200)
+        .status(httpStatus.NO_CONTENT)
         .json(
             new ApiResponse(
-                200,
+                httpStatus.NO_CONTENT,
                 "University deleted successfully",
                 null
             )
@@ -95,14 +96,14 @@ const getUniversityById = asyncHandler(async (req, res) => {
     const university = await University.findByPk(id);
 
     if (!university) {
-        throw new ApiError(404, "University not found");
+        throw new ApiError(httpStatus.NOT_FOUND, "University not found");
     }
 
     res
-        .status(200)
+        .status(httpStatus.OK)
         .json(
             new ApiResponse(
-                200,
+                httpStatus.OK,
                 "University retrieved successfully",
                 university
             )

@@ -4,6 +4,7 @@ import { asyncHandler } from '../utils/asyncHandler.js';
 import { ApiError } from '../utils/ApiError.js';
 import { ApiResponse } from '../utils/ApiResponse.js';
 import Dropout from '../db/models/dropout.model.js'
+import httpStatus from 'http-status';
 
 const addStudentToDropout = asyncHandler(async (req, res) => {
     const { studentId, academicStartYear, academicEndYear } = req.body
@@ -13,11 +14,11 @@ const addStudentToDropout = asyncHandler(async (req, res) => {
     const student = await Student.findByPk(studentId)
 
     if (!student) {
-        throw new ApiError(400, "Student not found")
+        throw new ApiError(httpStatus.NOT_FOUND, "Student not found")
     }
 
     if (academicStartYear < student.admissionYear) {
-        throw new ApiError(400, "Academic start year cannot be before student's admission year")
+        throw new ApiError(httpStatus.BAD_REQUEST, "Academic start year cannot be before student's admission year")
     }
 
     const isAlreayInDropout = await Dropout.findOne({
@@ -29,7 +30,7 @@ const addStudentToDropout = asyncHandler(async (req, res) => {
     })
 
     if (isAlreayInDropout) {
-        throw new ApiError(400, "Student is already in dropout")
+        throw new ApiError(httpStatus.CONFLICT, "Student is already in dropout")
     }
 
     const dropout = await Dropout.create({
@@ -39,10 +40,10 @@ const addStudentToDropout = asyncHandler(async (req, res) => {
     })
 
     res
-        .status(201)
+        .status(httpStatus.CREATED)
         .json(
             new ApiResponse(
-                201,
+                httpStatus.CREATED,
                 "Student added to dropout successfully",
                 dropout
             )
@@ -57,11 +58,11 @@ const removeStudentFromDropout = asyncHandler(async (req, res) => {
     const student = await Student.findByPk(studentId)
 
     if (!student) {
-        throw new ApiError(400, "Student not found")
+        throw new ApiError(httpStatus.NOT_FOUND, "Student not found")
     }
     
     if (academicStartYear < student.admissionYear) {
-        throw new ApiError(400, "Academic start year cannot be before student's admission year")
+        throw new ApiError(httpStatus.BAD_REQUEST, "Academic start year cannot be before student's admission year")
     }
 
     const isAlreayInDropout = await Dropout.findOne({
@@ -73,16 +74,16 @@ const removeStudentFromDropout = asyncHandler(async (req, res) => {
     })
 
     if (!isAlreayInDropout) {
-        throw new ApiError(400, "Student is not in dropout")
+        throw new ApiError(httpStatus.NOT_FOUND, "Student is not in dropout")
     }
 
     await isAlreayInDropout.destroy()
 
     res
-        .status(200)
+        .status(httpStatus.OK)
         .json(
             new ApiResponse(
-                200,
+                httpStatus.OK,
                 "Student removed from dropout successfully",
                 null
             )
@@ -106,14 +107,14 @@ const getDropoutById = asyncHandler(async (req, res) => {
     })
 
     if (!dropout) {
-        throw new ApiError(404, "Dropout details for given input not found")
+        throw new ApiError(httpStatus.NOT_FOUND, "Dropout details for given input not found")
     }
 
     res
-        .status(200)
+        .status(httpStatus.OK)
         .json(
             new ApiResponse(
-                200,
+                httpStatus.OK,
                 "Dropout fetched successfully",
                 dropout
             )
@@ -132,10 +133,10 @@ const getDropoutDetailsOfStudent = asyncHandler(async (req, res) => {
     })
 
     res
-        .status(200)
+        .status(httpStatus.OK)
         .json(
             new ApiResponse(
-                200,
+                httpStatus.OK,
                 "Dropout fetched successfully",
                 dropouts
             )

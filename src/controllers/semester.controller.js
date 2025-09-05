@@ -9,6 +9,7 @@ import Course from '../db/models/course.model.js';
 import BranchCourseSemester from '../db/models/branchCourseSemester.model.js';
 import University from '../db/models/university.model.js';
 import SemesterCourse from '../db/models/semesterCourse.model.js';
+import httpStatus from 'http-status';
 
 //* get all the semesters
 const getSemesters = asyncHandler(async (req, res) => {
@@ -76,10 +77,10 @@ const getSemesters = asyncHandler(async (req, res) => {
     });
 
     res
-        .status(200)
+        .status(httpStatus.OK)
         .json(
             new ApiResponse(
-                200,
+                httpStatus.OK,
                 "Semesters retrieved successfully.",
                 {
                     semesters: semesters.rows,
@@ -108,22 +109,22 @@ const addSemester = asyncHandler(async (req, res) => {
 
     // Only keep business logic validation that depends on DB or cross-field logic
     if (academicEndYear < academicStartYear) {
-        throw new ApiError(400, "Academic end year cannot be less than academic start year");
+        throw new ApiError(httpStatus.BAD_REQUEST, "Academic end year cannot be less than academic start year");
     }
 
     const startDateObj = new Date(startDate);
     const endDateObj = new Date(endDate);
 
     if(startDateObj >= endDateObj) {
-        throw new ApiError(400, "End date cannot be less than or equal to start date");
+        throw new ApiError(httpStatus.BAD_REQUEST, "End date cannot be less than or equal to start date");
     }
 
     if(startDateObj.getFullYear() < Number(academicStartYear)) {
-        throw new ApiError(400, "Start date cannot be lesser than academic start year");
+        throw new ApiError(httpStatus.BAD_REQUEST, "Start date cannot be lesser than academic start year");
     }
 
     if(endDateObj.getFullYear() > Number(academicEndYear)) {
-        throw new ApiError(400, "End date cannot be greater than academic end year");
+        throw new ApiError(httpStatus.BAD_REQUEST, "End date cannot be greater than academic end year");
     }
 
     // searching courses for the semeseter to be added bcz if the semester contains optional courses then we must create a entry in SemesterCourse table to tell the optional subjects for a particular semester
@@ -188,7 +189,7 @@ const addSemester = asyncHandler(async (req, res) => {
         // optionalCourseIds presence/type/array validation is handled by @semester.validation.js
 
         if (optionalCourseIds.length !== countOfRequiredOptionalCourses) {
-            throw new ApiError(400, `Please give ${countOfRequiredOptionalCourses} optional courses`)
+            throw new ApiError(httpStatus.BAD_REQUEST, `Please give ${countOfRequiredOptionalCourses} optional courses`)
         }
 
         for (let optionalCourseId of optionalCourseIds) {
@@ -203,7 +204,7 @@ const addSemester = asyncHandler(async (req, res) => {
         // if the length of any of the optionCourseList is greater than 0 then the courses that are being added are not valid
         for (let optionalCourseList of Object.values(requiredOptionalCourses)) {
             if (optionalCourseList.length > 0) {
-                throw new ApiError(400, `Invalid optional courses`)
+                throw new ApiError(httpStatus.BAD_REQUEST, `Invalid optional courses`)
             }
         }
     }
@@ -237,10 +238,10 @@ const addSemester = asyncHandler(async (req, res) => {
     }
 
     res
-        .status(201)
+        .status(httpStatus.CREATED)
         .json(
             new ApiResponse(
-                201,
+                httpStatus.CREATED,
                 'Semester added successfully',
                 { semester, addedOptionalCourses }
             )
@@ -255,7 +256,7 @@ const getCoursesOfSemester = asyncHandler(async (req, res) => {
 
     const semester = await Semester.findByPk(semesterId);
     if (!semester) {
-        throw new ApiError(404, "Semester not found");
+        throw new ApiError(httpStatus.NOT_FOUND, "Semester not found");
     }
 
     const compulsaryCourses = await BranchCourseSemester.findAll({
@@ -288,10 +289,10 @@ const getCoursesOfSemester = asyncHandler(async (req, res) => {
     });
 
     res
-        .status(200)
+        .status(httpStatus.OK)
         .json(
             new ApiResponse(
-                200,
+                httpStatus.OK,
                 "Courses retrieved successfully.",
                 //! send full courses
                 [...compulsaryCourses, ...optionalCourses]
@@ -313,22 +314,22 @@ const updateSemester = asyncHandler(async (req, res) => {
     const semester = await Semester.findByPk(id);
 
     if (!semester) {
-        throw new ApiError(404, "Semester not found");
+        throw new ApiError(httpStatus.NOT_FOUND, "Semester not found");
     }
     
     const startDateObj = new Date(startDate);
     const endDateObj = new Date(endDate);
 
     if(startDateObj >= endDateObj) {
-        throw new ApiError(400, "End date cannot be less than or equal to start date");
+        throw new ApiError(httpStatus.BAD_REQUEST, "End date cannot be less than or equal to start date");
     }
 
     if(startDateObj.getFullYear() < semester.academicStartYear) {
-        throw new ApiError(400, "Start date cannot be lesser than academic start year");
+        throw new ApiError(httpStatus.BAD_REQUEST, "Start date cannot be lesser than academic start year");
     }
 
     if(endDateObj.getFullYear() > semester.academicEndYear) {
-        throw new ApiError(400, "End date cannot be greater than academic end year");
+        throw new ApiError(httpStatus.BAD_REQUEST, "End date cannot be greater than academic end year");
     }
 
     semester.endDate = endDate || semester.endDate;
@@ -337,10 +338,10 @@ const updateSemester = asyncHandler(async (req, res) => {
     await semester.save();
 
     res
-        .status(200)
+        .status(httpStatus.OK)
         .json(
             new ApiResponse(
-                200,
+                httpStatus.OK,
                 "Semester updated successfully",
                 semester
             )
@@ -357,16 +358,16 @@ const removeSemester = asyncHandler(async (req, res) => {
     const semester = await Semester.findByPk(id);
 
     if (!semester) {
-        throw new ApiError(404, "Semester not found");
+        throw new ApiError(httpStatus.NOT_FOUND, "Semester not found");
     }
 
     await semester.destroy();
 
     res
-        .status(200)
+        .status(httpStatus.NO_CONTENT)
         .json(
             new ApiResponse(
-                200,
+                httpStatus.NO_CONTENT,
                 "Semester deleted successfully",
                 null
             )
@@ -394,14 +395,14 @@ const getSemesterById = asyncHandler(async (req, res) => {
     });
 
     if (!semester) {
-        throw new ApiError(404, "Semester not found");
+        throw new ApiError(httpStatus.NOT_FOUND, "Semester not found");
     }
 
     res
-        .status(200)
+        .status(httpStatus.OK)
         .json(
             new ApiResponse(
-                200,
+                httpStatus.OK,
                 "Semester retrieved successfully",
                 semester
             )

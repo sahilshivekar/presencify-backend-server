@@ -5,6 +5,7 @@ import Admin from "../db/models/admin.model.js";
 import Student from "../db/models/student.model.js";
 import Teacher from "../db/models/teacher.model.js";
 import { ROLES } from "../config/roles.js";
+import { StatusCodes } from "http-status-codes";
 
 const modelMap = {
     [ROLES.ADMIN]: Admin,
@@ -20,21 +21,21 @@ const verifyJWT = (allowedRoles) =>
     asyncHandler(async (req, _, next) => {
         try {
 
-            if (allowedRoles.length === 0) throw new Error("No roles provided");
+            if (allowedRoles.length === 0) throw new ApiError(StatusCodes.INTERNAL_SERVER_ERROR, "No roles provided");
 
             const token =
                 req.cookies?.accessToken ||
                 req.header("Authorization")?.replace("Bearer ", "");
 
             if (!token) {
-                throw new ApiError(401, "Unauthorized request: No token provided");
+                throw new ApiError(StatusCodes.UNAUTHORIZED, "Unauthorized request: No token provided");
             }
 
             const decodedToken = jwt.verify(token, process.env.JWT_ACCESS_TOKEN_SECRET);
 
             // Check if role is allowed  
             if (!allowedRoles.includes(decodedToken.role)) {
-                throw new ApiError(403, "Forbidden: Insufficient permissions");
+                throw new ApiError(StatusCodes.FORBIDDEN, "Forbidden: Insufficient permissions");
             }
 
             const UserModel = modelMap[decodedToken.role];
@@ -45,9 +46,8 @@ const verifyJWT = (allowedRoles) =>
             });
 
             if (!user) {
-                throw new ApiError(401, "Invalid Access Token: User not found");
+                throw new ApiError(StatusCodes.UNAUTHORIZED, "Invalid Access Token: User not found");
             }
-
 
             // Optional: auto-assign user id to req.body or req.query based on role and method:
             if (req.method !== "GET") {
@@ -74,9 +74,8 @@ const verifyJWT = (allowedRoles) =>
             next();
         } catch (err) {
             console.error(err);
-            throw new ApiError(401, "Unauthorized request");
+            throw new ApiError(StatusCodes.UNAUTHORIZED, "Unauthorized request");
         }
     });
 
 export { verifyJWT };
-

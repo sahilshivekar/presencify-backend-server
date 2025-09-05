@@ -7,7 +7,6 @@ import Room from '../db/models/room.model.js';
 import Course from '../db/models/course.model.js';
 import Teacher from '../db/models/teacher.model.js';
 import Batch from '../db/models/batch.model.js';
-import moment from 'moment';
 import Timetable from '../db/models/timetable.model.js';
 import Division from '../db/models/division.model.js';
 import Semester from '../db/models/semester.model.js';
@@ -21,6 +20,7 @@ import { getTimeInTwelveHourFormat } from '../utils/time.js';
 import { fromYYYYMMDDToDDMMYYYY } from '../utils/date.js';
 import StudentBatch from '../db/models/studentBatch.model.js';
 import TeacherTeachesCourse from '../db/models/teacherTeachesCourse.model.js';
+import httpStatus from 'http-status';
 
 const getYearFromSemesterNumber = (semesterNumber) => {
     if (semesterNumber === 1 || semesterNumber === 2) return 'FE'
@@ -70,25 +70,25 @@ const addClass = asyncHandler(async (req, res) => {
     const teacher = await Teacher.findByPk(teacherId);
 
     if (!teacher) {
-        throw new ApiError(404, "Teacher not found");
+        throw new ApiError(httpStatus.NOT_FOUND, "Teacher not found");
     }
 
     const course = await Course.findByPk(courseId);
-    if (!course) throw new ApiError(404, "Course not found");
+    if (!course) throw new ApiError(httpStatus.NOT_FOUND, "Course not found");
 
     const room = await Room.findByPk(roomId);
-    if (!room) throw new ApiError(404, "Room not found");
+    if (!room) throw new ApiError(httpStatus.NOT_FOUND, "Room not found");
 
     const timetable = await Timetable.findByPk(timetableId);
-    if (!timetable) throw new ApiError(404, "Timetable not found");
+    if (!timetable) throw new ApiError(httpStatus.NOT_FOUND, "Timetable not found");
 
     // Check batch only for practical/tutorial
     let batch = null;
     if (classType === "Tutorial" || classType === "Practical") {
         batch = await Batch.findByPk(batchId);
-        if (!batch) throw new ApiError(404, "Batch not found");
+        if (!batch) throw new ApiError(httpStatus.NOT_FOUND, "Batch not found");
         if (batch.divisionId != timetable.divisionId) {
-            throw new ApiError(400, "Batch doesn't belong to the same division as the timetable")
+            throw new ApiError(httpStatus.BAD_REQUEST, "Batch doesn't belong to the same division as the timetable")
         }
     }
 
@@ -106,15 +106,15 @@ const addClass = asyncHandler(async (req, res) => {
     })
 
     if (!checkCourseAvailableForSpecificSemester) {
-        throw new ApiError(400, `Course '${course.name}' is not in syllabus for semester ${semester.semesterNumber} of branch ${branch.name}`)
+        throw new ApiError(httpStatus.BAD_REQUEST, `Course '${course.name}' is not in syllabus for semester ${semester.semesterNumber} of branch ${branch.name}`)
     }
 
     // Check if dates are in bounds of semester dates
     if (activeFrom < semester.startDate || activeFrom > semester.endDate) {
-        throw new ApiError(400, `Active from date is out of bounds because semester start date is ${semester.startDate} and semester end date is ${semester.endDate}`)
+        throw new ApiError(httpStatus.BAD_REQUEST, `Active from date is out of bounds because semester start date is ${semester.startDate} and semester end date is ${semester.endDate}`)
     }
     if (activeTill > semester.endDate || activeTill < semester.startDate) {
-        throw new ApiError(400, `Active till date is out of bounds because semester start date is ${semester.startDate} and semester end date is ${semester.endDate}`)
+        throw new ApiError(httpStatus.BAD_REQUEST, `Active till date is out of bounds because semester start date is ${semester.startDate} and semester end date is ${semester.endDate}`)
     }
 
     // Check if teacher teaches the course
@@ -125,7 +125,7 @@ const addClass = asyncHandler(async (req, res) => {
         }
     })
     if (!teacherTeachesCourse) {
-        throw new ApiError(400, "Teacher is not teaching this course")
+        throw new ApiError(httpStatus.BAD_REQUEST, "Teacher is not teaching this course")
     }
 
     // Check for teacher conflict
@@ -154,7 +154,7 @@ const addClass = asyncHandler(async (req, res) => {
     })
     if (teacherConflict) {
         const msg = await getThrowableConflictMessage(teacherConflict, "Teacher unavailable at this time: ")
-        throw new ApiError(400, msg)
+        throw new ApiError(httpStatus.CONFLICT, msg)
     }
 
     // Check for room conflict
@@ -183,7 +183,7 @@ const addClass = asyncHandler(async (req, res) => {
     })
     if (roomConflict) {
         const msg = await getThrowableConflictMessage(roomConflict, "Room unavailable at this time: ")
-        throw new ApiError(400, msg)
+        throw new ApiError(httpStatus.CONFLICT, msg)
     }
 
     // Check for division conflict (lecture)
@@ -213,7 +213,7 @@ const addClass = asyncHandler(async (req, res) => {
         })
         if (multipleLecturesConflict) {
             const msg = await getThrowableConflictMessage(multipleLecturesConflict, "Time slot isn't free: ")
-            throw new ApiError(400, msg)
+            throw new ApiError(httpStatus.CONFLICT, msg)
         }
     }
 
@@ -252,7 +252,7 @@ const addClass = asyncHandler(async (req, res) => {
         })
         if (multiplePracticalsConflict) {
             const msg = await getThrowableConflictMessage(multiplePracticalsConflict, "Time slot isn't free: ")
-            throw new ApiError(400, msg)
+            throw new ApiError(httpStatus.CONFLICT, msg)
         }
     }
 
@@ -272,7 +272,7 @@ const addClass = asyncHandler(async (req, res) => {
         }
     );
 
-    res.status(201).json(new ApiResponse(201, "Class added successfully", classObj));
+    res.status(httpStatus.CREATED).json(new ApiResponse(httpStatus.CREATED, "Class added successfully", classObj));
 });
 
 const getClasses = asyncHandler(async (req, res) => {
@@ -378,7 +378,7 @@ const getClasses = asyncHandler(async (req, res) => {
         ...(limit && getAll === false ? { limit: parseInt(limit, 10) } : {})
     })
 
-    res.status(200).json(new ApiResponse(200, "Classes retrieved successfully.", {
+    res.status(httpStatus.OK).json(new ApiResponse(httpStatus.OK, "Classes retrieved successfully.", {
         classes: classes.rows,
         totalCount: classes.count
     }));
@@ -437,13 +437,13 @@ const getClassById = asyncHandler(async (req, res) => {
             ]
         })
 
-    if (!classObj) throw new ApiError(404, "Class not found");
+    if (!classObj) throw new ApiError(httpStatus.NOT_FOUND, "Class not found");
 
     res
-        .status(200)
+        .status(httpStatus.OK)
         .json(
             new ApiResponse(
-                200,
+                httpStatus.OK,
                 "Class fetched successfully",
                 classObj
             )
@@ -464,14 +464,14 @@ const extendActiveTillDateOfClass = asyncHandler(async (req, res) => {
     const division = await Division.findByPk(timetable.divisionId)
     const semester = await Semester.findByPk(division.semesterId)
 
-    if (!classObj) throw new ApiError(404, "Class not found");
+    if (!classObj) throw new ApiError(httpStatus.NOT_FOUND, "Class not found");
 
     if (newActiveTill) {
         if (newActiveTill <= classObj.activeTill) {
-            throw new ApiError(400, "New active till date should be after the old active till date");
+            throw new ApiError(httpStatus.BAD_REQUEST, "New active till date should be after the old active till date");
         }
         if (newActiveTill > semester.endDate) {
-            throw new ApiError(400, "New active till date should be before the semester end date");
+            throw new ApiError(httpStatus.BAD_REQUEST, "New active till date should be before the semester end date");
         }
         classObj.activeTill = newActiveTill;
     }
@@ -502,7 +502,7 @@ const extendActiveTillDateOfClass = asyncHandler(async (req, res) => {
     })
     if (roomConflict) {
         const msg = await getThrowableConflictMessage(roomConflict, "Room unavailable at this time: ")
-        throw new ApiError(400, msg)
+        throw new ApiError(httpStatus.CONFLICT, msg)
     }
 
     // Check for division conflict (lecture)
@@ -532,7 +532,7 @@ const extendActiveTillDateOfClass = asyncHandler(async (req, res) => {
         })
         if (multipleLecturesConflict) {
             const msg = await getThrowableConflictMessage(multipleLecturesConflict, "Time slot isn't free: ")
-            throw new ApiError(400, msg)
+            throw new ApiError(httpStatus.CONFLICT, msg)
         }
     }
 
@@ -571,12 +571,12 @@ const extendActiveTillDateOfClass = asyncHandler(async (req, res) => {
         })
         if (multiplePracticalsConflict) {
             const msg = await getThrowableConflictMessage(multiplePracticalsConflict, "Time slot isn't free: ")
-            throw new ApiError(400, msg)
+            throw new ApiError(httpStatus.CONFLICT, msg)
         }
     }
 
     await classObj.save()
-    res.status(200).json(new ApiResponse(200, "Class updated successfully", classObj));
+    res.status(httpStatus.OK).json(new ApiResponse(httpStatus.OK, "Class updated successfully", classObj));
 });
 
 const removeClass = asyncHandler(async (req, res) => {
@@ -586,11 +586,11 @@ const removeClass = asyncHandler(async (req, res) => {
 
     const classObj = await Class.findByPk(id);
 
-    if (!classObj) throw new ApiError(404, "Class not found");
+    if (!classObj) throw new ApiError(httpStatus.NOT_FOUND, "Class not found");
 
     await classObj.destroy();
 
-    res.status(200).json(new ApiResponse(200, "Class deleted successfully", null));
+    res.status(httpStatus.OK).json(new ApiResponse(httpStatus.OK, "Class deleted successfully", null));
 });
 
 const addExtraClass = asyncHandler(async (req, res) => {
@@ -612,24 +612,24 @@ const addExtraClass = asyncHandler(async (req, res) => {
 
     // Check if all referenced IDs exist in the database
     const teacher = await Teacher.findByPk(teacherId);
-    if (!teacher) throw new ApiError(404, "Teacher not found");
+    if (!teacher) throw new ApiError(httpStatus.NOT_FOUND, "Teacher not found");
 
     const course = await Course.findByPk(courseId);
-    if (!course) throw new ApiError(404, "Course not found");
+    if (!course) throw new ApiError(httpStatus.NOT_FOUND, "Course not found");
 
     const room = await Room.findByPk(roomId);
-    if (!room) throw new ApiError(404, "Room not found");
+    if (!room) throw new ApiError(httpStatus.NOT_FOUND, "Room not found");
 
     const timetable = await Timetable.findByPk(timetableId);
-    if (!timetable) throw new ApiError(404, "Timetable not found");
+    if (!timetable) throw new ApiError(httpStatus.NOT_FOUND, "Timetable not found");
 
     // Check batch only for practical/tutorial
     let batch = null;
     if (classType === "Tutorial" || classType === "Practical") {
         batch = await Batch.findByPk(batchId);
-        if (!batch) throw new ApiError(404, "Batch not found");
+        if (!batch) throw new ApiError(httpStatus.NOT_FOUND, "Batch not found");
         if (batch.divisionId != timetable.divisionId) {
-            throw new ApiError(400, "Batch doesn't belong to the same division as the timetable")
+            throw new ApiError(httpStatus.BAD_REQUEST, "Batch doesn't belong to the same division as the timetable")
         }
     }
 
@@ -647,15 +647,15 @@ const addExtraClass = asyncHandler(async (req, res) => {
     })
 
     if (!checkCourseAvailableForSpecificSemester) {
-        throw new ApiError(400, `Course '${course.name}' is not in syllabus for semester ${semester.semesterNumber} of branch ${branch.name}`)
+        throw new ApiError(httpStatus.BAD_REQUEST, `Course '${course.name}' is not in syllabus for semester ${semester.semesterNumber} of branch ${branch.name}`)
     }
 
     // Check if dates are in bounds of semester dates
     if (activeFrom < semester.startDate || activeFrom > semester.endDate) {
-        throw new ApiError(400, `Active from date is out of bounds because semester start date is ${semester.startDate} and semester end date is ${semester.endDate}`)
+        throw new ApiError(httpStatus.BAD_REQUEST, `Active from date is out of bounds because semester start date is ${semester.startDate} and semester end date is ${semester.endDate}`)
     }
     if (activeTill > semester.endDate || activeTill < semester.startDate) {
-        throw new ApiError(400, `Active till date is out of bounds because semester start date is ${semester.startDate} and semester end date is ${semester.endDate}`)
+        throw new ApiError(httpStatus.BAD_REQUEST, `Active till date is out of bounds because semester start date is ${semester.startDate} and semester end date is ${semester.endDate}`)
     }
 
     // Check for teacher conflict
@@ -684,7 +684,7 @@ const addExtraClass = asyncHandler(async (req, res) => {
     })
     if (teacherConflict) {
         const msg = await getThrowableConflictMessage(teacherConflict, "Teacher unavailable at this time: ")
-        throw new ApiError(400, msg)
+        throw new ApiError(httpStatus.CONFLICT, msg)
     }
 
     // Check for room conflict
@@ -713,7 +713,7 @@ const addExtraClass = asyncHandler(async (req, res) => {
     })
     if (roomConflict) {
         const msg = await getThrowableConflictMessage(roomConflict, "Room unavailable at this time: ")
-        throw new ApiError(400, msg)
+        throw new ApiError(httpStatus.CONFLICT, msg)
     }
 
     // Check for division conflict (lecture)
@@ -743,7 +743,7 @@ const addExtraClass = asyncHandler(async (req, res) => {
         })
         if (multipleLecturesConflict) {
             const msg = await getThrowableConflictMessage(multipleLecturesConflict, "Time slot isn't free: ")
-            throw new ApiError(400, msg)
+            throw new ApiError(httpStatus.CONFLICT, msg)
         }
     }
 
@@ -782,7 +782,7 @@ const addExtraClass = asyncHandler(async (req, res) => {
         })
         if (multiplePracticalsConflict) {
             const msg = await getThrowableConflictMessage(multiplePracticalsConflict, "Time slot isn't free: ")
-            throw new ApiError(400, msg)
+            throw new ApiError(httpStatus.CONFLICT, msg)
         }
     }
 
@@ -842,7 +842,7 @@ const addExtraClass = asyncHandler(async (req, res) => {
         )
     })
 
-    res.status(201).json(new ApiResponse(201, "Class added successfully", classObj));
+    res.status(httpStatus.CREATED).json(new ApiResponse(httpStatus.CREATED, "Class added successfully", classObj));
 })
 
 const cancelClass = asyncHandler(async (req, res) => {
@@ -856,10 +856,10 @@ const cancelClass = asyncHandler(async (req, res) => {
 
     const classObj = await Class.findByPk(classId);
 
-    if (!classObj) throw new ApiError(404, "Class not found");
+    if (!classObj) throw new ApiError(httpStatus.NOT_FOUND, "Class not found");
 
     if (date > classObj.activeTill || date < classObj.activeFrom) {
-        throw new ApiError(400, "Date is not in bounds of active from and active till of class");
+        throw new ApiError(httpStatus.BAD_REQUEST, "Date is not in bounds of active from and active till of class");
     }
 
     const isAlreadyCancelled = await CancelledClass.findOne({
@@ -870,7 +870,7 @@ const cancelClass = asyncHandler(async (req, res) => {
     })
 
     if (isAlreadyCancelled) {
-        throw new ApiError(400, "Class is already cancelled")
+        throw new ApiError(httpStatus.CONFLICT, "Class is already cancelled")
     }
 
     await CancelledClass.create(
@@ -929,7 +929,7 @@ const cancelClass = asyncHandler(async (req, res) => {
         )
     })
 
-    res.status(200).json(new ApiResponse(200, "Class marked as cancelled successfully", null));
+    res.status(httpStatus.OK).json(new ApiResponse(httpStatus.OK, "Class marked as cancelled successfully", null));
 });
 
 const getCancelledClasses = asyncHandler(async (req, res) => {
@@ -954,7 +954,7 @@ const getCancelledClasses = asyncHandler(async (req, res) => {
             }
         })
         if (!timetableOfDivision) {
-            throw new ApiError(404, "Timetable not found")
+            throw new ApiError(httpStatus.NOT_FOUND, "Timetable not found")
         }
     }
 
@@ -981,7 +981,7 @@ const getCancelledClasses = asyncHandler(async (req, res) => {
         ...(limit && getAll === false ? { limit: parseInt(limit, 10) } : {})
     })
 
-    res.status(200).json(new ApiResponse(200, "Cancelled classes retrieved successfully.", {
+    res.status(httpStatus.OK).json(new ApiResponse(httpStatus.OK, "Cancelled classes retrieved successfully.", {
         cancelledClasses: cancelledClasses.rows,
         totalCount: cancelledClasses.count
     }));

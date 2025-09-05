@@ -23,6 +23,7 @@ import { sendAttendanceReportToEmail } from "../utils/email.js";
 import { sendNotification } from "../utils/firebaseCloudMessaging.js";
 import StudentFCMToken from "../db/models/studentFCMToken.model.js";
 import StudentBatch from '../db/models/studentBatch.model.js';
+import httpStatus from 'http-status';
 
 const realtimeAttendanceHelper = async (
     currStudentIds,
@@ -63,8 +64,6 @@ const realtimeAttendanceHelper = async (
         }
     }
 
-
-
     // ! For all attendance by course, batch, division, semester
 
     let roomsOfAllStudents = openRoomsList.filter(openRoom => openRoom.includes("all_attendance_room"))
@@ -75,7 +74,6 @@ const realtimeAttendanceHelper = async (
         const courseId = openRoom.split("_")[10]
         const startDate = openRoom.split("_")[12]
         const endDate = openRoom.split("_")[14]
-
 
         if (
             semesterId == currSemesterId ||
@@ -109,7 +107,7 @@ const createAttendance = asyncHandler(async (req, res) => {
     const classObj = await Class.findByPk(classId);
 
     if (!classObj) {
-        throw new ApiError(404, "Class not found")
+        throw new ApiError(httpStatus.NOT_FOUND, "Class not found")
     }
 
     const timetable = await Timetable.findByPk(classObj.timetableId);
@@ -117,7 +115,7 @@ const createAttendance = asyncHandler(async (req, res) => {
     const semester = await Semester.findByPk(division.semesterId);
 
     if (semester.startDate > date || semester.endDate < date) {
-        throw new ApiError(400, `Date is out of bounds because semester start date is ${semester.startDate} and semester end date is ${semester.endDate}`)
+        throw new ApiError(httpStatus.BAD_REQUEST, `Date is out of bounds because semester start date is ${semester.startDate} and semester end date is ${semester.endDate}`)
     }
 
     const checkIfAttendaceAlreadyCreatedForTodaysClass = await Attendance.findOne({
@@ -130,7 +128,7 @@ const createAttendance = asyncHandler(async (req, res) => {
     })
 
     if (checkIfAttendaceAlreadyCreatedForTodaysClass) {
-        res.status(201).json(new ApiResponse(201, "Attendance was already created successfully", checkIfAttendaceAlreadyCreatedForTodaysClass));
+        return res.status(httpStatus.OK).json(new ApiResponse(httpStatus.OK, "Attendance was already created successfully", checkIfAttendaceAlreadyCreatedForTodaysClass));
     }
 
     const attendance = await Attendance.create({
@@ -138,7 +136,7 @@ const createAttendance = asyncHandler(async (req, res) => {
         date: date
     });
 
-    res.status(201).json(new ApiResponse(201, "Attendance created successfully", attendance));
+    res.status(httpStatus.CREATED).json(new ApiResponse(httpStatus.CREATED, "Attendance created successfully", attendance));
 
 })
 
@@ -156,7 +154,7 @@ const addStudentsAttendance = asyncHandler(async (req, res) => {
     const attendance = await Attendance.findByPk(attendanceId)
 
     if (!attendance) {
-        throw new ApiError(404, "Attendance not found")
+        throw new ApiError(httpStatus.NOT_FOUND, "Attendance not found")
     }
 
     //!check if attendance is already added or not 
@@ -167,7 +165,7 @@ const addStudentsAttendance = asyncHandler(async (req, res) => {
     })
 
     if (alreadyAddedAttendance) {
-        throw new ApiError(400, "Attendance is already added. Use the update student attendance feature to modify students attendance status.")
+        throw new ApiError(httpStatus.CONFLICT, "Attendance is already added. Use the update student attendance feature to modify students attendance status.")
     }
 
     const classObj = await Class.findByPk(attendance.classId);
@@ -198,7 +196,7 @@ const addStudentsAttendance = asyncHandler(async (req, res) => {
         division.id
     )
 
-    res.status(201).json(new ApiResponse(201, "Students attendance added successfully", null));
+    res.status(httpStatus.CREATED).json(new ApiResponse(httpStatus.CREATED, "Students attendance added successfully", null));
 })
 
 
@@ -215,7 +213,7 @@ const updateStudentAttendance = asyncHandler(async (req, res) => {
     const attendance = await Attendance.findByPk(attendanceId)
 
     if (!attendance) {
-        throw new ApiError(404, "Attendance not found")
+        throw new ApiError(httpStatus.NOT_FOUND, "Attendance not found")
     }
 
     const attendanceStudent = await AttendanceStudent.findOne({
@@ -226,11 +224,11 @@ const updateStudentAttendance = asyncHandler(async (req, res) => {
     })
 
     if (!attendanceStudent) {
-        throw new ApiError(404, "Attendance of this student not found")
+        throw new ApiError(httpStatus.NOT_FOUND, "Attendance of this student not found")
     }
 
     if (attendanceStudent.attendanceStatus === newAttendanceStatus) {
-        throw new ApiError(400, "New attendance status is same as old attendance status")
+        throw new ApiError(httpStatus.BAD_REQUEST, "New attendance status is same as old attendance status")
     }
 
     attendanceStudent.attendanceStatus = newAttendanceStatus
@@ -248,7 +246,7 @@ const updateStudentAttendance = asyncHandler(async (req, res) => {
         timetable.divisionId
     )
 
-    res.status(200).json(new ApiResponse(200, "Students attendance status updated successfully", attendanceStudent));
+    res.status(httpStatus.OK).json(new ApiResponse(httpStatus.OK, "Students attendance status updated successfully", attendanceStudent));
 })
 
 
@@ -260,12 +258,12 @@ const removeAttendance = asyncHandler(async (req, res) => {
     const attendance = await Attendance.findByPk(attendanceId)
 
     if (!attendance) {
-        throw new ApiError(404, "Attendance not found")
+        throw new ApiError(httpStatus.NOT_FOUND, "Attendance not found")
     }
 
     await attendance.destroy()
 
-    res.status(200).json(new ApiResponse(200, "Attendance deleted successfully", null));
+    res.status(httpStatus.OK).json(new ApiResponse(httpStatus.OK, "Attendance deleted successfully", null));
 })
 
 
@@ -295,7 +293,7 @@ const getAttendanceOfStudentForSpecificCourseInSemester = asyncHandler(async (re
         endDate ? endDate : null
     );
 
-    res.status(200).json(new ApiResponse(200, "Attendance fetched successfully", attendance));
+    res.status(httpStatus.OK).json(new ApiResponse(httpStatus.OK, "Attendance fetched successfully", attendance));
 });
 
 const getAttendanceOfAllForSemesterDivisionBatchCourse = asyncHandler(async (req, res) => {
@@ -316,7 +314,7 @@ const getAttendanceOfAllForSemesterDivisionBatchCourse = asyncHandler(async (req
         startDate,
         endDate
     )
-    res.status(200).json(new ApiResponse(200, "Attendance fetched successfully", attendance));
+    res.status(httpStatus.OK).json(new ApiResponse(httpStatus.OK, "Attendance fetched successfully", attendance));
 })
 
 
@@ -396,7 +394,7 @@ const getAttendanceOfStudentForSpecificCourseInSemesterQuery = async (
 
 
     if (!aggregatedAttendance || !detailedAttendance) {
-        throw new ApiError(404, "Attendance for this course not found")
+        throw new ApiError(httpStatus.NOT_FOUND, "Attendance for this course not found")
     }
 
     return {
@@ -414,7 +412,7 @@ const getAttendanceOfAllForSemesterDivisionBatchCourseQuery = async (
     endDate
 ) => {
     if (!semesterId && !divisionId && !courseId && !batchId && !startDate && !endDate) {
-        throw new ApiError(400, "One of the parameters is required: semesterId, divisionId, courseId, batchId, startDate, endDate")
+        throw new ApiError(httpStatus.BAD_REQUEST, "One of the parameters is required: semesterId, divisionId, courseId, batchId, startDate, endDate")
     }
     const attendance = await sequelize.query(
         `
@@ -536,10 +534,10 @@ const sendAttendanceReport = asyncHandler(async (req, res) => {
 
 
     res
-        .status(200)
+        .status(httpStatus.OK)
         .json(
             new ApiResponse(
-                200,
+                httpStatus.OK,
                 "Attendance report sent to student's parent for those who had there valid parent's email attached to their details",
                 {
                     studentWithNoParentEmail: studentWithNoParentEmail
@@ -569,49 +567,49 @@ const getAttendance = asyncHandler(async (req, res) => {
     if (studentId) {
         const student = await Student.findByPk(studentId);
         if (!student) {
-            throw new ApiError(404, "Student not found")
+            throw new ApiError(httpStatus.NOT_FOUND, "Student not found")
         }
     }
 
     if (courseId) {
         const course = await Course.findByPk(courseId);
         if (!course) {
-            throw new ApiError(404, "Course not found")
+            throw new ApiError(httpStatus.NOT_FOUND, "Course not found")
         }
     }
 
     if (semesterId) {
         const semester = await Semester.findByPk(semesterId);
         if (!semester) {
-            throw new ApiError(404, "Semester not found")
+            throw new ApiError(httpStatus.NOT_FOUND, "Semester not found")
         }
     }
 
     if (divisionId) {
         const division = await Division.findByPk(divisionId);
         if (!division) {
-            throw new ApiError(404, "Division not found")
+            throw new ApiError(httpStatus.NOT_FOUND, "Division not found")
         }
     }
 
     if (attendanceId) {
         const attendance = await Attendance.findByPk(attendanceId);
         if (!attendance) {
-            throw new ApiError(404, "Attendance not found")
+            throw new ApiError(httpStatus.NOT_FOUND, "Attendance not found")
         }
     }
 
     if (classId) {
         const classObj = await Class.findByPk(classId);
         if (!classObj) {
-            throw new ApiError(404, "Class not found")
+            throw new ApiError(httpStatus.NOT_FOUND, "Class not found")
         }
     }
 
     if (courseId) {
         const course = await Course.findByPk(courseId);
         if (!course) {
-            throw new ApiError(404, "Course not found")
+            throw new ApiError(httpStatus.NOT_FOUND, "Course not found")
         }
     }
 
@@ -692,10 +690,10 @@ const getAttendance = asyncHandler(async (req, res) => {
     // courseid, semesterid, studentId
 
     if (!attendance) {
-        throw new ApiError(404, "Attendance not found")
+        throw new ApiError(httpStatus.NOT_FOUND, "Attendance not found")
     }
 
-    res.status(200).json(new ApiResponse(200, "Attendance fetched successfully", attendance));
+    res.status(httpStatus.OK).json(new ApiResponse(httpStatus.OK, "Attendance fetched successfully", attendance));
 })
 
 
@@ -709,7 +707,7 @@ const getActiveAttendanceSheet = asyncHandler(async (req, res) => {
     const student = await Student.findByPk(studentId);
 
     if (!student) {
-        throw new ApiError(404, "Student not found")
+        throw new ApiError(httpStatus.NOT_FOUND, "Student not found")
     }
 
     const studentDivision = await StudentDivision.findOne({
@@ -721,7 +719,7 @@ const getActiveAttendanceSheet = asyncHandler(async (req, res) => {
     })
 
     if (!studentDivision) {
-        throw new ApiError(404, "Student's division not found")
+        throw new ApiError(httpStatus.NOT_FOUND, "Student's division not found")
     }
 
     const timetable = await Timetable.findOne({
@@ -731,7 +729,7 @@ const getActiveAttendanceSheet = asyncHandler(async (req, res) => {
     });
 
     if (!timetable) {
-        throw new ApiError(404, "Timetable not found")
+        throw new ApiError(httpStatus.NOT_FOUND, "Timetable not found")
     }
 
     const classes = await Class.findAll({
@@ -741,7 +739,7 @@ const getActiveAttendanceSheet = asyncHandler(async (req, res) => {
     })
 
     if (!classes) {
-        throw new ApiError("Classes not found")
+        throw new ApiError(httpStatus.NOT_FOUND, "Classes not found")
     }
     const classIds = classes.map(classObj => classObj.id)
 
@@ -759,10 +757,10 @@ const getActiveAttendanceSheet = asyncHandler(async (req, res) => {
     })
 
     res
-        .status(200)
+        .status(httpStatus.OK)
         .json(
             new ApiResponse(
-                200,
+                httpStatus.OK,
                 "Active attendance sheets fetched successfully",
                 activeAttendanceSheets
             )

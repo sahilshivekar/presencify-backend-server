@@ -5,10 +5,10 @@ import { ApiResponse } from '../utils/ApiResponse.js'
 import { ApiError } from '../utils/ApiError.js'
 import { Op } from 'sequelize'
 import { sendVerificationCode } from '../utils/email.js';
-import { getAdminsSchema, emailSchema } from '../validators/admin.validators.js';
 import crypto from 'crypto';
 import jwt from 'jsonwebtoken'
 import { type } from 'os';
+import httpStatus from 'http-status';
 
 
 //* generate verfication code for verifying email and forgot password
@@ -36,7 +36,7 @@ const generateAccessAndRefreshTokens = async (admin) => {
 
         return { newAccessToken, newRefreshToken }
     } catch (err) {
-        throw new ApiError(500, "Something went wrong while generating tokens")
+        throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, "Something went wrong while generating tokens")
     }
 }
 
@@ -62,7 +62,7 @@ const refreshTokens = asyncHandler(async (req, res) => {
     await admin.save();
 
     res
-        .status(200)
+        .status(httpStatus.OK)
         .cookie("adminAccessToken", newAccessToken, {
             ...options,
             maxAge: 86400000 // 1 day
@@ -73,7 +73,7 @@ const refreshTokens = asyncHandler(async (req, res) => {
         })
         .json(
             new ApiResponse(
-                200,
+                httpStatus.OK,
                 "Access token refreshed successfully",
                 {
                     accessToken: newAccessToken,
@@ -116,12 +116,12 @@ const login = asyncHandler(async (req, res) => {
     delete admin.refreshToken;
 
     res
-        .status(200)
+        .status(httpStatus.OK)
         .cookie("adminAccessToken", newAccessToken, { ...options, maxAge: 86400000 })
         .cookie("adminRefreshToken", newRefreshToken, { ...options, maxAge: 1296000000 })
         .json(
             new ApiResponse(
-                200,
+                httpStatus.OK,
                 "Login Successful",
                 {
                     admin: admin,
@@ -141,18 +141,18 @@ const verifyPassword = asyncHandler(async (req, res) => {
     const admin = await Admin.scope('withPassword').findByPk(req.admin.id);
 
     if (!admin) {
-        throw new ApiError(404, "Admin not found");
+        throw new ApiError(httpStatus.NOT_FOUND, "Admin not found");
     }
 
     const isPasswordMatching = await admin.isPasswordMatching(password);
 
     if (!isPasswordMatching) {
-        throw new ApiError(400, "Password is incorrect");
+        throw new ApiError(httpStatus.UNAUTHORIZED, "Password is incorrect");
     }
 
-    res.status(200).json(
+    res.status(httpStatus.OK).json(
         new ApiResponse(
-            200,
+            httpStatus.OK,
             "Password is correct",
             null
         )
@@ -168,22 +168,22 @@ const updateAdminPassword = asyncHandler(async (req, res) => {
     const admin = await Admin.scope('withPassword').findByPk(req.admin.id);
 
     if (!admin) {
-        throw new ApiError(404, "Admin not found");
+        throw new ApiError(httpStatus.NOT_FOUND, "Admin not found");
     }
 
     const isPasswordMatching = await admin.isPasswordMatching(password);
 
     if (isPasswordMatching) {
-        throw new ApiError(400, "New password can't be same as old password.")
+        throw new ApiError(httpStatus.BAD_REQUEST, "New password can't be same as old password.")
     }
 
     admin.password = password;
 
     await admin.save();
 
-    res.status(200).json(
+    res.status(httpStatus.OK).json(
         new ApiResponse(
-            200,
+            httpStatus.OK,
             "Password updated successfully",
             null
         )
@@ -204,12 +204,12 @@ const logout = asyncHandler(async (req, res) => {
     )
 
     res
-        .status(200)
+        .status(httpStatus.OK)
         .clearCookie('adminAccessToken')
         .clearCookie('adminRefreshToken')
         .json(
             new ApiResponse(
-                200,
+                httpStatus.OK,
                 "Logged out successfully",
                 "If you are not accessing this api from a browser then you must manually remove the tokens stored"
             )
@@ -225,7 +225,7 @@ const sendVerificationCodeToEmail = asyncHandler(async (req, res) => {
 
     // check the routers file if didn't get why we are taking emails this way
     if (!email && !req?.admin?.email) {
-        throw new ApiError(400, "Email is required");
+        throw new ApiError(httpStatus.BAD_REQUEST, "Email is required");
     }
 
     if (req?.admin?.email) {
@@ -235,7 +235,7 @@ const sendVerificationCodeToEmail = asyncHandler(async (req, res) => {
     const admin = await Admin.findOne({ where: { email } })
 
     if (!admin) {
-        throw new ApiError(400, "Admin with this email doesn't exists")
+        throw new ApiError(httpStatus.NOT_FOUND, "Admin with this email doesn't exists")
     }
 
     // Generate a random verification code (e.g., 6 digits)
@@ -250,14 +250,14 @@ const sendVerificationCodeToEmail = asyncHandler(async (req, res) => {
     })
 
     if (!record) {
-        throw new ApiError(500, "Some issue occured while generating code")
+        throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, "Some issue occured while generating code")
     }
 
     // Call the email utility function to send the email
     const emailSent = await sendVerificationCode(email, code);
 
     if (!emailSent) {
-        throw new ApiError(500, "Error sending verification email");
+        throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, "Error sending verification email");
     }
 
     setTimeout(
@@ -273,10 +273,10 @@ const sendVerificationCodeToEmail = asyncHandler(async (req, res) => {
 
 
     res
-        .status(200)
+        .status(httpStatus.OK)
         .json(
             new ApiResponse(
-                200,
+                httpStatus.OK,
                 `Verification code sent on ${admin.email}`,
                 {
                     expiresAt
@@ -297,7 +297,7 @@ const verifyCode = asyncHandler(async (req, res) => {
     })
 
     if (!codeRecord) {
-        throw new ApiError(400, "Invalid verification code")
+        throw new ApiError(httpStatus.BAD_REQUEST, "Invalid verification code")
     }
 
     const admin = await Admin.scope('withPassword').findOne({ where: { email: email.toLowerCase() } })
@@ -321,7 +321,7 @@ const verifyCode = asyncHandler(async (req, res) => {
 
 
     res
-        .status(200)
+        .status(httpStatus.OK)
         .cookie("adminAccessToken", newAccessToken, {
             ...options,
             maxAge: 86400000 /** bcz access token expiray is 1 day  */
@@ -332,7 +332,7 @@ const verifyCode = asyncHandler(async (req, res) => {
         })
         .json(
             new ApiResponse(
-                200,
+                httpStatus.OK,
                 "Verification successful!",
                 {
                     accessToken: newAccessToken, refreshToken: newRefreshToken

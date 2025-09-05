@@ -4,6 +4,7 @@ import { ApiResponse } from '../utils/ApiResponse.js'
 import { ApiError } from '../utils/ApiError.js'
 import { Op } from 'sequelize'
 import University from '../db/models/university.model.js';
+import httpStatus from 'http-status';
 
 //* get all the schemes
 const getSchemes = asyncHandler(async (req, res) => {
@@ -33,10 +34,10 @@ const getSchemes = asyncHandler(async (req, res) => {
     });
 
     res
-        .status(200)
+        .status(httpStatus.OK)
         .json(
             new ApiResponse(
-                200,
+                httpStatus.OK,
                 "Schemes retrieved successfully.",
                 schemes
             )
@@ -50,7 +51,7 @@ const addScheme = asyncHandler(async (req, res) => {
     const university = await University.findByPk(universityId);
 
     if (!university) {
-        throw new ApiError(404, "University not found");
+        throw new ApiError(httpStatus.NOT_FOUND, "University not found");
     }
 
     const scheme = await Scheme.create({
@@ -59,10 +60,10 @@ const addScheme = asyncHandler(async (req, res) => {
     });
 
     res
-        .status(201)
+        .status(httpStatus.CREATED)
         .json(
             new ApiResponse(
-                201,
+                httpStatus.CREATED,
                 'Scheme added successfully',
                 scheme
             )
@@ -79,7 +80,7 @@ const updateScheme = asyncHandler(async (req, res) => {
     const scheme = await Scheme.findByPk(id);
 
     if (!scheme) {
-        throw new ApiError(404, "Scheme not found");
+        throw new ApiError(httpStatus.NOT_FOUND, "Scheme not found");
     }
 
     scheme.name = name || scheme.name;
@@ -87,10 +88,10 @@ const updateScheme = asyncHandler(async (req, res) => {
     await scheme.save();
 
     res
-        .status(200)
+        .status(httpStatus.OK)
         .json(
             new ApiResponse(
-                200,
+                httpStatus.OK,
                 "Scheme updated successfully",
                 scheme
             )
@@ -106,16 +107,16 @@ const removeScheme = asyncHandler(async (req, res) => {
     const scheme = await Scheme.findByPk(id);
 
     if (!scheme) {
-        throw new ApiError(404, "Scheme not found");
+        throw new ApiError(httpStatus.NOT_FOUND, "Scheme not found");
     }
 
     await scheme.destroy();
 
     res
-        .status(200)
+        .status(httpStatus.NO_CONTENT)
         .json(
             new ApiResponse(
-                200,
+                httpStatus.NO_CONTENT,
                 "Scheme deleted successfully",
                 null
             )
@@ -138,14 +139,14 @@ const getSchemeById = asyncHandler(async (req, res) => {
     });
 
     if (!scheme) {
-        throw new ApiError(404, "Scheme not found");
+        throw new ApiError(httpStatus.NOT_FOUND, "Scheme not found");
     }
 
     res
-        .status(200)
+        .status(httpStatus.OK)
         .json(
             new ApiResponse(
-                200,
+                httpStatus.OK,
                 "Scheme retrieved successfully",
                 scheme
             )

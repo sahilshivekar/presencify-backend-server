@@ -3,6 +3,7 @@ import { asyncHandler } from '../utils/asyncHandler.js';
 import { ApiResponse } from '../utils/ApiResponse.js';
 import { ApiError } from '../utils/ApiError.js';
 import Room from '../db/models/room.model.js';
+import httpStatus from 'http-status';
 
 const addRoom = asyncHandler(async (req, res) => {
     const { roomNumber, sittingCapacity } = req.body;
@@ -12,7 +13,7 @@ const addRoom = asyncHandler(async (req, res) => {
         sittingCapacity
     });
 
-    res.status(201).json(new ApiResponse(201, "Room added successfully", room));
+    res.status(httpStatus.CREATED).json(new ApiResponse(httpStatus.CREATED, "Room added successfully", room));
 });
 
 const getRooms = asyncHandler(async (req, res) => {
@@ -42,7 +43,7 @@ const getRooms = asyncHandler(async (req, res) => {
         ...(limit && getAll === false ? { offset } : {})
     });
 
-    res.status(200).json(new ApiResponse(200, "Rooms retrieved successfully.", {
+    res.status(httpStatus.OK).json(new ApiResponse(httpStatus.OK, "Rooms retrieved successfully.", {
         rooms: rooms.rows,
         totalCount: rooms.count
     }));
@@ -53,13 +54,13 @@ const getRoomById = asyncHandler(async (req, res) => {
 
     const room = await Room.findByPk(id);
 
-    if (!room) throw new ApiError(404, "Room not found");
+    if (!room) throw new ApiError(httpStatus.NOT_FOUND, "Room not found");
 
     res
-        .status(200)
+        .status(httpStatus.OK)
         .json(
             new ApiResponse(
-                200,
+                httpStatus.OK,
                 "Room fetched successfully",
                 room
             )
@@ -72,14 +73,14 @@ const updateRoom = asyncHandler(async (req, res) => {
 
     const room = await Room.findByPk(id);
 
-    if (!room) throw new ApiError(404, "Room not found");
+    if (!room) throw new ApiError(httpStatus.NOT_FOUND, "Room not found");
 
     room.roomNumber = roomNumber || room.roomNumber;
     room.sittingCapacity = sittingCapacity || room.sittingCapacity;
 
     await room.save();
 
-    res.status(200).json(new ApiResponse(200, "Room updated successfully", room));
+    res.status(httpStatus.OK).json(new ApiResponse(httpStatus.OK, "Room updated successfully", room));
 });
 
 const removeRoom = asyncHandler(async (req, res) => {
@@ -87,11 +88,11 @@ const removeRoom = asyncHandler(async (req, res) => {
 
     const room = await Room.findByPk(id);
 
-    if (!room) throw new ApiError(404, "Room not found");
+    if (!room) throw new ApiError(httpStatus.NOT_FOUND, "Room not found");
 
     await room.destroy();
 
-    res.status(200).json(new ApiResponse(200, "Room deleted successfully", null));
+    res.status(httpStatus.NO_CONTENT).json(new ApiResponse(httpStatus.NO_CONTENT, "Room deleted successfully", null));
 });
 
 export {
