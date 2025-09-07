@@ -1,7 +1,7 @@
 import httpStatus from 'http-status';
-import {config} from '../config/config.js';
-import {logger} from '../config/logger.js';
-import {ApiError} from '../utils/ApiError.js';
+import { config } from '../config/config.js';
+import { logger } from '../config/logger.js';
+import { ApiError } from '../utils/ApiError.js';
 import { ApiResponse } from '../utils/ApiResponse.js';
 
 const errorConverter = (err, req, res, next) => {
@@ -28,15 +28,18 @@ const errorHandler = (err, req, res, next) => {
         logger.error(err);
     }
 
+    const shouldIncludeDebugInfo = config.env !== 'production';
+
+    const response = {
+        statusCode,
+        message,
+        ...(shouldIncludeDebugInfo && Array.isArray(err.errors) && err.errors.length >= 0 && { errors: err.errors }),
+        ...(shouldIncludeDebugInfo && { stack: err.stack }),
+    };
+
     res
         .status(statusCode)
-        .json(
-            new ApiError(
-                statusCode,
-                message,
-                [],
-                config.env === 'development' ? err.stack : undefined
-            ))
+        .json(response);
 };
 
 export { errorConverter, errorHandler };
