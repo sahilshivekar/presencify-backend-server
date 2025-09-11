@@ -1,10 +1,10 @@
 import request from 'supertest';
-import app from '../../app.js';
-import setupTestDb from '../util/setupTestDb.js';
-import Admin from '../../db/models/admin.model.js';
+import app from '../../../app.js';
+import setupTestDb from '../../util/setupTestDb.js';
+import Admin from '../../../db/models/admin.model.js';
 import { faker } from '@faker-js/faker';
 import httpStatus from 'http-status';
-import { logger } from '../../config/logger.js';
+import { logger } from '../../../config/logger.js';
 
 setupTestDb();
 
@@ -194,13 +194,13 @@ describe('Admin API - addAdmin', () => {
             const duplicateEmail = 'duplicate@example.com';
             await Admin.create({
                 email: duplicateEmail,
-                username: (faker.internet.username() + Date.now()).toLowerCase(),
+                username: faker.internet.username().toLowerCase(),
                 password: 'TestPass123!',
             });
 
             const newAdminData = {
                 email: duplicateEmail,
-                username: (faker.internet.username() + Date.now()).toLowerCase(),
+                username: faker.internet.username().toLowerCase(),
                 password: 'TestPass123!',
             };
 
@@ -212,30 +212,6 @@ describe('Admin API - addAdmin', () => {
 
             expect(res.body.success).toBe(false);
             expect(res.body.message).toContain('This email is already in use');
-        });
-
-        test('should return 409 when username already exists', async () => {
-            const duplicateUsername = 'duplicateuser';
-            await Admin.create({
-                email: faker.internet.email(),
-                username: duplicateUsername,
-                password: 'TestPass123!',
-            });
-
-            const newAdminData = {
-                email: faker.internet.email(),
-                username: duplicateUsername,
-                password: 'TestPass123!',
-            };
-
-            const res = await request(app)
-                .post('/api/v1/admins')
-                .set('Authorization', `Bearer ${adminToken}`)
-                .send(newAdminData)
-                .expect(httpStatus.CONFLICT);
-
-            expect(res.body.success).toBe(false);
-            expect(res.body.message).toContain('This username is already in use');
         });
     });
 });

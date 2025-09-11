@@ -1,26 +1,34 @@
-jest.mock("../../db/models/admin.model.js", () => ({ __esModule: true, default: { findByPk: jest.fn() } }))
+import { jest } from '@jest/globals';
 
-jest.mock("../../db/models/student.model.js", () => ({ __esModule: true, default: { findByPk: jest.fn() } }))
+// Mock modules before importing
+jest.unstable_mockModule("../../db/models/admin.model.js", () => ({
+    default: { findByPk: jest.fn() }
+}));
 
-jest.mock("../../db/models/teacher.model.js", () => ({ __esModule: true, default: { findByPk: jest.fn() } }))
+jest.unstable_mockModule("../../db/models/student.model.js", () => ({
+    default: { findByPk: jest.fn() }
+}));
 
-jest.mock("jsonwebtoken", () => ({
-    __esModule: true,
+jest.unstable_mockModule("../../db/models/teacher.model.js", () => ({
+    default: { findByPk: jest.fn() }
+}));
+
+jest.unstable_mockModule("jsonwebtoken", () => ({
     default: { verify: jest.fn() },
     verify: jest.fn()
-}))
+}));
 
-// Now import code under test and helpers
-import { verifyJWT } from "../../middlewares/auth.middleware.js";
-import { ROLES } from "../../config/roles.js";
-import { StatusCodes } from "http-status-codes";
-import httpMocks from "node-mocks-http";
-import jwt from "jsonwebtoken"; // Changed to default import to match auth middleware
+// Dynamic imports after mocking
+const { verifyJWT } = await import("../../middlewares/auth.middleware.js");
+const { ROLES } = await import("../../config/roles.js");
+const { StatusCodes } = await import("http-status-codes");
+const httpMocks = (await import("node-mocks-http")).default;
+const jwt = (await import("jsonwebtoken")).default;
 
-// Import mocked models - Jest will give us the mocked versions
-import Admin from "../../db/models/admin.model.js";
-import Student from "../../db/models/student.model.js";
-import Teacher from "../../db/models/teacher.model.js";
+// Import mocked models
+const Admin = (await import("../../db/models/admin.model.js")).default;
+const Student = (await import("../../db/models/student.model.js")).default;
+const Teacher = (await import("../../db/models/teacher.model.js")).default;
 
 
 

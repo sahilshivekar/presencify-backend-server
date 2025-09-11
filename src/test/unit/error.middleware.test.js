@@ -1,22 +1,25 @@
-jest.mock('../../config/config.js', () => ({
+import { jest } from '@jest/globals';
+
+// Mock modules before importing
+jest.unstable_mockModule('../../config/config.js', () => ({
     config: {
         env: 'test' // Default to test environment
     }
 }));
 
-jest.mock('../../config/logger.js', () => ({
+jest.unstable_mockModule('../../config/logger.js', () => ({
     logger: {
         error: jest.fn()
     }
 }));
 
-// Import modules after mocks
-import { errorConverter, errorHandler } from '../../middlewares/error.js';
-import { ApiError } from '../../utils/ApiError.js';
-import { config } from '../../config/config.js';
-import { logger } from '../../config/logger.js';
-import httpStatus from 'http-status';
-import httpMocks from 'node-mocks-http';
+// Dynamic imports after mocking
+const { errorConverter, errorHandler } = await import('../../middlewares/error.js');
+const { ApiError } = await import('../../utils/ApiError.js');
+const { config } = await import('../../config/config.js');
+const { logger } = await import('../../config/logger.js');
+const httpStatus = (await import('http-status')).default;
+const httpMocks = (await import('node-mocks-http')).default;
 
 describe('Error Middleware', () => {
     let req, res, next;

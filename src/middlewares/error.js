@@ -6,7 +6,6 @@ import { ApiResponse } from '../utils/ApiResponse.js';
 
 const errorConverter = (err, req, res, next) => {
     let error = err;
-    
     if (error?.name == 'SequelizeUniqueConstraintError') {
         error.statusCode = httpStatus.CONFLICT;
     } else if (!(error instanceof ApiError)) {

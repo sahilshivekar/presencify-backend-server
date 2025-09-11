@@ -1,7 +1,10 @@
-import validate from '../../middlewares/validate.js';
-import { ApiError } from '../../utils/ApiError.js';
-import httpStatus from 'http-status';
-import Joi from 'joi';
+import { jest } from '@jest/globals';
+
+// Dynamic imports - no mocking needed for these modules
+const validate = (await import('../../middlewares/validate.js')).default;
+const { ApiError } = await import('../../utils/ApiError.js');
+const httpStatus = (await import('http-status')).default;
+const Joi = (await import('joi')).default;
 
 describe('validate middleware', () => {
     let req, next;
