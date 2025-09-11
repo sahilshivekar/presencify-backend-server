@@ -128,13 +128,15 @@ Admin.prototype.isPasswordMatching = async function (password) {
 
 Admin.beforeCreate(async (admin) => {
     if (admin?.password) {
-        admin.password = await bcrypt.hash(admin.password, Number(process.env.BCRYPT_SALT))
+        const saltRounds = process.env.NODE_ENV === 'test' ? 4 : Number(process.env.BCRYPT_SALT);
+        admin.password = await bcrypt.hash(admin.password, saltRounds)
     }
 })
 
 Admin.beforeUpdate(async (admin) => {
     if (admin.changed('password') && admin?.password) {
-        admin.password = await bcrypt.hash(admin.password, Number(process.env.BCRYPT_SALT))
+        const saltRounds = process.env.NODE_ENV === 'test' ? 4 : Number(process.env.BCRYPT_SALT);
+        admin.password = await bcrypt.hash(admin.password, saltRounds)
     }
     if (admin.changed('email')) {
         admin.email = admin.email.toLowerCase();

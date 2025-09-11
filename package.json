@@ -5,7 +5,7 @@
   "main": "server.js",
   "type": "module",
   "scripts": {
-    "test": "jest",
+    "test":"node --experimental-vm-modules node_modules/jest/bin/jest.js --testTimeout=30000",
     "start": "node src/server.js",
     "dev": "nodemon src/server.js",
     "seq-mig": "npx sequelize-cli db:migrate",
@@ -13,7 +13,8 @@
     "seq-undo-name": "npx sequelize-cli db:migrate:undo --name",
     "seq-undo-all": "npx sequelize-cli db:migrate:undo:all",
     "seq-mig-gen": "npx sequelize-cli migration:generate --name",
-    "reset-db": "npx sequelize-cli db:migrate:undo:all && npx sequelize-cli db:migrate && npx sequelize-cli db:seed:all"
+    "reset-db": "npx sequelize-cli db:migrate:undo:all && npx sequelize-cli db:migrate && npx sequelize-cli db:seed:all",
+    "test-mig": "NODE_ENV=test npx sequelize-cli db:migrate"
   },
   "repository": {
     "type": "git",

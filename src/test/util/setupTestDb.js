@@ -1,21 +1,48 @@
 // src/test/util/setupTestDb.js
-import { sequelize } from "../../config/db.connection.js";
+import sequelize from "../../config/db.connection.js";
+import { logger } from "../../config/logger.js";
 
 const setupTestDb = () => {
     beforeAll(async () => {
-        await sequelize.authenticate();
+        try {
+            // Test database connection
+            await sequelize.authenticate();
+            logger.info('✓ Database connection established successfully');
+            
+        } catch (error) {
+            logger.error('✗ Database setup failed:', error);
+            throw error;
+        }
     });
 
     beforeEach(async () => {
-        await Promise.all(
-            Object.values(sequelize.models).map((model) =>
-                model.destroy({ where: {}, force: true })
-            )
-        );
+        try {
+            // Clean all tables - much faster approach
+            const modelNames = Object.keys(sequelize.models);
+            
+            if (modelNames.length === 0) {
+                throw new Error('No models found! Make sure all models are imported.');
+            }
+            
+            // Use raw SQL for faster cleanup (PostgreSQL specific)
+            await sequelize.query('TRUNCATE TABLE ' + 
+                modelNames.map(name => `"${sequelize.models[name].tableName}"`).join(', ') + 
+                ' RESTART IDENTITY CASCADE');
+
+            logger.info(`✓ Cleaned ${modelNames.length} tables`);
+        } catch (error) {
+            logger.error('✗ Database cleanup failed:', error);
+            throw error;
+        }
     });
 
     afterAll(async () => {
-        await sequelize.close();
+        try {
+            await sequelize.close();
+            logger.info('✓ Database connection closed');
+        } catch (error) {
+            logger.error('✗ Error closing database connection:', error);
+        }
     });
 };
 
