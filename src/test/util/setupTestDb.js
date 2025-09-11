@@ -6,9 +6,7 @@ const setupTestDb = () => {
     beforeAll(async () => {
         try {
             // Test database connection
-            await sequelize.authenticate();
-            logger.info('✓ Database connection established successfully');
-            
+            await sequelize.authenticate();            
         } catch (error) {
             logger.error('✗ Database setup failed:', error);
             throw error;
@@ -29,7 +27,6 @@ const setupTestDb = () => {
                 modelNames.map(name => `"${sequelize.models[name].tableName}"`).join(', ') + 
                 ' RESTART IDENTITY CASCADE');
 
-            logger.info(`✓ Cleaned ${modelNames.length} tables`);
         } catch (error) {
             logger.error('✗ Database cleanup failed:', error);
             throw error;
@@ -39,7 +36,6 @@ const setupTestDb = () => {
     afterAll(async () => {
         try {
             await sequelize.close();
-            logger.info('✓ Database connection closed');
         } catch (error) {
             logger.error('✗ Error closing database connection:', error);
         }
