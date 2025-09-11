@@ -13,12 +13,10 @@ const addAdmin = {
                 'string.base': 'Email must be a string'
             }),
         username: Joi.string()
-            .alphanum()
             .min(3)
             .max(30)
             .required()
             .messages({
-                'string.alphanum': 'Username must contain only letters and numbers',
                 'string.min': 'Username must be at least 3 characters long',
                 'string.max': 'Username cannot exceed 30 characters',
                 'any.required': 'Username is required',
@@ -68,12 +66,10 @@ const updateAdminDetails = {
                 'string.base': 'Email must be a string'
             }),
         username: Joi.string()
-            .alphanum()
             .min(3)
             .max(30)
             .required()
             .messages({
-                'string.alphanum': 'Username must contain only letters and numbers',
                 'string.min': 'Username must be at least 3 characters long',
                 'string.max': 'Username cannot exceed 30 characters',
                 'any.required': 'Username is required',

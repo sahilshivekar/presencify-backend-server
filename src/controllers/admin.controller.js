@@ -17,7 +17,7 @@ const addAdmin = asyncHandler(async (req, res) => {
         password,
     });
 
-    const newAdmin = await Admin.findOne({ email })
+    const newAdmin = await Admin.findOne({ where: { email } })
 
     if (!newAdmin) {
         throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, "Some issue occuered while adding admin")

@@ -17,7 +17,7 @@ const modelMap = {
  * Middleware to verify JWT and authorize based on allowed roles.
  * Usage: verifyJWT([ROLES.ADMIN, ROLES.TEACHER]) or verifyJWT([ROLES.STUDENT])
  */
-const verifyJWT = (allowedRoles) => 
+const verifyJWT = (allowedRoles) =>
     asyncHandler(async (req, _, next) => {
 
         if (allowedRoles.length === 0) throw new ApiError(StatusCodes.INTERNAL_SERVER_ERROR, "No roles provided");
@@ -30,8 +30,13 @@ const verifyJWT = (allowedRoles) =>
             throw new ApiError(StatusCodes.UNAUTHORIZED, "Unauthorized request: No token provided");
         }
 
-        const decodedToken = jwt.verify(token, process.env.JWT_ACCESS_TOKEN_SECRET);
-
+        try {
+            decodedToken = jwt.verify(token, process.env.JWT_ACCESS_TOKEN_SECRET);
+        } catch (error) {
+            // Catch JWT errors (e.g., malformed, expired) and throw ApiError for 401
+            throw new ApiError(StatusCodes.UNAUTHORIZED, "Unauthorized request: Invalid token");
+        }
+        
         if (!decodedToken || !decodedToken.id || !decodedToken.role) {
             throw new ApiError(StatusCodes.UNAUTHORIZED, "Unauthorized request: Invalid token");
         }

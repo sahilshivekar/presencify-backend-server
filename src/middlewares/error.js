@@ -6,11 +6,15 @@ import { ApiResponse } from '../utils/ApiResponse.js';
 
 const errorConverter = (err, req, res, next) => {
     let error = err;
-    if (!(error instanceof ApiError)) {
+    
+    if (error?.name == 'SequelizeUniqueConstraintError') {
+        error.statusCode = httpStatus.CONFLICT;
+    } else if (!(error instanceof ApiError)) {
         const statusCode = error.statusCode || httpStatus.INTERNAL_SERVER_ERROR;
         const message = error.message || httpStatus[statusCode];
         error = new ApiError(statusCode, message, [], err.stack);
     }
+
     next(error);
 };
 
@@ -33,6 +37,7 @@ const errorHandler = (err, req, res, next) => {
     const response = {
         statusCode,
         message,
+        success: false,
         ...(shouldIncludeDebugInfo && Array.isArray(err.errors) && err.errors.length >= 0 && { errors: err.errors }),
         ...(shouldIncludeDebugInfo && { stack: err.stack }),
     };
