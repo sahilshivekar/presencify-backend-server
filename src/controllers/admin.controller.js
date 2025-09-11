@@ -1,30 +1,9 @@
 import Admin from '../db/models/admin.model.js';
-import VerificationCode from '../db/models/verificationCode.model.js'
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { ApiResponse } from '../utils/ApiResponse.js'
 import { ApiError } from '../utils/ApiError.js'
 import { Op } from 'sequelize'
-import { sendVerificationCode } from '../utils/email.js';
-import crypto from 'crypto';
-import jwt from 'jsonwebtoken'
-import { type } from 'os';
 import httpStatus from 'http-status';
-
-
-//* generate verfication code for verifying email and forgot password
-const generateVerificationCode = (length = 6) => {
-    let code = '';
-    for (let i = 0; i < length; i++) {
-        code += crypto.randomInt(0, 10).toString();
-    }
-    return code;
-}
-
-//* options for setting cookies
-const options = {
-    httpOnly: true,
-    secure: true,
-}
 
 
 //* Add new admin

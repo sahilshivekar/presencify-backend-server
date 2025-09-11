@@ -13,8 +13,8 @@ const router = Router();
 
 // FCM Token management operations
 router.route('/')
-    .post(verifyJWT([ROLES.ADMIN, ROLES.STUDENT]), validate(studentFCMValidation.addStudentFCMTokens), addStudentFCMTokens)
-    .put(verifyJWT([ROLES.ADMIN, ROLES.STUDENT]), validate(studentFCMValidation.updateStudentFCMTokens), updateStudentFCMTokens)
-    .delete(verifyJWT([ROLES.ADMIN, ROLES.STUDENT]), validate(studentFCMValidation.removeStudentFCMTokens), removeStudentFCMTokens);
+    .post(validate(studentFCMValidation.addStudentFCMTokens), verifyJWT([ROLES.ADMIN, ROLES.STUDENT]), addStudentFCMTokens)
+    .put(validate(studentFCMValidation.updateStudentFCMTokens), verifyJWT([ROLES.ADMIN, ROLES.STUDENT]), updateStudentFCMTokens)
+    .delete(validate(studentFCMValidation.removeStudentFCMTokens), verifyJWT([ROLES.ADMIN, ROLES.STUDENT]), removeStudentFCMTokens);
 
 export default router;

@@ -23,9 +23,9 @@ router.route('/verify-code').post(validate(adminAuthValidation.verifyCode), veri
 router.route('/access-token').post(validate(adminAuthValidation.refreshTokens), refreshTokens);
 
 // Authentication and password management
-router.route('/verify-password').post(verifyJWT([ROLES.ADMIN]), validate(adminAuthValidation.verifyPassword), verifyPassword);
-router.route('/update-password').put(verifyJWT([ROLES.ADMIN]), validate(adminAuthValidation.updateAdminPassword), updateAdminPassword);
+router.route('/verify-password').post(validate(adminAuthValidation.verifyPassword), verifyJWT([ROLES.ADMIN]), verifyPassword);
+router.route('/update-password').put(validate(adminAuthValidation.updateAdminPassword), verifyJWT([ROLES.ADMIN]), updateAdminPassword);
 router.route('/logout').post(verifyJWT([ROLES.ADMIN]), logout);
-router.route('/email-verification').get(verifyJWT([ROLES.ADMIN]), validate(adminAuthValidation.sendVerificationCodeToEmail), sendVerificationCodeToEmail);
+router.route('/email-verification').get(validate(adminAuthValidation.sendVerificationCodeToEmail), verifyJWT([ROLES.ADMIN]), sendVerificationCodeToEmail);
 
 export default router;

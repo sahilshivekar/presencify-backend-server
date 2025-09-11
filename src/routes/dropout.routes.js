@@ -14,14 +14,14 @@ const router = Router();
 
 // Basic CRUD operations for dropout records
 router.route('/')
-    .post(verifyJWT([ROLES.ADMIN]), validate(dropoutValidation.addStudentToDropout), addStudentToDropout)
-    .delete(verifyJWT([ROLES.ADMIN]), validate(dropoutValidation.removeStudentFromDropout), removeStudentFromDropout);
+    .post(validate(dropoutValidation.addStudentToDropout), verifyJWT([ROLES.ADMIN]), addStudentToDropout)
+    .delete(validate(dropoutValidation.removeStudentFromDropout), verifyJWT([ROLES.ADMIN]), removeStudentFromDropout);
 
 router.route('/:id')
-    .get(verifyJWT([ROLES.ADMIN]), validate(dropoutValidation.getDropoutById), getDropoutById);
+    .get(validate(dropoutValidation.getDropoutById), verifyJWT([ROLES.ADMIN]), getDropoutById);
 
 // Student-specific dropout details
 router.route('/student')
-    .get(verifyJWT([ROLES.ADMIN, ROLES.TEACHER, ROLES.STUDENT]), validate(dropoutValidation.getDropoutDetailsOfStudent), getDropoutDetailsOfStudent);
+    .get(validate(dropoutValidation.getDropoutDetailsOfStudent), verifyJWT([ROLES.ADMIN, ROLES.TEACHER, ROLES.STUDENT]), getDropoutDetailsOfStudent);
 
 export default router;

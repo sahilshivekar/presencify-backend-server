@@ -19,51 +19,51 @@ const router = express.Router();
 // Basic CRUD operations
 router.route('/')
     .get(
-        verifyJWT([ROLES.ADMIN, ROLES.TEACHER, ROLES.STUDENT]),
         validate(classValidation.getClasses),
+        verifyJWT([ROLES.ADMIN, ROLES.TEACHER, ROLES.STUDENT]),
         getClasses
     )
     .post(
-        verifyJWT([ROLES.ADMIN]),
         validate(classValidation.addClass),
+        verifyJWT([ROLES.ADMIN]),
         addClass
     );
 
 router.route('/:id')
     .get(
-        verifyJWT([ROLES.ADMIN, ROLES.TEACHER, ROLES.STUDENT]),
         validate(classValidation.getClassById),
+        verifyJWT([ROLES.ADMIN, ROLES.TEACHER, ROLES.STUDENT]),
         getClassById
     )
     .put(
-        verifyJWT([ROLES.ADMIN]),
         validate(classValidation.extendActiveTillDateOfClass),
+        verifyJWT([ROLES.ADMIN]),
         extendActiveTillDateOfClass
     )
     .delete(
-        verifyJWT([ROLES.ADMIN]),
         validate(classValidation.removeClass),
+        verifyJWT([ROLES.ADMIN]),
         removeClass
     );
 
 // Extra class operations
 router.route('/extra')
     .post(
-        verifyJWT([ROLES.ADMIN, ROLES.TEACHER]),
         validate(classValidation.addExtraClass),
+        verifyJWT([ROLES.ADMIN, ROLES.TEACHER]),
         addExtraClass
     );
 
 // Cancelled class operations
 router.route('/cancelled')
     .get(
-        verifyJWT([ROLES.ADMIN, ROLES.TEACHER, ROLES.STUDENT]),
         validate(classValidation.getCancelledClasses),
+        verifyJWT([ROLES.ADMIN, ROLES.TEACHER, ROLES.STUDENT]),
         getCancelledClasses
     )
     .post(
-        verifyJWT([ROLES.ADMIN, ROLES.TEACHER]),
         validate(classValidation.cancelClass),
+        verifyJWT([ROLES.ADMIN, ROLES.TEACHER]),
         cancelClass
     );
 

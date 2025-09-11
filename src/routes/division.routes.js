@@ -16,30 +16,30 @@ const router = Router();
 // Basic CRUD operations
 router.route('/')
     .get(
-        verifyJWT([ROLES.ADMIN, ROLES.TEACHER, ROLES.STUDENT]),
         validate(divisionValidation.getDivisions),
+        verifyJWT([ROLES.ADMIN, ROLES.TEACHER, ROLES.STUDENT]),
         getDivisions
     )
     .post(
-        verifyJWT([ROLES.ADMIN]),
         validate(divisionValidation.addDivision),
+        verifyJWT([ROLES.ADMIN]),
         addDivision
     );
 
 router.route('/:id')
     .get(
-        verifyJWT([ROLES.ADMIN, ROLES.TEACHER, ROLES.STUDENT]),
         validate(divisionValidation.getDivisionById),
+        verifyJWT([ROLES.ADMIN, ROLES.TEACHER, ROLES.STUDENT]),
         getDivisionById
     )
     .put(
-        verifyJWT([ROLES.ADMIN]),
         validate(divisionValidation.updateDivision),
+        verifyJWT([ROLES.ADMIN]),
         updateDivision
     )
     .delete(
-        verifyJWT([ROLES.ADMIN]),
         validate(divisionValidation.removeDivision),
+        verifyJWT([ROLES.ADMIN]),
         removeDivision
     );
 

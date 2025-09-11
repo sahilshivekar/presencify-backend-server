@@ -10,30 +10,30 @@ const router = express.Router();
 // Basic CRUD operations
 router.route('/')
     .get(
-        verifyJWT([ROLES.ADMIN, ROLES.TEACHER, ROLES.STUDENT]),
         validate(batchValidation.getBatches),
+        verifyJWT([ROLES.ADMIN, ROLES.TEACHER, ROLES.STUDENT]),
         getBatches
     )
     .post(
-        verifyJWT([ROLES.ADMIN]),
         validate(batchValidation.addBatch),
+        verifyJWT([ROLES.ADMIN]),
         addBatch
     );
 
 router.route('/:id')
     .get(
-        verifyJWT([ROLES.ADMIN, ROLES.TEACHER, ROLES.STUDENT]),
         validate(batchValidation.getBatchById),
+        verifyJWT([ROLES.ADMIN, ROLES.TEACHER, ROLES.STUDENT]),
         getBatchById
     )
     .put(
-        verifyJWT([ROLES.ADMIN]),
         validate(batchValidation.updateBatch),
+        verifyJWT([ROLES.ADMIN]),
         updateBatch
     )
     .delete(
-        verifyJWT([ROLES.ADMIN]),
         validate(batchValidation.removeBatch),
+        verifyJWT([ROLES.ADMIN]),
         removeBatch
     );
 

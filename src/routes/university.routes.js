@@ -20,25 +20,25 @@ router.route('/')
         getUniversities
     )
     .post(
-        verifyJWT([ROLES.ADMIN]),
         validate(universityValidation.addUniversity),
+        verifyJWT([ROLES.ADMIN]),
         addUniversity
     );
 
 router.route('/:id')
     .get(
-        verifyJWT([ROLES.ADMIN, ROLES.TEACHER, ROLES.STUDENT]),
         validate(universityValidation.getUniversityById),
+        verifyJWT([ROLES.ADMIN, ROLES.TEACHER, ROLES.STUDENT]),
         getUniversityById
     )
     .put(
-        verifyJWT([ROLES.ADMIN]),
         validate(universityValidation.updateUniversity),
+        verifyJWT([ROLES.ADMIN]),
         updateUniversity
     )
     .delete(
-        verifyJWT([ROLES.ADMIN]),
         validate(universityValidation.removeUniversity),
+        verifyJWT([ROLES.ADMIN]),
         removeUniversity
     );
 

@@ -19,29 +19,29 @@ const router = express.Router();
 
 // Basic CRUD operations for attendance sheets
 router.route('/')
-    .get(verifyJWT([ROLES.ADMIN, ROLES.TEACHER]), validate(attendanceValidation.getAttendance), getAttendance)
-    .post(verifyJWT([ROLES.ADMIN, ROLES.TEACHER]), validate(attendanceValidation.createAttendance), createAttendance)
-    .delete(verifyJWT([ROLES.ADMIN, ROLES.TEACHER]), validate(attendanceValidation.removeAttendance), removeAttendance);
+    .get(validate(attendanceValidation.getAttendance), verifyJWT([ROLES.ADMIN, ROLES.TEACHER]), getAttendance)
+    .post(validate(attendanceValidation.createAttendance), verifyJWT([ROLES.ADMIN, ROLES.TEACHER]), createAttendance)
+    .delete(validate(attendanceValidation.removeAttendance), verifyJWT([ROLES.ADMIN, ROLES.TEACHER]), removeAttendance);
 
 // Student-specific attendance operations
 router.route('/students')
-    .post(verifyJWT([ROLES.ADMIN, ROLES.TEACHER]), validate(attendanceValidation.addStudentsAttendance), addStudentsAttendance)
-    .put(verifyJWT([ROLES.ADMIN, ROLES.TEACHER]), validate(attendanceValidation.updateStudentAttendance), updateStudentAttendance);
+    .post(validate(attendanceValidation.addStudentsAttendance), verifyJWT([ROLES.ADMIN, ROLES.TEACHER]), addStudentsAttendance)
+    .put(validate(attendanceValidation.updateStudentAttendance), verifyJWT([ROLES.ADMIN, ROLES.TEACHER]), updateStudentAttendance);
 
 // Individual student attendance queries
 router.route('/student')
-    .get(verifyJWT([ROLES.ADMIN, ROLES.TEACHER, ROLES.STUDENT]), validate(attendanceValidation.getAttendanceOfStudentForSpecificCourseInSemester), getAttendanceOfStudentForSpecificCourseInSemester);
+    .get(validate(attendanceValidation.getAttendanceOfStudentForSpecificCourseInSemester), verifyJWT([ROLES.ADMIN, ROLES.TEACHER, ROLES.STUDENT]), getAttendanceOfStudentForSpecificCourseInSemester);
 
 // Bulk attendance queries (all students)
 router.route('/all')
-    .get(verifyJWT([ROLES.ADMIN, ROLES.TEACHER]), validate(attendanceValidation.getAttendanceOfAllForSemesterDivisionBatchCourse), getAttendanceOfAllForSemesterDivisionBatchCourse);
+    .get(validate(attendanceValidation.getAttendanceOfAllForSemesterDivisionBatchCourse), verifyJWT([ROLES.ADMIN, ROLES.TEACHER]), getAttendanceOfAllForSemesterDivisionBatchCourse);
 
 // Active attendance sheet operations
 router.route('/active')
-    .get(verifyJWT([ROLES.ADMIN, ROLES.TEACHER, ROLES.STUDENT]), validate(attendanceValidation.getActiveAttendanceSheet), getActiveAttendanceSheet);
+    .get(validate(attendanceValidation.getActiveAttendanceSheet), verifyJWT([ROLES.ADMIN, ROLES.TEACHER, ROLES.STUDENT]), getActiveAttendanceSheet);
 
 // Reporting functionality
 router.route('/report')
-    .post(verifyJWT([ROLES.ADMIN, ROLES.TEACHER]), validate(attendanceValidation.sendAttendanceReport), sendAttendanceReport);
+    .post(validate(attendanceValidation.sendAttendanceReport), verifyJWT([ROLES.ADMIN, ROLES.TEACHER]), sendAttendanceReport);
 
 export default router;

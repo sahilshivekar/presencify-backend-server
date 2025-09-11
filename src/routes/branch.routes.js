@@ -16,30 +16,30 @@ const router = Router();
 // Basic CRUD operations
 router.route('/')
     .get(
-        verifyJWT([ROLES.ADMIN, ROLES.TEACHER, ROLES.STUDENT]),
         validate(branchValidation.getBranches),
+        verifyJWT([ROLES.ADMIN, ROLES.TEACHER, ROLES.STUDENT]),
         getBranches
     )
     .post(
-        verifyJWT([ROLES.ADMIN]),
         validate(branchValidation.addBranch),
+        verifyJWT([ROLES.ADMIN]),
         addBranch
     );
 
 router.route('/:id')
     .get(
-        verifyJWT([ROLES.ADMIN, ROLES.TEACHER, ROLES.STUDENT]),
         validate(branchValidation.getBranchById),
+        verifyJWT([ROLES.ADMIN, ROLES.TEACHER, ROLES.STUDENT]),
         getBranchById
     )
     .put(
-        verifyJWT([ROLES.ADMIN]),
         validate(branchValidation.updateBranch),
+        verifyJWT([ROLES.ADMIN]),
         updateBranch
     )
     .delete(
-        verifyJWT([ROLES.ADMIN]),
         validate(branchValidation.removeBranch),
+        verifyJWT([ROLES.ADMIN]),
         removeBranch
     );
 

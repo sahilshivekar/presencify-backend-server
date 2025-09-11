@@ -23,67 +23,67 @@ const router = express.Router();
 // Basic CRUD operations
 router.route('/')
     .get(
-        verifyJWT([ROLES.ADMIN, ROLES.TEACHER, ROLES.STUDENT]),
         validate(teacherValidation.getTeacher),
+        verifyJWT([ROLES.ADMIN, ROLES.TEACHER, ROLES.STUDENT]),
         getTeacher
     )
     .post(
-        verifyJWT([ROLES.ADMIN]),
         upload.single('teacherImageFile'),
         validate(teacherValidation.addTeacher),
+        verifyJWT([ROLES.ADMIN]),
         addTeacher
     )
     .delete(
-        verifyJWT([ROLES.ADMIN]),
         validate(teacherValidation.removeTeacher),
+        verifyJWT([ROLES.ADMIN]),
         removeTeacher
     );
 
 router.route('/:id')
     .get(
-        verifyJWT([ROLES.ADMIN, ROLES.TEACHER, ROLES.STUDENT]),
         validate(teacherValidation.getTeacherById),
+        verifyJWT([ROLES.ADMIN, ROLES.TEACHER, ROLES.STUDENT]),
         getTeacherById
     )
     .put(
-        verifyJWT([ROLES.ADMIN, ROLES.TEACHER]),
         validate(teacherValidation.updateTeacherDetails),
+        verifyJWT([ROLES.ADMIN, ROLES.TEACHER]),
         updateTeacherDetails
     );
 
 // Teacher profile image management
 router.route('/image')
     .put(
-        verifyJWT([ROLES.ADMIN, ROLES.TEACHER]),
         upload.single('teacherImageFile'),
         validate(teacherValidation.updateTeacherImage),
+        verifyJWT([ROLES.ADMIN, ROLES.TEACHER]),
         updateTeacherImage
     )
     .delete(
-        verifyJWT([ROLES.ADMIN, ROLES.TEACHER]),
         validate(teacherValidation.removeImage),
+        verifyJWT([ROLES.ADMIN, ROLES.TEACHER]),
         removeImage
     );
 
 // Password management (admin only)
 router.route('/password')
-    .put(verifyJWT([ROLES.ADMIN]), validate(teacherValidation.updateTeacherPassword), updateTeacherPassword);
+    .put(validate(teacherValidation.updateTeacherPassword), verifyJWT([ROLES.ADMIN]), updateTeacherPassword);
 
 // Teaching subjects management
 router.route('/subjects')
     .get(
-        verifyJWT([ROLES.ADMIN, ROLES.TEACHER, ROLES.STUDENT]),
         validate(teacherValidation.getTeachingSubjects),
+        verifyJWT([ROLES.ADMIN, ROLES.TEACHER, ROLES.STUDENT]),
         getTeachingSubjects
     )
     .post(
-        verifyJWT([ROLES.ADMIN]),
         validate(teacherValidation.addTeachingSubject),
+        verifyJWT([ROLES.ADMIN]),
         addTeachingSubject
     )
     .delete(
-        verifyJWT([ROLES.ADMIN]),
         validate(teacherValidation.removeTeachingSubject),
+        verifyJWT([ROLES.ADMIN]),
         removeTeachingSubject
     );
 

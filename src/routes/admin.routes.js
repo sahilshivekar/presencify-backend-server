@@ -16,12 +16,12 @@ const router = Router();
 // Secured routes (admin authentication required)
 router.route('/me')
     .get(verifyJWT([ROLES.ADMIN]), getAdminDetails)
-    .put(verifyJWT([ROLES.ADMIN]), validate(adminValidation.updateAdminDetails), updateAdminDetails)
+    .put(validate(adminValidation.updateAdminDetails), verifyJWT([ROLES.ADMIN]), updateAdminDetails)
     .delete(verifyJWT([ROLES.ADMIN]), removeAdmin)
 
 router.route('/')
-    .get(verifyJWT([ROLES.ADMIN]), validate(adminValidation.getAdmins), getAdmins)
-    .post(verifyJWT([ROLES.ADMIN]), validate(adminValidation.addAdmin), addAdmin);
+    .get(validate(adminValidation.getAdmins), verifyJWT([ROLES.ADMIN]), getAdmins)
+    .post(validate(adminValidation.addAdmin), verifyJWT([ROLES.ADMIN]), addAdmin);
 
 
 export default router;

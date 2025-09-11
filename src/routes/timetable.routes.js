@@ -16,30 +16,30 @@ const router = express.Router();
 // Basic CRUD operations
 router.route('/')
     .get(
-        verifyJWT([ROLES.ADMIN, ROLES.TEACHER, ROLES.STUDENT]),
         validate(timetableValidation.getTimetables),
+        verifyJWT([ROLES.ADMIN, ROLES.TEACHER, ROLES.STUDENT]),
         getTimetables
     )
     .post(
-        verifyJWT([ROLES.ADMIN]),
         validate(timetableValidation.addTimetable),
+        verifyJWT([ROLES.ADMIN]),
         addTimetable
     );
 
 router.route('/:id')
     .get(
-        verifyJWT([ROLES.ADMIN, ROLES.TEACHER, ROLES.STUDENT]),
         validate(timetableValidation.getTimetableById),
+        verifyJWT([ROLES.ADMIN, ROLES.TEACHER, ROLES.STUDENT]),
         getTimetableById
     )
     .put(
-        verifyJWT([ROLES.ADMIN]),
         validate(timetableValidation.updateTimetable),
+        verifyJWT([ROLES.ADMIN]),
         updateTimetable
     )
     .delete(
-        verifyJWT([ROLES.ADMIN]),
         validate(timetableValidation.removeTimetable),
+        verifyJWT([ROLES.ADMIN]),
         removeTimetable
     );
 

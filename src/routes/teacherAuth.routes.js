@@ -20,8 +20,8 @@ router.route('/send-verification-code').post(validate(teacherAuthValidation.send
 router.route('/access-token').get(validate(teacherAuthValidation.getAccessToken), getAccessToken);
 
 // Secured authentication routes (teacher authentication required)
-router.route('/update-password').put(verifyJWT([ROLES.TEACHER]), validate(teacherAuthValidation.updateTeacherPassword), updateTeacherPassword);
-router.route('/verify-code').post(verifyJWT([ROLES.TEACHER]), validate(teacherAuthValidation.verifyCode), verifyCode);
+router.route('/update-password').put(validate(teacherAuthValidation.updateTeacherPassword), verifyJWT([ROLES.TEACHER]), updateTeacherPassword);
+router.route('/verify-code').post(validate(teacherAuthValidation.verifyCode), verifyJWT([ROLES.TEACHER]), verifyCode);
 router.route('/logout').post(verifyJWT([ROLES.TEACHER]), logout);
 
 export default router;

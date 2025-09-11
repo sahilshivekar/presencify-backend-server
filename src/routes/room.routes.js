@@ -16,30 +16,30 @@ const router = express.Router();
 // Basic CRUD operations
 router.route('/')
     .get(
-        verifyJWT([ROLES.ADMIN, ROLES.TEACHER, ROLES.STUDENT]),
         validate(roomValidation.getRooms),
+        verifyJWT([ROLES.ADMIN, ROLES.TEACHER, ROLES.STUDENT]),
         getRooms
     )
     .post(
-        verifyJWT([ROLES.ADMIN]),
         validate(roomValidation.addRoom),
+        verifyJWT([ROLES.ADMIN]),
         addRoom
     );
 
 router.route('/:id')
     .get(
-        verifyJWT([ROLES.ADMIN, ROLES.TEACHER, ROLES.STUDENT]),
         validate(roomValidation.getRoomById),
+        verifyJWT([ROLES.ADMIN, ROLES.TEACHER, ROLES.STUDENT]),
         getRoomById
     )
     .put(
-        verifyJWT([ROLES.ADMIN]),
         validate(roomValidation.updateRoom),
+        verifyJWT([ROLES.ADMIN]),
         updateRoom
     )
     .delete(
-        verifyJWT([ROLES.ADMIN]),
         validate(roomValidation.removeRoom),
+        verifyJWT([ROLES.ADMIN]),
         removeRoom
     );
 

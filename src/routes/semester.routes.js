@@ -17,38 +17,38 @@ const router = express.Router();
 // Basic CRUD operations
 router.route('/')
     .get(
-        verifyJWT([ROLES.ADMIN, ROLES.TEACHER, ROLES.STUDENT]),
         validate(semesterValidation.getSemesters),
+        verifyJWT([ROLES.ADMIN, ROLES.TEACHER, ROLES.STUDENT]),
         getSemesters
     )
     .post(
-        verifyJWT([ROLES.ADMIN]),
         validate(semesterValidation.addSemester),
+        verifyJWT([ROLES.ADMIN]),
         addSemester
     );
 
 router.route('/:id')
     .get(
-        verifyJWT([ROLES.ADMIN, ROLES.TEACHER, ROLES.STUDENT]),
         validate(semesterValidation.getSemesterById),
+        verifyJWT([ROLES.ADMIN, ROLES.TEACHER, ROLES.STUDENT]),
         getSemesterById
     )
     .put(
-        verifyJWT([ROLES.ADMIN]),
         validate(semesterValidation.updateSemester),
+        verifyJWT([ROLES.ADMIN]),
         updateSemester
     )
     .delete(
-        verifyJWT([ROLES.ADMIN]),
         validate(semesterValidation.removeSemester),
+        verifyJWT([ROLES.ADMIN]),
         removeSemester
     );
 
 // Semester-specific operations
 router.route('/courses')
     .get(
-        verifyJWT([ROLES.ADMIN, ROLES.TEACHER, ROLES.STUDENT]),
         validate(semesterValidation.getCoursesOfSemester),
+        verifyJWT([ROLES.ADMIN, ROLES.TEACHER, ROLES.STUDENT]),
         getCoursesOfSemester
     );
 

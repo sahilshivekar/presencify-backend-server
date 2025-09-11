@@ -29,88 +29,88 @@ const router = express.Router();
 // Basic CRUD operations
 router.route('/')
     .get(
-        verifyJWT([ROLES.ADMIN, ROLES.TEACHER, ROLES.STUDENT]),
         validate(studentValidation.getStudents),
+        verifyJWT([ROLES.ADMIN, ROLES.TEACHER, ROLES.STUDENT]),
         getStudents
     )
     .post(
-        verifyJWT([ROLES.ADMIN]),
         upload.single('studentImageFile'),
         validate(studentValidation.addStudent),
+        verifyJWT([ROLES.ADMIN]),
         addStudent
     )
     
 
 router.route('/:id')
     .get(
-        verifyJWT([ROLES.ADMIN, ROLES.TEACHER, ROLES.STUDENT]),
         validate(studentValidation.getStudentDetailsById),
+        verifyJWT([ROLES.ADMIN, ROLES.TEACHER, ROLES.STUDENT]),
         getStudentDetailsById
     )
     .put(
-        verifyJWT([ROLES.ADMIN, ROLES.STUDENT]),
         validate(studentValidation.updateStudentDetails),
+        verifyJWT([ROLES.ADMIN, ROLES.STUDENT]),
         updateStudentDetails
     )
     .delete(
-        verifyJWT([ROLES.ADMIN]),
         validate(studentValidation.removeStudent),
+        verifyJWT([ROLES.ADMIN]),
         removeStudent
     );
 
 // Student profile image management
 router.route('/image')
     .put(
-        verifyJWT([ROLES.ADMIN, ROLES.STUDENT]),
         upload.single('studentImageFile'),
         validate(studentValidation.updateStudentImage),
+        verifyJWT([ROLES.ADMIN, ROLES.STUDENT]),
         updateStudentImage
     )
     .delete(
-        verifyJWT([ROLES.ADMIN, ROLES.STUDENT]),
         validate(studentValidation.removeStudentImage),
+        verifyJWT([ROLES.ADMIN, ROLES.STUDENT]),
         removeStudentImage
     );
 
 // Password management (admin only)
 router.route('/password')
-    .put(verifyJWT([ROLES.ADMIN]), validate(studentValidation.updateStudentPassword), updateStudentPassword);
+    .put(validate(studentValidation.updateStudentPassword), verifyJWT([ROLES.ADMIN]), updateStudentPassword);
 
 // Student relationship queries
 router.route('/:id/semesters')
     .get(
-        verifyJWT([ROLES.ADMIN, ROLES.TEACHER, ROLES.STUDENT]),
         validate(studentValidation.getStudentSemestersById),
+        verifyJWT([ROLES.ADMIN, ROLES.TEACHER, ROLES.STUDENT]),
         getStudentSemestersById
     );
 
 router.route('/:id/divisions')
     .get(
-        verifyJWT([ROLES.ADMIN, ROLES.TEACHER, ROLES.STUDENT]),
         validate(studentValidation.getStudentDivisionsById),
+        verifyJWT([ROLES.ADMIN, ROLES.TEACHER, ROLES.STUDENT]),
         getStudentDivisionsById
     );
 
 router.route('/:id/batches')
     .get(
-        verifyJWT([ROLES.ADMIN, ROLES.TEACHER, ROLES.STUDENT]),
         validate(studentValidation.getStudentBatchesById),
+        verifyJWT([ROLES.ADMIN, ROLES.TEACHER, ROLES.STUDENT]),
         getStudentBatchesById
     );
 
 // Semester management (admin only)
 router.route('/semester')
-    .post(verifyJWT([ROLES.ADMIN]), validate(studentValidation.addStudentToSemester), addStudentToSemester)
-    .delete(verifyJWT([ROLES.ADMIN]), validate(studentValidation.removeStudentFromSemester), removeStudentFromSemester);
+    .post(validate(studentValidation.addStudentToSemester), verifyJWT([ROLES.ADMIN]), addStudentToSemester)
+    .delete(validate(studentValidation.removeStudentFromSemester), verifyJWT([ROLES.ADMIN]), removeStudentFromSemester);
 
 // Division management (admin only)
 router.route('/division')
-    .post(verifyJWT([ROLES.ADMIN]), validate(studentValidation.addStudentToDivision), addStudentToDivision)
-    .put(verifyJWT([ROLES.ADMIN]), validate(studentValidation.changeStudentDivision), changeStudentDivision);
+    .post(validate(studentValidation.addStudentToDivision), verifyJWT([ROLES.ADMIN]), addStudentToDivision)
+    .put(validate(studentValidation.changeStudentDivision), verifyJWT([ROLES.ADMIN]), changeStudentDivision);
 
 // Batch management (admin only)
 router.route('/batch')
-    .post(verifyJWT([ROLES.ADMIN]), validate(studentValidation.addStudentToBatch), addStudentToBatch)
-    .put(verifyJWT([ROLES.ADMIN]), validate(studentValidation.changeStudentBatch), changeStudentBatch);
+    .post(validate(studentValidation.addStudentToBatch), verifyJWT([ROLES.ADMIN]), addStudentToBatch)
+    .put(validate(studentValidation.changeStudentBatch), verifyJWT([ROLES.ADMIN]), changeStudentBatch);
 
 export default router;
