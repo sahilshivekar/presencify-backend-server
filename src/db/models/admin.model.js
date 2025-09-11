@@ -150,7 +150,8 @@ Admin.prototype.generateAccessToken = function () {
             id: this.id,
             username: this.username,
             email: this.email,
-            role: ROLES.ADMIN
+            role: ROLES.ADMIN,
+            nonce: Math.random().toString(36) // Add random nonce for uniqueness
         },
         process.env.JWT_ACCESS_TOKEN_SECRET,
         {
@@ -165,7 +166,8 @@ Admin.prototype.generateRefreshToken = function () {
             id: this.id,
             username: this.username,
             email: this.email,
-            role: ROLES.ADMIN
+            role: ROLES.ADMIN,
+            nonce: Math.random().toString(36) // Add random nonce for uniqueness
         },
         process.env.JWT_REFRESH_TOKEN_SECRET,
         {

@@ -43,11 +43,14 @@ const generateAccessAndRefreshTokens = async (admin) => {
 //* hit a end point to give access token by checking refresh token
 const refreshTokens = asyncHandler(async (req, res) => {
 
-    const { refreshToekn } = req.body;
+    const { refreshToken } = req.body;
 
-    const actualToken = refreshToekn.replace("Bearer ", "");
-
-    const decoded = jwt.verify(actualToken, process.env.JWT_REFRESH_TOKEN_SECRET);
+    let decoded;
+    try {
+        decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_TOKEN_SECRET);
+    } catch (err) {
+        throw new ApiError(httpStatus.UNAUTHORIZED, "Invalid refresh token");
+    }
 
     const admin = await Admin.findByPk(decoded.id);
 
@@ -55,7 +58,7 @@ const refreshTokens = asyncHandler(async (req, res) => {
         throw new ApiError(httpStatus.UNAUTHORIZED, "Invalid refresh token");
     }
 
-    const { newAccessToken, newRefreshToken } = await generateAccessAndRefreshTokens(admin.id);
+    const { newAccessToken, newRefreshToken } = await generateAccessAndRefreshTokens(admin);
 
     admin.refreshToken = newRefreshToken;
 
