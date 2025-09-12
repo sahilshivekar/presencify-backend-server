@@ -40,7 +40,7 @@ const generateAccessAndRefreshTokens = async (teacher) => {
 }
 
 //* hit a end point to give access token by checking refresh token
-const getAccessToken = asyncHandler(async (req, res) => {
+const refreshTokens = asyncHandler(async (req, res) => {
     const { refreshToken } = req.body;
 
     // Validation is handled by middleware
@@ -325,6 +325,6 @@ export {
     loginTeacher,
     sendVerificationCodeToEmail,
     verifyCode,
-    getAccessToken,
+    refreshTokens,
     logout,
 };

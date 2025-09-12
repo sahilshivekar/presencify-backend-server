@@ -4,7 +4,7 @@ import {
     loginTeacher,
     sendVerificationCodeToEmail,
     verifyCode,
-    getAccessToken,
+    refreshTokens,
     logout,
 } from '../controllers/teacherAuth.controller.js';
 import { verifyJWT } from '../middlewares/auth.middleware.js';
@@ -17,7 +17,7 @@ const router = Router();
 // Public authentication routes (no authentication required)
 router.route('/login').post(validate(teacherAuthValidation.loginTeacher), loginTeacher);
 router.route('/send-verification-code').post(validate(teacherAuthValidation.sendVerificationCodeToEmail), sendVerificationCodeToEmail);
-router.route('/access-token').get(validate(teacherAuthValidation.getAccessToken), getAccessToken);
+router.route('/access-token').get(validate(teacherAuthValidation.refreshTokens), refreshTokens);
 
 // Secured authentication routes (teacher authentication required)
 router.route('/update-password').put(validate(teacherAuthValidation.updateTeacherPassword), verifyJWT([ROLES.TEACHER]), updateTeacherPassword);

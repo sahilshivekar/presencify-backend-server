@@ -40,28 +40,29 @@ const generateAccessAndRefreshTokens = async (student) => {
 }
 
 //* hit a end point to give access token by checking refresh token
-const getAccessToken = asyncHandler(async (req, res) => {
+const refreshTokens = asyncHandler(async (req, res) => {
     const { refreshToken } = req.body;
 
     // Validation is handled by middleware
 
     const actualRefreshToken = refreshToken.replace("Bearer ", "");
 
-    let studentId;
-    jwt.verify(actualRefreshToken, process.env.JWT_REFRESH_TOKEN_SECRET, (err, decoded) => {
-        if (err) {
-            throw new ApiError(httpStatus.UNAUTHORIZED, "Invalid refresh token") // Token invalid or expired
-        }
-        studentId = decoded.id;
-    });
+    let decoded;
+    try {
+        decoded = jwt.verify(actualRefreshToken, process.env.JWT_REFRESH_TOKEN_SECRET);
+    } catch (err) {
+        throw new ApiError(httpStatus.UNAUTHORIZED, "Invalid refresh token");
+    }
+
+    const studentId = decoded.id;
     
     const student = await Student.findByPk(studentId);
 
     if (!student) {
-        throw new ApiError(httpStatus.UNAUTHORIZED, "Student with this refresh token doesn't exist")
+        throw new ApiError(httpStatus.UNAUTHORIZED, "Student with this refresh token doesn't exist");
     }
 
-    const { newAccessToken, newRefreshToken } = await generateAccessAndRefreshTokens(student)
+    const { newAccessToken, newRefreshToken } = await generateAccessAndRefreshTokens(student);
 
     student.refreshToken = newRefreshToken;
 
@@ -85,7 +86,7 @@ const getAccessToken = asyncHandler(async (req, res) => {
                     accessToken: newAccessToken,
                     refreshToken: newRefreshToken
                 })
-        )
+        );
 
 });
 
@@ -283,7 +284,7 @@ const verifyCode = asyncHandler(async (req, res) => {
     })
 
     if (!codeRecord) {
-        throw new ApiError(httpStatus.UNAUTHORIZED, "Invalid verification code")
+        throw new ApiError(httpStatus.BAD_REQUEST, "Invalid verification code")
     }
 
     const student = await Student.findOne({ where: { email:email.toLowerCase() } })
@@ -328,6 +329,6 @@ export {
     loginStudent,
     sendVerificationCodeToEmail,
     verifyCode,
-    getAccessToken,
+    refreshTokens,
     logout,
 };

@@ -15,10 +15,6 @@ module.exports = {
                 email: {
                     type: Sequelize.STRING,
                     allowNull: false,
-                    references: {
-                        model: 'admins',
-                        key: 'admin_email'
-                    },
                     validate: {
                         notEmpty: {
                             msg: 'Email cannot be empty',
@@ -27,8 +23,7 @@ module.exports = {
                             msg: 'Must be a valid email address',
                         }
                     },
-                    onDelete: 'CASCADE',
-                    field: 'admin_email',
+                    field: 'email',
                 },
                 code: {
                     type: Sequelize.STRING,

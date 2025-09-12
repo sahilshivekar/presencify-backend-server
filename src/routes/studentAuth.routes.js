@@ -4,7 +4,7 @@ import {
     loginStudent,
     sendVerificationCodeToEmail,
     verifyCode,
-    getAccessToken,
+    refreshTokens,
     logout,
 } from '../controllers/studentAuth.controller.js';
 import { verifyJWT } from '../middlewares/auth.middleware.js';
@@ -17,7 +17,7 @@ const router = Router();
 // Public authentication routes (no authentication required)
 router.route('/login').post(validate(studentAuthValidation.loginStudent), loginStudent);
 router.route('/send-verification-code').post(validate(studentAuthValidation.sendVerificationCodeToEmail), sendVerificationCodeToEmail);
-router.route('/access-token').get(validate(studentAuthValidation.getAccessToken), getAccessToken);
+router.route('/access-token').post(validate(studentAuthValidation.refreshTokens), refreshTokens);
 
 // Secured authentication routes (student authentication required)
 router.route('/update-password').put(validate(studentAuthValidation.updateStudentPassword), verifyJWT([ROLES.STUDENT]), updateStudentPassword);
