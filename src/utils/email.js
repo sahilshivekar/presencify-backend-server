@@ -1,5 +1,5 @@
 import nodemailer from 'nodemailer';
-import { logger } from '../config/logger';
+import { logger } from '../config/logger.js';
 
 // a reusable transporter object
 const createTransporter = () => {
