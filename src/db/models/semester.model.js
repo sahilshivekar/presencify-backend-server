@@ -121,9 +121,6 @@ Semester.init(
             validate: {
                 notNull: {
                     msg: 'Scheme ID cannot be null'
-                },
-                isInt: {
-                    msg: 'Scheme ID must be an integer'
                 }
             },
             unique: {

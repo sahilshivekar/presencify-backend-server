@@ -100,13 +100,13 @@ const addBatch = {
                 'string.empty': 'Batch code cannot be empty',
                 'string.base': 'Batch code must be a string'
             }),
-        semesterId: Joi.string()
+        divisionId: Joi.string()
             .uuid()
             .required()
             .messages({
-                'string.guid': 'Semester ID must be a valid UUID',
-                'any.required': 'Semester ID is required',
-                'string.base': 'Semester ID must be a string'
+                'string.guid': 'Division ID must be a valid UUID',
+                'any.required': 'Division ID is required',
+                'string.base': 'Division ID must be a string'
             })
     })
 };

@@ -149,18 +149,17 @@ const getBatchById = asyncHandler(async (req, res) => {
 const addBatch = asyncHandler(async (req, res) => {
     const {
         batchCode,
-        semesterId,
+        divisionId,
     } = req.body;
 
-
-    const semester = await Semester.findByPk(semesterId);
-    if (!semester) {
-        throw new ApiError(httpStatus.NOT_FOUND, "Semester not found");
+    const division = await Division.findByPk(divisionId);
+    if (!division) {
+        throw new ApiError(httpStatus.NOT_FOUND, "Division not found");
     }
 
     const batch = await Batch.create({
         batchCode: batchCode,
-        semesterId: semesterId,
+        divisionId: divisionId,
     });
 
     if (!batch) {
