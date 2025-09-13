@@ -19,7 +19,10 @@ const createAttendance = {
                 if (!dateRegex.test(value)) {
                     throw new Error('Date must be in YYYY-MM-DD format');
                 }
-
+                const [year, month, day] = value.split('-').map(Number);
+                if (month < 1 || month > 12 || day < 1 || day > 31) {
+                    throw new Error('Invalid date provided');
+                }
                 // Validate if it's a real date
                 const dateObj = new Date(value);
                 if (dateObj.toISOString().split('T')[0] !== value) {
@@ -116,13 +119,14 @@ const removeAttendance = {
             .messages({
                 'string.guid': 'Attendance ID must be a valid UUID',
                 'any.required': 'Attendance ID is required',
-                'string.base': 'Attendance ID must be a string'
+                'string.base': 'Attendance ID must be a string',
+                'string.empty': 'Attendance ID cannot be empty'
             })
     })
 };
 
 // validations/attendance.validation.js
-const getAttendanceOfStudentForSpecificCourseInSemester = {
+const getAttendanceOfAnyStudentForSpecificCourseInSemester = {
     query: Joi.object().keys({
         studentId: Joi.string()
             .uuid()
@@ -132,6 +136,69 @@ const getAttendanceOfStudentForSpecificCourseInSemester = {
                 'any.required': 'Student ID is required',
                 'string.base': 'Student ID must be a string'
             }),
+        courseId: Joi.string()
+            .uuid()
+            .required()
+            .messages({
+                'string.guid': 'Course ID must be a valid UUID',
+                'any.required': 'Course ID is required',
+                'string.base': 'Course ID must be a string'
+            }),
+        semesterId: Joi.string()
+            .uuid()
+            .optional()
+            .allow(null, '')
+            .messages({
+                'string.guid': 'Semester ID must be a valid UUID',
+                'string.base': 'Semester ID must be a string'
+            }),
+        divisionId: Joi.string()
+            .uuid()
+            .optional()
+            .allow(null, '')
+            .messages({
+                'string.guid': 'Division ID must be a valid UUID',
+                'string.base': 'Division ID must be a string'
+            }),
+        batchId: Joi.string()
+            .uuid()
+            .optional()
+            .allow(null, '')
+            .messages({
+                'string.guid': 'Batch ID must be a valid UUID',
+                'string.base': 'Batch ID must be a string'
+            }),
+        startDate: Joi.string()
+            .optional()
+            .allow(null, '')
+            .custom((value, helpers) => {
+                const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+                if (value && !dateRegex.test(value)) {
+                    throw new Error('Start date must be in YYYY-MM-DD format');
+                }
+                return value;
+            })
+            .messages({
+                'string.base': 'Start date must be a string'
+            }),
+        endDate: Joi.string()
+            .optional()
+            .allow(null, '')
+            .custom((value, helpers) => {
+                const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+                if (value && !dateRegex.test(value)) {
+                    throw new Error('End date must be in YYYY-MM-DD format');
+                }
+                return value;
+            })
+            .messages({
+                'string.base': 'End date must be a string'
+            })
+    })
+};
+
+const getAttendanceOfSelfForSpecificCourseInSemester = {
+    query: Joi.object().keys({
         courseId: Joi.string()
             .uuid()
             .required()
@@ -447,7 +514,8 @@ export default {
     addStudentsAttendance,
     updateStudentAttendance,
     removeAttendance,
-    getAttendanceOfStudentForSpecificCourseInSemester,
+    getAttendanceOfAnyStudentForSpecificCourseInSemester,
+    getAttendanceOfSelfForSpecificCourseInSemester,
     getAttendanceOfAllForSemesterDivisionBatchCourse,
     sendAttendanceReport,
     getAttendance,

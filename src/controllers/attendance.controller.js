@@ -17,84 +17,12 @@ import Student from '../db/models/student.model.js';
 import { Attendance, AttendanceStudent } from '../db/models/attendance.model.js';
 import StudentDivision from '../db/models/studentDivision.model.js';
 import sequelize from '../config/db.connection.js';
-import { getIO } from '../socket/index.js';
 import { fromYYYYMMDDToDDMMYYYY } from "../utils/date.js";
 import { sendAttendanceReportToEmail } from "../utils/email.js";
 import { sendNotification } from "../utils/firebaseCloudMessaging.js";
 import StudentFCMToken from "../db/models/studentFCMToken.model.js";
 import StudentBatch from '../db/models/studentBatch.model.js';
 import httpStatus from 'http-status';
-
-const realtimeAttendanceHelper = async (
-    currStudentIds,
-    currCourseId,
-    currSemesterId,
-    currBatchId,
-    currDivisionId
-) => {
-    const io = getIO();
-    const openRooms = io.of("/attendance").adapter.rooms.keys()
-    const openRoomsList = [...openRooms]
-    // ! For individual student attendance
-    let studentRooms = openRoomsList.filter(openRoom => openRoom.includes("student_attendance"))
-
-    for (const roomName of studentRooms) {
-        const studentId = roomName.split("_")[3]
-        const courseId = roomName.split("_")[5]
-        const semesterId = roomName.split("_")[7]
-        const divisionId = roomName.split("_")[9]
-        const batchId = roomName.split("_")[11]
-        const startDate = roomName.split("_")[13]
-        const endDate = roomName.split("_")[15]
-        if (
-            currStudentIds.includes(Number(studentId)) &&
-            currCourseId == courseId &&
-            currSemesterId == semesterId
-        ) {
-            const attendance = await getAttendanceOfStudentForSpecificCourseInSemesterQuery(
-                studentId,
-                courseId,
-                semesterId,
-                divisionId == "null" ? null : divisionId,
-                batchId == "null" ? null : batchId,
-                startDate == "null" ? null : startDate,
-                endDate == "null" ? null : endDate
-            )
-            io.of("/attendance").to(roomName).emit("student_updated_attendance", attendance);
-        }
-    }
-
-    // ! For all attendance by course, batch, division, semester
-
-    let roomsOfAllStudents = openRoomsList.filter(openRoom => openRoom.includes("all_attendance_room"))
-    for (const openRoom of roomsOfAllStudents) {
-        const semesterId = openRoom.split("_")[4]
-        const divisionId = openRoom.split("_")[6]
-        const batchId = openRoom.split("_")[8]
-        const courseId = openRoom.split("_")[10]
-        const startDate = openRoom.split("_")[12]
-        const endDate = openRoom.split("_")[14]
-
-        if (
-            semesterId == currSemesterId ||
-            divisionId == currDivisionId ||
-            batchId == currBatchId ||
-            courseId == currCourseId
-        ) {
-
-            const updatedAttendance = await getAttendanceOfAllForSemesterDivisionBatchCourseQuery(
-                semesterId == "null" ? null : semesterId,
-                divisionId == "null" ? null : divisionId,
-                batchId == "null" ? null : batchId,
-                courseId == "null" ? null : courseId,
-                startDate == "null" ? null : startDate,
-                endDate == "null" ? null : endDate
-            )
-            io.of("/attendance").to(openRoom).emit("all_updated_attendance", updatedAttendance);
-        }
-    }
-
-}
 
 
 //* create attendance sheet type thing where student ids will be added
@@ -128,7 +56,7 @@ const createAttendance = asyncHandler(async (req, res) => {
     })
 
     if (checkIfAttendaceAlreadyCreatedForTodaysClass) {
-        return res.status(httpStatus.OK).json(new ApiResponse(httpStatus.OK, "Attendance was already created successfully", checkIfAttendaceAlreadyCreatedForTodaysClass));
+        return res.status(httpStatus.CONFLICT).json(new ApiResponse(httpStatus.CONFLICT, "Attendance already exists", checkIfAttendaceAlreadyCreatedForTodaysClass));
     }
 
     const attendance = await Attendance.create({
@@ -175,26 +103,24 @@ const addStudentsAttendance = asyncHandler(async (req, res) => {
     const division = await Division.findByPk(timetable.divisionId);
     const semester = await Semester.findByPk(division.semesterId);
 
-    await AttendanceStudent.bulkCreate(
-        [...presentStudentIds.map(studentId => ({
-            attendanceId,
-            studentId,
-            attendanceStatus: true
-        })),
-        ...absentStudentIds.map(studentId => ({
-            attendanceId,
-            studentId,
-            attendanceStatus: false
-        }))]
-    )
-
-    realtimeAttendanceHelper(
-        [...presentStudentIds, ...absentStudentIds],
-        classObj.courseId,
-        semester.id,
-        classObj?.batchId,
-        division.id
-    )
+    try {
+        await AttendanceStudent.bulkCreate(
+            [...presentStudentIds.map(studentId => ({
+                attendanceId,
+                studentId,
+                attendanceStatus: true
+            })),
+            ...absentStudentIds.map(studentId => ({
+                attendanceId,
+                studentId,
+                attendanceStatus: false
+            }))]
+        )
+    } catch (error) {
+        if (error.name === 'SequelizeForeignKeyConstraintError') {
+            throw new ApiError(httpStatus.BAD_REQUEST, "One or more student IDs are invalid")
+        }
+    }
 
     res.status(httpStatus.CREATED).json(new ApiResponse(httpStatus.CREATED, "Students attendance added successfully", null));
 })
@@ -234,18 +160,6 @@ const updateStudentAttendance = asyncHandler(async (req, res) => {
     attendanceStudent.attendanceStatus = newAttendanceStatus
     await attendanceStudent.save()
 
-    const classObj = await Class.findByPk(attendance.classId);
-    const timetable = await Timetable.findByPk(classObj.timetableId);
-    const division = await Division.findByPk(timetable.divisionId);
-
-    realtimeAttendanceHelper(
-        [studentId],
-        classObj.courseId,
-        division.semesterId,
-        classObj?.batchId,
-        timetable.divisionId
-    )
-
     res.status(httpStatus.OK).json(new ApiResponse(httpStatus.OK, "Students attendance status updated successfully", attendanceStudent));
 })
 
@@ -263,7 +177,7 @@ const removeAttendance = asyncHandler(async (req, res) => {
 
     await attendance.destroy()
 
-    res.status(httpStatus.OK).json(new ApiResponse(httpStatus.OK, "Attendance deleted successfully", null));
+    res.status(httpStatus.OK).json(new ApiResponse(httpStatus.OK, "Attendance removed successfully", null));
 })
 
 
@@ -281,7 +195,33 @@ const getAttendanceOfStudentForSpecificCourseInSemester = asyncHandler(async (re
     } = req.query;
 
     // courseid, semesterid, studentId
+    if (studentId) {
+        const student = await Student.findByPk(studentId);
+        if (!student) {
+            throw new ApiError(httpStatus.NOT_FOUND, "Student not found")
+        }
+    }
 
+    if (courseId) {
+        const course = await Course.findByPk(courseId);
+        if (!course) {
+            throw new ApiError(httpStatus.NOT_FOUND, "Course not found")
+        }
+    }
+
+    if (semesterId) {
+        const semester = await Semester.findByPk(semesterId);
+        if (!semester) {
+            throw new ApiError(httpStatus.NOT_FOUND, "Semester not found")
+        }
+    }
+
+    if (divisionId) {
+        const division = await Division.findByPk(divisionId);
+        if (!division) {
+            throw new ApiError(httpStatus.NOT_FOUND, "Division not found")
+        }
+    }
     // for the rest of the subjects 
     const attendance = await getAttendanceOfStudentForSpecificCourseInSemesterQuery(
         studentId,
@@ -305,6 +245,35 @@ const getAttendanceOfAllForSemesterDivisionBatchCourse = asyncHandler(async (req
         startDate,
         endDate
     } = req.query;
+    
+
+    if (courseId) {
+        const course = await Course.findByPk(courseId);
+        if (!course) {
+            throw new ApiError(httpStatus.NOT_FOUND, "Course not found")
+        }
+    }
+
+    if (semesterId) {
+        const semester = await Semester.findByPk(semesterId);
+        if (!semester) {
+            throw new ApiError(httpStatus.NOT_FOUND, "Semester not found")
+        }
+    }
+
+    if (divisionId) {
+        const division = await Division.findByPk(divisionId);
+        if (!division) {
+            throw new ApiError(httpStatus.NOT_FOUND, "Division not found")
+        }
+    }
+
+    if (batchId) {
+        const batch = await Batch.findByPk(batchId);
+        if (!batch) {
+            throw new ApiError(httpStatus.NOT_FOUND, "Batch not found")
+        }
+    }
 
     const attendance = await getAttendanceOfAllForSemesterDivisionBatchCourseQuery(
         semesterId,
@@ -330,7 +299,6 @@ const getAttendanceOfStudentForSpecificCourseInSemesterQuery = async (
     endDate
 ) => {
 
-
     // for getting total and attended lectures of a student for a specific course
 
     // in the query include the join of batches only if batchId is provided 
@@ -351,11 +319,11 @@ const getAttendanceOfStudentForSpecificCourseInSemesterQuery = async (
         ${batchId ? `INNER JOIN batches ON batches.division_id = divisions.division_id` : ''}
         INNER JOIN semesters ON semesters.semester_id = divisions.semester_id
         WHERE 
-        attendance_students.student_id = ${studentId}
-        AND courses.course_id = ${courseId}
-        ${semesterId ? `AND semesters.semester_id = ${semesterId}` : ''}
-        ${divisionId ? `AND divisions.division_id = ${divisionId}` : ''}
-        ${batchId ? `AND batches.batch_id = ${batchId}` : ''}
+        attendance_students.student_id = '${studentId}'
+        AND courses.course_id = '${courseId}'
+        ${semesterId ? `AND semesters.semester_id = '${semesterId}'` : ''}
+        ${divisionId ? `AND divisions.division_id = '${divisionId}'` : ''}
+        ${batchId ? `AND batches.batch_id = '${batchId}'` : ''}
         ${startDate ? `AND attendances.attendance_date >= '${startDate}'` : ''}
         ${endDate ? `AND attendances.attendance_date <= '${endDate}'` : ''}
         GROUP BY 
@@ -380,22 +348,17 @@ const getAttendanceOfStudentForSpecificCourseInSemesterQuery = async (
         ${batchId ? `INNER JOIN batches ON batches.division_id = divisions.division_id` : ''}
         INNER JOIN semesters ON semesters.semester_id = divisions.semester_id
         WHERE 
-        attendance_students.student_id = ${studentId}
-        AND courses.course_id = ${courseId}
-        ${semesterId ? `AND semesters.semester_id = ${semesterId}` : ''}
-        ${divisionId ? `AND divisions.division_id = ${divisionId}` : ''}
-        ${batchId ? `AND batches.batch_id = ${batchId}` : ''}
+        attendance_students.student_id = '${studentId}'
+        AND courses.course_id = '${courseId}'
+        ${semesterId ? `AND semesters.semester_id = '${semesterId}'` : ''}
+        ${divisionId ? `AND divisions.division_id = '${divisionId}'` : ''}
+        ${batchId ? `AND batches.batch_id = '${batchId}'` : ''}
         ${startDate ? `AND attendances.attendance_date >= '${startDate}'` : ''}
         ${endDate ? `AND attendances.attendance_date <= '${endDate}'` : ''}
         ORDER BY
         attendances.attendance_date;
         `
     )
-
-
-    if (!aggregatedAttendance || !detailedAttendance) {
-        throw new ApiError(httpStatus.NOT_FOUND, "Attendance for this course not found")
-    }
 
     return {
         aggregatedAttendance: aggregatedAttendance[0],
@@ -414,6 +377,17 @@ const getAttendanceOfAllForSemesterDivisionBatchCourseQuery = async (
     if (!semesterId && !divisionId && !courseId && !batchId && !startDate && !endDate) {
         throw new ApiError(httpStatus.BAD_REQUEST, "One of the parameters is required: semesterId, divisionId, courseId, batchId, startDate, endDate")
     }
+
+    // Build WHERE clause dynamically
+    const conditions = [];
+    if (semesterId) conditions.push(`semesters.semester_id = '${semesterId}'`);
+    if (divisionId) conditions.push(`timetables.division_id = '${divisionId}'`);
+    if (batchId) conditions.push(`classes.batch_id = '${batchId}'`);
+    if (courseId) conditions.push(`classes.course_id = '${courseId}'`);
+    if (startDate) conditions.push(`attendances.attendance_date >= '${startDate}'`);
+    if (endDate) conditions.push(`attendances.attendance_date <= '${endDate}'`);
+    const whereClause = conditions.length ? `WHERE ${conditions.join(' AND ')}` : '';
+
     const attendance = await sequelize.query(
         `
         WITH attendance_grouped_by_course_id_and_attendance_date AS (SELECT
@@ -430,18 +404,12 @@ const getAttendanceOfAllForSemesterDivisionBatchCourseQuery = async (
         INNER JOIN divisions ON divisions.division_id = timetables.division_id
         ${batchId ? `INNER JOIN batches ON batches.division_id = divisions.division_id` : ''}
         INNER JOIN semesters ON semesters.semester_id = divisions.semester_id
-        WHERE 
-        ${semesterId ? `semesters.semester_id = ${semesterId}` : ''}
-        ${divisionId ? `AND timetables.division_id = ${divisionId}` : ''}
-        ${batchId ? `AND classes.batch_id = ${batchId}` : ''}
-        ${courseId ? `AND classes.course_id = ${courseId}` : ''}
-        ${startDate ? `AND attendances.attendance_date >= '${startDate}'` : ''}
-        ${endDate ? `AND attendances.attendance_date <= '${endDate}'` : ''}
+        ${whereClause}
         GROUP BY courses.course_id, attendances.attendance_date, attendances.attendance_id
         ORDER BY attendances.attendance_date)
 
-        SELECT 
-        course_id,
+        SELECT
+        course_id AS "courseId",
         json_agg(
             json_build_object(
                 'attendanceDate', "attendanceDate",
@@ -449,7 +417,7 @@ const getAttendanceOfAllForSemesterDivisionBatchCourseQuery = async (
                 'presentStudents', "presentStudents",
                 'attendanceId', "attendanceId"
             ) ORDER BY "attendanceDate"
-        ) AS attendanceSummary
+        ) AS "attendanceSummary"
         FROM attendance_grouped_by_course_id_and_attendance_date
         GROUP BY course_id;
         `
@@ -461,93 +429,167 @@ const getAttendanceOfAllForSemesterDivisionBatchCourseQuery = async (
 
 
 const sendAttendanceReport = asyncHandler(async (req, res) => {
-    const {
-        startDate, // will be same as end date if its about single day attendance
-        endDate,
-        studentIds,
-        courseIds,
-        semesterId
-    } = req.body;
+    try {
+        const {
+            startDate, // will be same as end date if its about single day attendance
+            endDate,
+            studentIds,
+            courseIds,
+            semesterId
+        } = req.body;
 
-    let studentWithNoParentEmail = []
+        let studentWithNoParentEmail = []
+        let emailsSent = 0;
+        let fcmNotificationsSent = 0;
 
-    for (const studentId of studentIds) {
-        let allCourseAttendance = []
-        let emailText = ""
-        for (const courseId of courseIds) {
-            const attendance = await getAttendanceOfStudentForSpecificCourseInSemesterQuery(
-                studentId,
-                courseId,
-                semesterId,
-                null,
-                null,
-                startDate || null,
-                endDate || null
-            )
-            allCourseAttendance.push(attendance)
+        // Ensure we have arrays to iterate over
+        let finalStudentIds = studentIds || [];
+        let finalCourseIds = courseIds || [];
+
+
+        // Early validation of semester if provided
+        if (semesterId) {
+            const semester = await Semester.findByPk(semesterId);
+            if (!semester) {
+                throw new ApiError(httpStatus.NOT_FOUND, "Semester not found");
+            }
         }
-        const student = await Student.findByPk(studentId)
-        if (student.parentEmail != null) {
 
-            // each object in the "allCourseAttendance" represents a course
-            allCourseAttendance.forEach(courseAttendance => {
-                if (courseAttendance.aggregatedAttendance.length != 0) {
-                    emailText += `Attendance of ${student.firstName} ${student.lastName}\n\n`
-
-
-                    emailText += `Course: ${courseAttendance.aggregatedAttendance[0].courseName}\n`
-                    emailText += `Total lectures: ${courseAttendance.aggregatedAttendance[0].totalLectures}\n`
-                    emailText += `Attended lectures: ${courseAttendance.aggregatedAttendance[0].attendedLectures}\n`
-                    emailText += `Not attended lectures: ${courseAttendance.aggregatedAttendance[0].totalLectures - courseAttendance.aggregatedAttendance[0].attendedLectures}\n`
-
-                    emailText += `Attendance in percentage: ${(100 * (courseAttendance.aggregatedAttendance[0].attendedLectures / courseAttendance.aggregatedAttendance[0].totalLectures)).toFixed(2)}%\n`
-
-
-                    const attendedLecturesDates = []
-                    courseAttendance.detailedAttendance.forEach(detailedAttendanceObj => {
-                        if (detailedAttendanceObj.attendanceStatus == true) {
-                            attendedLecturesDates.push(fromYYYYMMDDToDDMMYYYY(detailedAttendanceObj.date))
-                        }
-                    })
-                    emailText += `Attended lectures dates: ${attendedLecturesDates.length > 0 ? attendedLecturesDates.join(", ") : "none"}\n`
-                    const notAttendedLecturesDates = []
-                    courseAttendance.detailedAttendance.forEach(detailedAttendanceObj => {
-                        if (detailedAttendanceObj.attendanceStatus == false) {
-                            notAttendedLecturesDates.push(fromYYYYMMDDToDDMMYYYY(detailedAttendanceObj.date))
-                        }
-                    })
-                    emailText += `Not attended lectures dates: ${notAttendedLecturesDates.length > 0 ? notAttendedLecturesDates.join(", ") : "none"}\n\n\n\n\n`
-                }
-            })
-            sendAttendanceReportToEmail(student.parentEmail, emailText)
-
-        } else {
-            studentWithNoParentEmail.push(
-                {
-                    studentId: student.id,
-                    firstName: student.firstName,
-                    lastName: student.lastName
-                }
-            )
+        // If no courseIds provided but studentIds provided, get all courses
+        if (finalCourseIds.length === 0 && finalStudentIds.length > 0) {
+            const allCourses = await Course.findAll();
+            finalCourseIds = allCourses.map(c => c.id);
         }
+
+        // If no studentIds provided but courseIds provided, get all students
+        if (finalStudentIds.length === 0 && finalCourseIds.length > 0) {
+            const allStudents = await Student.findAll();
+            finalStudentIds = allStudents.map(s => s.id);
+        }
+
+        // If only semesterId provided, get all students and courses
+        if (finalStudentIds.length === 0 && finalCourseIds.length === 0 && semesterId) {
+            const allStudents = await Student.findAll();
+            const allCourses = await Course.findAll();
+            finalStudentIds = allStudents.map(s => s.id);
+            finalCourseIds = allCourses.map(c => c.id);
+        }
+
+        // Validate that all students exist
+        for (const studentId of finalStudentIds) {
+            const student = await Student.findByPk(studentId);
+            if (!student) {
+                throw new ApiError(httpStatus.NOT_FOUND, "Student not found");
+            }
+        }
+
+        // Validate that all courses exist
+        for (const courseId of finalCourseIds) {
+            const course = await Course.findByPk(courseId);
+            if (!course) {
+                throw new ApiError(httpStatus.NOT_FOUND, "Course not found");
+            }
+        }
+
+        let hasAnyAttendanceData = false;
+
+        for (const studentId of finalStudentIds) {
+            let allCourseAttendance = []
+            let emailText = ""
+            for (const courseId of finalCourseIds) {
+                const attendance = await getAttendanceOfStudentForSpecificCourseInSemesterQuery(
+                    studentId,
+                    courseId,
+                    semesterId,
+                    null,
+                    null,
+                    startDate || null,
+                    endDate || null
+                )
+                allCourseAttendance.push(attendance)
+            }
+
+            const student = await Student.findByPk(studentId)
+            if (student.parentEmail != null) {
+                let hasDataForThisStudent = false;
+
+                // each object in the "allCourseAttendance" represents a course
+                allCourseAttendance.forEach(courseAttendance => {
+                    if (courseAttendance.aggregatedAttendance.length != 0) {
+                        hasDataForThisStudent = true;
+                        hasAnyAttendanceData = true;
+                        emailText += `Attendance of ${student.firstName} ${student.lastName}\n\n`
+
+
+                        emailText += `Course: ${courseAttendance.aggregatedAttendance[0].courseName}\n`
+                        emailText += `Total lectures: ${courseAttendance.aggregatedAttendance[0].totalLectures}\n`
+                        emailText += `Attended lectures: ${courseAttendance.aggregatedAttendance[0].attendedLectures}\n`
+                        emailText += `Not attended lectures: ${courseAttendance.aggregatedAttendance[0].totalLectures - courseAttendance.aggregatedAttendance[0].attendedLectures}\n`
+
+                        emailText += `Attendance in percentage: ${(100 * (courseAttendance.aggregatedAttendance[0].attendedLectures / courseAttendance.aggregatedAttendance[0].totalLectures)).toFixed(2)}%\n`
+
+
+                        const attendedLecturesDates = []
+                        courseAttendance.detailedAttendance.forEach(detailedAttendanceObj => {
+                            if (detailedAttendanceObj.attendanceStatus == true) {
+                                attendedLecturesDates.push(fromYYYYMMDDToDDMMYYYY(detailedAttendanceObj.date))
+                            }
+                        })
+                        emailText += `Attended lectures dates: ${attendedLecturesDates.length > 0 ? attendedLecturesDates.join(", ") : "none"}\n`
+                        const notAttendedLecturesDates = []
+                        courseAttendance.detailedAttendance.forEach(detailedAttendanceObj => {
+                            if (detailedAttendanceObj.attendanceStatus == false) {
+                                notAttendedLecturesDates.push(fromYYYYMMDDToDDMMYYYY(detailedAttendanceObj.date))
+                            }
+                        })
+                        emailText += `Not attended lectures dates: ${notAttendedLecturesDates.length > 0 ? notAttendedLecturesDates.join(", ") : "none"}\n\n\n\n\n`
+                    }
+                })
+
+                // Only send email if there's actual attendance data
+                if (hasDataForThisStudent && emailText.trim() !== "") {
+                    try {
+                        await sendAttendanceReportToEmail(student.parentEmail, emailText)
+                        emailsSent++;
+                    } catch (emailError) {
+                        throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, "Failed to send attendance report");
+                    }
+                }
+
+            } else {
+                studentWithNoParentEmail.push(
+                    {
+                        studentId: student.id,
+                        firstName: student.firstName,
+                        lastName: student.lastName
+                    }
+                )
+            }
+        }
+
+
+        const responseMessage = hasAnyAttendanceData
+            ? "Attendance report sent successfully"
+            : "No attendance data found";
+
+        res
+            .status(httpStatus.OK)
+            .json(
+                new ApiResponse(
+                    httpStatus.OK,
+                    responseMessage,
+                    {
+                        reportSent: emailsSent > 0,
+                        emailsSent: emailsSent,
+                        fcmNotificationsSent: fcmNotificationsSent,
+                        studentWithNoParentEmail: studentWithNoParentEmail
+                    }
+                )
+            );
+    } catch (error) {
+        throw error;
     }
-
-
-    res
-        .status(httpStatus.OK)
-        .json(
-            new ApiResponse(
-                httpStatus.OK,
-                "Attendance report sent to student's parent for those who had there valid parent's email attached to their details",
-                {
-                    studentWithNoParentEmail: studentWithNoParentEmail
-                }
-            )
-        );
-
 })
-
-
 // following controller needed to get attendance in diff aspects    
 // use only for getting attendance from a attendance id
 const getAttendance = asyncHandler(async (req, res) => {

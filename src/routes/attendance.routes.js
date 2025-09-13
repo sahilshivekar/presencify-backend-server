@@ -30,7 +30,11 @@ router.route('/students')
 
 // Individual student attendance queries
 router.route('/student')
-    .get(validate(attendanceValidation.getAttendanceOfStudentForSpecificCourseInSemester), verifyJWT([ROLES.ADMIN, ROLES.TEACHER, ROLES.STUDENT]), getAttendanceOfStudentForSpecificCourseInSemester);
+    .get(validate(attendanceValidation.getAttendanceOfAnyStudentForSpecificCourseInSemester), verifyJWT([ROLES.ADMIN, ROLES.TEACHER]), getAttendanceOfStudentForSpecificCourseInSemester);
+
+
+router.route('/me')
+    .get(validate(attendanceValidation.getAttendanceOfSelfForSpecificCourseInSemester), verifyJWT([ROLES.STUDENT]), getAttendanceOfStudentForSpecificCourseInSemester);
 
 // Bulk attendance queries (all students)
 router.route('/all')

@@ -24,10 +24,10 @@ const sendAttendanceReportToEmail = async (to, text) => {
 
     try {
         const info = await transporter.sendMail(mailOptions);
-        console.log("Email sent: " + info.response);
+        logger.info(`Email sent: ${info.response}`);
         return true
     } catch (error) {
-        console.error("Error sending email: " + error);
+        logger.error(`Error sending email: ${error}`);
         return false
     }
 }

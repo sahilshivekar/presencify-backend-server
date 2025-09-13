@@ -71,7 +71,7 @@ Student.init(
         },
         gender: {
             type: Sequelize.ENUM('Male', 'Female', 'Other'),
-            allowNull: true,
+            allowNull: false,
             field: 'gender',
             validate: {
                 notEmpty: {
@@ -129,33 +129,6 @@ Student.init(
                 }
             }
         },
-        // enrollmentDate: {
-        //     type: Sequelize.DATE,
-        //     allowNull: false,
-        //     field: 'enrollment_date',
-        //     validate: {
-        //         notNull: {
-        //             msg: 'Enrollment date cannot be null'
-        //         },
-        //         isDate: {
-        //             msg: 'Invalid date format for Enrollment date'
-        //         }
-        //     }
-        // },
-        // academicStatus: {
-        //     type: Sequelize.ENUM('Active', 'Graduated'),
-        //     allowNull: false,
-        //     field: 'academic_status',
-        //     validate: {
-        //         notNull: {
-        //             msg: 'Academic status cannot be null'
-        //         },
-        //         isIn: {
-        //             args: [['Active', 'Graduated']],
-        //             msg: 'Academic status must be Active or Graduated'
-        //         }
-        //     }
-        // },
         password: {
             type: Sequelize.STRING,
             allowNull: false,

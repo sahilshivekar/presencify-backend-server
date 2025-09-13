@@ -27,11 +27,6 @@ Attendance.init(
                 }
             }
         },
-        BLEsessionUUID: {
-            type: Sequelize.STRING,
-            allowNull: true,
-            field: 'ble_session_uuid'
-        },
         date: {
             type: Sequelize.DATEONLY,
             allowNull: false,
@@ -80,10 +75,10 @@ class AttendanceStudent extends Model { }
 AttendanceStudent.init(
     {
         id: {
-            type: Sequelize.INTEGER,
+            type: Sequelize.UUID,
+            defaultValue: UUIDV4,
             primaryKey: true,
             allowNull: false,
-            autoIncrement: true,
             field: 'attendance_student_id'
         },
         attendanceId: {
