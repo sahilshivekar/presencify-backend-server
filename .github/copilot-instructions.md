@@ -24,14 +24,14 @@
 - **`src/validators/`**: Implement all request input validation using Joi. Maintain one validation file per controller.
 - **`src/controllers/`**: House the business logic for handling API requests.
 - **`src/middlewares/`**:
-    - `auth.middleware.js`: Verify JWTs and perform role-based authorization.
-    - `error.js`: Handle centralized error conversion and response formatting.
-    - `validate.js`: Connect Joi validation schemas to routes.
+  - `auth.middleware.js`: Verify JWTs and perform role-based authorization.
+  - `error.js`: Handle centralized error conversion and response formatting.
+  - `validate.js`: Connect Joi validation schemas to routes.
 - **`src/config/`**: Manage all configurations, including environment variables, database connections, logging, and user roles.
 - **`src/db/`**:
-    - `migrations/`: Store all Sequelize migration files.
-    - `seeders/`: Store all Sequelize seeder files.
-    - `models/`: Define all Sequelize models and their associations.
+  - `migrations/`: Store all Sequelize migration files.
+  - `seeders/`: Store all Sequelize seeder files.
+  - `models/`: Define all Sequelize models and their associations.
 - **`src/socket/`**: Implement real-time features using Socket.IO.
 - **`src/utils/`**: Contain helper modules for common tasks (`ApiError`, `ApiResponse`, `asyncHandler`, etc.).
 
@@ -70,21 +70,22 @@
 ## Testing Guidelines
 
 - **Scope**:
-    - Write **unit tests** for Express middlewares in `src/test/unit/`.
-    - Write **integration tests** for API endpoints in `src/test/integration/`.
-- **Structure**:
-    - For integration tests, create a directory for each controller (e.g., `admin.controller.tests/`).
-    - Inside, create a separate test file for each controller function (e.g., `addAdmin.test.js`).
-    - If you need to create a some instances of models like Batch, Division, Semester, Student, Teacher, Admin, Course, Branch, Scheme, University refer to tests in src/test/integration/attendance.controller.tests beforeEach() part only and copy paste it directly, this will save time to read whole files of models. If the model creation is not done in other test cases then you have to search it in models
-    - Always wrap the beforeEach() part code in try catch blog to know the errors
+  - Write **unit tests** for Express middlewares in `src/test/unit/`.
+  - Write **integration tests** for API endpoints in `src/test/integration/`.
+- **Structure**: - For integration tests, create a directory for each controller (e.g., `admin.controller.tests/`). 
+  - Inside, create a separate test file for each controller function (e.g., `addAdmin.test.js`). 
+  - If you need to create a instances for testing purpose in beforeEach() of any of these models:
+  [Admin, Teacher, Student, University, Branch, Scheme, Semester, Division, Batch, Course, Room, Timetable, Class, Attendance, AttendanceStudent, StudentSemester, StudentDivision, StudentBatch]
+  then copy paste them directly from src\test\integration\attendance.controller.tests\addStudentsAttendance.test.js, this will save time to read whole files of models. If the model creation is not done in this file then you have to search it in models 
+  - Always wrap the beforeEach() part code in try catch blog to know the errors
 - **Data Management**:
-    - Use the `setupTestDb.js` utility, which cleans the test database before each test run.
-    - Seed only the data necessary for each specific test case within the test file itself.
+  - Use the `setupTestDb.js` utility, which cleans the test database before each test run.
+  - Seed only the data necessary for each specific test case within the test file itself.
 - **Assertions**:
-    - **Unit Tests**: Assert that `next()` is called correctly and that `req`/`res` objects are mutated as expected.
-    - **Integration Tests**: Assert the HTTP status code, response body structure, and any resulting database state changes.
+  - **Unit Tests**: Assert that `next()` is called correctly and that `req`/`res` objects are mutated as expected.
+  - **Integration Tests**: Assert the HTTP status code, response body structure, and any resulting database state changes.
 - **Authentication and Authorization Tests**:
-    - For protected endpoints, always test for `401 Unauthorized`, `403 Forbidden`, `400 Bad Request`, `404 Not Found`, and successful `2xx` responses.
+  - For protected endpoints, always test for `401 Unauthorized`, `403 Forbidden`, `400 Bad Request`, `404 Not Found`, and successful `2xx` responses.
 - **Mocking**:
-    - **Unit Tests**: Mock external modules (`jsonwebtoken`, database models) using `jest.mock()`.
-    - **Integration Tests**: **Do not mock the database.** Only mock truly external services like email (Nodemailer) or push notifications (FCM).
+  - **Unit Tests**: Mock external modules (`jsonwebtoken`, database models) using `jest.mock()`.
+  - **Integration Tests**: **Do not mock the database.** Only mock truly external services like email (Nodemailer) or push notifications (FCM).
