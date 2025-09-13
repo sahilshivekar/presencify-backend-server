@@ -43,8 +43,8 @@ const addBranch = asyncHandler(async (req, res) => {
     const { name, abbreviation } = req.body;
 
     const branch = await Branch.create({
-        name: name || "",
-        abbreviation: abbreviation || "",
+        name,
+        abbreviation,
     });
 
     res
