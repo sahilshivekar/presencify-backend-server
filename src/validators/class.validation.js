@@ -10,8 +10,8 @@ const addClass = {
 		dayOfWeek: Joi.string().trim().required().messages({ 'any.required': 'Day of week is required' }),
 		roomId: uuid.required().messages({ 'any.required': 'Room ID is required', 'string.guid': 'Room ID must be a valid UUID' }),
 		batchId: uuid.allow(null).messages({ 'string.guid': 'Batch ID must be a valid UUID' }),
-		activeFrom: Joi.date().iso().required().messages({ 'any.required': 'Active from date is required' }),
-		activeTill: Joi.date().iso().required().messages({ 'any.required': 'Active till date is required' }),
+		activeFrom: Joi.required().messages({ 'any.required': 'Active from date is required' }),
+		activeTill: Joi.required().messages({ 'any.required': 'Active till date is required' }),
 		classType: Joi.string().valid('Lecture', 'Tutorial', 'Practical').required().messages({ 'any.only': "Class type must be 'Lecture', 'Tutorial' or 'Practical'", 'any.required': 'Class type is required' }),
 		courseId: uuid.required().messages({ 'any.required': 'Course ID is required', 'string.guid': 'Course ID must be a valid UUID' }),
 		timetableId: uuid.required().messages({ 'any.required': 'Timetable ID is required', 'string.guid': 'Timetable ID must be a valid UUID' })
@@ -25,8 +25,8 @@ const getClasses = {
 		divisionId: uuid.allow(null).messages({ 'string.guid': 'Division ID must be a valid UUID' }),
 		startTime: Joi.string().pattern(/^\d{2}:\d{2}:\d{2}$/).allow(null).messages({ 'string.pattern.base': 'Start time must be in HH:mm:ss format' }),
 		endTime: Joi.string().pattern(/^\d{2}:\d{2}:\d{2}$/).allow(null).messages({ 'string.pattern.base': 'End time must be in HH:mm:ss format' }),
-		activeFrom: Joi.date().iso().allow(null).messages({ 'date.format': 'activeFrom must be a valid ISO date' }),
-		activeTill: Joi.date().iso().allow(null).messages({ 'date.format': 'activeTill must be a valid ISO date' }),
+		activeFrom: Joi.allow(null).messages({ 'date.format': 'activeFrom must be a valid ISO date' }),
+		activeTill: Joi.allow(null).messages({ 'date.format': 'activeTill must be a valid ISO date' }),
 		teacherId: uuid.allow(null).messages({ 'string.guid': 'Teacher ID must be a valid UUID' }),
 		dayOfWeek: Joi.string().trim().allow(null).messages({ 'string.base': 'Day of week must be a string' }),
 		roomId: uuid.allow(null).messages({ 'string.guid': 'Room ID must be a valid UUID' }),
@@ -48,7 +48,7 @@ const getClassById = {
 const extendActiveTillDateOfClass = {
 	params: Joi.object().keys({ id: uuid.required().messages({ 'any.required': 'Class ID is required', 'string.guid': 'Class ID must be a valid UUID' }) }),
 	body: Joi.object().keys({
-		newActiveTill: Joi.date().iso().required().messages({ 'any.required': 'newActiveTill is required' })
+		newactiveTill: Joi.required().messages({ 'any.required': 'newActiveTill is required' })
 	})
 };
 
@@ -64,8 +64,8 @@ const addExtraClass = {
 		dayOfWeek: Joi.string().trim().required().messages({ 'any.required': 'Day of week is required' }),
 		roomId: uuid.required().messages({ 'any.required': 'Room ID is required', 'string.guid': 'Room ID must be a valid UUID' }),
 		batchId: uuid.allow(null).messages({ 'string.guid': 'Batch ID must be a valid UUID' }),
-		activeFrom: Joi.date().iso().required().messages({ 'any.required': 'Active from date is required' }),
-		activeTill: Joi.date().iso().required().messages({ 'any.required': 'Active till date is required' }),
+		activeFrom: Joi.required().messages({ 'any.required': 'Active from date is required' }),
+		activeTill: Joi.required().messages({ 'any.required': 'Active till date is required' }),
 		classType: Joi.string().valid('Lecture', 'Tutorial', 'Practical').required().messages({ 'any.only': "Class type must be 'Lecture', 'Tutorial' or 'Practical'", 'any.required': 'Class type is required' }),
 		courseId: uuid.required().messages({ 'any.required': 'Course ID is required', 'string.guid': 'Course ID must be a valid UUID' }),
 		timetableId: uuid.required().messages({ 'any.required': 'Timetable ID is required', 'string.guid': 'Timetable ID must be a valid UUID' })
@@ -76,7 +76,7 @@ const getCancelledClasses = {
 	query: Joi.object().keys({
 		divisionId: uuid.allow(null).messages({ 'string.guid': 'Division ID must be a valid UUID' }),
 		batchId: uuid.allow(null).messages({ 'string.guid': 'Batch ID must be a valid UUID' }),
-		date: Joi.date().iso().allow(null).messages({ 'date.format': 'Date must be a valid ISO date' }),
+		date: Joi.date().allow(null).messages({ 'date.format': 'Date must be a valid ISO date' }),
 		page: Joi.number().integer().min(1).default(1).messages({ 'number.base': 'Page must be a number', 'number.min': 'Page must be at least 1' }),
 		limit: Joi.number().integer().min(1).max(100).default(10).messages({ 'number.base': 'Limit must be a number', 'number.min': 'Limit must be at least 1', 'number.max': 'Limit cannot exceed 100' }),
 		getAll: Joi.boolean().default(false).messages({ 'boolean.base': 'getAll must be a boolean' })
@@ -86,7 +86,7 @@ const getCancelledClasses = {
 const cancelClass = {
 	body: Joi.object().keys({
 		classId: uuid.required().messages({ 'any.required': 'Class ID is required', 'string.guid': 'Class ID must be a valid UUID' }),
-		date: Joi.date().iso().required().messages({ 'any.required': 'Date is required' }),
+		date: Joi.date().required().messages({ 'any.required': 'Date is required' }),
 		reason: Joi.string().allow('', null).messages({ 'string.base': 'Reason must be a string' })
 	})
 };

@@ -21,6 +21,7 @@ import { fromYYYYMMDDToDDMMYYYY } from '../utils/date.js';
 import StudentBatch from '../db/models/studentBatch.model.js';
 import TeacherTeachesCourse from '../db/models/teacherTeachesCourse.model.js';
 import httpStatus from 'http-status';
+import { getDateStringFromObj } from '../utils/date.js';
 
 const getYearFromSemesterNumber = (semesterNumber) => {
     if (semesterNumber === 1 || semesterNumber === 2) return 'FE'
@@ -108,12 +109,12 @@ const addClass = asyncHandler(async (req, res) => {
     if (!checkCourseAvailableForSpecificSemester) {
         throw new ApiError(httpStatus.BAD_REQUEST, `Course '${course.name}' is not in syllabus for semester ${semester.semesterNumber} of branch ${branch.name}`)
     }
-
+    
     // Check if dates are in bounds of semester dates
     if (activeFrom < semester.startDate || activeFrom > semester.endDate) {
         throw new ApiError(httpStatus.BAD_REQUEST, `Active from date is out of bounds because semester start date is ${semester.startDate} and semester end date is ${semester.endDate}`)
     }
-    if (activeTill > semester.endDate || activeTill < semester.startDate) {
+    if (activeTill < semester.startDate || activeTill > semester.endDate) {
         throw new ApiError(httpStatus.BAD_REQUEST, `Active till date is out of bounds because semester start date is ${semester.startDate} and semester end date is ${semester.endDate}`)
     }
 
