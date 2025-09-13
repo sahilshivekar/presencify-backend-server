@@ -75,6 +75,7 @@
 - **Structure**:
     - For integration tests, create a directory for each controller (e.g., `admin.controller.tests/`).
     - Inside, create a separate test file for each controller function (e.g., `addAdmin.test.js`).
+    - If you need to create a some instances of models like Batch, Division, Semester, Student, Teacher, Admin, Course, Branch, Scheme, University refer to tests in src/test/integration/attendance.controller.tests beforeEach() part only and copy paste it directly, this will save time to read whole files of models. If the model creation is not done in other test cases then you have to search it in models
 - **Data Management**:
     - Use the `setupTestDb.js` utility, which cleans the test database before each test run.
     - Seed only the data necessary for each specific test case within the test file itself.
