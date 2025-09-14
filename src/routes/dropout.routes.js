@@ -17,11 +17,12 @@ router.route('/')
     .post(validate(dropoutValidation.addStudentToDropout), verifyJWT([ROLES.ADMIN]), addStudentToDropout)
     .delete(validate(dropoutValidation.removeStudentFromDropout), verifyJWT([ROLES.ADMIN]), removeStudentFromDropout);
 
-router.route('/:id')
-    .get(validate(dropoutValidation.getDropoutById), verifyJWT([ROLES.ADMIN]), getDropoutById);
 
 // Student-specific dropout details
 router.route('/student')
     .get(validate(dropoutValidation.getDropoutDetailsOfStudent), verifyJWT([ROLES.ADMIN, ROLES.TEACHER, ROLES.STUDENT]), getDropoutDetailsOfStudent);
+
+router.route('/:id')
+    .get(validate(dropoutValidation.getDropoutById), verifyJWT([ROLES.ADMIN]), getDropoutById);
 
 export default router;

@@ -126,11 +126,16 @@ const getDropoutDetailsOfStudent = asyncHandler(async (req, res) => {
 
     // Input validation is handled by @dropout.validation.js
 
+    const student = await Student.findByPk(studentId);
+    if (!student) {
+        throw new ApiError(httpStatus.NOT_FOUND, "Student not found");
+    }
+
     const dropouts = await Dropout.findAll({
         where: {
             studentId: studentId
         }
-    })
+    });
 
     res
         .status(httpStatus.OK)
@@ -140,7 +145,7 @@ const getDropoutDetailsOfStudent = asyncHandler(async (req, res) => {
                 "Dropout fetched successfully",
                 dropouts
             )
-        )
+        );
 })
 
 export {
