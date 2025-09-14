@@ -453,19 +453,17 @@ const getClassById = asyncHandler(async (req, res) => {
 
 const extendActiveTillDateOfClass = asyncHandler(async (req, res) => {
     const { id } = req.params;
-    const {
-        newActiveTill,
-    } = req.body;
+    const { newActiveTill } = req.body;
 
     // Input validation for id and newActiveTill is handled by @class.validation.js
 
     const classObj = await Class.findByPk(id);
 
+    if (!classObj) throw new ApiError(httpStatus.NOT_FOUND, "Class not found");
+
     const timetable = await Timetable.findByPk(classObj.timetableId)
     const division = await Division.findByPk(timetable.divisionId)
     const semester = await Semester.findByPk(division.semesterId)
-
-    if (!classObj) throw new ApiError(httpStatus.NOT_FOUND, "Class not found");
 
     if (newActiveTill) {
         if (newActiveTill <= classObj.activeTill) {
@@ -859,14 +857,17 @@ const cancelClass = asyncHandler(async (req, res) => {
 
     if (!classObj) throw new ApiError(httpStatus.NOT_FOUND, "Class not found");
 
-    if (date > classObj.activeTill || date < classObj.activeFrom) {
+    // Joi may coerce date to a Date object; normalize to 'YYYY-MM-DD' for lexicographic comparison
+    const normalizedDate = typeof date === 'string' ? date : getDateStringFromObj(date);
+
+    if (normalizedDate > classObj.activeTill || normalizedDate < classObj.activeFrom) {
         throw new ApiError(httpStatus.BAD_REQUEST, "Date is not in bounds of active from and active till of class");
     }
 
     const isAlreadyCancelled = await CancelledClass.findOne({
         where: {
             classId: classId,
-            date: date
+            date: normalizedDate
         }
     })
 
@@ -877,7 +878,7 @@ const cancelClass = asyncHandler(async (req, res) => {
     await CancelledClass.create(
         {
             classId: classId,
-            date: date,
+            date: normalizedDate,
             reason: reason || null
         }
     );
@@ -921,11 +922,11 @@ const cancelClass = asyncHandler(async (req, res) => {
         sendNotification(
             studentWithFCMToken.fcmToken,
             "Lecture cancelled",
-            `Lecture of ${course.name} from ${classObj.startTime} to ${classObj.endTime} on ${fromYYYYMMDDToDDMMYYYY(date)} is cancelled`,
+            `Lecture of ${course.name} from ${classObj.startTime} to ${classObj.endTime} on ${fromYYYYMMDDToDDMMYYYY(normalizedDate)} is cancelled`,
             {
                 type: "LectureCancelled",
                 classId: classObj.id,
-                cancelDate: fromYYYYMMDDToDDMMYYYY(date)
+                cancelDate: fromYYYYMMDDToDDMMYYYY(normalizedDate)
             }
         )
     })

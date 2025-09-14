@@ -29,6 +29,19 @@ router.route('/')
         addClass
     );
 
+// Cancelled class operations (place before '/:id' to avoid route conflicts)
+router.route('/cancelled')
+    .get(
+        validate(classValidation.getCancelledClasses),
+        verifyJWT([ROLES.ADMIN, ROLES.TEACHER, ROLES.STUDENT]),
+        getCancelledClasses
+    )
+    .post(
+        validate(classValidation.cancelClass),
+        verifyJWT([ROLES.ADMIN, ROLES.TEACHER]),
+        cancelClass
+    );
+
 router.route('/:id')
     .get(
         validate(classValidation.getClassById),
@@ -52,19 +65,6 @@ router.route('/extra')
         validate(classValidation.addExtraClass),
         verifyJWT([ROLES.ADMIN, ROLES.TEACHER]),
         addExtraClass
-    );
-
-// Cancelled class operations
-router.route('/cancelled')
-    .get(
-        validate(classValidation.getCancelledClasses),
-        verifyJWT([ROLES.ADMIN, ROLES.TEACHER, ROLES.STUDENT]),
-        getCancelledClasses
-    )
-    .post(
-        validate(classValidation.cancelClass),
-        verifyJWT([ROLES.ADMIN, ROLES.TEACHER]),
-        cancelClass
     );
 
 export default router;

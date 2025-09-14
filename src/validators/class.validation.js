@@ -48,7 +48,7 @@ const getClassById = {
 const extendActiveTillDateOfClass = {
 	params: Joi.object().keys({ id: uuid.required().messages({ 'any.required': 'Class ID is required', 'string.guid': 'Class ID must be a valid UUID' }) }),
 	body: Joi.object().keys({
-		newactiveTill: Joi.required().messages({ 'any.required': 'newActiveTill is required' })
+		newActiveTill: Joi.required().messages({ 'any.required': 'newActiveTill is required' })
 	})
 };
 
