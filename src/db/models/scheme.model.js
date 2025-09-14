@@ -11,7 +11,6 @@ Scheme.init(
         id: {
             type: Sequelize.UUID,
             defaultValue: UUIDV4,
-            autoIncrement: true,
             primaryKey: true,
             field: 'scheme_id'
         },

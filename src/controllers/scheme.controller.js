@@ -14,18 +14,9 @@ const getSchemes = asyncHandler(async (req, res) => {
 
     if (searchQuery) {
         searchClause = {
-            [Op.or]: [
-                {
-                    name: {
-                        [Op.like]: `%${searchQuery}%`
-                    }
-                },
-                {
-                    abbreviation: {
-                        [Op.like]: `%${searchQuery}%`
-                    }
-                }
-            ]
+            name: {
+                [Op.iLike]: `%${searchQuery}%`
+            }
         };
     }
 
