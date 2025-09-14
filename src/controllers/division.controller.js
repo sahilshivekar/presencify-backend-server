@@ -104,6 +104,17 @@ const addDivision = asyncHandler(async (req, res) => {
         throw new ApiError(httpStatus.NOT_FOUND, "Semester not found");
     }
 
+    // Check for duplicate divisionCode in the same semester
+    const existingDivision = await Division.findOne({
+        where: {
+            divisionCode: divisionCode,
+            semesterId: semesterId,
+        }
+    });
+    if (existingDivision) {
+        throw new ApiError(httpStatus.CONFLICT, "Duplicate divisionCode in the same semester is not allowed");
+    }
+
     const division = await Division.create({
         divisionCode: divisionCode,
         semesterId: semesterId,
