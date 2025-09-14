@@ -23,11 +23,6 @@ const createAttendance = {
                 if (month < 1 || month > 12 || day < 1 || day > 31) {
                     throw new Error('Invalid date provided');
                 }
-                // Validate if it's a real date
-                const dateObj = new Date(value);
-                if (dateObj.toISOString().split('T')[0] !== value) {
-                    throw new Error('Invalid date provided');
-                }
 
                 return value;
             })
@@ -176,7 +171,12 @@ const getAttendanceOfAnyStudentForSpecificCourseInSemester = {
                 if (value && !dateRegex.test(value)) {
                     throw new Error('Start date must be in YYYY-MM-DD format');
                 }
+                const [year, month, day] = value.split('-').map(Number);
+                if (month < 1 || month > 12 || day < 1 || day > 31) {
+                    throw new Error('Invalid date provided');
+                }
                 return value;
+                
             })
             .messages({
                 'string.base': 'Start date must be a string'
@@ -188,6 +188,10 @@ const getAttendanceOfAnyStudentForSpecificCourseInSemester = {
                 const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
                 if (value && !dateRegex.test(value)) {
                     throw new Error('End date must be in YYYY-MM-DD format');
+                }
+                const [year, month, day] = value.split('-').map(Number);
+                if (month < 1 || month > 12 || day < 1 || day > 31) {
+                    throw new Error('Invalid date provided');
                 }
                 return value;
             })
@@ -239,6 +243,10 @@ const getAttendanceOfSelfForSpecificCourseInSemester = {
                 if (value && !dateRegex.test(value)) {
                     throw new Error('Start date must be in YYYY-MM-DD format');
                 }
+                const [year, month, day] = value.split('-').map(Number);
+                if (month < 1 || month > 12 || day < 1 || day > 31) {
+                    throw new Error('Invalid date provided');
+                }
                 return value;
             })
             .messages({
@@ -251,6 +259,10 @@ const getAttendanceOfSelfForSpecificCourseInSemester = {
                 const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
                 if (value && !dateRegex.test(value)) {
                     throw new Error('End date must be in YYYY-MM-DD format');
+                }
+                const [year, month, day] = value.split('-').map(Number);
+                if (month < 1 || month > 12 || day < 1 || day > 31) {
+                    throw new Error('Invalid date provided');
                 }
                 return value;
             })
@@ -302,6 +314,10 @@ const getAttendanceOfAllForSemesterDivisionBatchCourse = {
                 if (value && !dateRegex.test(value)) {
                     throw new Error('Start date must be in YYYY-MM-DD format');
                 }
+                const [year, month, day] = value.split('-').map(Number);
+                if (month < 1 || month > 12 || day < 1 || day > 31) {
+                    throw new Error('Invalid date provided');
+                }
                 return value;
             })
             .messages({
@@ -314,6 +330,10 @@ const getAttendanceOfAllForSemesterDivisionBatchCourse = {
                 const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
                 if (value && !dateRegex.test(value)) {
                     throw new Error('End date must be in YYYY-MM-DD format');
+                }
+                const [year, month, day] = value.split('-').map(Number);
+                if (month < 1 || month > 12 || day < 1 || day > 31) {
+                    throw new Error('Invalid date provided');
                 }
                 return value;
             })
@@ -334,6 +354,10 @@ const sendAttendanceReport = {
                 if (value && !dateRegex.test(value)) {
                     throw new Error('Start date must be in YYYY-MM-DD format');
                 }
+                const [year, month, day] = value.split('-').map(Number);
+                if (month < 1 || month > 12 || day < 1 || day > 31) {
+                    throw new Error('Invalid date provided');
+                }
                 return value;
             })
             .messages({
@@ -346,6 +370,10 @@ const sendAttendanceReport = {
                 const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
                 if (value && !dateRegex.test(value)) {
                     throw new Error('End date must be in YYYY-MM-DD format');
+                }
+                const [year, month, day] = value.split('-').map(Number);
+                if (month < 1 || month > 12 || day < 1 || day > 31) {
+                    throw new Error('Invalid date provided');
                 }
                 return value;
             })
@@ -395,6 +423,10 @@ const getAttendance = {
                 const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
                 if (value && !dateRegex.test(value)) {
                     throw new Error('Date must be in YYYY-MM-DD format');
+                }
+                const [year, month, day] = value.split('-').map(Number);
+                if (month < 1 || month > 12 || day < 1 || day > 31) {
+                    throw new Error('Invalid date provided');
                 }
                 return value;
             })
@@ -465,6 +497,10 @@ const getAttendance = {
                 if (value && !dateRegex.test(value)) {
                     throw new Error('Start date must be in YYYY-MM-DD format');
                 }
+                const [year, month, day] = value.split('-').map(Number);
+                if (month < 1 || month > 12 || day < 1 || day > 31) {
+                    throw new Error('Invalid date provided');
+                }
                 return value;
             })
             .messages({
@@ -477,6 +513,10 @@ const getAttendance = {
                 const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
                 if (value && !dateRegex.test(value)) {
                     throw new Error('End date must be in YYYY-MM-DD format');
+                }
+                const [year, month, day] = value.split('-').map(Number);
+                if (month < 1 || month > 12 || day < 1 || day > 31) {
+                    throw new Error('Invalid date provided');
                 }
                 return value;
             })

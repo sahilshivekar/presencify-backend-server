@@ -488,7 +488,6 @@ describe('Attendance API - sendAttendanceReport', () => {
                     .post('/api/v1/attendances/report')
                     .set('Authorization', `Bearer ${adminToken}`)
                     .send(requestBody);
-                console.log('Response body:', JSON.stringify(response.body, null, 2));
 
                 expect(response.status).toBe(httpStatus.OK);
                 expect(response.body.success).toBe(true);
