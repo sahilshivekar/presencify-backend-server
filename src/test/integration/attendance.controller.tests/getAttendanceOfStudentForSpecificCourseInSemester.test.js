@@ -477,4 +477,91 @@ describe('Attendance API - getAttendanceOfStudentForSpecificCourseInSemester', (
             });
         });
     });
+
+    describe('GET /api/v1/attendances/me', () => {
+        describe('Authentication', () => {
+            test('should return 401 if no token provided', async () => {
+                const response = await request(app)
+                    .get('/api/v1/attendances/me')
+                    .query({ courseId: course.id });
+                expect(response.status).toBe(httpStatus.UNAUTHORIZED);
+                expect(response.body.success).toBe(false);
+                expect(response.body.message).toContain('No token provided');
+            });
+
+            test('should return 401 if invalid token provided', async () => {
+                const response = await request(app)
+                    .get('/api/v1/attendances/me')
+                    .set('Authorization', 'Bearer invalidtoken')
+                    .query({ courseId: course.id });
+                expect(response.status).toBe(httpStatus.UNAUTHORIZED);
+                expect(response.body.success).toBe(false);
+                expect(response.body.message).toContain('Invalid token');
+            });
+        });
+
+        describe('Validation', () => {
+            test('should return 400 if courseId is missing', async () => {
+                const response = await request(app)
+                    .get('/api/v1/attendances/me')
+                    .set('Authorization', `Bearer ${studentToken}`)
+                    .query({});
+                expect(response.status).toBe(httpStatus.BAD_REQUEST);
+                expect(response.body.success).toBe(false);
+                expect(response.body.message).toContain('Course ID is required');
+            });
+
+            test('should return 400 if courseId is not a valid UUID', async () => {
+                const response = await request(app)
+                    .get('/api/v1/attendances/me')
+                    .set('Authorization', `Bearer ${studentToken}`)
+                    .query({ courseId: 'invalid-uuid' });
+                expect(response.status).toBe(httpStatus.BAD_REQUEST);
+                expect(response.body.success).toBe(false);
+                expect(response.body.message).toContain('Course ID must be a valid UUID');
+            });
+        });
+
+        describe('Success Cases', () => {
+            test('should get attendance for self in specific course successfully', async () => {
+                const response = await request(app)
+                    .get('/api/v1/attendances/me')
+                    .set('Authorization', `Bearer ${studentToken}`)
+                    .query({ courseId: course.id });
+                expect(response.status).toBe(httpStatus.OK);
+                expect(response.body.success).toBe(true);
+                expect(response.body.message).toContain('Attendance fetched successfully');
+                expect(response.body.data).toHaveProperty('aggregatedAttendance');
+                expect(response.body.data).toHaveProperty('detailedAttendance');
+                expect(response.body.data.aggregatedAttendance).toHaveLength(1);
+                expect(response.body.data.detailedAttendance.length).toBeGreaterThanOrEqual(1);
+            });
+
+            test('should get attendance for self in specific course with date range filter', async () => {
+                const response = await request(app)
+                    .get('/api/v1/attendances/me')
+                    .set('Authorization', `Bearer ${studentToken}`)
+                    .query({
+                        courseId: course.id,
+                        startDate: '2024-01-10',
+                        endDate: '2024-01-20',
+                    });
+                expect(response.status).toBe(httpStatus.OK);
+                expect(response.body.success).toBe(true);
+                expect(response.body.data.detailedAttendance).toHaveLength(1);
+                expect(response.body.data.detailedAttendance[0].date).toBe('2024-01-15');
+            });
+
+            test('should return 404 if course does not exist', async () => {
+                const fakeCourseId = '123e4567-e89b-12d3-a456-426614174000';
+                const response = await request(app)
+                    .get('/api/v1/attendances/me')
+                    .set('Authorization', `Bearer ${studentToken}`)
+                    .query({ courseId: fakeCourseId });
+                expect(response.status).toBe(httpStatus.NOT_FOUND);
+                expect(response.body.success).toBe(false);
+                expect(response.body.message).toContain('Course not found');
+            });
+        });
+    });
 });
