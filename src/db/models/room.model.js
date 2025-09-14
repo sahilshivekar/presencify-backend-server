@@ -11,7 +11,6 @@ Room.init(
             defaultValue: UUIDV4,
             primaryKey: true,
             allowNull: false,
-            autoIncrement: true,
             field: 'room_id'
         },
         roomNumber: {
