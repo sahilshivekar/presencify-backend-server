@@ -27,6 +27,14 @@ router.route('/')
         addSemester
     );
 
+// Semester-specific operations - must be registered before '/:id'
+router.route('/courses')
+    .get(
+        validate(semesterValidation.getCoursesOfSemester),
+        verifyJWT([ROLES.ADMIN, ROLES.TEACHER, ROLES.STUDENT]),
+        getCoursesOfSemester
+    );
+
 router.route('/:id')
     .get(
         validate(semesterValidation.getSemesterById),
@@ -42,14 +50,6 @@ router.route('/:id')
         validate(semesterValidation.removeSemester),
         verifyJWT([ROLES.ADMIN]),
         removeSemester
-    );
-
-// Semester-specific operations
-router.route('/courses')
-    .get(
-        validate(semesterValidation.getCoursesOfSemester),
-        verifyJWT([ROLES.ADMIN, ROLES.TEACHER, ROLES.STUDENT]),
-        getCoursesOfSemester
     );
 
 export default router;

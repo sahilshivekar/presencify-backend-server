@@ -1,5 +1,6 @@
 import { Sequelize, Model, UUIDV4 } from 'sequelize';
 import sequelize from '../../config/db.connection.js';
+import Course from './course.model.js';
 
 class SemesterCourse extends Model { }
 
@@ -71,3 +72,7 @@ SemesterCourse.init(
 );
 
 export default SemesterCourse;
+
+// Associations
+// Link SemesterCourse -> Course to support eager loading in controllers
+SemesterCourse.belongsTo(Course, { foreignKey: 'courseId', targetKey: 'id' });
