@@ -9,6 +9,7 @@ import Course from '../db/models/course.model.js';
 import TeacherTeachesCourse from '../db/models/teacherTeachesCourse.model.js';
 import Scheme from '../db/models/scheme.model.js';
 import httpStatus from 'http-status';
+import sequelize from '../config/db.connection.js';
 
 // All input validation is now handled in @teacher.validation.js
 
@@ -380,32 +381,39 @@ const removeTeacher = asyncHandler(async (req, res) => {
 
     const { id } = req.query;
 
-    // Validation moved to @teacher.validation.js
-
     const teacher = await Teacher.findByPk(id);
 
     if (!teacher) {
         throw new ApiError(httpStatus.NOT_FOUND, "Teacher not found");
     }
-    if (teacher.teacherImagePublicId) {
-        const deletedImage = await deleteFromCloudinary(teacher.teacherImagePublicId)
-        if (!deletedImage) {
-            throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, "Some issue occured while deleting the image")
+
+    const transaction = await sequelize.transaction();
+    try {
+        // Handle image deletion outside transaction (external service)
+        if (teacher.teacherImagePublicId) {
+            const deletedImage = await deleteFromCloudinary(teacher.teacherImagePublicId)
+            if (!deletedImage) {
+                await transaction.rollback();
+                throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, "Some issue occured while deleting the image")
+            }
         }
+        
+        await teacher.destroy({ transaction });
+        await transaction.commit();
+        
+        res
+            .status(httpStatus.NO_CONTENT)
+            .json(
+                new ApiResponse(
+                    httpStatus.NO_CONTENT,
+                    "Teacher deleted successfully",
+                    null
+                )
+            );
+    } catch (error) {
+        await transaction.rollback();
+        throw error;
     }
-
-
-    await teacher.destroy();
-
-    res
-        .status(httpStatus.NO_CONTENT)
-        .json(
-            new ApiResponse(
-                httpStatus.NO_CONTENT,
-                "Teacher deleted successfully",
-                null
-            )
-        );
 });
 
 //! logout is remaining
@@ -413,70 +421,71 @@ const removeTeacher = asyncHandler(async (req, res) => {
 const addTeachingSubject = asyncHandler(async (req, res) => {
     const { teacherId, courseId } = req.body;
 
-    // Validation moved to @teacher.validation.js
-
-    const teacher = await Teacher.findByPk(teacherId);
-
-    if (!teacher) {
-        throw new ApiError(httpStatus.NOT_FOUND, "Teacher not found");
-    }
-
-    const course = await Course.findByPk(courseId);
-
-    if (!course) {
-        throw new ApiError(httpStatus.NOT_FOUND, "Course not found");
-    }
-
-    const alreadyAssigned = await TeacherTeachesCourse.findOne({
-        where: {
+    const transaction = await sequelize.transaction();
+    try {
+        const teacher = await Teacher.findByPk(teacherId, { transaction });
+        if (!teacher) {
+            throw new ApiError(httpStatus.NOT_FOUND, "Teacher not found");
+        }
+        const course = await Course.findByPk(courseId, { transaction });
+        if (!course) {
+            throw new ApiError(httpStatus.NOT_FOUND, "Course not found");
+        }
+        const alreadyAssigned = await TeacherTeachesCourse.findOne({
+            where: {
+                teacherId: teacherId,
+                courseId: courseId,
+            },
+            transaction
+        });
+        if(alreadyAssigned) {
+            throw new ApiError(httpStatus.BAD_REQUEST, "Course is already assigned to this teacher member")
+        }
+        const teacherTeachesCourseEntry = await TeacherTeachesCourse.create({
             teacherId: teacherId,
             courseId: courseId,
-        }
-    });
-
-    if(alreadyAssigned) {
-        throw new ApiError(httpStatus.BAD_REQUEST, "Course is already assigned to this teacher member")
+        }, { transaction });
+        await transaction.commit();
+        res
+            .status(httpStatus.CREATED)
+            .json(
+                new ApiResponse(
+                    httpStatus.CREATED,
+                    "Teaching subject added successfully",
+                    teacherTeachesCourseEntry
+                )
+            );
+    } catch (error) {
+        await transaction.rollback();
+        throw error;
     }
-
-    const teacherTeachesCourseEntry = await TeacherTeachesCourse.create({
-        teacherId: teacherId,
-        courseId: courseId,
-    });
-
-    res
-        .status(httpStatus.CREATED)
-        .json(
-            new ApiResponse(
-                httpStatus.CREATED,
-                "Teaching subject added successfully",
-                teacherTeachesCourseEntry
-            )
-        );
 });
 
 
 const removeTeachingSubject = asyncHandler(async (req, res) => {
     const { teacherSubjectId } = req.query;
 
-    // Validation moved to @teacher.validation.js
-
-    const teacherSubject = await TeacherTeachesCourse.findByPk(teacherSubjectId);
-
-    if (!teacherSubject) {
-        throw new ApiError(httpStatus.NOT_FOUND, "Teacher subject not found");
+    const transaction = await sequelize.transaction();
+    try {
+        const teacherSubject = await TeacherTeachesCourse.findByPk(teacherSubjectId, { transaction });
+        if (!teacherSubject) {
+            throw new ApiError(httpStatus.NOT_FOUND, "Teacher subject not found");
+        }
+        await teacherSubject.destroy({ transaction });
+        await transaction.commit();
+        res
+            .status(httpStatus.NO_CONTENT)
+            .json(
+                new ApiResponse(
+                    httpStatus.NO_CONTENT,
+                    "Teaching subject deleted successfully",
+                    null
+                )
+            );
+    } catch (error) {
+        await transaction.rollback();
+        throw error;
     }
-
-    await teacherSubject.destroy();
-
-    res
-        .status(httpStatus.NO_CONTENT)
-        .json(
-            new ApiResponse(
-                httpStatus.NO_CONTENT,
-                "Teaching subject deleted successfully",
-                null
-            )
-        );
 });
 
 const getTeachingSubjects = asyncHandler(async (req, res) => {

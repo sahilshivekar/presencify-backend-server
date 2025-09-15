@@ -14,6 +14,7 @@ import Branch from '../db/models/branch.model.js';
 import StudentBatch from '../db/models/studentBatch.model.js';
 import StudentDivision from '../db/models/studentDivision.model.js';
 import Division from '../db/models/division.model.js';
+import sequelize from '../config/db.connection.js';
 import Batch from '../db/models/batch.model.js';
 import { get } from 'http';
 import { getDateStringFromObj } from "../utils/date.js";
@@ -773,51 +774,56 @@ const addStudentToSemester = asyncHandler(async (req, res) => {
 const removeStudentFromSemester = asyncHandler(async (req, res) => {
     const { studentSemesterId } = req.query;
 
-    // Remove input validation, assume already validated
-
     const studentSemester = await StudentSemester.findByPk(studentSemesterId);
 
     if (!studentSemester) {
         throw new ApiError(httpStatus.NOT_FOUND, "StudentSemester not found");
     }
-    const divisionsThatBelongToThisSemester = await Division.findAll({
-        where: {
-            semesterId: studentSemester.semesterId
-        }
-    });
 
-    await StudentDivision.destroy({
-        where: {
-            studentId: studentSemester.studentId,
-            divisionId: {
-                [Op.in]: divisionsThatBelongToThisSemester.map(division => division.id)
-            }
-        }
-    });
+    const transaction = await sequelize.transaction();
+    try {
+        const divisionsThatBelongToThisSemester = await Division.findAll({
+            where: {
+                semesterId: studentSemester.semesterId
+            },
+            transaction
+        });
 
+        await StudentDivision.destroy({
+            where: {
+                studentId: studentSemester.studentId,
+                divisionId: {
+                    [Op.in]: divisionsThatBelongToThisSemester.map(division => division.id)
+                }
+            },
+            transaction
+        });
 
-    const batchesOfCurrentSemester = await Batch.findAll({
-        where: {
-            divisionId: {
-                [Op.in]: divisionsThatBelongToThisSemester.map(division => division.id)
-            }
-        }
-    });
+        const batchesOfCurrentSemester = await Batch.findAll({
+            where: {
+                divisionId: {
+                    [Op.in]: divisionsThatBelongToThisSemester.map(division => division.id)
+                }
+            },
+            transaction
+        });
 
-    await StudentBatch.destroy({
-        where: {
-            studentId: studentSemester.studentId,
-            batchId: {
-                [Op.in]: batchesOfCurrentSemester.map(batch => batch.id)
-            }
-        }
-    })
+        await StudentBatch.destroy({
+            where: {
+                studentId: studentSemester.studentId,
+                batchId: {
+                    [Op.in]: batchesOfCurrentSemester.map(batch => batch.id)
+                }
+            },
+            transaction
+        });
 
-    if (!studentSemester) {
-        throw new ApiError(httpStatus.NOT_FOUND, "StudentSemester entry with given Id is not found");
+        await studentSemester.destroy({ transaction });
+        await transaction.commit();
+    } catch (error) {
+        await transaction.rollback();
+        throw error;
     }
-
-    await studentSemester.destroy();
 
     res
         .status(httpStatus.OK)
@@ -913,8 +919,6 @@ const addStudentToDivision = asyncHandler(async (req, res) => {
 const changeStudentDivision = asyncHandler(async (req, res) => {
     const { studentDivisionId, divisionId, newDivisionStartDate } = req.body;
 
-    // Remove input validation, assume already validated
-
     const studentDivision = await StudentDivision.findByPk(studentDivisionId);
 
     if (!studentDivision) {
@@ -930,7 +934,6 @@ const changeStudentDivision = asyncHandler(async (req, res) => {
     if (!division) {
         throw new ApiError(httpStatus.NOT_FOUND, "Division is not found");
     }
-
 
     if (studentDivision.divisionId === divisionId) {
         throw new ApiError(httpStatus.BAD_REQUEST, "Student's new division can't be same as previous division");
@@ -965,81 +968,87 @@ const changeStudentDivision = asyncHandler(async (req, res) => {
 
     const endDateOfPrevDivision = new Date(startDateOfNewDivision.getFullYear(), startDateOfNewDivision.getMonth(), startDateOfNewDivision.getDate() - 1);
 
-    const batchesOfCurrentDivision = await Batch.findAll({
-        where: {
-            divisionId: studentDivision.divisionId,
-        }
-    });
-
-    // removing student from his previous batch of the previous division
-    const studentBatch = await StudentBatch.findOne({
-        where: {
-            studentId: studentDivision.studentId,
-            batchId: {
-                [Op.in]: batchesOfCurrentDivision.map(batch => batch.id),
+    const transaction = await sequelize.transaction();
+    try {
+        const batchesOfCurrentDivision = await Batch.findAll({
+            where: {
+                divisionId: studentDivision.divisionId,
             },
-            endDate: null
-        }
-    });
+            transaction
+        });
 
-    if (studentBatch) {
-        if (studentBatch.startDate > startDateOfNewDivision.toISOString().split('T')[0]) {
-
-            const futureBatchStartDateObj = new Date(studentBatch.startDate)
-            const prevBatchEndDateObj = new Date(futureBatchStartDateObj.getFullYear(), futureBatchStartDateObj.getMonth(), futureBatchStartDateObj.getDate());
-
-            const previousBatch = await StudentBatch.findOne({
-                where: {
-                    studentId: studentDivision.studentId,
-                    endDate: prevBatchEndDateObj.toISOString().split('T')[0],
+        // removing student from his previous batch of the previous division
+        const studentBatch = await StudentBatch.findOne({
+            where: {
+                studentId: studentDivision.studentId,
+                batchId: {
+                    [Op.in]: batchesOfCurrentDivision.map(batch => batch.id),
                 },
-                include: [
-                    {
-                        model: Batch,
-                        required: true,
-                        where: {
-                            divisionId: studentDivision.divisionId
+                endDate: null
+            },
+            transaction
+        });
+
+        if (studentBatch) {
+            if (studentBatch.startDate > startDateOfNewDivision.toISOString().split('T')[0]) {
+                const futureBatchStartDateObj = new Date(studentBatch.startDate)
+                const prevBatchEndDateObj = new Date(futureBatchStartDateObj.getFullYear(), futureBatchStartDateObj.getMonth(), futureBatchStartDateObj.getDate());
+
+                const previousBatch = await StudentBatch.findOne({
+                    where: {
+                        studentId: studentDivision.studentId,
+                        endDate: prevBatchEndDateObj.toISOString().split('T')[0],
+                    },
+                    include: [
+                        {
+                            model: Batch,
+                            required: true,
+                            where: {
+                                divisionId: studentDivision.divisionId
+                            }
                         }
-                    }
-                ]
-            });
+                    ],
+                    transaction
+                });
 
-            await studentBatch.destroy();
+                await studentBatch.destroy({ transaction });
 
-            if (previousBatch) {
-                previousBatch.endDate = endDateOfPrevDivision;
-                await previousBatch.save();
+                if (previousBatch) {
+                    previousBatch.endDate = endDateOfPrevDivision;
+                    await previousBatch.save({ transaction });
+                }
+            } else {
+                studentBatch.endDate = endDateOfPrevDivision;
+                await studentBatch.save({ transaction });
             }
-        } else {
-            studentBatch.endDate = endDateOfPrevDivision;
-            await studentBatch.save();
         }
+
+        studentDivision.endDate = endDateOfPrevDivision;
+        await studentDivision.save({ transaction });
+
+        const newStudentDivision = await StudentDivision.create({
+            studentId: studentDivision.studentId,
+            divisionId: divisionId,
+            startDate: startDateOfNewDivision
+        }, { transaction });
+
+        if (!newStudentDivision) {
+            throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, "Some issue occured while changing division");
+        }
+        await transaction.commit();
+        res
+            .status(httpStatus.OK)
+            .json(
+                new ApiResponse(
+                    httpStatus.OK,
+                    "Student's division is changed successfully",
+                    newStudentDivision
+                )
+            );
+    } catch (error) {
+        await transaction.rollback();
+        throw error;
     }
-
-    studentDivision.endDate = endDateOfPrevDivision;
-
-    await studentDivision.save();
-
-
-    const newStudentDivision = await StudentDivision.create({
-        studentId: studentDivision.studentId,
-        divisionId: divisionId,
-        startDate: startDateOfNewDivision
-    });
-
-    if (!newStudentDivision) {
-        throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, "Some issue occured while changing division");
-    }
-
-    res
-        .status(httpStatus.OK)
-        .json(
-            new ApiResponse(
-                httpStatus.OK,
-                "Student's division is changed successfully",
-                newStudentDivision
-            )
-        );
 
 });
 
@@ -1131,8 +1140,6 @@ const changeStudentBatch = asyncHandler(async (req, res, next) => {
 
     const { studentBatchId, batchId, newBatchStartDate } = req.body;
 
-    // Remove input validation, assume already validated
-
     const studentBatch = await StudentBatch.findByPk(studentBatchId);
 
     if (!studentBatch) {
@@ -1188,25 +1195,31 @@ const changeStudentBatch = asyncHandler(async (req, res, next) => {
         throw new ApiError(httpStatus.BAD_REQUEST, "New batch start date cannot be lesser than or same as previous batch start date");
     }
 
-    studentBatch.endDate = endDateOfPrevBatch;
+    const transaction = await sequelize.transaction();
+    try {
+        studentBatch.endDate = endDateOfPrevBatch;
+        await studentBatch.save({ transaction });
 
-    await studentBatch.save();
+        const newStudentBatch = await StudentBatch.create({
+            studentId: studentBatch.studentId,
+            batchId: batchId,
+            startDate: startDateOfNewBatch
+        }, { transaction });
 
-    const newStudentBatch = await StudentBatch.create({
-        studentId: studentBatch.studentId,
-        batchId: batchId,
-        startDate: startDateOfNewBatch
-    });
-
-    res
-        .status(httpStatus.OK)
-        .json(
-            new ApiResponse(
-                httpStatus.OK,
-                "Student's batch is changed successfully",
-                newStudentBatch
-            )
-        );
+        await transaction.commit();
+        res
+            .status(httpStatus.OK)
+            .json(
+                new ApiResponse(
+                    httpStatus.OK,
+                    "Student's batch is changed successfully",
+                    newStudentBatch
+                )
+            );
+    } catch (error) {
+        await transaction.rollback();
+        throw error;
+    }
 
 });
 

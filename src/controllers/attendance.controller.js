@@ -103,6 +103,7 @@ const addStudentsAttendance = asyncHandler(async (req, res) => {
     const division = await Division.findByPk(timetable.divisionId);
     const semester = await Semester.findByPk(division.semesterId);
 
+    const transaction = await sequelize.transaction();
     try {
         await AttendanceStudent.bulkCreate(
             [...presentStudentIds.map(studentId => ({
@@ -114,12 +115,16 @@ const addStudentsAttendance = asyncHandler(async (req, res) => {
                 attendanceId,
                 studentId,
                 attendanceStatus: false
-            }))]
-        )
+            }))],
+            { transaction }
+        );
+        await transaction.commit();
     } catch (error) {
+        await transaction.rollback();
         if (error.name === 'SequelizeForeignKeyConstraintError') {
             throw new ApiError(httpStatus.BAD_REQUEST, "One or more student IDs are invalid")
         }
+        throw error;
     }
 
     res.status(httpStatus.CREATED).json(new ApiResponse(httpStatus.CREATED, "Students attendance added successfully", null));
@@ -245,7 +250,7 @@ const getAttendanceOfAllForSemesterDivisionBatchCourse = asyncHandler(async (req
         startDate,
         endDate
     } = req.query;
-    
+
 
     if (courseId) {
         const course = await Course.findByPk(courseId);
