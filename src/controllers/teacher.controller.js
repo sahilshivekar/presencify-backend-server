@@ -39,6 +39,9 @@ const getTeacher = asyncHandler(async (req, res) => {
         getAll = "false",
     } = req.query;
 
+    // Normalize getAll to a boolean regardless of it coming as string or boolean
+    const isGetAll = getAll === true || getAll === 'true';
+
     const offset = (parseInt(page, 10) - 1) * parseInt(limit, 10);
 
     let searchClause = {};
@@ -100,11 +103,11 @@ const getTeacher = asyncHandler(async (req, res) => {
     const teacher = await Teacher.findAndCountAll({
         where: searchClause,
         include: includeClause,
-        ...(limit && getAll == "false" ? { offset: offset, } : {}),
-        ...(limit && getAll == "false" ? { limit: parseInt(limit, 10) } : {}),
+        ...(limit && !isGetAll ? { offset: offset, } : {}),
+        ...(limit && !isGetAll ? { limit: parseInt(limit, 10) } : {}),
         distinct: true,
     });
-    console.log(teacher.rows)
+    
     res
         .status(httpStatus.OK)
         .json(
@@ -121,11 +124,11 @@ const getTeacher = asyncHandler(async (req, res) => {
 });
 
 const getTeacherById = asyncHandler(async (req, res) => {
-    const { teacherId } = req.query;
+    const { id } = req.params;
 
     // Validation moved to @teacher.validation.js
 
-    const teacher = await Teacher.findByPk(teacherId);
+    const teacher = await Teacher.findByPk(id);
 
     if (!teacher) {
         throw new ApiError(httpStatus.NOT_FOUND, "Teacher not found");

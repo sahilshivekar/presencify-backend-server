@@ -39,19 +39,7 @@ router.route('/')
         removeTeacher
     );
 
-router.route('/:id')
-    .get(
-        validate(teacherValidation.getTeacherById),
-        verifyJWT([ROLES.ADMIN, ROLES.TEACHER, ROLES.STUDENT]),
-        getTeacherById
-    )
-    .put(
-        validate(teacherValidation.updateTeacherDetails),
-        verifyJWT([ROLES.ADMIN, ROLES.TEACHER]),
-        updateTeacherDetails
-    );
-
-// Teacher profile image management
+// Teacher profile image management (place before dynamic routes)
 router.route('/image')
     .put(
         upload.single('teacherImageFile'),
@@ -85,6 +73,19 @@ router.route('/subjects')
         validate(teacherValidation.removeTeachingSubject),
         verifyJWT([ROLES.ADMIN]),
         removeTeachingSubject
+    );
+
+// Dynamic routes should be registered last
+router.route('/:id')
+    .get(
+        validate(teacherValidation.getTeacherById),
+        verifyJWT([ROLES.ADMIN, ROLES.TEACHER, ROLES.STUDENT]),
+        getTeacherById
+    )
+    .put(
+        validate(teacherValidation.updateTeacherDetails),
+        verifyJWT([ROLES.ADMIN, ROLES.TEACHER]),
+        updateTeacherDetails
     );
 
 export default router;

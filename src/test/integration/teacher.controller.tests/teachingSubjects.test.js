@@ -1,0 +1,135 @@
+import request from 'supertest';
+import httpStatus from 'http-status';
+import app from '../../../app.js';
+import setupTestDb from '../../util/setupTestDb.js';
+
+import Admin from '../../../db/models/admin.model.js';
+import Teacher from '../../../db/models/teacher.model.js';
+import University from '../../../db/models/university.model.js';
+import Scheme from '../../../db/models/scheme.model.js';
+import Course from '../../../db/models/course.model.js';
+import TeacherTeachesCourse from '../../../db/models/teacherTeachesCourse.model.js';
+
+setupTestDb();
+
+describe('Teacher API - Teaching Subjects', () => {
+  let adminToken;
+  let teacherToken;
+  let teacher;
+  let course;
+
+  beforeEach(async () => {
+    try {
+      await Admin.create({ email: 'admin@example.com', username: 'adminuser', password: 'Admin@12345' });
+      const adminLoginRes = await request(app).post('/api/v1/auth/admins/login').send({ emailOrUsername: 'admin@example.com', password: 'Admin@12345' });
+      adminToken = adminLoginRes.body.data.accessToken;
+
+      teacher = await Teacher.create({ firstName: 'Sub', lastName: 'Jects', email: 'subj@example.com', phoneNumber: '+911234588888', password: 'Teacher@123', gender: 'Male', role: 'Teacher' });
+  const teacherLoginRes = await request(app).post('/api/v1/auth/teachers/login').send({ email: 'subj@example.com', password: 'Teacher@123' });
+  teacherToken = teacherLoginRes.body.data.accessToken;
+      const university = await University.create({ name: 'Tech University', abbreviation: 'TU' });
+      const scheme = await Scheme.create({ name: 'CS 2025', universityId: university.id });
+      course = await Course.create({ name: 'Networks', code: 'CS203', schemeId: scheme.id });
+    } catch (err) {
+      // eslint-disable-next-line no-console
+      console.error('beforeEach setup error:', err);
+      throw err;
+    }
+  });
+
+  test('POST /subjects - admin only, validation, 404s, duplicate, success', async () => {
+    // 401
+    let res = await request(app).post('/api/v1/teachers/subjects').send({ teacherId: teacher.id, courseId: course.id });
+    expect(res.status).toBe(httpStatus.UNAUTHORIZED);
+
+    // 403 forbidden for non-admin (teacher)
+    res = await request(app)
+      .post('/api/v1/teachers/subjects')
+      .set('Authorization', `Bearer ${teacherToken}`)
+      .send({ teacherId: teacher.id, courseId: course.id });
+    expect(res.status).toBe(httpStatus.FORBIDDEN);
+
+    // 400 invalid ids
+    res = await request(app).post('/api/v1/teachers/subjects').set('Authorization', `Bearer ${adminToken}`).send({ teacherId: 'not-a-uuid', courseId: 'also-not' });
+    expect(res.status).toBe(httpStatus.BAD_REQUEST);
+
+    // 404 teacher not found
+    res = await request(app).post('/api/v1/teachers/subjects').set('Authorization', `Bearer ${adminToken}`).send({ teacherId: 'aaaaaaaa-aaaa-4aaa-aaaa-aaaaaaaaaaaa', courseId: course.id });
+    expect(res.status).toBe(httpStatus.NOT_FOUND);
+    expect(res.body.message).toBe('Teacher not found');
+
+    // 404 course not found
+    res = await request(app).post('/api/v1/teachers/subjects').set('Authorization', `Bearer ${adminToken}`).send({ teacherId: teacher.id, courseId: 'aaaaaaaa-aaaa-4aaa-aaaa-aaaaaaaaaaaa' });
+    expect(res.status).toBe(httpStatus.NOT_FOUND);
+    expect(res.body.message).toBe('Course not found');
+
+    // 201 success
+    res = await request(app).post('/api/v1/teachers/subjects').set('Authorization', `Bearer ${adminToken}`).send({ teacherId: teacher.id, courseId: course.id });
+    expect(res.status).toBe(httpStatus.CREATED);
+    const ttc = await TeacherTeachesCourse.findOne({ where: { teacherId: teacher.id, courseId: course.id } });
+    expect(ttc).not.toBeNull();
+
+    // 400 duplicate
+    res = await request(app).post('/api/v1/teachers/subjects').set('Authorization', `Bearer ${adminToken}`).send({ teacherId: teacher.id, courseId: course.id });
+    expect(res.status).toBe(httpStatus.BAD_REQUEST);
+    expect(res.body.message).toBe('Course is already assigned to this teacher member');
+  });
+
+  test('GET /subjects - includes Course->Scheme', async () => {
+    // seed one subject
+    await TeacherTeachesCourse.create({ teacherId: teacher.id, courseId: course.id });
+    const adminLoginRes = await request(app).post('/api/v1/auth/admins/login').send({ emailOrUsername: 'admin@example.com', password: 'Admin@12345' });
+    const token = adminLoginRes.body.data.accessToken;
+
+    // 401 when no token
+    let res = await request(app).get('/api/v1/teachers/subjects').query({ teacherId: teacher.id });
+    expect(res.status).toBe(httpStatus.UNAUTHORIZED);
+
+    // 400 invalid
+    res = await request(app).get('/api/v1/teachers/subjects').set('Authorization', `Bearer ${token}`).query({ teacherId: 'not-a-uuid' });
+    expect(res.status).toBe(httpStatus.BAD_REQUEST);
+
+    // 404 teacher not found
+    res = await request(app).get('/api/v1/teachers/subjects').set('Authorization', `Bearer ${token}`).query({ teacherId: 'aaaaaaaa-aaaa-4aaa-aaaa-aaaaaaaaaaaa' });
+    expect(res.status).toBe(httpStatus.NOT_FOUND);
+    expect(res.body.message).toBe('Teacher not found');
+
+    // 200 success
+    res = await request(app).get('/api/v1/teachers/subjects').set('Authorization', `Bearer ${token}`).query({ teacherId: teacher.id });
+    expect(res.status).toBe(httpStatus.OK);
+    expect(Array.isArray(res.body.data)).toBe(true);
+    expect(res.body.data[0]).toHaveProperty('Course');
+    expect(res.body.data[0].Course).toHaveProperty('Scheme');
+  });
+
+  test('DELETE /subjects - admin only, 404 not found, 204 success', async () => {
+    // create then delete
+    const entry = await TeacherTeachesCourse.create({ teacherId: teacher.id, courseId: course.id });
+
+    // 401
+    let res = await request(app).delete('/api/v1/teachers/subjects').query({ teacherSubjectId: entry.id });
+    expect(res.status).toBe(httpStatus.UNAUTHORIZED);
+
+    // 403 forbidden for non-admin (teacher)
+    res = await request(app)
+      .delete('/api/v1/teachers/subjects')
+      .set('Authorization', `Bearer ${teacherToken}`)
+      .query({ teacherSubjectId: entry.id });
+    expect(res.status).toBe(httpStatus.FORBIDDEN);
+
+    // 400 invalid
+    res = await request(app).delete('/api/v1/teachers/subjects').set('Authorization', `Bearer ${adminToken}`).query({ teacherSubjectId: 'not-a-uuid' });
+    expect(res.status).toBe(httpStatus.BAD_REQUEST);
+
+    // 404 not found
+    res = await request(app).delete('/api/v1/teachers/subjects').set('Authorization', `Bearer ${adminToken}`).query({ teacherSubjectId: 'aaaaaaaa-aaaa-4aaa-aaaa-aaaaaaaaaaaa' });
+    expect(res.status).toBe(httpStatus.NOT_FOUND);
+    expect(res.body.message).toBe('Teacher subject not found');
+
+    // 204 success
+    res = await request(app).delete('/api/v1/teachers/subjects').set('Authorization', `Bearer ${adminToken}`).query({ teacherSubjectId: entry.id });
+    expect(res.status).toBe(httpStatus.NO_CONTENT);
+    const found = await TeacherTeachesCourse.findByPk(entry.id);
+    expect(found).toBeNull();
+  });
+});
