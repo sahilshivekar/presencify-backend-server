@@ -39,6 +39,24 @@ router.route('/')
         verifyJWT([ROLES.ADMIN]),
         addStudent
     )
+
+// Password management (admin only) - must be before /:id route
+router.route('/password')
+    .put(validate(studentValidation.updateStudentPassword), verifyJWT([ROLES.ADMIN]), updateStudentPassword);
+
+// Student profile image management
+router.route('/image')
+    .put(
+        upload.single('studentImageFile'),
+        validate(studentValidation.updateStudentImage),
+        verifyJWT([ROLES.ADMIN]),
+        updateStudentImage
+    )
+    .delete(
+        validate(studentValidation.removeStudentImage),
+        verifyJWT([ROLES.ADMIN, ROLES.STUDENT]),
+        removeStudentImage
+    );
     
 
 router.route('/:id')
@@ -57,24 +75,6 @@ router.route('/:id')
         verifyJWT([ROLES.ADMIN]),
         removeStudent
     );
-
-// Student profile image management
-router.route('/image')
-    .put(
-        upload.single('studentImageFile'),
-        validate(studentValidation.updateStudentImage),
-        verifyJWT([ROLES.ADMIN, ROLES.STUDENT]),
-        updateStudentImage
-    )
-    .delete(
-        validate(studentValidation.removeStudentImage),
-        verifyJWT([ROLES.ADMIN, ROLES.STUDENT]),
-        removeStudentImage
-    );
-
-// Password management (admin only)
-router.route('/password')
-    .put(validate(studentValidation.updateStudentPassword), verifyJWT([ROLES.ADMIN]), updateStudentPassword);
 
 // Student relationship queries
 router.route('/:id/semesters')

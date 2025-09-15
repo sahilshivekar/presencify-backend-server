@@ -95,12 +95,12 @@ const getStudents = asyncHandler(async (req, res) => {
     }
 
     if (schemeId) {
-        schemeFilterClause.id = Number(schemeId);
+        schemeFilterClause.id = schemeId;
     }
 
     if (branchIds) {
         branchFilterClause.branchId = {
-            [Op.in]: branchIds.map(branchId => Number(branchId))
+            [Op.in]: branchIds
         };
     }
 
@@ -355,8 +355,8 @@ const addStudent = asyncHandler(async (req, res) => {
 
 //* Update student details
 const updateStudentDetails = asyncHandler(async (req, res) => {
+    const { id } = req.params;
     const {
-        id,
         firstName,
         middleName,
         lastName,
@@ -457,7 +457,7 @@ const updateStudentImage = asyncHandler(async (req, res) => {
 
     await student.save();
 
-    res.status(httpStatus.OK).json(new ApiResponse(httpStatus.OK, "Student image updated successfully", student));
+    res.status(httpStatus.OK).json(new ApiResponse(httpStatus.OK, "Student image updated successfully", { student }));
 });
 
 //* Remove student image
@@ -497,14 +497,15 @@ const removeStudent = asyncHandler(async (req, res) => {
 });
 
 const getStudentDetailsById = asyncHandler(async (req, res) => {
-    const { studentId } = req.query;
+    const { id } = req.params;
 
     // Remove input validation, assume already validated
 
     const student = await Student.findOne({
         where: {
-            id: studentId
+            id: id
         },
+        attributes: { exclude: ['password', 'refreshToken'] },
         include: [
             {
                 model: Branch,
@@ -516,7 +517,6 @@ const getStudentDetailsById = asyncHandler(async (req, res) => {
             }
         ]
     });
-    console.log(student)
     if (!student) throw new ApiError(httpStatus.NOT_FOUND, "Student not found");
 
     res
@@ -532,17 +532,17 @@ const getStudentDetailsById = asyncHandler(async (req, res) => {
 
 
 const getStudentSemestersById = asyncHandler(async (req, res) => {
-    const { studentId } = req.query;
+    const { id } = req.params;
 
     // Remove input validation, assume already validated
 
-    const student = await Student.findByPk(studentId);
+    const student = await Student.findByPk(id);
 
     if (!student) throw new ApiError(httpStatus.NOT_FOUND, "Student not found");
 
     const studentSemesters = await StudentSemester.findAll({
         where: {
-            studentId: studentId
+            studentId: id
         },
         include: [
             {
@@ -557,7 +557,7 @@ const getStudentSemestersById = asyncHandler(async (req, res) => {
         .json(
             new ApiResponse(
                 httpStatus.OK,
-                "Student fetched successfully",
+                "Student semesters fetched successfully",
                 studentSemesters
             )
         );
