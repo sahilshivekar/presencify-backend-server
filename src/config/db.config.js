@@ -34,11 +34,11 @@ export default {
         port: process.env.PG_PROD_DB_PORT,
         dialect: "postgres",
         logging: false,
-        dialectOptions: { 
-            ssl: {
-                require: true,
-                rejectUnauthorized: false // Required for Render.com
-            }
-        },
+        // dialectOptions: { 
+        //     ssl: {
+        //         require: true,
+        //         rejectUnauthorized: false // Required for Render.com
+        //     }
+        // },
     }
 }

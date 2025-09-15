@@ -34,7 +34,7 @@ const generateAccessAndRefreshTokens = async (student) => {
 
         return { newAccessToken, newRefreshToken }
     } catch (err) {
-        console.log(err)
+    // removed debug log
         throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, "Something went wrong while generating tokens")
     }
 }
@@ -250,7 +250,7 @@ const sendVerificationCodeToEmail = asyncHandler(async (req, res) => {
                     [Op.and]: [{ email }, { code }]
                 }
             })
-            console.log(`Verfication code for ${email} is deleted due to timeout`)
+            // removed debug log
         },
         5 * 60 * 1000
     )

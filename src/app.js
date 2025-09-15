@@ -3,6 +3,7 @@ import cors from "cors"
 import httpStatus from 'http-status';
 import cookieParser from "cookie-parser"
 import { config } from './config/config.js';
+import { logger } from './config/logger.js';
 const app = express()
 import xss from 'xss-clean';
 import morgan from './config/morgan.js';
@@ -17,29 +18,39 @@ app.use(cors({
     origin: config.corsOrigin,
     credentials: true
 }))
+logger.info(`CORS configured for origin: ${config.corsOrigin}`);
 
 if (config.env !== 'test') {
     app.use(morgan.successHandler);
     app.use(morgan.errorHandler);
+    logger.info('Morgan HTTP logging enabled');
 }
 
 // set security HTTP headers
 app.use(helmet());
+logger.info('Helmet security headers enabled');
 
 // sanitize request data
 app.use(xss());
+logger.info('XSS protection enabled');
 
 app.use(compression())
+logger.info('Response compression enabled');
 
 app.use(express.json({ limit: "16kb" }))
+logger.info('JSON body parser enabled (limit: 16kb)');
 app.use(express.urlencoded({ extended: true, limit: "16kb" }))
+logger.info('URL-encoded body parser enabled (limit: 16kb)');
 app.use(express.static("public"))
+logger.info('Serving static files from /public');
 app.use(cookieParser())
+logger.info('Cookie parser enabled');
 
 
 // limit repeated failed requests to auth endpoints
 if (config.env === 'production') {
     app.use('/api/v1/auth', authLimiter);
+    logger.info('Rate limiter enabled for /api/v1/auth endpoints');
 }
 
 //! routes import
@@ -85,18 +96,22 @@ app.use("/api/v1/classes", classRouter);
 app.use("/api/v1/attendances", attendanceRouter);
 app.use("/api/v1/dropouts", dropoutRouter);
 app.use("/api/v1/student-fcm-tokens", studentFCMTokenRouter);
+logger.info('All API routes registered');
 
 
 app.use((req, res, next) => {
     next(new ApiError(httpStatus.NOT_FOUND, 'Not found'));
+    logger.warn(`404 Not Found: ${req.method} ${req.originalUrl}`);
 });
 
 
 // convert error to ApiError, if needed
 app.use(errorConverter);
+logger.info('Error converter middleware registered');
 
 // handle error
 app.use(errorHandler);
+logger.info('Error handler middleware registered');
 
 
 export default app 

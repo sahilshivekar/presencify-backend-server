@@ -26,10 +26,7 @@ const errorHandler = (err, req, res, next) => {
     }
 
     res.locals.errorMessage = err.message;
-
-    if (config.env === 'development') {
-        logger.error(err);
-    }
+    res.locals.stack = err.stack;
 
     const shouldIncludeDebugInfo = config.env !== 'production';
 

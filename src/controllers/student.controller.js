@@ -345,10 +345,7 @@ const addStudent = asyncHandler(async (req, res) => {
         admissionType: admissionType,
         branchId: branchId
     });
-    if(addedStudent){
-        console.log("student added")
-        console.log(addedStudent)
-    }
+    
     res.status(httpStatus.CREATED).json(new ApiResponse(httpStatus.CREATED, "Student added successfully", addedStudent));
 });
 
@@ -477,7 +474,6 @@ const removeStudentImage = asyncHandler(async (req, res) => {
     student.studentImgPublicId = null;
 
     await student.save();
-    console.log(student)
     res.status(httpStatus.OK).json(new ApiResponse(httpStatus.OK, "Student image deleted successfully", student));
 });
 

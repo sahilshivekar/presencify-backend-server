@@ -8,16 +8,30 @@ const enumerateErrorFormat = winston.format((info) => {
     return info;
 });
 
+const logFormat = winston.format.printf(({ timestamp, level, message, ...meta }) => {
+    let metaString = Object.keys(meta).length ? ` | ${JSON.stringify(meta)}` : '';
+    return `${timestamp} [${level}]: ${message}${metaString}`;
+});
+
 const logger = winston.createLogger({
     level: config.env === 'development' ? 'debug' : 'info',
     format: winston.format.combine(
+        winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
         enumerateErrorFormat(),
-        config.env === 'development' ? winston.format.colorize() : winston.format.uncolorize(),
         winston.format.splat(),
-        winston.format.printf(({ level, message }) => `${level}: ${message}`)
+        winston.format.errors({ stack: true }),
+        logFormat
     ),
     transports: [
         new winston.transports.Console({
+            format: winston.format.combine(
+                config.env === 'development' ? winston.format.colorize({ all: true }) : winston.format.uncolorize(),
+                winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
+                enumerateErrorFormat(),
+                winston.format.splat(),
+                winston.format.errors({ stack: true }),
+                logFormat
+            ),
             stderrLevels: ['error'],
         }),
     ],

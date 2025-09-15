@@ -4,9 +4,20 @@ import { logger } from './logger.js';
 
 morgan.token('message', (req, res) => res.locals.errorMessage || '');
 
+morgan.token('stack', (req, res) => {
+    if (res.locals.stack && (config.env === 'development' || config.env === 'test')) {
+        return `\nStack: ${res.locals.stack}`;
+    }
+    return '';
+});
+
 const getIpFormat = () => (config.env === 'production' ? ':remote-addr - ' : '');
 const successResponseFormat = `${getIpFormat()}:method :url :status - :response-time ms`;
-const errorResponseFormat = `${getIpFormat()}:method :url :status - :response-time ms - message: :message`;
+
+// Use different error formats based on environment
+const errorResponseFormat = config.env === 'production' 
+    ? `${getIpFormat()}:method :url :status - :response-time ms - message: :message`
+    : `${getIpFormat()}:method :url :status - :response-time ms - :stack`;
 
 const successHandler = morgan(successResponseFormat, {
     skip: (req, res) => res.statusCode >= 400,
