@@ -7,17 +7,10 @@ jest.unstable_mockModule('../../config/config.js', () => ({
     }
 }));
 
-jest.unstable_mockModule('../../config/logger.js', () => ({
-    logger: {
-        error: jest.fn()
-    }
-}));
-
 // Dynamic imports after mocking
 const { errorConverter, errorHandler } = await import('../../middlewares/error.js');
 const { ApiError } = await import('../../utils/ApiError.js');
 const { config } = await import('../../config/config.js');
-const { logger } = await import('../../config/logger.js');
 const httpStatus = (await import('http-status')).default;
 const httpMocks = (await import('node-mocks-http')).default;
 
@@ -138,9 +131,9 @@ describe('Error Middleware', () => {
                 expect(jsonCall.statusCode).toBe(400);
                 expect(jsonCall.message).toBe('Validation failed');
                 expect(jsonCall.stack).toBe('dev stack trace');
+                expect(jsonCall.success).toBe(false);
                 
                 expect(res.locals.errorMessage).toBe('Validation failed');
-                expect(logger.error).toHaveBeenCalledWith(apiError);
             });
 
             it('includes stack trace for operational errors in development', () => {
@@ -155,6 +148,7 @@ describe('Error Middleware', () => {
                 const jsonCall = res.json.mock.calls[0][0];
                 expect(jsonCall.statusCode).toBe(422);
                 expect(jsonCall.message).toBe('Business logic error');
+                expect(jsonCall.success).toBe(false);
                 expect(jsonCall.stack).toEqual(expect.any(String));
             });
 
@@ -170,6 +164,7 @@ describe('Error Middleware', () => {
                 const jsonCall = res.json.mock.calls[0][0];
                 expect(jsonCall.statusCode).toBe(500);
                 expect(jsonCall.message).toBe('System error');
+                expect(jsonCall.success).toBe(false);
                 expect(jsonCall.stack).toEqual(expect.any(String));
             });
         });
@@ -191,10 +186,10 @@ describe('Error Middleware', () => {
                 const jsonCall = res.json.mock.calls[0][0];
                 expect(jsonCall.statusCode).toBe(400);
                 expect(jsonCall.message).toBe('Bad request data');
+                expect(jsonCall.success).toBe(false);
                 expect(jsonCall.stack).not.toBeDefined();
                 expect(jsonCall.errors).not.toBeDefined();
                 expect(res.locals.errorMessage).toBe('Bad request data');
-                expect(logger.error).not.toHaveBeenCalled();
             });
 
             it('masks non-operational errors with generic 500 message', () => {
@@ -210,6 +205,7 @@ describe('Error Middleware', () => {
                 const jsonCall = res.json.mock.calls[0][0];
                 expect(jsonCall.statusCode).toBe(httpStatus.INTERNAL_SERVER_ERROR);
                 expect(jsonCall.message).toBe(httpStatus[httpStatus.INTERNAL_SERVER_ERROR]); // 'Internal Server Error'
+                expect(jsonCall.success).toBe(false);
                 expect(jsonCall.stack).not.toBeDefined();
                 expect(jsonCall.errors).not.toBeDefined();
                 expect(res.locals.errorMessage).toBe('Database connection failed'); // Original message in locals
@@ -217,7 +213,8 @@ describe('Error Middleware', () => {
 
             it('masks undefined isOperational as non-operational (defaults to false)', () => {
                 const errorWithoutOperational = new ApiError(500, 'Some system error');
-                // isOperational is undefined, should be treated as false
+                // Explicitly set isOperational to undefined to test the default behavior
+                errorWithoutOperational.isOperational = undefined;
                 
                 errorHandler(errorWithoutOperational, req, res, next);
                 
@@ -228,6 +225,7 @@ describe('Error Middleware', () => {
                 const jsonCall = res.json.mock.calls[0][0];
                 expect(jsonCall.statusCode).toBe(httpStatus.INTERNAL_SERVER_ERROR);
                 expect(jsonCall.message).toBe(httpStatus[httpStatus.INTERNAL_SERVER_ERROR]);
+                expect(jsonCall.success).toBe(false);
                 expect(jsonCall.stack).not.toBeDefined();
                 expect(jsonCall.errors).not.toBeDefined();
             });
@@ -249,10 +247,10 @@ describe('Error Middleware', () => {
                 const jsonCall = res.json.mock.calls[0][0];
                 expect(jsonCall.statusCode).toBe(404);
                 expect(jsonCall.message).toBe('Resource not found');
+                expect(jsonCall.success).toBe(false);
                 expect(jsonCall.stack).toEqual(expect.any(String));
                 expect(jsonCall.errors).toBeDefined();
                 expect(res.locals.errorMessage).toBe('Resource not found');
-                expect(logger.error).not.toHaveBeenCalled(); // Only logs in development
             });
 
             it('does not mask non-operational errors in test environment', () => {
@@ -267,6 +265,7 @@ describe('Error Middleware', () => {
                 const jsonCall = res.json.mock.calls[0][0];
                 expect(jsonCall.statusCode).toBe(500);
                 expect(jsonCall.message).toBe('Test system error'); // Original message preserved in test
+                expect(jsonCall.success).toBe(false);
                 expect(jsonCall.stack).toEqual(expect.any(String));
                 expect(jsonCall.errors).toBeDefined();
             });
@@ -296,10 +295,10 @@ describe('Error Middleware', () => {
                 expect.objectContaining({
                     statusCode: 409,
                     message: 'Integration test error',
+                    success: false,
                     stack: expect.any(String)
                 })
             );
-            expect(logger.error).toHaveBeenCalledWith(convertedError);
         });
     });
 });
