@@ -7,7 +7,9 @@ import {
     removeCourse,
     addCourseToBranchWithSemesterNumber,
     removeCourseFromBranchWithSemesterNumber,
-    getCourseById
+    getCourseById,
+    bulkCreateCourses,
+    bulkDeleteCourses
 } from '../controllers/course.controller.js';
 import { ROLES } from '../config/roles.js';
 import validate from '../middlewares/validate.js';
@@ -58,6 +60,21 @@ router.route('/branch/:branchCourseSemesterId')
         validate(courseValidation.removeCourseFromBranchWithSemesterNumber),
         verifyJWT([ROLES.ADMIN]),
         removeCourseFromBranchWithSemesterNumber
+    );
+
+// Bulk operations
+router.route('/bulk/create')
+    .post(
+        validate(courseValidation.bulkCreateCourses),
+        verifyJWT([ROLES.ADMIN]),
+        bulkCreateCourses
+    );
+
+router.route('/bulk/delete')
+    .delete(
+        validate(courseValidation.bulkDeleteCourses),
+        verifyJWT([ROLES.ADMIN]),
+        bulkDeleteCourses
     );
 
 export default router;

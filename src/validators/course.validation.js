@@ -98,6 +98,49 @@ const removeCourseFromBranchWithSemesterNumber = {
     })
 };
 
+const bulkCreateCourses = {
+    body: Joi.object().keys({
+        courses: Joi.array().items(
+            Joi.object().keys({
+                code: Joi.string().trim().min(1).max(50).required()
+                    .messages({
+                        'any.required': 'Course code is required',
+                        'string.min': 'Course code must be at least 1 character',
+                        'string.max': 'Course code cannot exceed 50 characters'
+                    }),
+                name: Joi.string().trim().min(1).max(200).required()
+                    .messages({
+                        'any.required': 'Course name is required',
+                        'string.min': 'Course name must be at least 1 character',
+                        'string.max': 'Course name cannot exceed 200 characters'
+                    }),
+                optionalSubject: Joi.string().trim().allow(null, '').default(null)
+                    .messages({ 'string.base': 'Optional subject must be a string' }),
+                schemeId: uuid.required()
+                    .messages({ 'any.required': 'Scheme ID is required', 'string.guid': 'Scheme ID must be a valid UUID' })
+            })
+        ).min(1).max(100).required()
+        .messages({
+            'any.required': 'Courses array is required',
+            'array.min': 'At least 1 course is required',
+            'array.max': 'Cannot create more than 100 courses at once'
+        })
+    })
+};
+
+const bulkDeleteCourses = {
+    body: Joi.object().keys({
+        courseIds: Joi.array().items(
+            uuid.required().messages({ 'string.guid': 'Each course ID must be a valid UUID' })
+        ).min(1).max(100).required()
+        .messages({
+            'any.required': 'Course IDs array is required',
+            'array.min': 'At least 1 course ID is required',
+            'array.max': 'Cannot delete more than 100 courses at once'
+        })
+    })
+};
+
 export default {
     getCourses,
     addCourse,
@@ -105,7 +148,9 @@ export default {
     removeCourse,
     getCourseById,
     addCourseToBranchWithSemesterNumber,
-    removeCourseFromBranchWithSemesterNumber
+    removeCourseFromBranchWithSemesterNumber,
+    bulkCreateCourses,
+    bulkDeleteCourses
 };
 
 

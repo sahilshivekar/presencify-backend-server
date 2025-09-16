@@ -11,6 +11,7 @@ import sequelize from '../config/db.connection.js';
 import { parse } from 'path';
 import Semester from '../db/models/semester.model.js';
 import httpStatus from 'http-status';
+import { logger } from '../config/logger.js';
 
 //* get all the courses
 const getCourses = asyncHandler(async (req, res) => {
@@ -279,6 +280,160 @@ const getCourseById = asyncHandler(async (req, res) => {
         );
 });
 
+//* bulk create courses
+const bulkCreateCourses = asyncHandler(async (req, res) => {
+    const { courses } = req.body;
+    
+    logger.info(`Bulk creating ${courses.length} courses`);
+    
+    const transaction = await sequelize.transaction();
+    
+    try {
+        // Check for duplicate course codes within request
+        const courseCodes = courses.map(course => course.code);
+        const uniqueCodes = new Set(courseCodes);
+        if (uniqueCodes.size !== courseCodes.length) {
+            throw new ApiError(
+                httpStatus.CONFLICT,
+                'Course codes already exist: duplicate codes in request'
+            );
+        }
+
+        // Validate all schemes exist
+        const schemeIds = [...new Set(courses.map(course => course.schemeId))];
+        const existingSchemes = await Scheme.findAll({
+            where: { id: schemeIds },
+            attributes: ['id'],
+            transaction
+        });
+        
+        const existingSchemeIds = existingSchemes.map(scheme => scheme.id);
+        const invalidSchemeIds = schemeIds.filter(id => !existingSchemeIds.includes(id));
+        
+        if (invalidSchemeIds.length > 0) {
+            await transaction.rollback();
+            throw new ApiError(
+                httpStatus.BAD_REQUEST, 
+                `Invalid scheme IDs: ${invalidSchemeIds.join(', ')}`
+            );
+        }
+        
+        // Check for duplicate course codes against database
+        const existingCourses = await Course.findAll({
+            where: { code: courseCodes },
+            attributes: ['code'],
+            transaction
+        });
+        
+        if (existingCourses.length > 0) {
+            const duplicateCodes = existingCourses.map(course => course.code);
+            await transaction.rollback();
+            throw new ApiError(
+                httpStatus.CONFLICT, 
+                `Course codes already exist: ${duplicateCodes.join(', ')}`
+            );
+        }
+        
+        // Create courses
+        const createdCourses = await Course.bulkCreate(courses, {
+            transaction,
+            validate: true,
+            returning: true,
+            individualHooks: true
+        });
+        
+        await transaction.commit();
+        logger.info(`Successfully bulk created ${createdCourses.length} courses`);
+        
+        res
+            .status(httpStatus.CREATED)
+            .json(
+                new ApiResponse(
+                    httpStatus.CREATED,
+                    `${createdCourses.length} courses created successfully`,
+                    { courses: createdCourses }
+                )
+            );
+            
+    } catch (error) {
+        if (!transaction.finished) {
+            await transaction.rollback();
+        }
+        logger.error('Bulk create courses failed:', error.message);
+        throw error;
+    }
+});
+
+//* bulk delete courses
+const bulkDeleteCourses = asyncHandler(async (req, res) => {
+    const { courseIds } = req.body;
+    
+    logger.info(`Bulk deleting ${courseIds.length} courses`);
+    
+    const transaction = await sequelize.transaction();
+    
+    try {
+        // Verify all courses exist
+        const existingCourses = await Course.findAll({
+            where: { id: courseIds },
+            attributes: ['id'],
+            transaction
+        });
+        
+        if (existingCourses.length !== courseIds.length) {
+            const existingIds = existingCourses.map(course => course.id);
+            const nonExistentIds = courseIds.filter(id => !existingIds.includes(id));
+            await transaction.rollback();
+            throw new ApiError(
+                httpStatus.NOT_FOUND, 
+                `Courses not found: ${nonExistentIds.join(', ')}`
+            );
+        }
+        
+        // Check if any courses are referenced in BranchCourseSemester
+        const referencedCourses = await BranchCourseSemester.findAll({
+            where: { courseId: courseIds },
+            attributes: ['courseId'],
+            transaction
+        });
+        
+        if (referencedCourses.length > 0) {
+            const referencedIds = [...new Set(referencedCourses.map(ref => ref.courseId))];
+            await transaction.rollback();
+            throw new ApiError(
+                httpStatus.CONFLICT, 
+                `Cannot delete courses that are assigned to branches: ${referencedIds.join(', ')}`
+            );
+        }
+        
+        // Delete courses
+        const deletedCount = await Course.destroy({
+            where: { id: courseIds },
+            transaction
+        });
+        
+        await transaction.commit();
+        logger.info(`Successfully bulk deleted ${deletedCount} courses`);
+        
+        res
+            .status(httpStatus.OK)
+            .json(
+                new ApiResponse(
+                    httpStatus.OK,
+                    `${deletedCount} courses deleted successfully`,
+                    { deletedCount }
+                )
+            );
+            
+    } catch (error) {
+        if (!transaction.finished) {
+            await transaction.rollback();
+        }
+        logger.error('Bulk delete courses failed:', error.message);
+        throw error;
+    }
+});
+
 export {
     getCourses,
     addCourse,
@@ -286,5 +441,7 @@ export {
     removeCourse,
     addCourseToBranchWithSemesterNumber,
     removeCourseFromBranchWithSemesterNumber,
-    getCourseById
+    getCourseById,
+    bulkCreateCourses,
+    bulkDeleteCourses
 };          
