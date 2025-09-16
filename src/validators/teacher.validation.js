@@ -80,6 +80,30 @@ const removeTeachingSubject = {
 	query: Joi.object().keys({ teacherSubjectId: uuid.required().messages({ 'any.required': 'teacherSubjectId is required', 'string.guid': 'teacherSubjectId must be a valid UUID' }) })
 };
 
+const bulkCreateTeachers = {
+	body: Joi.object().keys({
+		teachers: Joi.array().items(
+			Joi.object().keys({
+				firstName: Joi.string().trim().min(1).max(100).required().messages({ 'any.required': 'First name is required', 'string.min': 'First name must be at least 1 character', 'string.max': 'First name cannot exceed 100 characters' }),
+				middleName: Joi.string().allow('', null).messages({ 'string.base': 'Middle name must be a string' }),
+				lastName: Joi.string().trim().min(1).max(100).required().messages({ 'any.required': 'Last name is required', 'string.min': 'Last name must be at least 1 character', 'string.max': 'Last name cannot exceed 100 characters' }),
+				email: Joi.string().email().required().messages({ 'any.required': 'Email is required', 'string.email': 'Please provide a valid email address' }),
+				phoneNumber: Joi.string().trim().required().messages({ 'any.required': 'Phone number is required' }),
+				gender: Joi.string().valid('Male', 'Female', 'Other').required().messages({ 'any.required': 'Gender is required', 'any.only': "Gender must be one of 'Male', 'Female', or 'Other'" }),
+				highestQualification: Joi.string().allow('', null).messages({ 'string.base': 'Highest qualification must be a string' }),
+				role: Joi.string().trim().required().messages({ 'any.required': 'Role is required' }),
+				isActive: Joi.boolean().default(true).messages({ 'boolean.base': 'isActive must be a boolean' })
+			})
+		).min(1).required().messages({ 'any.required': 'Teachers array is required', 'array.min': 'At least one teacher is required' })
+	})
+};
+
+const bulkDeleteTeachers = {
+	body: Joi.object().keys({
+		teacherIds: Joi.array().items(uuid.messages({ 'string.guid': 'Each teacher ID must be a valid UUID' })).min(1).required().messages({ 'any.required': 'Teacher IDs array is required', 'array.min': 'At least one teacher ID is required' })
+	})
+};
+
 export default {
 	getTeacher,
 	getTeacherById,
@@ -91,7 +115,9 @@ export default {
 	removeTeacher,
 	getTeachingSubjects,
 	addTeachingSubject,
-	removeTeachingSubject
+	removeTeachingSubject,
+	bulkCreateTeachers,
+	bulkDeleteTeachers
 };
 
 

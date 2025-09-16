@@ -10,7 +10,9 @@ import {
     getTeacherById,
     getTeachingSubjects,
     addTeachingSubject,
-    removeTeachingSubject
+    removeTeachingSubject,
+    bulkCreateTeachers,
+    bulkDeleteTeachers
 } from '../controllers/teacher.controller.js';
 import { verifyJWT } from '../middlewares/auth.middleware.js';
 import { ROLES } from '../config/roles.js';
@@ -74,6 +76,13 @@ router.route('/subjects')
         verifyJWT([ROLES.ADMIN]),
         removeTeachingSubject
     );
+
+// Bulk operations (admin only)
+router.route('/bulk/create')
+    .post(validate(teacherValidation.bulkCreateTeachers), verifyJWT([ROLES.ADMIN]), bulkCreateTeachers);
+
+router.route('/bulk/delete')
+    .delete(validate(teacherValidation.bulkDeleteTeachers), verifyJWT([ROLES.ADMIN]), bulkDeleteTeachers);
 
 // Dynamic routes should be registered last
 router.route('/:id')

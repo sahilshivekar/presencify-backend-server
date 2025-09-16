@@ -10,6 +10,7 @@ import TeacherTeachesCourse from '../db/models/teacherTeachesCourse.model.js';
 import Scheme from '../db/models/scheme.model.js';
 import httpStatus from 'http-status';
 import sequelize from '../config/db.connection.js';
+import { logger } from '../config/logger.js';
 
 // All input validation is now handled in @teacher.validation.js
 
@@ -529,6 +530,148 @@ const getTeachingSubjects = asyncHandler(async (req, res) => {
 });
 
 
+//* Bulk Create Teachers
+const bulkCreateTeachers = asyncHandler(async (req, res) => {
+    const { teachers } = req.body;
+
+    if (!teachers || !Array.isArray(teachers) || teachers.length === 0) {
+        throw new ApiError(httpStatus.BAD_REQUEST, "Teachers array is required and must not be empty");
+    }
+
+    logger.info(`Starting bulk creation of ${teachers.length} teachers`);
+
+    const transaction = await sequelize.transaction();
+    try {
+        const createdTeachers = [];
+        const errors = [];
+
+        for (let i = 0; i < teachers.length; i++) {
+            const teacherData = teachers[i];
+            try {
+                // Validate required fields
+                if (!teacherData.firstName || !teacherData.lastName || 
+                    !teacherData.email || !teacherData.phoneNumber || 
+                    !teacherData.gender || !teacherData.role) {
+                    errors.push({ index: i, error: "Missing required fields" });
+                    continue;
+                }
+
+                // Check if email already exists
+                const existingTeacher = await Teacher.findOne({
+                    where: { email: teacherData.email },
+                    transaction
+                });
+
+                if (existingTeacher) {
+                    errors.push({ index: i, error: `Email ${teacherData.email} already exists` });
+                    continue;
+                }
+
+                const teacher = await Teacher.create({
+                    firstName: teacherData.firstName,
+                    middleName: teacherData.middleName || null,
+                    lastName: teacherData.lastName,
+                    email: teacherData.email,
+                    phoneNumber: teacherData.phoneNumber,
+                    gender: teacherData.gender,
+                    highestQualification: teacherData.highestQualification || null,
+                    role: teacherData.role,
+                    isActive: teacherData.isActive !== undefined ? teacherData.isActive : true
+                }, { transaction });
+
+                createdTeachers.push(teacher);
+
+            } catch (error) {
+                errors.push({ index: i, error: error.message });
+            }
+        }
+
+        await transaction.commit();
+
+        logger.info(`Bulk teacher creation completed. Created: ${createdTeachers.length}, Errors: ${errors.length}`);
+
+        res.status(httpStatus.CREATED).json(
+            new ApiResponse(
+                httpStatus.CREATED,
+                `Bulk teacher creation completed. Created: ${createdTeachers.length}, Errors: ${errors.length}`,
+                {
+                    createdTeachers,
+                    errors,
+                    summary: {
+                        total: teachers.length,
+                        created: createdTeachers.length,
+                        failed: errors.length
+                    }
+                }
+            )
+        );
+
+    } catch (error) {
+        await transaction.rollback();
+        logger.error(`Bulk teacher creation failed: ${error.message}`);
+        throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, "Bulk teacher creation failed");
+    }
+});
+
+//* Bulk Delete Teachers
+const bulkDeleteTeachers = asyncHandler(async (req, res) => {
+    const { teacherIds } = req.body;
+
+    if (!teacherIds || !Array.isArray(teacherIds) || teacherIds.length === 0) {
+        throw new ApiError(httpStatus.BAD_REQUEST, "Teacher IDs array is required and must not be empty");
+    }
+
+    logger.info(`Starting bulk deletion of ${teacherIds.length} teachers`);
+
+    const transaction = await sequelize.transaction();
+    try {
+        const teachers = await Teacher.findAll({
+            where: { id: { [Op.in]: teacherIds } },
+            transaction
+        });
+
+        if (teachers.length === 0) {
+            throw new ApiError(httpStatus.NOT_FOUND, "No teachers found with provided IDs");
+        }
+
+        // Delete images from cloudinary for teachers that have them
+        const teachersWithImages = teachers.filter(teacher => teacher.teacherImagePublicId);
+        for (const teacher of teachersWithImages) {
+            try {
+                await deleteFromCloudinary(teacher.teacherImagePublicId);
+            } catch (error) {
+                logger.warn(`Failed to delete image for teacher ${teacher.id}: ${error.message}`);
+            }
+        }
+
+        const deletedCount = await Teacher.destroy({
+            where: { id: { [Op.in]: teacherIds } },
+            transaction
+        });
+
+        await transaction.commit();
+
+        logger.info(`Bulk teacher deletion completed. Deleted: ${deletedCount} teachers`);
+
+        res.status(httpStatus.OK).json(
+            new ApiResponse(
+                httpStatus.OK,
+                "Teachers deleted successfully",
+                {
+                    deletedCount,
+                    requestedCount: teacherIds.length
+                }
+            )
+        );
+
+    } catch (error) {
+        await transaction.rollback();
+        logger.error(`Bulk teacher deletion failed: ${error.message}`);
+        throw error;
+    }
+});
+
+
 export {
     getTeacher,
     addTeacher,
@@ -540,5 +683,7 @@ export {
     getTeacherById,
     getTeachingSubjects,
     addTeachingSubject,
-    removeTeachingSubject
+    removeTeachingSubject,
+    bulkCreateTeachers,
+    bulkDeleteTeachers
 }
