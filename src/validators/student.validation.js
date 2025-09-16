@@ -144,6 +144,55 @@ const changeStudentBatch = {
 	})
 };
 
+const bulkCreateStudents = {
+	body: Joi.object().keys({
+		students: Joi.array().items(
+			Joi.object().keys({
+				prn: Joi.string().trim().max(100).required().messages({ 'any.required': 'PRN is required', 'string.max': 'PRN cannot exceed 100 characters' }),
+				firstName: Joi.string().trim().min(1).max(100).required().messages({ 'any.required': 'First name is required', 'string.min': 'First name must be at least 1 character', 'string.max': 'First name cannot exceed 100 characters' }),
+				middleName: Joi.string().allow('', null).messages({ 'string.base': 'Middle name must be a string' }),
+				lastName: Joi.string().trim().min(1).max(100).required().messages({ 'any.required': 'Last name is required', 'string.min': 'Last name must be at least 1 character', 'string.max': 'Last name cannot exceed 100 characters' }),
+				email: Joi.string().email().required().messages({ 'any.required': 'Email is required', 'string.email': 'Please provide a valid email address' }),
+				phoneNumber: Joi.string().trim().required().messages({ 'any.required': 'Phone number is required' }),
+				gender: Joi.string().valid('Male', 'Female', 'Other').allow(null).messages({ 'any.only': "Gender must be one of 'Male', 'Female', or 'Other'" }),
+				dob: Joi.string().allow('', null).messages({ 'string.base': 'DOB must be a string' }),
+				schemeId: uuid.required().messages({ 'any.required': 'Scheme ID is required', 'string.guid': 'Scheme ID must be a valid UUID' }),
+				admissionYear: Joi.number().integer().min(1900).max(3000).allow(null).messages({ 'number.base': 'Admission year must be a number' }),
+				admissionType: Joi.string().trim().required().messages({ 'any.required': 'Admission type is required' }),
+				branchId: uuid.required().messages({ 'any.required': 'Branch ID is required', 'string.guid': 'Branch ID must be a valid UUID' }),
+				parentEmail: Joi.string().email().allow('', null).messages({ 'string.email': 'Parent email must be a valid email' })
+			})
+		).min(1).required().messages({ 'any.required': 'Students array is required', 'array.min': 'At least one student is required' })
+	})
+};
+
+const bulkDeleteStudents = {
+	body: Joi.object().keys({
+		studentIds: Joi.array().items(uuid.messages({ 'string.guid': 'Each student ID must be a valid UUID' })).min(1).required().messages({ 'any.required': 'Student IDs array is required', 'array.min': 'At least one student ID is required' })
+	})
+};
+
+const bulkAddStudentsToSemester = {
+	body: Joi.object().keys({
+		studentIds: Joi.array().items(uuid.messages({ 'string.guid': 'Each student ID must be a valid UUID' })).min(1).required().messages({ 'any.required': 'Student IDs array is required', 'array.min': 'At least one student ID is required' }),
+		semesterId: uuid.required().messages({ 'any.required': 'Semester ID is required', 'string.guid': 'Semester ID must be a valid UUID' })
+	})
+};
+
+const bulkAddStudentsToDivision = {
+	body: Joi.object().keys({
+		studentIds: Joi.array().items(uuid.messages({ 'string.guid': 'Each student ID must be a valid UUID' })).min(1).required().messages({ 'any.required': 'Student IDs array is required', 'array.min': 'At least one student ID is required' }),
+		divisionId: uuid.required().messages({ 'any.required': 'Division ID is required', 'string.guid': 'Division ID must be a valid UUID' })
+	})
+};
+
+const bulkAddStudentsToBatch = {
+	body: Joi.object().keys({
+		studentIds: Joi.array().items(uuid.messages({ 'string.guid': 'Each student ID must be a valid UUID' })).min(1).required().messages({ 'any.required': 'Student IDs array is required', 'array.min': 'At least one student ID is required' }),
+		batchId: uuid.required().messages({ 'any.required': 'Batch ID is required', 'string.guid': 'Batch ID must be a valid UUID' })
+	})
+};
+
 export default {
 	getStudents,
 	addStudent,
@@ -161,7 +210,12 @@ export default {
 	addStudentToDivision,
 	changeStudentDivision,
 	addStudentToBatch,
-	changeStudentBatch
+	changeStudentBatch,
+	bulkCreateStudents,
+	bulkDeleteStudents,
+	bulkAddStudentsToSemester,
+	bulkAddStudentsToDivision,
+	bulkAddStudentsToBatch
 };
 
 

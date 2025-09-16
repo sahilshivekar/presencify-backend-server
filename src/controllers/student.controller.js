@@ -20,6 +20,7 @@ import { get } from 'http';
 import { getDateStringFromObj } from "../utils/date.js";
 import Dropout from '../db/models/dropout.model.js'
 import httpStatus from 'http-status';
+import { logger } from '../config/logger.js';
 
 //* Get all students
 const getStudents = asyncHandler(async (req, res) => {
@@ -1220,6 +1221,482 @@ const changeStudentBatch = asyncHandler(async (req, res, next) => {
 });
 
 
+//* Bulk Create Students
+const bulkCreateStudents = asyncHandler(async (req, res) => {
+    const { students } = req.body;
+
+    if (!students || !Array.isArray(students) || students.length === 0) {
+        throw new ApiError(httpStatus.BAD_REQUEST, "Students array is required and must not be empty");
+    }
+
+    logger.info(`Starting bulk creation of ${students.length} students`);
+
+    const transaction = await sequelize.transaction();
+    try {
+        const createdStudents = [];
+        const errors = [];
+
+        for (let i = 0; i < students.length; i++) {
+            const studentData = students[i];
+            try {
+                // Validate required fields
+                if (!studentData.prn || !studentData.firstName || !studentData.lastName || 
+                    !studentData.email || !studentData.phoneNumber || !studentData.branchId || 
+                    !studentData.schemeId || !studentData.admissionType) {
+                    errors.push({ index: i, error: "Missing required fields" });
+                    continue;
+                }
+
+                // Check if PRN already exists
+                const existingStudent = await Student.findOne({
+                    where: { prn: studentData.prn },
+                    transaction
+                });
+
+                if (existingStudent) {
+                    errors.push({ index: i, error: `PRN ${studentData.prn} already exists` });
+                    continue;
+                }
+
+                // Validate phone number
+                if (!isValidPhoneNumber(studentData.phoneNumber, 'IN')) {
+                    errors.push({ index: i, error: "Invalid phone number" });
+                    continue;
+                }
+
+                // Process date of birth
+                let dobForDB = null;
+                if (studentData.dob) {
+                    dobForDB = moment(studentData.dob, "YYYY/MM/DD").toDate();
+                    if (new Date() < dobForDB) {
+                        errors.push({ index: i, error: "Date of birth cannot be in the future" });
+                        continue;
+                    }
+                }
+
+                const student = await Student.create({
+                    prn: studentData.prn,
+                    firstName: studentData.firstName,
+                    middleName: studentData.middleName || null,
+                    lastName: studentData.lastName,
+                    email: studentData.email,
+                    phoneNumber: studentData.phoneNumber,
+                    parentEmail: studentData.parentEmail || null,
+                    gender: studentData.gender || null,
+                    dob: dobForDB,
+                    studentImgUrl: null,
+                    studentImgPublicId: null,
+                    schemeId: studentData.schemeId,
+                    admissionYear: Number(studentData.admissionYear) || null,
+                    admissionType: studentData.admissionType,
+                    branchId: studentData.branchId
+                }, { transaction });
+
+                createdStudents.push(student);
+
+            } catch (error) {
+                errors.push({ index: i, error: error.message });
+            }
+        }
+
+        await transaction.commit();
+
+        logger.info(`Bulk student creation completed. Created: ${createdStudents.length}, Errors: ${errors.length}`);
+
+        res.status(httpStatus.CREATED).json(
+            new ApiResponse(
+                httpStatus.CREATED,
+                `Bulk student creation completed. Created: ${createdStudents.length}, Errors: ${errors.length}`,
+                {
+                    createdStudents,
+                    errors,
+                    summary: {
+                        total: students.length,
+                        created: createdStudents.length,
+                        failed: errors.length
+                    }
+                }
+            )
+        );
+
+    } catch (error) {
+        await transaction.rollback();
+        logger.error(`Bulk student creation failed: ${error.message}`);
+        throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, "Bulk student creation failed");
+    }
+});
+
+//* Bulk Delete Students
+const bulkDeleteStudents = asyncHandler(async (req, res) => {
+    const { studentIds } = req.body;
+
+    if (!studentIds || !Array.isArray(studentIds) || studentIds.length === 0) {
+        throw new ApiError(httpStatus.BAD_REQUEST, "Student IDs array is required and must not be empty");
+    }
+
+    logger.info(`Starting bulk deletion of ${studentIds.length} students`);
+
+    const transaction = await sequelize.transaction();
+    try {
+        const students = await Student.findAll({
+            where: { id: { [Op.in]: studentIds } },
+            transaction
+        });
+
+        if (students.length === 0) {
+            throw new ApiError(httpStatus.NOT_FOUND, "No students found with provided IDs");
+        }
+
+        // Delete images from cloudinary for students that have them
+        const studentsWithImages = students.filter(student => student.studentImgPublicId);
+        for (const student of studentsWithImages) {
+            try {
+                await deleteFromCloudinary(student.studentImgPublicId);
+            } catch (error) {
+                logger.warn(`Failed to delete image for student ${student.id}: ${error.message}`);
+            }
+        }
+
+        const deletedCount = await Student.destroy({
+            where: { id: { [Op.in]: studentIds } },
+            transaction
+        });
+
+        await transaction.commit();
+
+        logger.info(`Bulk student deletion completed. Deleted: ${deletedCount} students`);
+
+        res.status(httpStatus.OK).json(
+            new ApiResponse(
+                httpStatus.OK,
+                "Students deleted successfully",
+                {
+                    deletedCount,
+                    requestedCount: studentIds.length
+                }
+            )
+        );
+
+    } catch (error) {
+        await transaction.rollback();
+        logger.error(`Bulk student deletion failed: ${error.message}`);
+        throw error;
+    }
+});
+
+//* Bulk Add Students to Semester
+const bulkAddStudentsToSemester = asyncHandler(async (req, res) => {
+    const { studentIds, semesterId } = req.body;
+
+    if (!studentIds || !Array.isArray(studentIds) || studentIds.length === 0) {
+        throw new ApiError(httpStatus.BAD_REQUEST, "Student IDs array is required and must not be empty");
+    }
+
+    if (!semesterId) {
+        throw new ApiError(httpStatus.BAD_REQUEST, "Semester ID is required");
+    }
+
+    logger.info(`Starting bulk addition of ${studentIds.length} students to semester ${semesterId}`);
+
+    const transaction = await sequelize.transaction();
+    try {
+        const semester = await Semester.findByPk(semesterId, { transaction });
+        if (!semester) {
+            throw new ApiError(httpStatus.NOT_FOUND, "Semester not found");
+        }
+
+        const students = await Student.findAll({
+            where: { id: { [Op.in]: studentIds } },
+            transaction
+        });
+
+        if (students.length === 0) {
+            throw new ApiError(httpStatus.NOT_FOUND, "No students found with provided IDs");
+        }
+
+        const studentSemesterData = [];
+        const errors = [];
+
+        for (const student of students) {
+            try {
+                // Check if student is already in this semester
+                const existingStudentSemester = await StudentSemester.findOne({
+                    where: {
+                        studentId: student.id,
+                        semesterId: semesterId
+                    },
+                    transaction
+                });
+
+                if (existingStudentSemester) {
+                    errors.push({ studentId: student.id, error: "Student already in this semester" });
+                    continue;
+                }
+
+                studentSemesterData.push({
+                    studentId: student.id,
+                    semesterId: semesterId
+                });
+
+            } catch (error) {
+                errors.push({ studentId: student.id, error: error.message });
+            }
+        }
+
+        let created = [];
+        if (studentSemesterData.length > 0) {
+            created = await StudentSemester.bulkCreate(studentSemesterData, { transaction });
+        }
+
+        await transaction.commit();
+
+        logger.info(`Bulk addition to semester completed. Added: ${created.length}, Errors: ${errors.length}`);
+
+        res.status(httpStatus.CREATED).json(
+            new ApiResponse(
+                httpStatus.CREATED,
+                `Bulk addition to semester completed. Added: ${created.length}, Errors: ${errors.length}`,
+                {
+                    created,
+                    errors,
+                    summary: {
+                        total: studentIds.length,
+                        added: created.length,
+                        failed: errors.length
+                    }
+                }
+            )
+        );
+
+    } catch (error) {
+        await transaction.rollback();
+        logger.error(`Bulk addition to semester failed: ${error.message}`);
+        throw error;
+    }
+});
+
+//* Bulk Add Students to Division
+const bulkAddStudentsToDivision = asyncHandler(async (req, res) => {
+    const { studentIds, divisionId } = req.body;
+
+    if (!studentIds || !Array.isArray(studentIds) || studentIds.length === 0) {
+        throw new ApiError(httpStatus.BAD_REQUEST, "Student IDs array is required and must not be empty");
+    }
+
+    if (!divisionId) {
+        throw new ApiError(httpStatus.BAD_REQUEST, "Division ID is required");
+    }
+
+    logger.info(`Starting bulk addition of ${studentIds.length} students to division ${divisionId}`);
+
+    const transaction = await sequelize.transaction();
+    try {
+        const division = await Division.findByPk(divisionId, { transaction });
+        if (!division) {
+            throw new ApiError(httpStatus.NOT_FOUND, "Division not found");
+        }
+
+        const students = await Student.findAll({
+            where: { id: { [Op.in]: studentIds } },
+            transaction
+        });
+
+        if (students.length === 0) {
+            throw new ApiError(httpStatus.NOT_FOUND, "No students found with provided IDs");
+        }
+
+        const studentDivisionData = [];
+        const errors = [];
+
+        for (const student of students) {
+            try {
+                // Check if student is in the same semester as the division
+                const semester = await Semester.findByPk(division.semesterId, { transaction });
+                
+                const isStudentInSameSemesterAsDivision = await StudentSemester.findOne({
+                    where: {
+                        studentId: student.id,
+                        semesterId: semester.id
+                    },
+                    transaction
+                });
+
+                if (!isStudentInSameSemesterAsDivision) {
+                    errors.push({ studentId: student.id, error: "Student not in the same semester as division" });
+                    continue;
+                }
+
+                // Check if student is already in this division
+                const existingStudentDivision = await StudentDivision.findOne({
+                    where: {
+                        studentId: student.id,
+                        divisionId: divisionId,
+                        endDate: null
+                    },
+                    transaction
+                });
+
+                if (existingStudentDivision) {
+                    errors.push({ studentId: student.id, error: "Student already in this division" });
+                    continue;
+                }
+
+                studentDivisionData.push({
+                    studentId: student.id,
+                    divisionId: divisionId,
+                    startDate: new Date().toISOString().split('T')[0]
+                });
+
+            } catch (error) {
+                errors.push({ studentId: student.id, error: error.message });
+            }
+        }
+
+        let created = [];
+        if (studentDivisionData.length > 0) {
+            created = await StudentDivision.bulkCreate(studentDivisionData, { transaction });
+        }
+
+        await transaction.commit();
+
+        logger.info(`Bulk addition to division completed. Added: ${created.length}, Errors: ${errors.length}`);
+
+        res.status(httpStatus.CREATED).json(
+            new ApiResponse(
+                httpStatus.CREATED,
+                `Bulk addition to division completed. Added: ${created.length}, Errors: ${errors.length}`,
+                {
+                    created,
+                    errors,
+                    summary: {
+                        total: studentIds.length,
+                        added: created.length,
+                        failed: errors.length
+                    }
+                }
+            )
+        );
+
+    } catch (error) {
+        await transaction.rollback();
+        logger.error(`Bulk addition to division failed: ${error.message}`);
+        throw error;
+    }
+});
+
+//* Bulk Add Students to Batch
+const bulkAddStudentsToBatch = asyncHandler(async (req, res) => {
+    const { studentIds, batchId } = req.body;
+
+    if (!studentIds || !Array.isArray(studentIds) || studentIds.length === 0) {
+        throw new ApiError(httpStatus.BAD_REQUEST, "Student IDs array is required and must not be empty");
+    }
+
+    if (!batchId) {
+        throw new ApiError(httpStatus.BAD_REQUEST, "Batch ID is required");
+    }
+
+    logger.info(`Starting bulk addition of ${studentIds.length} students to batch ${batchId}`);
+
+    const transaction = await sequelize.transaction();
+    try {
+        const batch = await Batch.findByPk(batchId, { transaction });
+        if (!batch) {
+            throw new ApiError(httpStatus.NOT_FOUND, "Batch not found");
+        }
+
+        const students = await Student.findAll({
+            where: { id: { [Op.in]: studentIds } },
+            transaction
+        });
+
+        if (students.length === 0) {
+            throw new ApiError(httpStatus.NOT_FOUND, "No students found with provided IDs");
+        }
+
+        const studentBatchData = [];
+        const errors = [];
+
+        for (const student of students) {
+            try {
+                // Check if student is in the same division as the batch
+                const division = await Division.findByPk(batch.divisionId, { transaction });
+                
+                const isStudentInSameDivisionAsBatch = await StudentDivision.findOne({
+                    where: {
+                        studentId: student.id,
+                        divisionId: division.id,
+                        endDate: null
+                    },
+                    transaction
+                });
+
+                if (!isStudentInSameDivisionAsBatch) {
+                    errors.push({ studentId: student.id, error: "Student not in the same division as batch" });
+                    continue;
+                }
+
+                // Check if student is already in any batch of this division
+                const existingStudentBatch = await StudentBatch.findOne({
+                    where: {
+                        studentId: student.id,
+                        endDate: null
+                    },
+                    include: [{
+                        model: Batch,
+                        where: { divisionId: division.id },
+                        required: true
+                    }],
+                    transaction
+                });
+
+                if (existingStudentBatch) {
+                    errors.push({ studentId: student.id, error: "Student already in a batch of this division" });
+                    continue;
+                }
+
+                studentBatchData.push({
+                    studentId: student.id,
+                    batchId: batchId,
+                    startDate: new Date().toISOString().split('T')[0]
+                });
+
+            } catch (error) {
+                errors.push({ studentId: student.id, error: error.message });
+            }
+        }
+
+        let created = [];
+        if (studentBatchData.length > 0) {
+            created = await StudentBatch.bulkCreate(studentBatchData, { transaction });
+        }
+
+        await transaction.commit();
+
+        logger.info(`Bulk addition to batch completed. Added: ${created.length}, Errors: ${errors.length}`);
+
+        res.status(httpStatus.CREATED).json(
+            new ApiResponse(
+                httpStatus.CREATED,
+                `Bulk addition to batch completed. Added: ${created.length}, Errors: ${errors.length}`,
+                {
+                    created,
+                    errors,
+                    summary: {
+                        total: studentIds.length,
+                        added: created.length,
+                        failed: errors.length
+                    }
+                }
+            )
+        );
+
+    } catch (error) {
+        await transaction.rollback();
+        logger.error(`Bulk addition to batch failed: ${error.message}`);
+        throw error;
+    }
+});
 
 
 export {
@@ -1239,5 +1716,10 @@ export {
     getStudentDetailsById,
     getStudentSemestersById,
     getStudentDivisionsById,
-    getStudentBatchesById
+    getStudentBatchesById,
+    bulkCreateStudents,
+    bulkDeleteStudents,
+    bulkAddStudentsToSemester,
+    bulkAddStudentsToDivision,
+    bulkAddStudentsToBatch
 }

@@ -16,7 +16,12 @@ import {
     changeStudentBatch,
     getStudentSemestersById,
     getStudentDivisionsById,    
-    getStudentBatchesById
+    getStudentBatchesById,
+    bulkCreateStudents,
+    bulkDeleteStudents,
+    bulkAddStudentsToSemester,
+    bulkAddStudentsToDivision,
+    bulkAddStudentsToBatch
 } from '../controllers/student.controller.js';
 import { verifyJWT } from '../middlewares/auth.middleware.js';
 import { ROLES } from '../config/roles.js';
@@ -112,5 +117,21 @@ router.route('/division')
 router.route('/batch')
     .post(validate(studentValidation.addStudentToBatch), verifyJWT([ROLES.ADMIN]), addStudentToBatch)
     .put(validate(studentValidation.changeStudentBatch), verifyJWT([ROLES.ADMIN]), changeStudentBatch);
+
+// Bulk operations (admin only)
+router.route('/bulk/create')
+    .post(validate(studentValidation.bulkCreateStudents), verifyJWT([ROLES.ADMIN]), bulkCreateStudents);
+
+router.route('/bulk/delete')
+    .delete(validate(studentValidation.bulkDeleteStudents), verifyJWT([ROLES.ADMIN]), bulkDeleteStudents);
+
+router.route('/bulk/semester')
+    .post(validate(studentValidation.bulkAddStudentsToSemester), verifyJWT([ROLES.ADMIN]), bulkAddStudentsToSemester);
+
+router.route('/bulk/division')
+    .post(validate(studentValidation.bulkAddStudentsToDivision), verifyJWT([ROLES.ADMIN]), bulkAddStudentsToDivision);
+
+router.route('/bulk/batch')
+    .post(validate(studentValidation.bulkAddStudentsToBatch), verifyJWT([ROLES.ADMIN]), bulkAddStudentsToBatch);
 
 export default router;
