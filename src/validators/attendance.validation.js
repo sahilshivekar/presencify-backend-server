@@ -106,6 +106,42 @@ const updateStudentAttendance = {
     })
 };
 
+const bulkUpdateStudentAttendance = {
+    body: Joi.object().keys({
+        attendanceUpdates: Joi.array().items(
+            Joi.object().keys({
+                attendanceId: Joi.string()
+                    .uuid()
+                    .required()
+                    .messages({
+                        'string.guid': 'Attendance ID must be a valid UUID',
+                        'any.required': 'Attendance ID is required',
+                        'string.base': 'Attendance ID must be a string'
+                    }),
+                studentId: Joi.string()
+                    .uuid()
+                    .required()
+                    .messages({
+                        'string.guid': 'Student ID must be a valid UUID',
+                        'any.required': 'Student ID is required',
+                        'string.base': 'Student ID must be a string'
+                    }),
+                newAttendanceStatus: Joi.boolean()
+                    .required()
+                    .messages({
+                        'boolean.base': 'New attendance status must be a boolean',
+                        'any.required': 'New attendance status is required'
+                    })
+            })
+        ).min(1).max(200).required()
+        .messages({
+            'any.required': 'Attendance updates array is required',
+            'array.min': 'At least 1 attendance update is required',
+            'array.max': 'Cannot update more than 200 attendance records at once'
+        })
+    })
+};
+
 const removeAttendance = {
     query: Joi.object().keys({
         attendanceId: Joi.string()
@@ -553,6 +589,7 @@ export default {
     createAttendance,
     addStudentsAttendance,
     updateStudentAttendance,
+    bulkUpdateStudentAttendance,
     removeAttendance,
     getAttendanceOfAnyStudentForSpecificCourseInSemester,
     getAttendanceOfSelfForSpecificCourseInSemester,

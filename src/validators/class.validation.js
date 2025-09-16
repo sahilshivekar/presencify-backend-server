@@ -91,6 +91,46 @@ const cancelClass = {
 	})
 };
 
+const bulkCreateClasses = {
+	body: Joi.object().keys({
+		classes: Joi.array().items(
+			Joi.object().keys({
+				teacherId: Joi.string().guid().required().messages({ 'any.required': 'Teacher ID is required', 'string.guid': 'Teacher ID must be a valid UUID' }),
+				startTime: Joi.string().pattern(/^([01]\d|2[0-3]):([0-5]\d)$/).required().messages({ 'any.required': 'Start time is required', 'string.pattern.base': 'Start time must be in HH:MM format' }),
+				endTime: Joi.string().pattern(/^([01]\d|2[0-3]):([0-5]\d)$/).required().messages({ 'any.required': 'End time is required', 'string.pattern.base': 'End time must be in HH:MM format' }),
+				dayOfWeek: Joi.string().valid('Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday').required().messages({ 'any.required': 'Day of week is required', 'any.only': 'Day of week must be a valid day' }),
+				roomId: Joi.string().guid().required().messages({ 'any.required': 'Room ID is required', 'string.guid': 'Room ID must be a valid UUID' }),
+				batchId: Joi.string().guid().allow(null).messages({ 'string.guid': 'Batch ID must be a valid UUID' }),
+				activeFrom: Joi.date().required().messages({ 'any.required': 'Active from date is required' }),
+				activeTill: Joi.date().required().messages({ 'any.required': 'Active till date is required' }),
+				classType: Joi.string().valid('Lecture', 'Practical', 'Tutorial').required().messages({ 'any.required': 'Class type is required', 'any.only': 'Class type must be Lecture, Practical, or Tutorial' }),
+				courseId: Joi.string().guid().required().messages({ 'any.required': 'Course ID is required', 'string.guid': 'Course ID must be a valid UUID' }),
+				timetableId: Joi.string().guid().required().messages({ 'any.required': 'Timetable ID is required', 'string.guid': 'Timetable ID must be a valid UUID' }),
+				isExtraClass: Joi.boolean().default(false).messages({ 'boolean.base': 'isExtraClass must be a boolean' })
+			})
+		).min(1).required().messages({ 'any.required': 'Classes array is required', 'array.min': 'At least one class is required' })
+	})
+};
+
+const bulkDeleteClasses = {
+	body: Joi.object().keys({
+		classIds: Joi.array().items(
+			Joi.string()
+				.guid()
+				.messages({
+					'string.guid': 'Each class ID must be a valid UUID',
+					'string.empty': 'Each class ID must be a valid UUID',
+					'string.base': 'Each class ID must be a valid UUID'
+				})
+		).min(1).required().messages({ 'any.required': 'Class IDs array is required', 'array.min': 'At least one class ID is required' })
+	})
+};
+
+const bulkCreateClassesFromCSV = {
+	// File validation will be handled by multer middleware
+	body: Joi.object().keys({}).allow({})
+};
+
 export default {
 	addClass,
 	getClasses,
@@ -99,7 +139,10 @@ export default {
 	removeClass,
 	addExtraClass,
 	getCancelledClasses,
-	cancelClass
+	cancelClass,
+	bulkCreateClasses,
+	bulkDeleteClasses,
+	bulkCreateClassesFromCSV
 };
 
 

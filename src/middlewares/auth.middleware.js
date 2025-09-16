@@ -44,7 +44,7 @@ const verifyJWT = (allowedRoles) =>
         
         if (!decodedToken || !decodedToken.id || !decodedToken.role) {
             logger.warn(`Decoded token missing required fields: ${JSON.stringify(decodedToken)}`);
-            throw new ApiError(StatusCodes.UNAUTHORIZED, "Unauthorized request: Invalid token");
+            throw new ApiError(StatusCodes.UNAUTHORIZED, "Invalid token");
         }
 
         // Check if role is allowed  

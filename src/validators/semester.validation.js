@@ -55,13 +55,50 @@ const getCoursesOfSemester = {
 	})
 };
 
+const bulkCreateSemesters = {
+	body: Joi.object().keys({
+		semesters: Joi.array().items(
+			Joi.object().keys({
+				branchId: uuid.required().messages({ 'any.required': 'Branch ID is required', 'string.guid': 'Branch ID must be a valid UUID' }),
+				semesterNumber: Joi.number().integer().min(1).max(20).required().messages({ 'any.required': 'Semester number is required' }),
+				academicStartYear: Joi.number().integer().min(1900).max(3000).required().messages({ 'any.required': 'Academic start year is required' }),
+				academicEndYear: Joi.number().integer().min(1900).max(3000).required().messages({ 'any.required': 'Academic end year is required' }),
+				startDate: Joi.date().iso().required().messages({ 'date.format': 'Start date must be a valid ISO date', 'any.required': 'Start date is required' }),
+				endDate: Joi.date().iso().required().messages({ 'date.format': 'End date must be a valid ISO date', 'any.required': 'End date is required' }),
+				schemeId: uuid.required().messages({ 'any.required': 'Scheme ID is required', 'string.guid': 'Scheme ID must be a valid UUID' }),
+				optionalCourseIds: Joi.array().items(uuid.messages({ 'string.guid': 'Each optional course ID must be a valid UUID' })).default([])
+			})
+		).min(1).max(50).required()
+		.messages({
+			'any.required': 'Semesters array is required',
+			'array.min': 'At least 1 semester is required',
+			'array.max': 'Cannot create more than 50 semesters at once'
+		})
+	})
+};
+
+const bulkDeleteSemesters = {
+	body: Joi.object().keys({
+		semesterIds: Joi.array().items(
+			uuid.required().messages({ 'string.guid': 'Each semester ID must be a valid UUID' })
+		).min(1).max(50).required()
+		.messages({
+			'any.required': 'Semester IDs array is required',
+			'array.min': 'At least 1 semester ID is required',
+			'array.max': 'Cannot delete more than 50 semesters at once'
+		})
+	})
+};
+
 export default {
 	getSemesters,
 	addSemester,
 	updateSemester,
 	removeSemester,
 	getSemesterById,
-	getCoursesOfSemester
+	getCoursesOfSemester,
+	bulkCreateSemesters,
+	bulkDeleteSemesters
 };
 
 

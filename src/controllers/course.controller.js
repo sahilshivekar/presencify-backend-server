@@ -11,7 +11,6 @@ import sequelize from '../config/db.connection.js';
 import { parse } from 'path';
 import Semester from '../db/models/semester.model.js';
 import httpStatus from 'http-status';
-import { logger } from '../config/logger.js';
 
 //* get all the courses
 const getCourses = asyncHandler(async (req, res) => {
@@ -284,8 +283,6 @@ const getCourseById = asyncHandler(async (req, res) => {
 const bulkCreateCourses = asyncHandler(async (req, res) => {
     const { courses } = req.body;
     
-    logger.info(`Bulk creating ${courses.length} courses`);
-    
     const transaction = await sequelize.transaction();
     
     try {
@@ -343,7 +340,6 @@ const bulkCreateCourses = asyncHandler(async (req, res) => {
         });
         
         await transaction.commit();
-        logger.info(`Successfully bulk created ${createdCourses.length} courses`);
         
         res
             .status(httpStatus.CREATED)
@@ -359,7 +355,6 @@ const bulkCreateCourses = asyncHandler(async (req, res) => {
         if (!transaction.finished) {
             await transaction.rollback();
         }
-        logger.error('Bulk create courses failed:', error.message);
         throw error;
     }
 });
@@ -367,8 +362,6 @@ const bulkCreateCourses = asyncHandler(async (req, res) => {
 //* bulk delete courses
 const bulkDeleteCourses = asyncHandler(async (req, res) => {
     const { courseIds } = req.body;
-    
-    logger.info(`Bulk deleting ${courseIds.length} courses`);
     
     const transaction = await sequelize.transaction();
     
@@ -413,7 +406,6 @@ const bulkDeleteCourses = asyncHandler(async (req, res) => {
         });
         
         await transaction.commit();
-        logger.info(`Successfully bulk deleted ${deletedCount} courses`);
         
         res
             .status(httpStatus.OK)
@@ -429,7 +421,6 @@ const bulkDeleteCourses = asyncHandler(async (req, res) => {
         if (!transaction.finished) {
             await transaction.rollback();
         }
-        logger.error('Bulk delete courses failed:', error.message);
         throw error;
     }
 });

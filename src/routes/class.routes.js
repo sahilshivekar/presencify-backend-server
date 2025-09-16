@@ -7,12 +7,16 @@ import {
     removeClass,
     addExtraClass,
     getCancelledClasses,
-    cancelClass
+    cancelClass,
+    bulkCreateClasses,
+    bulkDeleteClasses,
+    bulkCreateClassesFromCSV
 } from '../controllers/class.controller.js';
 import { verifyJWT } from '../middlewares/auth.middleware.js';
 import { ROLES } from '../config/roles.js';
 import validate from '../middlewares/validate.js';
 import classValidation from '../validators/class.validation.js';
+import { upload } from '../middlewares/multer.middleware.js';
 
 const router = express.Router();
 
@@ -65,6 +69,21 @@ router.route('/extra')
         validate(classValidation.addExtraClass),
         verifyJWT([ROLES.ADMIN, ROLES.TEACHER]),
         addExtraClass
+    );
+
+// Bulk operations (admin only)
+router.route('/bulk/create')
+    .post(validate(classValidation.bulkCreateClasses), verifyJWT([ROLES.ADMIN]), bulkCreateClasses);
+
+router.route('/bulk/delete')
+    .delete(validate(classValidation.bulkDeleteClasses), verifyJWT([ROLES.ADMIN]), bulkDeleteClasses);
+
+router.route('/bulk/csv-upload')
+    .post(
+        upload.single('csvFile'),
+        validate(classValidation.bulkCreateClassesFromCSV),
+        verifyJWT([ROLES.ADMIN]),
+        bulkCreateClassesFromCSV
     );
 
 export default router;

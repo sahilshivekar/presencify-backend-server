@@ -20,7 +20,6 @@ import { get } from 'http';
 import { getDateStringFromObj } from "../utils/date.js";
 import Dropout from '../db/models/dropout.model.js'
 import httpStatus from 'http-status';
-import { logger } from '../config/logger.js';
 
 //* Get all students
 const getStudents = asyncHandler(async (req, res) => {
@@ -1229,7 +1228,7 @@ const bulkCreateStudents = asyncHandler(async (req, res) => {
         throw new ApiError(httpStatus.BAD_REQUEST, "Students array is required and must not be empty");
     }
 
-    logger.info(`Starting bulk creation of ${students.length} students`);
+    
 
     const transaction = await sequelize.transaction();
     try {
@@ -1301,7 +1300,7 @@ const bulkCreateStudents = asyncHandler(async (req, res) => {
 
         await transaction.commit();
 
-        logger.info(`Bulk student creation completed. Created: ${createdStudents.length}, Errors: ${errors.length}`);
+        
 
         res.status(httpStatus.CREATED).json(
             new ApiResponse(
@@ -1321,7 +1320,6 @@ const bulkCreateStudents = asyncHandler(async (req, res) => {
 
     } catch (error) {
         await transaction.rollback();
-        logger.error(`Bulk student creation failed: ${error.message}`);
         throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, "Bulk student creation failed");
     }
 });
@@ -1334,7 +1332,7 @@ const bulkDeleteStudents = asyncHandler(async (req, res) => {
         throw new ApiError(httpStatus.BAD_REQUEST, "Student IDs array is required and must not be empty");
     }
 
-    logger.info(`Starting bulk deletion of ${studentIds.length} students`);
+    
 
     const transaction = await sequelize.transaction();
     try {
@@ -1353,7 +1351,7 @@ const bulkDeleteStudents = asyncHandler(async (req, res) => {
             try {
                 await deleteFromCloudinary(student.studentImgPublicId);
             } catch (error) {
-                logger.warn(`Failed to delete image for student ${student.id}: ${error.message}`);
+                
             }
         }
 
@@ -1364,7 +1362,7 @@ const bulkDeleteStudents = asyncHandler(async (req, res) => {
 
         await transaction.commit();
 
-        logger.info(`Bulk student deletion completed. Deleted: ${deletedCount} students`);
+        
 
         res.status(httpStatus.OK).json(
             new ApiResponse(
@@ -1379,7 +1377,6 @@ const bulkDeleteStudents = asyncHandler(async (req, res) => {
 
     } catch (error) {
         await transaction.rollback();
-        logger.error(`Bulk student deletion failed: ${error.message}`);
         throw error;
     }
 });
@@ -1396,7 +1393,7 @@ const bulkAddStudentsToSemester = asyncHandler(async (req, res) => {
         throw new ApiError(httpStatus.BAD_REQUEST, "Semester ID is required");
     }
 
-    logger.info(`Starting bulk addition of ${studentIds.length} students to semester ${semesterId}`);
+    
 
     const transaction = await sequelize.transaction();
     try {
@@ -1450,7 +1447,7 @@ const bulkAddStudentsToSemester = asyncHandler(async (req, res) => {
 
         await transaction.commit();
 
-        logger.info(`Bulk addition to semester completed. Added: ${created.length}, Errors: ${errors.length}`);
+        
 
         res.status(httpStatus.CREATED).json(
             new ApiResponse(
@@ -1470,7 +1467,6 @@ const bulkAddStudentsToSemester = asyncHandler(async (req, res) => {
 
     } catch (error) {
         await transaction.rollback();
-        logger.error(`Bulk addition to semester failed: ${error.message}`);
         throw error;
     }
 });
@@ -1487,7 +1483,7 @@ const bulkAddStudentsToDivision = asyncHandler(async (req, res) => {
         throw new ApiError(httpStatus.BAD_REQUEST, "Division ID is required");
     }
 
-    logger.info(`Starting bulk addition of ${studentIds.length} students to division ${divisionId}`);
+    
 
     const transaction = await sequelize.transaction();
     try {
@@ -1559,7 +1555,7 @@ const bulkAddStudentsToDivision = asyncHandler(async (req, res) => {
 
         await transaction.commit();
 
-        logger.info(`Bulk addition to division completed. Added: ${created.length}, Errors: ${errors.length}`);
+        
 
         res.status(httpStatus.CREATED).json(
             new ApiResponse(
@@ -1579,7 +1575,6 @@ const bulkAddStudentsToDivision = asyncHandler(async (req, res) => {
 
     } catch (error) {
         await transaction.rollback();
-        logger.error(`Bulk addition to division failed: ${error.message}`);
         throw error;
     }
 });
@@ -1596,7 +1591,7 @@ const bulkAddStudentsToBatch = asyncHandler(async (req, res) => {
         throw new ApiError(httpStatus.BAD_REQUEST, "Batch ID is required");
     }
 
-    logger.info(`Starting bulk addition of ${studentIds.length} students to batch ${batchId}`);
+    
 
     const transaction = await sequelize.transaction();
     try {
@@ -1673,7 +1668,7 @@ const bulkAddStudentsToBatch = asyncHandler(async (req, res) => {
 
         await transaction.commit();
 
-        logger.info(`Bulk addition to batch completed. Added: ${created.length}, Errors: ${errors.length}`);
+        
 
         res.status(httpStatus.CREATED).json(
             new ApiResponse(
@@ -1693,7 +1688,6 @@ const bulkAddStudentsToBatch = asyncHandler(async (req, res) => {
 
     } catch (error) {
         await transaction.rollback();
-        logger.error(`Bulk addition to batch failed: ${error.message}`);
         throw error;
     }
 });

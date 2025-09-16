@@ -10,7 +10,6 @@ import TeacherTeachesCourse from '../db/models/teacherTeachesCourse.model.js';
 import Scheme from '../db/models/scheme.model.js';
 import httpStatus from 'http-status';
 import sequelize from '../config/db.connection.js';
-import { logger } from '../config/logger.js';
 
 // All input validation is now handled in @teacher.validation.js
 
@@ -538,7 +537,7 @@ const bulkCreateTeachers = asyncHandler(async (req, res) => {
         throw new ApiError(httpStatus.BAD_REQUEST, "Teachers array is required and must not be empty");
     }
 
-    logger.info(`Starting bulk creation of ${teachers.length} teachers`);
+    
 
     const transaction = await sequelize.transaction();
     try {
@@ -588,7 +587,7 @@ const bulkCreateTeachers = asyncHandler(async (req, res) => {
 
         await transaction.commit();
 
-        logger.info(`Bulk teacher creation completed. Created: ${createdTeachers.length}, Errors: ${errors.length}`);
+        
 
         res.status(httpStatus.CREATED).json(
             new ApiResponse(
@@ -608,7 +607,6 @@ const bulkCreateTeachers = asyncHandler(async (req, res) => {
 
     } catch (error) {
         await transaction.rollback();
-        logger.error(`Bulk teacher creation failed: ${error.message}`);
         throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, "Bulk teacher creation failed");
     }
 });
@@ -621,7 +619,7 @@ const bulkDeleteTeachers = asyncHandler(async (req, res) => {
         throw new ApiError(httpStatus.BAD_REQUEST, "Teacher IDs array is required and must not be empty");
     }
 
-    logger.info(`Starting bulk deletion of ${teacherIds.length} teachers`);
+    
 
     const transaction = await sequelize.transaction();
     try {
@@ -640,7 +638,7 @@ const bulkDeleteTeachers = asyncHandler(async (req, res) => {
             try {
                 await deleteFromCloudinary(teacher.teacherImagePublicId);
             } catch (error) {
-                logger.warn(`Failed to delete image for teacher ${teacher.id}: ${error.message}`);
+                
             }
         }
 
@@ -651,7 +649,7 @@ const bulkDeleteTeachers = asyncHandler(async (req, res) => {
 
         await transaction.commit();
 
-        logger.info(`Bulk teacher deletion completed. Deleted: ${deletedCount} teachers`);
+        
 
         res.status(httpStatus.OK).json(
             new ApiResponse(
@@ -666,7 +664,6 @@ const bulkDeleteTeachers = asyncHandler(async (req, res) => {
 
     } catch (error) {
         await transaction.rollback();
-        logger.error(`Bulk teacher deletion failed: ${error.message}`);
         throw error;
     }
 });

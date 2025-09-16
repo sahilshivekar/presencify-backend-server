@@ -23,6 +23,7 @@ import { sendNotification } from "../utils/firebaseCloudMessaging.js";
 import StudentFCMToken from "../db/models/studentFCMToken.model.js";
 import StudentBatch from '../db/models/studentBatch.model.js';
 import httpStatus from 'http-status';
+// removed logger import as per request to remove logs
 
 
 //* create attendance sheet type thing where student ids will be added
@@ -167,6 +168,134 @@ const updateStudentAttendance = asyncHandler(async (req, res) => {
 
     res.status(httpStatus.OK).json(new ApiResponse(httpStatus.OK, "Students attendance status updated successfully", attendanceStudent));
 })
+
+//* bulk update attendance status for multiple students
+const bulkUpdateStudentAttendance = asyncHandler(async (req, res) => {
+    const { attendanceUpdates } = req.body;
+    
+    // logging removed
+    
+    const transaction = await sequelize.transaction();
+    
+    try {
+        // Validate all attendance records exist
+        const attendanceIds = [...new Set(attendanceUpdates.map(update => update.attendanceId))];
+        const existingAttendances = await Attendance.findAll({
+            where: { id: attendanceIds },
+            attributes: ['id'],
+            transaction
+        });
+        
+        const existingAttendanceIds = existingAttendances.map(attendance => attendance.id);
+        const invalidAttendanceIds = attendanceIds.filter(id => !existingAttendanceIds.includes(id));
+        
+        if (invalidAttendanceIds.length > 0) {
+            throw new ApiError(
+                httpStatus.NOT_FOUND, 
+                `Attendance records not found: ${invalidAttendanceIds.join(', ')}`
+            );
+        }
+        
+        // Validate all students exist
+        const studentIds = [...new Set(attendanceUpdates.map(update => update.studentId))];
+        const existingStudents = await Student.findAll({
+            where: { id: studentIds },
+            attributes: ['id'],
+            transaction
+        });
+        
+        const existingStudentIds = existingStudents.map(student => student.id);
+        const invalidStudentIds = studentIds.filter(id => !existingStudentIds.includes(id));
+        
+        if (invalidStudentIds.length > 0) {
+            throw new ApiError(
+                httpStatus.NOT_FOUND, 
+                `Students not found: ${invalidStudentIds.join(', ')}`
+            );
+        }
+        
+        // Validate all attendance-student combinations exist
+        const attendanceStudentChecks = await Promise.all(
+            attendanceUpdates.map(async (update) => {
+                const attendanceStudent = await AttendanceStudent.findOne({
+                    where: {
+                        attendanceId: update.attendanceId,
+                        studentId: update.studentId
+                    },
+                    transaction
+                });
+                return attendanceStudent ? null : update;
+            })
+        );
+        
+        const invalidCombinations = attendanceStudentChecks.filter(Boolean);
+        if (invalidCombinations.length > 0) {
+            throw new ApiError(
+                httpStatus.NOT_FOUND, 
+                `Invalid attendance-student combinations found`
+            );
+        }
+        
+        // Filter out updates that don't change the status
+        const validUpdates = [];
+        for (const update of attendanceUpdates) {
+            const existingRecord = await AttendanceStudent.findOne({
+                where: {
+                    attendanceId: update.attendanceId,
+                    studentId: update.studentId
+                },
+                transaction
+            });
+            
+            if (existingRecord && existingRecord.attendanceStatus !== update.newAttendanceStatus) {
+                validUpdates.push(update);
+            }
+        }
+        
+        if (validUpdates.length === 0) {
+            throw new ApiError(
+                httpStatus.BAD_REQUEST, 
+                "No attendance status changes to apply"
+            );
+        }
+        
+        // Perform bulk updates
+        let updatedCount = 0;
+        for (const update of validUpdates) {
+            const [affectedRows] = await AttendanceStudent.update(
+                { attendanceStatus: update.newAttendanceStatus },
+                {
+                    where: {
+                        attendanceId: update.attendanceId,
+                        studentId: update.studentId
+                    },
+                    transaction
+                }
+            );
+            updatedCount += affectedRows;
+        }
+        
+    await transaction.commit();
+    // logging removed
+        
+        res
+            .status(httpStatus.OK)
+            .json(
+                new ApiResponse(
+                    httpStatus.OK,
+                    `${updatedCount} attendance records updated successfully`,
+                    { updatedCount, processedUpdates: validUpdates.length }
+                )
+            );
+            
+    } catch (error) {
+        if (!transaction.finished) {
+            await transaction.rollback();
+        }
+        // logging removed
+        throw error;
+    }
+});
 
 
 const removeAttendance = asyncHandler(async (req, res) => {
@@ -820,6 +949,7 @@ export {
     removeAttendance,
     addStudentsAttendance,
     updateStudentAttendance,
+    bulkUpdateStudentAttendance,
     createAttendance,
     getAttendanceOfStudentForSpecificCourseInSemester,
     getAttendanceOfAllForSemesterDivisionBatchCourse,

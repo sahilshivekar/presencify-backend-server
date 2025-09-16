@@ -12,7 +12,6 @@ Semester.init(
             defaultValue: UUIDV4,
             primaryKey: true,
             allowNull: false,
-            autoIncrement: true,
             field: 'semester_id'
         },
         branchId: {
@@ -130,23 +129,11 @@ Semester.init(
         },
         createdAt: {
             type: Sequelize.DATE,
-            allowNull: false,
-            field: 'created_at',
-            validate: {
-                notNull: {
-                    msg: 'Created At cannot be null'
-                }
-            }
+            field: 'created_at'
         },
         updatedAt: {
             type: Sequelize.DATE,
-            allowNull: false,
-            field: 'updated_at',
-            validate: {
-                notNull: {
-                    msg: 'Updated At cannot be null'
-                }
-            }
+            field: 'updated_at'
         },
     },
     {

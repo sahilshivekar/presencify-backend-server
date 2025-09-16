@@ -3,6 +3,7 @@ import {
     removeAttendance,
     addStudentsAttendance,
     updateStudentAttendance,
+    bulkUpdateStudentAttendance,
     createAttendance,
     getAttendanceOfStudentForSpecificCourseInSemester,
     getAttendanceOfAllForSemesterDivisionBatchCourse,
@@ -47,5 +48,13 @@ router.route('/active')
 // Reporting functionality
 router.route('/report')
     .post(validate(attendanceValidation.sendAttendanceReport), verifyJWT([ROLES.ADMIN, ROLES.TEACHER]), sendAttendanceReport);
+
+// Bulk operations
+router.route('/bulk/update')
+    .put(
+        validate(attendanceValidation.bulkUpdateStudentAttendance),
+        verifyJWT([ROLES.ADMIN, ROLES.TEACHER]),
+        bulkUpdateStudentAttendance
+    );
 
 export default router;

@@ -5,7 +5,9 @@ import {
     updateSemester,
     removeSemester,
     getCoursesOfSemester,
-    getSemesterById
+    getSemesterById,
+    bulkCreateSemesters,
+    bulkDeleteSemesters
 } from '../controllers/semester.controller.js';
 import { verifyJWT } from '../middlewares/auth.middleware.js';
 import { ROLES } from '../config/roles.js';
@@ -50,6 +52,21 @@ router.route('/:id')
         validate(semesterValidation.removeSemester),
         verifyJWT([ROLES.ADMIN]),
         removeSemester
+    );
+
+// Bulk operations
+router.route('/bulk/create')
+    .post(
+        validate(semesterValidation.bulkCreateSemesters),
+        verifyJWT([ROLES.ADMIN]),
+        bulkCreateSemesters
+    );
+
+router.route('/bulk/delete')
+    .delete(
+        validate(semesterValidation.bulkDeleteSemesters),
+        verifyJWT([ROLES.ADMIN]),
+        bulkDeleteSemesters
     );
 
 export default router;

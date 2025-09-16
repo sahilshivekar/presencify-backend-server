@@ -22,6 +22,10 @@ import StudentBatch from '../db/models/studentBatch.model.js';
 import TeacherTeachesCourse from '../db/models/teacherTeachesCourse.model.js';
 import httpStatus from 'http-status';
 import { getDateStringFromObj } from '../utils/date.js';
+// removed logger import as per request to remove logs
+import sequelize from '../config/db.connection.js';
+import fs from 'fs';
+import csv from 'csv-parser';
 
 const getYearFromSemesterNumber = (semesterNumber) => {
     if (semesterNumber === 1 || semesterNumber === 2) return 'FE'
@@ -989,6 +993,387 @@ const getCancelledClasses = asyncHandler(async (req, res) => {
     }));
 });
 
+
+//* Bulk Create Classes
+const bulkCreateClasses = asyncHandler(async (req, res) => {
+    const { classes } = req.body;
+
+    if (!classes || !Array.isArray(classes) || classes.length === 0) {
+        throw new ApiError(httpStatus.BAD_REQUEST, "Classes array is required and must not be empty");
+    }
+
+    // logging removed
+
+    const transaction = await sequelize.transaction();
+    try {
+        const createdClasses = [];
+        const errors = [];
+
+        for (let i = 0; i < classes.length; i++) {
+            const classData = classes[i];
+
+            // Existence checks (Joi already validated shapes)
+            const teacher = await Teacher.findByPk(classData.teacherId, { transaction });
+            if (!teacher) {
+                errors.push({ index: i, error: 'Teacher not found', type: 'notFound' });
+                continue;
+            }
+
+            const course = await Course.findByPk(classData.courseId, { transaction });
+            if (!course) {
+                errors.push({ index: i, error: 'Course not found', type: 'notFound' });
+                continue;
+            }
+
+            const room = await Room.findByPk(classData.roomId, { transaction });
+            if (!room) {
+                errors.push({ index: i, error: 'Room not found', type: 'notFound' });
+                continue;
+            }
+
+            const timetable = await Timetable.findByPk(classData.timetableId, { transaction });
+            if (!timetable) {
+                errors.push({ index: i, error: 'Timetable not found', type: 'notFound' });
+                continue;
+            }
+
+            if (classData.batchId) {
+                const batch = await Batch.findByPk(classData.batchId, { transaction });
+                if (!batch) {
+                    errors.push({ index: i, error: 'Batch not found', type: 'notFound' });
+                    continue;
+                }
+            }
+
+            // Basic scheduling conflict checks: room and teacher overlap on same day
+            const overlapWindow = {
+                [Op.or]: [
+                    { startTime: { [Op.between]: [classData.startTime, classData.endTime] } },
+                    { endTime: { [Op.between]: [classData.startTime, classData.endTime] } },
+                    { startTime: { [Op.lte]: classData.startTime }, endTime: { [Op.gte]: classData.endTime } }
+                ]
+            };
+
+            const timeRangeOverlap = overlapWindow;
+
+            const roomConflict = await Class.findOne({
+                where: {
+                    dayOfWeek: classData.dayOfWeek,
+                    roomId: classData.roomId,
+                    ...timeRangeOverlap
+                },
+                transaction
+            });
+
+            const teacherConflict = await Class.findOne({
+                where: {
+                    dayOfWeek: classData.dayOfWeek,
+                    teacherId: classData.teacherId,
+                    ...timeRangeOverlap
+                },
+                transaction
+            });
+
+            if (roomConflict || teacherConflict) {
+                errors.push({ index: i, error: 'scheduling conflict: overlapping time slot', type: 'conflict' });
+                continue;
+            }
+
+            const classObj = await Class.create({
+                teacherId: classData.teacherId,
+                startTime: classData.startTime,
+                endTime: classData.endTime,
+                dayOfWeek: classData.dayOfWeek,
+                roomId: classData.roomId,
+                batchId: classData.batchId || null,
+                activeFrom: classData.activeFrom,
+                activeTill: classData.activeTill,
+                classType: classData.classType,
+                courseId: classData.courseId,
+                timetableId: classData.timetableId,
+                isExtraClass: classData.isExtraClass || false
+            }, { transaction });
+
+            createdClasses.push(classObj);
+        }
+
+        // Decide outcome: all-or-nothing based on errors
+        if (errors.length > 0) {
+            await transaction.rollback();
+            const notFound = errors.find(e => e.type === 'notFound');
+            if (notFound) {
+                throw new ApiError(httpStatus.NOT_FOUND, notFound.error);
+            }
+            const conflict = errors.find(e => e.type === 'conflict');
+            if (conflict) {
+                throw new ApiError(httpStatus.CONFLICT, conflict.error);
+            }
+            // Fallback
+            throw new ApiError(httpStatus.BAD_REQUEST, errors[0].error || 'Bulk class creation failed');
+        }
+
+        await transaction.commit();
+
+    // logging removed
+
+        res.status(httpStatus.CREATED).json(
+            new ApiResponse(
+                httpStatus.CREATED,
+                'Classes created successfully',
+                {
+                    createdClasses,
+                    summary: {
+                        total: classes.length,
+                        created: createdClasses.length,
+                        failed: 0
+                    }
+                }
+            )
+        );
+
+    } catch (error) {
+        // Make sure transaction is rolled back if still active
+        try { await transaction.rollback(); } catch (_) {}
+    // logging removed
+        // If it's already an ApiError (like 404/409), rethrow as-is
+        if (error instanceof ApiError) {
+            throw error;
+        }
+        throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, "Bulk class creation failed");
+    }
+});
+
+//* Bulk Delete Classes
+const bulkDeleteClasses = asyncHandler(async (req, res) => {
+    const { classIds } = req.body;
+
+    if (!classIds || !Array.isArray(classIds) || classIds.length === 0) {
+        throw new ApiError(httpStatus.BAD_REQUEST, "Class IDs array is required and must not be empty");
+    }
+
+    // Deduplicate IDs
+    const uniqueIds = [...new Set(classIds)];
+
+    // logging removed
+
+    const transaction = await sequelize.transaction();
+    try {
+        // Fetch existing classes for provided IDs
+        const existingClasses = await Class.findAll({
+            where: { id: { [Op.in]: uniqueIds } },
+            transaction
+        });
+
+        const existingIds = new Set(existingClasses.map(c => c.id));
+        const notFoundIds = uniqueIds.filter(id => !existingIds.has(id));
+
+        if (notFoundIds.length > 0) {
+            // Some requested classes do not exist
+            throw new ApiError(httpStatus.NOT_FOUND, "Some classes not found");
+        }
+
+        // Check for dependent attendance records before deletion
+        // Note: Attendance model is defined together with AttendanceStudent
+        // import locally to avoid circular deps in some environments
+        const { Attendance } = await import('../db/models/attendance.model.js');
+
+        const dependentCount = await Attendance.count({
+            where: { classId: { [Op.in]: uniqueIds } },
+            transaction
+        });
+
+        if (dependentCount > 0) {
+            throw new ApiError(httpStatus.CONFLICT, "Cannot delete class due to dependent records (attendance)");
+        }
+
+        const deletedCount = await Class.destroy({
+            where: { id: { [Op.in]: uniqueIds } },
+            transaction
+        });
+
+        await transaction.commit();
+
+    // logging removed
+
+        res.status(httpStatus.OK).json(
+            new ApiResponse(
+                httpStatus.OK,
+                "Classes deleted successfully",
+                {
+                    deletedCount,
+                    requestedCount: uniqueIds.length
+                }
+            )
+        );
+
+    } catch (error) {
+        await transaction.rollback();
+    // logging removed
+        throw error;
+    }
+});
+
+//* Bulk Create Classes via CSV
+const bulkCreateClassesFromCSV = asyncHandler(async (req, res) => {
+    if (!req.file) {
+        throw new ApiError(httpStatus.BAD_REQUEST, "CSV file is required");
+    }
+
+    // logging removed
+
+    const csvFilePath = req.file.path;
+    const classes = [];
+    
+    try {
+        // Parse CSV file
+        const parseCSV = () => {
+            return new Promise((resolve, reject) => {
+                fs.createReadStream(csvFilePath)
+                    .pipe(csv())
+                    .on('data', (row) => {
+                        classes.push({
+                            teacherId: row.teacherId,
+                            startTime: row.startTime,
+                            endTime: row.endTime,
+                            dayOfWeek: row.dayOfWeek,
+                            roomId: row.roomId,
+                            batchId: row.batchId || null,
+                            activeFrom: row.activeFrom,
+                            activeTill: row.activeTill,
+                            classType: row.classType,
+                            courseId: row.courseId,
+                            timetableId: row.timetableId,
+                            isExtraClass: row.isExtraClass === 'true' || false
+                        });
+                    })
+                    .on('end', resolve)
+                    .on('error', reject);
+            });
+        };
+
+        await parseCSV();
+
+        if (classes.length === 0) {
+            throw new ApiError(httpStatus.BAD_REQUEST, "No valid classes found in CSV file");
+        }
+
+        // Use the existing bulk create logic
+        const transaction = await sequelize.transaction();
+        try {
+            const createdClasses = [];
+            const errors = [];
+
+            for (let i = 0; i < classes.length; i++) {
+                const classData = classes[i];
+                try {
+                    // Validate required fields
+                    if (!classData.teacherId || !classData.startTime || !classData.endTime || 
+                        !classData.dayOfWeek || !classData.roomId || !classData.activeFrom || 
+                        !classData.activeTill || !classData.classType || !classData.courseId || 
+                        !classData.timetableId) {
+                        errors.push({ row: i + 1, error: "Missing required fields" });
+                        continue;
+                    }
+
+                    // Check if all referenced IDs exist
+                    const teacher = await Teacher.findByPk(classData.teacherId, { transaction });
+                    if (!teacher) {
+                        errors.push({ row: i + 1, error: "Teacher not found" });
+                        continue;
+                    }
+
+                    const course = await Course.findByPk(classData.courseId, { transaction });
+                    if (!course) {
+                        errors.push({ row: i + 1, error: "Course not found" });
+                        continue;
+                    }
+
+                    const room = await Room.findByPk(classData.roomId, { transaction });
+                    if (!room) {
+                        errors.push({ row: i + 1, error: "Room not found" });
+                        continue;
+                    }
+
+                    const timetable = await Timetable.findByPk(classData.timetableId, { transaction });
+                    if (!timetable) {
+                        errors.push({ row: i + 1, error: "Timetable not found" });
+                        continue;
+                    }
+
+                    let batch = null;
+                    if (classData.batchId) {
+                        batch = await Batch.findByPk(classData.batchId, { transaction });
+                        if (!batch) {
+                            errors.push({ row: i + 1, error: "Batch not found" });
+                            continue;
+                        }
+                    }
+
+                    const classObj = await Class.create({
+                        teacherId: classData.teacherId,
+                        startTime: classData.startTime,
+                        endTime: classData.endTime,
+                        dayOfWeek: classData.dayOfWeek,
+                        roomId: classData.roomId,
+                        batchId: classData.batchId || null,
+                        activeFrom: classData.activeFrom,
+                        activeTill: classData.activeTill,
+                        classType: classData.classType,
+                        courseId: classData.courseId,
+                        timetableId: classData.timetableId,
+                        isExtraClass: classData.isExtraClass || false
+                    }, { transaction });
+
+                    createdClasses.push(classObj);
+
+                } catch (error) {
+                    errors.push({ row: i + 1, error: error.message });
+                }
+            }
+
+            await transaction.commit();
+
+            // Clean up uploaded file
+            fs.unlinkSync(csvFilePath);
+
+            // logging removed
+
+            res.status(httpStatus.CREATED).json(
+                new ApiResponse(
+                    httpStatus.CREATED,
+                    `Bulk class creation from CSV completed. Created: ${createdClasses.length}, Errors: ${errors.length}`,
+                    {
+                        createdClasses,
+                        errors,
+                        summary: {
+                            total: classes.length,
+                            created: createdClasses.length,
+                            failed: errors.length
+                        }
+                    }
+                )
+            );
+
+        } catch (error) {
+            await transaction.rollback();
+            // Clean up uploaded file
+            if (fs.existsSync(csvFilePath)) {
+                fs.unlinkSync(csvFilePath);
+            }
+            throw error;
+        }
+
+    } catch (error) {
+        // Clean up uploaded file
+        if (fs.existsSync(csvFilePath)) {
+            fs.unlinkSync(csvFilePath);
+        }
+    // logging removed
+        throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, "Bulk class creation from CSV failed");
+    }
+});
+
+
 export {
     addClass,
     getClasses,
@@ -997,5 +1382,8 @@ export {
     removeClass,
     addExtraClass,
     getCancelledClasses,
-    cancelClass
+    cancelClass,
+    bulkCreateClasses,
+    bulkDeleteClasses,
+    bulkCreateClassesFromCSV
 }   

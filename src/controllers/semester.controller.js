@@ -10,6 +10,7 @@ import BranchCourseSemester from '../db/models/branchCourseSemester.model.js';
 import University from '../db/models/university.model.js';
 import SemesterCourse from '../db/models/semesterCourse.model.js';
 import httpStatus from 'http-status';
+import sequelize from '../config/db.connection.js';
 
 //* get all the semesters
 const getSemesters = asyncHandler(async (req, res) => {
@@ -409,6 +410,234 @@ const getSemesterById = asyncHandler(async (req, res) => {
         );
 });
 
+//* bulk create semesters
+const bulkCreateSemesters = asyncHandler(async (req, res) => {
+    const { semesters } = req.body;
+    
+    const transaction = await sequelize.transaction();
+    
+    try {
+        // Validate all branches exist
+        const branchIds = [...new Set(semesters.map(semester => semester.branchId))];
+        const existingBranches = await Branch.findAll({
+            where: { id: branchIds },
+            attributes: ['id'],
+            transaction
+        });
+        
+        const existingBranchIds = existingBranches.map(branch => branch.id);
+        const invalidBranchIds = branchIds.filter(id => !existingBranchIds.includes(id));
+        
+        if (invalidBranchIds.length > 0) {
+            await transaction.rollback();
+            throw new ApiError(
+                httpStatus.BAD_REQUEST, 
+                `Invalid branch IDs: ${invalidBranchIds.join(', ')}`
+            );
+        }
+        
+        // Validate all schemes exist
+        const schemeIds = [...new Set(semesters.map(semester => semester.schemeId))];
+        const existingSchemes = await Scheme.findAll({
+            where: { id: schemeIds },
+            attributes: ['id'],
+            transaction
+        });
+        
+        const existingSchemeIds = existingSchemes.map(scheme => scheme.id);
+        const invalidSchemeIds = schemeIds.filter(id => !existingSchemeIds.includes(id));
+        
+        if (invalidSchemeIds.length > 0) {
+            await transaction.rollback();
+            throw new ApiError(
+                httpStatus.BAD_REQUEST, 
+                `Invalid scheme IDs: ${invalidSchemeIds.join(', ')}`
+            );
+        }
+        
+        // Validate business logic for each semester
+        for (const semester of semesters) {
+            if (semester.academicEndYear < semester.academicStartYear) {
+                await transaction.rollback();
+                throw new ApiError(
+                    httpStatus.BAD_REQUEST, 
+                    "Academic end year cannot be less than academic start year"
+                );
+            }
+            
+            const startDateObj = new Date(semester.startDate);
+            const endDateObj = new Date(semester.endDate);
+            
+            if (startDateObj >= endDateObj) {
+                await transaction.rollback();
+                throw new ApiError(
+                    httpStatus.BAD_REQUEST, 
+                    "End date cannot be less than or equal to start date"
+                );
+            }
+            
+            if (startDateObj.getFullYear() < semester.academicStartYear) {
+                await transaction.rollback();
+                throw new ApiError(
+                    httpStatus.BAD_REQUEST, 
+                    "Start date cannot be lesser than academic start year"
+                );
+            }
+            
+            if (endDateObj.getFullYear() > semester.academicEndYear) {
+                await transaction.rollback();
+                throw new ApiError(
+                    httpStatus.BAD_REQUEST, 
+                    "End date cannot be greater than academic end year"
+                );
+            }
+        }
+        
+        // Check for unique constraint violations
+        const duplicateCheck = await Promise.all(
+            semesters.map(async (semester) => {
+                const existing = await Semester.findOne({
+                    where: {
+                        branchId: semester.branchId,
+                        semesterNumber: semester.semesterNumber,
+                        academicStartYear: semester.academicStartYear,
+                        academicEndYear: semester.academicEndYear,
+                        schemeId: semester.schemeId
+                    },
+                    transaction
+                });
+                return existing ? semester : null;
+            })
+        );
+        
+        const duplicates = duplicateCheck.filter(Boolean);
+        if (duplicates.length > 0) {
+            await transaction.rollback();
+            throw new ApiError(
+                httpStatus.CONFLICT, 
+                `Duplicate semesters found`
+            );
+        }
+        
+        // Create semesters
+        const createdSemesters = await Semester.bulkCreate(semesters, {
+            transaction,
+            validate: true,
+            returning: true
+        });
+        
+        await transaction.commit();
+        
+        res
+            .status(httpStatus.CREATED)
+            .json(
+                new ApiResponse(
+                    httpStatus.CREATED,
+                    `${createdSemesters.length} semesters created successfully`,
+                    { semesters: createdSemesters }
+                )
+            );
+            
+    } catch (error) {
+        await transaction.rollback();
+        throw error;
+    }
+});
+
+//* bulk delete semesters
+const bulkDeleteSemesters = asyncHandler(async (req, res) => {
+    const { semesterIds } = req.body;
+
+    // Deduplicate incoming IDs to avoid false negatives and double-deletions
+    const uniqueSemesterIds = [...new Set(semesterIds)];
+
+    const transaction = await sequelize.transaction();
+
+    try {
+        // Verify all semesters exist (based on unique IDs)
+        const existingSemesters = await Semester.findAll({
+            where: { id: uniqueSemesterIds },
+            attributes: ['id'],
+            transaction
+        });
+
+        if (existingSemesters.length !== uniqueSemesterIds.length) {
+            const existingIds = existingSemesters.map(semester => semester.id);
+            const nonExistentIds = uniqueSemesterIds.filter(id => !existingIds.includes(id));
+            // Do not rollback here; let the catch do it to avoid double-rollback errors
+            throw new ApiError(
+                httpStatus.NOT_FOUND,
+                `Some semesters not found: ${nonExistentIds.join(', ')}`
+            );
+        }
+
+        // Check if any semesters have associated divisions or student enrollments
+        const Division = (await import('../db/models/division.model.js')).default;
+        const StudentSemester = (await import('../db/models/studentSemester.model.js')).default;
+
+        const associatedDivisions = await Division.findAll({
+            where: { semesterId: uniqueSemesterIds },
+            attributes: ['semesterId'],
+            transaction
+        });
+
+        if (associatedDivisions.length > 0) {
+            const associatedSemesterIds = [...new Set(associatedDivisions.map(div => div.semesterId))];
+            // Do not rollback here; let the catch do it to avoid double-rollback errors
+            throw new ApiError(
+                httpStatus.CONFLICT,
+                `Cannot delete semester: dependent records exist (divisions: ${associatedSemesterIds.join(', ')})`
+            );
+        }
+
+        const associatedStudents = await StudentSemester.findAll({
+            where: { semesterId: uniqueSemesterIds },
+            attributes: ['semesterId'],
+            transaction
+        });
+
+        if (associatedStudents.length > 0) {
+            const associatedSemesterIds = [...new Set(associatedStudents.map(ss => ss.semesterId))];
+            // Do not rollback here; let the catch do it to avoid double-rollback errors
+            throw new ApiError(
+                httpStatus.CONFLICT,
+                `Cannot delete semester: dependent records exist (student enrollments: ${associatedSemesterIds.join(', ')})`
+            );
+        }
+
+        // Delete associated semester courses first
+        await SemesterCourse.destroy({
+            where: { semesterId: uniqueSemesterIds },
+            transaction
+        });
+
+        // Delete semesters
+        const deletedCount = await Semester.destroy({
+            where: { id: uniqueSemesterIds },
+            transaction
+        });
+
+        await transaction.commit();
+
+        res
+            .status(httpStatus.OK)
+            .json(
+                new ApiResponse(
+                    httpStatus.OK,
+                    `${deletedCount} semesters deleted successfully`,
+                    { deletedCount }
+                )
+            );
+
+    } catch (error) {
+        try {
+            await transaction.rollback();
+        } catch (rollbackErr) {
+            // ignore rollback error
+        }
+        throw error;
+    }
+});
 
 export {
     getSemesters,
@@ -416,5 +645,7 @@ export {
     updateSemester,
     removeSemester,
     getCoursesOfSemester,
-    getSemesterById
+    getSemesterById,
+    bulkCreateSemesters,
+    bulkDeleteSemesters
 };
