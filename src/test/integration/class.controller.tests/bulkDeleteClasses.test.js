@@ -163,7 +163,7 @@ describe('DELETE /api/v1/classes/bulk/delete', () => {
                 });
 
             expect(response.status).toBe(401);
-            expect(response.body.message).toBe('Token not found');
+            expect(response.body.message).toBe('Unauthorized request: No token provided');
         });
 
         test('should return 401 with invalid token', async () => {
@@ -175,7 +175,7 @@ describe('DELETE /api/v1/classes/bulk/delete', () => {
                 });
 
             expect(response.status).toBe(401);
-            expect(response.body.message).toBe('Invalid token');
+            expect(response.body.message).toBe('Unauthorized request: Invalid token');
         });
 
         test('should return 403 for student access', async () => {

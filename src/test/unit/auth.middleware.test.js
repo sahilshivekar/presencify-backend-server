@@ -70,6 +70,8 @@ describe("verifyJWT middleware", () => {
 
     it("rejects when jwt.verify throws (invalid/expired)", async () => {
         req.cookies.accessToken = "token";
+        // Simulate jwt verification error to hit catch block
+        jwt.verify.mockImplementation(() => { throw new Error("jwt malformed"); });
         await verifyJWT([ROLES.ADMIN])(req, res, next);
         expect(next).toHaveBeenCalledWith(
             expect.objectContaining({
