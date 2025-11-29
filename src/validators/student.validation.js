@@ -193,6 +193,28 @@ const bulkAddStudentsToBatch = {
 	})
 };
 
+// CSV row validation schema (used for validating each row in the CSV)
+const csvStudentRowSchema = Joi.object().keys({
+	prn: Joi.string().trim().max(100).required().messages({ 'any.required': 'PRN is required', 'string.max': 'PRN cannot exceed 100 characters' }),
+	firstName: Joi.string().trim().min(1).max(100).required().messages({ 'any.required': 'First name is required', 'string.min': 'First name must be at least 1 character', 'string.max': 'First name cannot exceed 100 characters' }),
+	middleName: Joi.string().allow('', null).messages({ 'string.base': 'Middle name must be a string' }),
+	lastName: Joi.string().trim().min(1).max(100).required().messages({ 'any.required': 'Last name is required', 'string.min': 'Last name must be at least 1 character', 'string.max': 'Last name cannot exceed 100 characters' }),
+	email: Joi.string().email().required().messages({ 'any.required': 'Email is required', 'string.email': 'Please provide a valid email address' }),
+	phoneNumber: Joi.string().trim().required().messages({ 'any.required': 'Phone number is required' }),
+	gender: Joi.string().valid('Male', 'Female', 'Other').required().messages({ 'any.required': 'Gender is required', 'any.only': "Gender must be one of 'Male', 'Female', or 'Other'" }),
+	dob: Joi.string().allow('', null).messages({ 'string.base': 'DOB must be a string' }),
+	schemeId: uuid.required().messages({ 'any.required': 'Scheme ID is required', 'string.guid': 'Scheme ID must be a valid UUID' }),
+	admissionYear: Joi.number().integer().min(1900).max(3000).required().messages({ 'any.required': 'Admission year is required', 'number.base': 'Admission year must be a number' }),
+	admissionType: Joi.string().valid('DSE', 'FE').required().messages({ 'any.required': 'Admission type is required', 'any.only': "Admission type must be 'DSE' or 'FE'" }),
+	branchId: uuid.required().messages({ 'any.required': 'Branch ID is required', 'string.guid': 'Branch ID must be a valid UUID' }),
+	parentEmail: Joi.string().email().allow('', null).messages({ 'string.email': 'Parent email must be a valid email' })
+});
+
+const bulkCreateStudentsFromCSV = {
+	// No body validation needed as we receive file via multer
+	// Validation happens per row inside the controller
+};
+
 export default {
 	getStudents,
 	addStudent,
@@ -215,7 +237,9 @@ export default {
 	bulkDeleteStudents,
 	bulkAddStudentsToSemester,
 	bulkAddStudentsToDivision,
-	bulkAddStudentsToBatch
+	bulkAddStudentsToBatch,
+	bulkCreateStudentsFromCSV,
+	csvStudentRowSchema
 };
 
 

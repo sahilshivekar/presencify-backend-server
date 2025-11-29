@@ -1,6 +1,7 @@
 import { Op } from 'sequelize';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import fs from 'fs';
+import csvParser from 'csv-parser';
 import Student from '../db/models/student.model.js'
 import { ApiResponse } from '../utils/ApiResponse.js';
 import { ApiError } from '../utils/ApiError.js';
@@ -20,6 +21,7 @@ import { get } from 'http';
 import { getDateStringFromObj } from "../utils/date.js";
 import Dropout from '../db/models/dropout.model.js'
 import httpStatus from 'http-status';
+import studentValidation from '../validators/student.validation.js';
 
 //* Get all students
 const getStudents = asyncHandler(async (req, res) => {
@@ -1693,6 +1695,273 @@ const bulkAddStudentsToBatch = asyncHandler(async (req, res) => {
 });
 
 
+//* Bulk Create Students from CSV
+const bulkCreateStudentsFromCSV = asyncHandler(async (req, res) => {
+    const csvFilePath = req?.file?.path;
+
+    // Check if file exists
+    if (!csvFilePath) {
+        throw new ApiError(httpStatus.BAD_REQUEST, "CSV file is required");
+    }
+
+    // Helper function to clean up the file
+    const cleanupFile = () => {
+        if (csvFilePath && fs.existsSync(csvFilePath)) {
+            fs.unlinkSync(csvFilePath);
+        }
+    };
+
+    // Parse CSV file and collect rows
+    const parseCSV = () => {
+        return new Promise((resolve, reject) => {
+            const rows = [];
+            fs.createReadStream(csvFilePath)
+                .pipe(csvParser())
+                .on('data', (row) => {
+                    rows.push(row);
+                })
+                .on('end', () => {
+                    resolve(rows);
+                })
+                .on('error', (error) => {
+                    reject(error);
+                });
+        });
+    };
+
+    let rows;
+    try {
+        rows = await parseCSV();
+    } catch (error) {
+        cleanupFile();
+        throw new ApiError(httpStatus.BAD_REQUEST, `Error parsing CSV file: ${error.message}`);
+    }
+
+    // Check if CSV has any data
+    if (!rows || rows.length === 0) {
+        cleanupFile();
+        throw new ApiError(httpStatus.BAD_REQUEST, "CSV file is empty or contains no valid data");
+    }
+
+    const validationErrors = [];
+    const validatedStudents = [];
+
+    // Validate each row using Joi schema
+    for (let i = 0; i < rows.length; i++) {
+        const row = rows[i];
+        const rowNumber = i + 2; // +2 because row 1 is header, and arrays are 0-indexed
+
+        // Convert admissionYear to number if present
+        if (row.admissionYear) {
+            row.admissionYear = parseInt(row.admissionYear, 10);
+        }
+
+        // Validate row against schema
+        const { error, value } = studentValidation.csvStudentRowSchema.validate(row, { abortEarly: false });
+
+        if (error) {
+            const errorMessages = error.details.map(detail => detail.message).join('; ');
+            validationErrors.push({
+                row: rowNumber,
+                prn: row.prn || 'N/A',
+                errors: errorMessages
+            });
+        } else {
+            validatedStudents.push({ ...value, rowNumber });
+        }
+    }
+
+    // If any validation errors, rollback and return errors
+    if (validationErrors.length > 0) {
+        cleanupFile();
+        throw new ApiError(
+            httpStatus.BAD_REQUEST,
+            `Validation failed for ${validationErrors.length} row(s). No students were added.`,
+            validationErrors
+        );
+    }
+
+    // Start transaction for database operations
+    const transaction = await sequelize.transaction();
+    let transactionCommitted = false;
+
+    try {
+        // Collect all unique schemeIds and branchIds to validate
+        const schemeIds = [...new Set(validatedStudents.map(s => s.schemeId))];
+        const branchIds = [...new Set(validatedStudents.map(s => s.branchId))];
+        const emails = validatedStudents.map(s => s.email.toLowerCase());
+        const prns = validatedStudents.map(s => s.prn);
+        const phoneNumbers = validatedStudents.map(s => s.phoneNumber);
+
+        // Check for duplicate emails within CSV
+        const emailSet = new Set();
+        const duplicateEmails = [];
+        for (const student of validatedStudents) {
+            const lowerEmail = student.email.toLowerCase();
+            if (emailSet.has(lowerEmail)) {
+                duplicateEmails.push({ row: student.rowNumber, email: student.email });
+            }
+            emailSet.add(lowerEmail);
+        }
+        if (duplicateEmails.length > 0) {
+            throw new ApiError(
+                httpStatus.BAD_REQUEST,
+                `Duplicate emails found within CSV file`,
+                duplicateEmails
+            );
+        }
+
+        // Check for duplicate PRNs within CSV
+        const prnSet = new Set();
+        const duplicatePrns = [];
+        for (const student of validatedStudents) {
+            if (prnSet.has(student.prn)) {
+                duplicatePrns.push({ row: student.rowNumber, prn: student.prn });
+            }
+            prnSet.add(student.prn);
+        }
+        if (duplicatePrns.length > 0) {
+            throw new ApiError(
+                httpStatus.BAD_REQUEST,
+                `Duplicate PRNs found within CSV file`,
+                duplicatePrns
+            );
+        }
+
+        // Validate all schemes exist
+        const schemes = await Scheme.findAll({
+            where: {  },
+            transaction
+        });
+        console.log(schemes)
+        const foundSchemeIds = schemes.map(s => s.id);
+        const missingSchemeIds = schemeIds.filter(id => !foundSchemeIds.includes(id));
+        if (missingSchemeIds.length > 0) {
+            throw new ApiError(
+                httpStatus.NOT_FOUND,
+                `The following scheme IDs do not exist: ${missingSchemeIds.join(', ')}`
+            );
+        }
+
+        // Validate all branches exist
+        const branches = await Branch.findAll({
+            where: { id: { [Op.in]: branchIds } },
+            transaction
+        });
+        const foundBranchIds = branches.map(b => b.id);
+        const missingBranchIds = branchIds.filter(id => !foundBranchIds.includes(id));
+        if (missingBranchIds.length > 0) {
+            throw new ApiError(
+                httpStatus.NOT_FOUND,
+                `The following branch IDs do not exist: ${missingBranchIds.join(', ')}`
+            );
+        }
+
+        // Check for existing emails in database
+        const existingStudentsByEmail = await Student.findAll({
+            where: { email: { [Op.in]: emails } },
+            transaction
+        });
+        if (existingStudentsByEmail.length > 0) {
+            const existingEmails = existingStudentsByEmail.map(s => s.email);
+            throw new ApiError(
+                httpStatus.BAD_REQUEST,
+                `The following emails already exist in the database: ${existingEmails.join(', ')}`
+            );
+        }
+
+        // Check for existing PRNs in database
+        const existingStudentsByPrn = await Student.findAll({
+            where: { prn: { [Op.in]: prns } },
+            transaction
+        });
+        if (existingStudentsByPrn.length > 0) {
+            const existingPrns = existingStudentsByPrn.map(s => s.prn);
+            throw new ApiError(
+                httpStatus.BAD_REQUEST,
+                `The following PRNs already exist in the database: ${existingPrns.join(', ')}`
+            );
+        }
+
+        // Check for existing phone numbers in database
+        const existingStudentsByPhone = await Student.findAll({
+            where: { phoneNumber: { [Op.in]: phoneNumbers } },
+            transaction
+        });
+        if (existingStudentsByPhone.length > 0) {
+            const existingPhones = existingStudentsByPhone.map(s => s.phoneNumber);
+            throw new ApiError(
+                httpStatus.BAD_REQUEST,
+                `The following phone numbers already exist in the database: ${existingPhones.join(', ')}`
+            );
+        }
+
+        // Prepare student data for bulk create
+        const studentsToCreate = validatedStudents.map(student => {
+            let dobForDB = null;
+            if (student.dob) {
+                dobForDB = moment(student.dob, "YYYY/MM/DD").toDate();
+                if (new Date() < dobForDB) {
+                    throw new ApiError(httpStatus.BAD_REQUEST, `Row ${student.rowNumber}: Date of birth cannot be in the future`);
+                }
+            }
+
+            return {
+                prn: student.prn,
+                firstName: student.firstName,
+                middleName: student.middleName || null,
+                lastName: student.lastName,
+                email: student.email.toLowerCase(),
+                phoneNumber: student.phoneNumber,
+                parentEmail: student.parentEmail || null,
+                gender: student.gender,
+                dob: dobForDB,
+                studentImgUrl: null,
+                studentImgPublicId: null,
+                schemeId: student.schemeId,
+                admissionYear: student.admissionYear,
+                admissionType: student.admissionType,
+                branchId: student.branchId
+            };
+        });
+
+        // Bulk create students
+        const createdStudents = await Student.bulkCreate(studentsToCreate, { 
+            transaction,
+            individualHooks: true // This ensures password hashing via beforeCreate hook
+        });
+
+        await transaction.commit();
+        transactionCommitted = true;
+        cleanupFile();
+
+        res.status(httpStatus.CREATED).json(
+            new ApiResponse(
+                httpStatus.CREATED,
+                `Successfully created ${createdStudents.length} students from CSV`,
+                {
+                    createdCount: createdStudents.length,
+                    students: createdStudents.map(s => ({
+                        id: s.id,
+                        prn: s.prn,
+                        firstName: s.firstName,
+                        lastName: s.lastName,
+                        email: s.email
+                    }))
+                }
+            )
+        );
+
+    } catch (error) {
+        if (!transactionCommitted) {
+            await transaction.rollback();
+        }
+        cleanupFile();
+        throw error;
+    }
+});
+
+
 export {
     getStudents,
     addStudent,
@@ -1715,5 +1984,6 @@ export {
     bulkDeleteStudents,
     bulkAddStudentsToSemester,
     bulkAddStudentsToDivision,
-    bulkAddStudentsToBatch
+    bulkAddStudentsToBatch,
+    bulkCreateStudentsFromCSV
 }

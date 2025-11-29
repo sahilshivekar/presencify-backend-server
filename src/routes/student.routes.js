@@ -21,7 +21,8 @@ import {
     bulkDeleteStudents,
     bulkAddStudentsToSemester,
     bulkAddStudentsToDivision,
-    bulkAddStudentsToBatch
+    bulkAddStudentsToBatch,
+    bulkCreateStudentsFromCSV
 } from '../controllers/student.controller.js';
 import { verifyJWT } from '../middlewares/auth.middleware.js';
 import { ROLES } from '../config/roles.js';
@@ -133,5 +134,14 @@ router.route('/bulk/division')
 
 router.route('/bulk/batch')
     .post(validate(studentValidation.bulkAddStudentsToBatch), verifyJWT([ROLES.ADMIN]), bulkAddStudentsToBatch);
+
+// Bulk CSV upload (admin only)
+router.route('/bulk/csv')
+    .post(
+        upload.single('csvFile'),
+        validate(studentValidation.bulkCreateStudentsFromCSV),
+        verifyJWT([ROLES.ADMIN]),
+        bulkCreateStudentsFromCSV
+    );
 
 export default router;

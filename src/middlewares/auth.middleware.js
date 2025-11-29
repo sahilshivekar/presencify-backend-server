@@ -24,21 +24,25 @@ const verifyJWT = (allowedRoles) =>
 
         //logger.debug(`Verifying JWT for roles: ${JSON.stringify(allowedRoles)}`);
 
+        // Check for token in cookies (with role-specific names) or Authorization header
         const token =
+            req.cookies?.adminAccessToken ||
+            req.cookies?.teacherAccessToken ||
+            req.cookies?.studentAccessToken ||
             req.cookies?.accessToken ||
             req.header("Authorization")?.replace("Bearer ", "");
-
+        console.log(token)
         if (!token) {
             // //logger.warn(`No token provided for request ${req.method} ${req.originalUrl}`);
             throw new ApiError(StatusCodes.UNAUTHORIZED, "Unauthorized request: No token provided");
         }
 
+        let decodedToken;
         try {
             decodedToken = jwt.verify(token, process.env.JWT_ACCESS_TOKEN_SECRET);
-            // //logger.info(`JWT verified for userId: ${decodedToken?.id}, role: ${decodedToken?.role}`);
-        } catch (error) {
-            // Catch JWT errors (e.g., malformed, expired) and throw ApiError for 401
-            // //logger.error(`JWT verification failed: ${error.message}`);
+            logger.info(`JWT verified for userId: ${decodedToken?.id}, role: ${decodedToken?.role}`);
+        } catch (error) {   
+            logger.error(`JWT verification failed: ${error}`);
             throw new ApiError(StatusCodes.UNAUTHORIZED, "Unauthorized request: Invalid token");
         }
         
@@ -49,7 +53,7 @@ const verifyJWT = (allowedRoles) =>
 
         // Check if role is allowed  
         if (!allowedRoles.includes(decodedToken.role)) {
-            // //logger.warn(`Forbidden: User role ${decodedToken.role} not in allowed roles ${JSON.stringify(allowedRoles)}`);
+            logger.warn(`Forbidden: User role ${decodedToken.role} not in allowed roles ${JSON.stringify(allowedRoles)}`);
             throw new ApiError(StatusCodes.FORBIDDEN, "Forbidden: Insufficient permissions");
         }
 
