@@ -14,10 +14,12 @@ const getRooms = {
 		searchQuery: Joi.string().allow('', null).default('').messages({ 'string.base': 'Search query must be a string' }),
 		sortBy: Joi.string().valid('roomNumber', 'sittingCapacity').default('roomNumber').messages({ 'any.only': 'SortBy must be either roomNumber or sittingCapacity' }),
 		sortOrder: Joi.string().valid('ASC', 'DESC').default('ASC').messages({ 'any.only': 'SortOrder must be either ASC or DESC' }),
+		busyBetweenStartTime: Joi.string().pattern(/^\d{2}:\d{2}:\d{2}$/).required().messages({ 'string.pattern.base': 'busyBetweenStartTime must be in HH:mm:ss format', 'any.required': 'Start time is required' }),
+		busyBetweenEndTime: Joi.string().pattern(/^\d{2}:\d{2}:\d{2}$/).required().messages({ 'string.pattern.base': 'busyBetweenEndTime must be in HH:mm:ss format', 'any.required': 'End time is required' }),
 		page: Joi.number().integer().min(1).default(1).messages({ 'number.base': 'Page must be a number', 'number.min': 'Page must be at least 1' }),
 		limit: Joi.number().integer().min(1).max(100).default(10).messages({ 'number.base': 'Limit must be a number', 'number.min': 'Limit must be at least 1', 'number.max': 'Limit cannot exceed 100' }),
 		getAll: Joi.boolean().default(false).messages({ 'boolean.base': 'getAll must be a boolean' })
-	})
+	}).and('busyBetweenStartTime', 'busyBetweenEndTime')
 };
 
 const getRoomById = {

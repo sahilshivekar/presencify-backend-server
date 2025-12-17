@@ -3,6 +3,7 @@ import { asyncHandler } from '../utils/asyncHandler.js';
 import { ApiResponse } from '../utils/ApiResponse.js';
 import { ApiError } from '../utils/ApiError.js';
 import Room from '../db/models/room.model.js';
+import Class from '../db/models/class.model.js';
 import httpStatus from 'http-status';
 
 const addRoom = asyncHandler(async (req, res) => {
@@ -21,6 +22,8 @@ const getRooms = asyncHandler(async (req, res) => {
         searchQuery,
         sortBy = 'roomNumber',
         sortOrder = 'ASC',
+        busyBetweenStartTime,
+        busyBetweenEndTime,
         page = 1,
         limit = 10,
         getAll = false,
@@ -36,8 +39,25 @@ const getRooms = asyncHandler(async (req, res) => {
         }
     }
 
+    const include = [];
+    if (busyBetweenStartTime && busyBetweenEndTime) {
+        include.push({
+            model: Class,
+            required: false,
+            duplicating: false,
+            where: {
+                [Op.and]: [
+                    { activeTill: { [Op.gte]: new Date() } },
+                    { startTime: { [Op.lte]: busyBetweenEndTime } },
+                    { endTime: { [Op.gte]: busyBetweenStartTime } }
+                ]
+            }
+        });
+    }
+
     const rooms = await Room.findAndCountAll({
         where: searchClause,
+        ...(include.length ? { include } : {}),
         order: [[sortBy, sortOrder]],
         ...(limit && getAll === false ? { limit } : {}),
         ...(limit && getAll === false ? { offset } : {})
