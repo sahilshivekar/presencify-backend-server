@@ -1221,6 +1221,181 @@ const changeStudentBatch = asyncHandler(async (req, res, next) => {
 
 });
 
+// Revert: addStudentToDivision
+const revertAddStudentToDivision = asyncHandler(async (req, res) => {
+    const { studentDivisionId } = req.body;
+
+    const studentDivision = await StudentDivision.findByPk(studentDivisionId);
+    if (!studentDivision) throw new ApiError(httpStatus.NOT_FOUND, "StudentDivision not found");
+    if (studentDivision.endDate !== null) throw new ApiError(httpStatus.BAD_REQUEST, "StudentDivision is not active");
+
+    // Enforce LIFO: must be latest active division for the student
+    const latestActiveDivision = await StudentDivision.findOne({
+        where: { studentId: studentDivision.studentId, endDate: null },
+        order: [["startDate", "DESC"]]
+    });
+    if (!latestActiveDivision || latestActiveDivision.id !== studentDivision.id) {
+        throw new ApiError(httpStatus.BAD_REQUEST, "Only the latest active division can be reverted");
+    }
+
+    const transaction = await sequelize.transaction();
+    try {
+        // Remove active batches in this division for the student
+        const batchesInDivision = await Batch.findAll({ where: { divisionId: studentDivision.divisionId }, transaction });
+        await StudentBatch.destroy({
+            where: {
+                studentId: studentDivision.studentId,
+                batchId: { [Op.in]: batchesInDivision.map(b => b.id) },
+                endDate: null
+            },
+            transaction
+        });
+
+        await studentDivision.destroy({ transaction });
+        await transaction.commit();
+    } catch (error) {
+        await transaction.rollback();
+        throw error;
+    }
+
+    res.status(httpStatus.OK).json(new ApiResponse(httpStatus.OK, "Reverted addStudentToDivision successfully", null));
+});
+
+// Revert: changeStudentDivision
+const revertChangeStudentDivision = asyncHandler(async (req, res) => {
+    const { newStudentDivisionId } = req.body;
+
+    const newDivision = await StudentDivision.findByPk(newStudentDivisionId);
+    if (!newDivision) throw new ApiError(httpStatus.NOT_FOUND, "New StudentDivision not found");
+    if (newDivision.endDate !== null) throw new ApiError(httpStatus.BAD_REQUEST, "New division is not active");
+
+    // Enforce LIFO: must be latest active division for the student
+    const latestActiveDivision = await StudentDivision.findOne({
+        where: { studentId: newDivision.studentId, endDate: null },
+        order: [["startDate", "DESC"]]
+    });
+    if (!latestActiveDivision || latestActiveDivision.id !== newDivision.id) {
+        throw new ApiError(httpStatus.BAD_REQUEST, "Only the latest active division change can be reverted");
+    }
+
+    // Find previous division (most recent ended division)
+    const prevDivision = await StudentDivision.findOne({
+        where: {
+            studentId: newDivision.studentId,
+            endDate: { [Op.ne]: null }
+        },
+        order: [["endDate", "DESC"]]
+    });
+    if (!prevDivision) throw new ApiError(httpStatus.BAD_REQUEST, "Previous StudentDivision not found for revert");
+
+    const transaction = await sequelize.transaction();
+    try {
+        // Remove active batches in the new division
+        const batchesInNewDivision = await Batch.findAll({ where: { divisionId: newDivision.divisionId }, transaction });
+        await StudentBatch.destroy({
+            where: {
+                studentId: newDivision.studentId,
+                batchId: { [Op.in]: batchesInNewDivision.map(b => b.id) },
+                endDate: null
+            },
+            transaction
+        });
+
+        // Restore previous division as active
+        prevDivision.endDate = null;
+        await prevDivision.save({ transaction });
+
+        // Restore previous batch endDate back to null if it matches prevEndDateISO
+        const batchesInPrevDivision = await Batch.findAll({ where: { divisionId: prevDivision.divisionId }, transaction });
+        await StudentBatch.update(
+            { endDate: null },
+            {
+                where: {
+                    studentId: newDivision.studentId,
+                    batchId: { [Op.in]: batchesInPrevDivision.map(b => b.id) },
+                    endDate: { [Op.ne]: null }
+                },
+                transaction
+            }
+        );
+
+        // Delete new division row
+        await newDivision.destroy({ transaction });
+
+        await transaction.commit();
+    } catch (error) {
+        await transaction.rollback();
+        throw error;
+    }
+
+    res.status(httpStatus.OK).json(new ApiResponse(httpStatus.OK, "Reverted changeStudentDivision successfully", null));
+});
+
+// Revert: addStudentToBatch
+const revertAddStudentToBatch = asyncHandler(async (req, res) => {
+    const { studentBatchId } = req.body;
+
+    const studentBatch = await StudentBatch.findByPk(studentBatchId);
+    if (!studentBatch) throw new ApiError(httpStatus.NOT_FOUND, "StudentBatch not found");
+    if (studentBatch.endDate !== null) throw new ApiError(httpStatus.BAD_REQUEST, "StudentBatch is not active");
+
+    // Enforce LIFO: must be the currently active batch for the student in its division
+    const activeBatch = await StudentBatch.findOne({
+        where: { studentId: studentBatch.studentId, endDate: null },
+        order: [["startDate", "DESC"]]
+    });
+    if (!activeBatch || activeBatch.id !== studentBatch.id) {
+        throw new ApiError(httpStatus.BAD_REQUEST, "Only the latest active batch can be reverted");
+    }
+
+    await studentBatch.destroy();
+    res.status(httpStatus.OK).json(new ApiResponse(httpStatus.OK, "Reverted addStudentToBatch successfully", null));
+});
+
+// Revert: changeStudentBatch
+const revertChangeStudentBatch = asyncHandler(async (req, res) => {
+    const { newStudentBatchId } = req.body;
+
+    const newBatch = await StudentBatch.findByPk(newStudentBatchId);
+    if (!newBatch) throw new ApiError(httpStatus.NOT_FOUND, "New StudentBatch not found");
+    if (newBatch.endDate !== null) throw new ApiError(httpStatus.BAD_REQUEST, "New batch is not active");
+
+    // Enforce LIFO: must be latest active batch
+    const latestActiveBatch = await StudentBatch.findOne({
+        where: { studentId: newBatch.studentId, endDate: null },
+        order: [["startDate", "DESC"]]
+    });
+    if (!latestActiveBatch || latestActiveBatch.id !== newBatch.id) {
+        throw new ApiError(httpStatus.BAD_REQUEST, "Only the latest active batch change can be reverted");
+    }
+
+    const prevBatch = await StudentBatch.findOne({
+        where: {
+            studentId: newBatch.studentId,
+            endDate: { [Op.ne]: null }
+        },
+        order: [["endDate", "DESC"]]
+    });
+    if (!prevBatch) throw new ApiError(httpStatus.BAD_REQUEST, "Previous StudentBatch not found for revert");
+
+    const transaction = await sequelize.transaction();
+    try {
+        // Restore previous batch as active
+        prevBatch.endDate = null;
+        await prevBatch.save({ transaction });
+
+        // Delete new batch row
+        await newBatch.destroy({ transaction });
+
+        await transaction.commit();
+    } catch (error) {
+        await transaction.rollback();
+        throw error;
+    }
+
+    res.status(httpStatus.OK).json(new ApiResponse(httpStatus.OK, "Reverted changeStudentBatch successfully", null));
+});
+
 
 //* Bulk Create Students
 const bulkCreateStudents = asyncHandler(async (req, res) => {
@@ -1974,8 +2149,12 @@ export {
     removeStudentFromSemester,
     addStudentToDivision,
     changeStudentDivision,
+    revertAddStudentToDivision,
+    revertChangeStudentDivision,
     addStudentToBatch,
     changeStudentBatch,
+    revertAddStudentToBatch,
+    revertChangeStudentBatch,
     getStudentDetailsById,
     getStudentSemestersById,
     getStudentDivisionsById,

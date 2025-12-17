@@ -12,8 +12,12 @@ import {
     removeStudentFromSemester,
     addStudentToDivision,
     changeStudentDivision,
+    revertAddStudentToDivision,
+    revertChangeStudentDivision,
     addStudentToBatch,
     changeStudentBatch,
+    revertAddStudentToBatch,
+    revertChangeStudentBatch,
     getStudentSemestersById,
     getStudentDivisionsById,    
     getStudentBatchesById,
@@ -65,22 +69,7 @@ router.route('/image')
     );
     
 
-router.route('/:id')
-    .get(
-        validate(studentValidation.getStudentDetailsById),
-        verifyJWT([ROLES.ADMIN, ROLES.TEACHER, ROLES.STUDENT]),
-        getStudentDetailsById
-    )
-    .put(
-        validate(studentValidation.updateStudentDetails),
-        verifyJWT([ROLES.ADMIN, ROLES.STUDENT]),
-        updateStudentDetails
-    )
-    .delete(
-        validate(studentValidation.removeStudent),
-        verifyJWT([ROLES.ADMIN]),
-        removeStudent
-    );
+// Management endpoints should come before '/:id' to avoid path conflicts
 
 // Student relationship queries
 router.route('/:id/semesters')
@@ -114,10 +103,40 @@ router.route('/division')
     .post(validate(studentValidation.addStudentToDivision), verifyJWT([ROLES.ADMIN]), addStudentToDivision)
     .put(validate(studentValidation.changeStudentDivision), verifyJWT([ROLES.ADMIN]), changeStudentDivision);
 
+router.route('/division/revert-add')
+    .post(validate(studentValidation.revertAddStudentToDivision), verifyJWT([ROLES.ADMIN]), revertAddStudentToDivision);
+
+router.route('/division/revert-change')
+    .post(validate(studentValidation.revertChangeStudentDivision), verifyJWT([ROLES.ADMIN]), revertChangeStudentDivision);
+
 // Batch management (admin only)
 router.route('/batch')
     .post(validate(studentValidation.addStudentToBatch), verifyJWT([ROLES.ADMIN]), addStudentToBatch)
     .put(validate(studentValidation.changeStudentBatch), verifyJWT([ROLES.ADMIN]), changeStudentBatch);
+
+router.route('/batch/revert-add')
+    .post(validate(studentValidation.revertAddStudentToBatch), verifyJWT([ROLES.ADMIN]), revertAddStudentToBatch);
+
+router.route('/batch/revert-change')
+    .post(validate(studentValidation.revertChangeStudentBatch), verifyJWT([ROLES.ADMIN]), revertChangeStudentBatch);
+
+// CRUD by ID — placed after management endpoints to avoid matching '/division' or '/batch'
+router.route('/:id')
+    .get(
+        validate(studentValidation.getStudentDetailsById),
+        verifyJWT([ROLES.ADMIN, ROLES.TEACHER, ROLES.STUDENT]),
+        getStudentDetailsById
+    )
+    .put(
+        validate(studentValidation.updateStudentDetails),
+        verifyJWT([ROLES.ADMIN, ROLES.STUDENT]),
+        updateStudentDetails
+    )
+    .delete(
+        validate(studentValidation.removeStudent),
+        verifyJWT([ROLES.ADMIN]),
+        removeStudent
+    );
 
 // Bulk operations (admin only)
 router.route('/bulk/create')

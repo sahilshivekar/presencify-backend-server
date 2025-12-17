@@ -129,6 +129,18 @@ const changeStudentDivision = {
 	})
 };
 
+const revertAddStudentToDivision = {
+	body: Joi.object().keys({
+		studentDivisionId: uuid.required().messages({ 'any.required': 'studentDivisionId is required', 'string.guid': 'studentDivisionId must be a valid UUID' })
+	})
+};
+
+const revertChangeStudentDivision = {
+	body: Joi.object().keys({
+		newStudentDivisionId: uuid.required().messages({ 'any.required': 'newStudentDivisionId is required', 'string.guid': 'newStudentDivisionId must be a valid UUID' })
+	})
+};
+
 const addStudentToBatch = {
 	body: Joi.object().keys({
 		studentId: uuid.required().messages({ 'any.required': 'Student ID is required', 'string.guid': 'Student ID must be a valid UUID' }),
@@ -141,6 +153,18 @@ const changeStudentBatch = {
 		studentBatchId: uuid.required().messages({ 'any.required': 'studentBatchId is required', 'string.guid': 'studentBatchId must be a valid UUID' }),
 		batchId: uuid.required().messages({ 'any.required': 'Batch ID is required', 'string.guid': 'Batch ID must be a valid UUID' }),
 		newBatchStartDate: Joi.date().iso().required().messages({ 'any.required': 'New batch start date is required' })
+	})
+};
+
+const revertAddStudentToBatch = {
+	body: Joi.object().keys({
+		studentBatchId: uuid.required().messages({ 'any.required': 'studentBatchId is required', 'string.guid': 'studentBatchId must be a valid UUID' })
+	})
+};
+
+const revertChangeStudentBatch = {
+	body: Joi.object().keys({
+		newStudentBatchId: uuid.required().messages({ 'any.required': 'newStudentBatchId is required', 'string.guid': 'newStudentBatchId must be a valid UUID' })
 	})
 };
 
@@ -231,8 +255,12 @@ export default {
 	removeStudentFromSemester,
 	addStudentToDivision,
 	changeStudentDivision,
+	revertAddStudentToDivision,
+	revertChangeStudentDivision,
 	addStudentToBatch,
 	changeStudentBatch,
+	revertAddStudentToBatch,
+	revertChangeStudentBatch,
 	bulkCreateStudents,
 	bulkDeleteStudents,
 	bulkAddStudentsToSemester,
