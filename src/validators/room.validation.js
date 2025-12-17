@@ -26,6 +26,39 @@ const getRoomById = {
 	params: Joi.object().keys({ id: uuid.required().messages({ 'any.required': 'Room ID is required', 'string.guid': 'Room ID must be a valid UUID' }) })
 };
 
+const getRoomShedule = {
+	params: Joi.object().keys({ id: uuid.required().messages({ 'any.required': 'Room ID is required', 'string.guid': 'Room ID must be a valid UUID' }) }),
+	query: Joi.object()
+		.keys({
+			startDate: Joi.string()
+				.pattern(/^\d{4}-\d{2}-\d{2}$/)
+				.required()
+				.messages({ 'string.pattern.base': 'startDate must be in YYYY-MM-DD format', 'any.required': 'startDate is required' }),
+			endDate: Joi.string()
+				.pattern(/^\d{4}-\d{2}-\d{2}$/)
+				.required()
+				.messages({ 'string.pattern.base': 'endDate must be in YYYY-MM-DD format', 'any.required': 'endDate is required' }),
+			startTime: Joi.string()
+				.pattern(/^([01]\d|2[0-3]):[0-5]\d:[0-5]\d$/)
+				.required()
+				.messages({ 'string.pattern.base': 'startTime must be in HH:mm:ss format', 'any.required': 'startTime is required' }),
+			endTime: Joi.string()
+				.pattern(/^([01]\d|2[0-3]):[0-5]\d:[0-5]\d$/)
+				.required()
+				.messages({ 'string.pattern.base': 'endTime must be in HH:mm:ss format', 'any.required': 'endTime is required' })
+		})
+		.custom((value, helpers) => {
+			// Ensure startDate <= endDate and startTime < endTime
+			if (value.startDate > value.endDate) {
+				return helpers.error('any.invalid', { message: 'startDate cannot be after endDate' });
+			}
+			if (value.startTime >= value.endTime) {
+				return helpers.error('any.invalid', { message: 'startTime must be before endTime' });
+			}
+			return value;
+		}, 'date/time range validation')
+};
+
 const updateRoom = {
 	params: Joi.object().keys({ id: uuid.required().messages({ 'any.required': 'Room ID is required', 'string.guid': 'Room ID must be a valid UUID' }) }),
 	body: Joi.object().keys({
@@ -42,6 +75,7 @@ export default {
 	addRoom,
 	getRooms,
 	getRoomById,
+	getRoomShedule,
 	updateRoom,
 	removeRoom
 };

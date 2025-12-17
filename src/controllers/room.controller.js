@@ -115,10 +115,36 @@ const removeRoom = asyncHandler(async (req, res) => {
     res.status(httpStatus.NO_CONTENT).json(new ApiResponse(httpStatus.NO_CONTENT, "Room deleted successfully", null));
 });
 
+const getRoomShedule = asyncHandler(async (req, res) => {
+    const { id } = req.params;
+    const { startDate, endDate, startTime, endTime } = req.query;
+
+    const room = await Room.findByPk(id);
+    if (!room) throw new ApiError(httpStatus.NOT_FOUND, 'Room not found');
+
+    const classes = await Class.findAll({
+        where: {
+            roomId: id,
+            [Op.and]: [
+                { activeFrom: { [Op.lte]: endDate } },
+                { activeTill: { [Op.gte]: startDate } },
+                { startTime: { [Op.lte]: endTime } },
+                { endTime: { [Op.gte]: startTime } }
+            ]
+        },
+        order: [['dayOfWeek', 'ASC'], ['startTime', 'ASC']]
+    });
+
+    res
+        .status(httpStatus.OK)
+        .json(new ApiResponse(httpStatus.OK, 'Room schedule fetched successfully', { room, classes }));
+});
+
 export {
     addRoom,
     getRooms,
     getRoomById,
+    getRoomShedule,
     updateRoom,
     removeRoom
 }

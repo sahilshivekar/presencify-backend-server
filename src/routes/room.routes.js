@@ -3,6 +3,7 @@ import {
     addRoom,
     getRooms,
     getRoomById,
+    getRoomShedule,
     updateRoom,
     removeRoom
 } from '../controllers/room.controller.js';
@@ -41,6 +42,13 @@ router.route('/:id')
         validate(roomValidation.removeRoom),
         verifyJWT([ROLES.ADMIN]),
         removeRoom
+    );
+
+router.route('/:id/schedule')
+    .get(
+        validate(roomValidation.getRoomShedule),
+        verifyJWT([ROLES.ADMIN, ROLES.TEACHER, ROLES.STUDENT]),
+        getRoomShedule
     );
 
 export default router;
