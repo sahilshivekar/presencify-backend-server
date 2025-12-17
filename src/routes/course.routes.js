@@ -9,11 +9,13 @@ import {
     removeCourseFromBranchWithSemesterNumber,
     getCourseById,
     bulkCreateCourses,
-    bulkDeleteCourses
+    bulkDeleteCourses,
+    bulkCreateCoursesFromCSV
 } from '../controllers/course.controller.js';
 import { ROLES } from '../config/roles.js';
 import validate from '../middlewares/validate.js';
 import courseValidation from '../validators/course.validation.js';
+import { upload } from '../middlewares/multer.middleware.js';
 
 const router = Router();
 
@@ -75,6 +77,15 @@ router.route('/bulk/delete')
         validate(courseValidation.bulkDeleteCourses),
         verifyJWT([ROLES.ADMIN]),
         bulkDeleteCourses
+    );
+
+// Bulk CSV upload (admin only)
+router.route('/bulk/csv')
+    .post(
+        upload.single('csvFile'),
+        validate(courseValidation.bulkCreateCoursesFromCSV),
+        verifyJWT([ROLES.ADMIN]),
+        bulkCreateCoursesFromCSV
     );
 
 export default router;

@@ -12,7 +12,8 @@ import {
     addTeachingSubject,
     removeTeachingSubject,
     bulkCreateTeachers,
-    bulkDeleteTeachers
+    bulkDeleteTeachers,
+    bulkCreateTeachersFromCSV
 } from '../controllers/teacher.controller.js';
 import { verifyJWT } from '../middlewares/auth.middleware.js';
 import { ROLES } from '../config/roles.js';
@@ -83,6 +84,15 @@ router.route('/bulk/create')
 
 router.route('/bulk/delete')
     .delete(validate(teacherValidation.bulkDeleteTeachers), verifyJWT([ROLES.ADMIN]), bulkDeleteTeachers);
+
+// Bulk CSV upload (admin only)
+router.route('/bulk/csv')
+    .post(
+        upload.single('csvFile'),
+        validate(teacherValidation.bulkCreateTeachersFromCSV),
+        verifyJWT([ROLES.ADMIN]),
+        bulkCreateTeachersFromCSV
+    );
 
 // Dynamic routes should be registered last
 router.route('/:id')

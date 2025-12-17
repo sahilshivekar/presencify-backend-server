@@ -104,6 +104,24 @@ const bulkDeleteTeachers = {
 	})
 };
 
+// CSV row validation schema for Teachers
+const csvTeacherRowSchema = Joi.object().keys({
+	firstName: Joi.string().trim().min(1).max(100).required().messages({ 'any.required': 'First name is required', 'string.min': 'First name must be at least 1 character', 'string.max': 'First name cannot exceed 100 characters' }),
+	middleName: Joi.string().allow('', null).messages({ 'string.base': 'Middle name must be a string' }),
+	lastName: Joi.string().trim().min(1).max(100).required().messages({ 'any.required': 'Last name is required', 'string.min': 'Last name must be at least 1 character', 'string.max': 'Last name cannot exceed 100 characters' }),
+	email: Joi.string().email().required().messages({ 'any.required': 'Email is required', 'string.email': 'Please provide a valid email address' }),
+	phoneNumber: Joi.string().trim().required().messages({ 'any.required': 'Phone number is required' }),
+	gender: Joi.string().valid('Male', 'Female', 'Other').required().messages({ 'any.required': 'Gender is required', 'any.only': "Gender must be one of 'Male', 'Female', or 'Other'" }),
+	highestQualification: Joi.string().allow('', null).messages({ 'string.base': 'Highest qualification must be a string' }),
+	role: Joi.string().valid('Teacher', 'Head of Department', 'Principal').required().messages({ 'any.required': 'Role is required', 'any.only': "Role must be 'Teacher', 'Head of Department', or 'Principal'" }),
+	isActive: Joi.boolean().default(true).messages({ 'boolean.base': 'isActive must be a boolean' })
+});
+
+// Placeholder for CSV bulk import (file via multer)
+const bulkCreateTeachersFromCSV = {
+	// No body validation; rows validated in controller using csvTeacherRowSchema
+};
+
 export default {
 	getTeacher,
 	getTeacherById,
@@ -117,7 +135,9 @@ export default {
 	addTeachingSubject,
 	removeTeachingSubject,
 	bulkCreateTeachers,
-	bulkDeleteTeachers
+	bulkDeleteTeachers,
+	bulkCreateTeachersFromCSV,
+	csvTeacherRowSchema
 };
 
 

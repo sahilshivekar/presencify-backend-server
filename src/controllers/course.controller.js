@@ -9,8 +9,11 @@ import BranchCourseSemester from '../db/models/branchCourseSemester.model.js';
 import Branch from '../db/models/branch.model.js';
 import sequelize from '../config/db.connection.js';
 import { parse } from 'path';
+import fs from 'fs';
+import csvParser from 'csv-parser';
 import Semester from '../db/models/semester.model.js';
 import httpStatus from 'http-status';
+import courseValidation from '../validators/course.validation.js';
 
 //* get all the courses
 const getCourses = asyncHandler(async (req, res) => {
@@ -359,6 +362,128 @@ const bulkCreateCourses = asyncHandler(async (req, res) => {
     }
 });
 
+//* bulk create courses from CSV
+const bulkCreateCoursesFromCSV = asyncHandler(async (req, res) => {
+    const csvFilePath = req?.file?.path;
+
+    if (!csvFilePath) {
+        throw new ApiError(httpStatus.BAD_REQUEST, 'CSV file is required');
+    }
+
+    const cleanupFile = () => {
+        if (csvFilePath && fs.existsSync(csvFilePath)) {
+            fs.unlinkSync(csvFilePath);
+        }
+    };
+
+    const parseCSV = () => new Promise((resolve, reject) => {
+        const rows = [];
+        fs.createReadStream(csvFilePath)
+            .pipe(csvParser())
+            .on('data', (row) => rows.push(row))
+            .on('end', () => resolve(rows))
+            .on('error', (err) => reject(err));
+    });
+
+    let rows;
+    try {
+        rows = await parseCSV();
+    } catch (error) {
+        cleanupFile();
+        throw new ApiError(httpStatus.BAD_REQUEST, `Error parsing CSV file: ${error.message}`);
+    }
+
+    if (!rows || rows.length === 0) {
+        cleanupFile();
+        throw new ApiError(httpStatus.BAD_REQUEST, 'CSV file is empty or contains no valid data');
+    }
+
+    const validationErrors = [];
+    const validatedCourses = [];
+    for (let i = 0; i < rows.length; i++) {
+        const row = rows[i];
+        const rowNumber = i + 2;
+        const { error, value } = courseValidation.csvCourseRowSchema.validate(row, { abortEarly: false });
+        if (error) {
+            const msgs = error.details.map(d => d.message).join('; ');
+            validationErrors.push({ row: rowNumber, code: row.code || 'N/A', errors: msgs });
+        } else {
+            validatedCourses.push({ ...value, rowNumber });
+        }
+    }
+
+    if (validationErrors.length > 0) {
+        cleanupFile();
+        throw new ApiError(
+            httpStatus.BAD_REQUEST,
+            `Validation failed for ${validationErrors.length} row(s). No courses were added.`,
+            validationErrors
+        );
+    }
+
+    const transaction = await sequelize.transaction();
+    let committed = false;
+    try {
+        const codes = validatedCourses.map(c => c.code);
+        const schemeIds = [...new Set(validatedCourses.map(c => c.schemeId))];
+
+        // Duplicate codes within CSV
+        const codeSet = new Set();
+        const duplicateCodes = [];
+        for (const c of validatedCourses) {
+            if (codeSet.has(c.code)) duplicateCodes.push({ row: c.rowNumber, code: c.code });
+            codeSet.add(c.code);
+        }
+        if (duplicateCodes.length > 0) {
+            throw new ApiError(httpStatus.BAD_REQUEST, 'Duplicate course codes found within CSV file', duplicateCodes);
+        }
+
+        // Validate schemes exist
+        const existingSchemes = await Scheme.findAll({ where: { id: schemeIds }, attributes: ['id'], transaction });
+        const existingSchemeIds = existingSchemes.map(s => s.id);
+        const invalidSchemeIds = schemeIds.filter(id => !existingSchemeIds.includes(id));
+        if (invalidSchemeIds.length > 0) {
+            throw new ApiError(httpStatus.NOT_FOUND, `The following scheme IDs do not exist: ${invalidSchemeIds.join(', ')}`);
+        }
+
+        // Existing codes in DB
+        const existingCourses = await Course.findAll({ where: { code: codes }, attributes: ['code'], transaction });
+        if (existingCourses.length > 0) {
+            const dupCodes = existingCourses.map(c => c.code);
+            throw new ApiError(httpStatus.CONFLICT, `Course codes already exist: ${dupCodes.join(', ')}`);
+        }
+
+        const toCreate = validatedCourses.map(c => ({
+            code: c.code,
+            name: c.name,
+            optionalSubject: c.optionalSubject || null,
+            schemeId: c.schemeId
+        }));
+
+        const created = await Course.bulkCreate(toCreate, {
+            transaction,
+            validate: true,
+            individualHooks: true,
+            returning: true
+        });
+
+        await transaction.commit();
+        committed = true;
+        cleanupFile();
+
+        res.status(httpStatus.CREATED).json(
+            new ApiResponse(
+                httpStatus.CREATED,
+                `${created.length} courses created successfully from CSV`,
+                { courses: created, createdCount: created.length }
+            )
+        );
+    } catch (error) {
+        if (!committed) await transaction.rollback();
+        cleanupFile();
+        throw error;
+    }
+});
 //* bulk delete courses
 const bulkDeleteCourses = asyncHandler(async (req, res) => {
     const { courseIds } = req.body;
@@ -434,5 +559,6 @@ export {
     removeCourseFromBranchWithSemesterNumber,
     getCourseById,
     bulkCreateCourses,
-    bulkDeleteCourses
+    bulkDeleteCourses,
+    bulkCreateCoursesFromCSV
 };          

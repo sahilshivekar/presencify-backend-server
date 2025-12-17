@@ -141,6 +141,29 @@ const bulkDeleteCourses = {
     })
 };
 
+// CSV row validation schema for Courses
+const csvCourseRowSchema = Joi.object().keys({
+    code: Joi.string().trim().min(1).max(50).required()
+        .messages({
+            'any.required': 'Course code is required',
+            'string.min': 'Course code must be at least 1 character',
+            'string.max': 'Course code cannot exceed 50 characters'
+        }),
+    name: Joi.string().trim().min(1).max(200).required()
+        .messages({
+            'any.required': 'Course name is required',
+            'string.min': 'Course name must be at least 1 character',
+            'string.max': 'Course name cannot exceed 200 characters'
+        }),
+    optionalSubject: Joi.string().trim().allow(null, '').messages({ 'string.base': 'Optional subject must be a string' }),
+    schemeId: uuid.required().messages({ 'any.required': 'Scheme ID is required', 'string.guid': 'Scheme ID must be a valid UUID' })
+});
+
+// Placeholder for CSV bulk import
+const bulkCreateCoursesFromCSV = {
+    // No body validation; rows validated in controller using csvCourseRowSchema
+};
+
 export default {
     getCourses,
     addCourse,
@@ -150,7 +173,9 @@ export default {
     addCourseToBranchWithSemesterNumber,
     removeCourseFromBranchWithSemesterNumber,
     bulkCreateCourses,
-    bulkDeleteCourses
+    bulkDeleteCourses,
+    bulkCreateCoursesFromCSV,
+    csvCourseRowSchema
 };
 
 

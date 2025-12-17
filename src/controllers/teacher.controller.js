@@ -5,11 +5,13 @@ import { ApiError } from '../utils/ApiError.js'
 import { Op } from 'sequelize'
 import { uploadOnCloudinary, deleteFromCloudinary } from '../utils/cloudinary.js';
 import fs from "fs"
+import csvParser from 'csv-parser';
 import Course from '../db/models/course.model.js';
 import TeacherTeachesCourse from '../db/models/teacherTeachesCourse.model.js';
 import Scheme from '../db/models/scheme.model.js';
 import httpStatus from 'http-status';
 import sequelize from '../config/db.connection.js';
+import teacherValidation from '../validators/teacher.validation.js';
 
 // All input validation is now handled in @teacher.validation.js
 
@@ -668,6 +670,152 @@ const bulkDeleteTeachers = asyncHandler(async (req, res) => {
     }
 });
 
+//* Bulk Create Teachers from CSV
+const bulkCreateTeachersFromCSV = asyncHandler(async (req, res) => {
+    const csvFilePath = req?.file?.path;
+
+    if (!csvFilePath) {
+        throw new ApiError(httpStatus.BAD_REQUEST, "CSV file is required");
+    }
+
+    const cleanupFile = () => {
+        if (csvFilePath && fs.existsSync(csvFilePath)) {
+            fs.unlinkSync(csvFilePath);
+        }
+    };
+
+    const parseCSV = () => {
+        return new Promise((resolve, reject) => {
+            const rows = [];
+            fs.createReadStream(csvFilePath)
+                .pipe(csvParser())
+                .on('data', (row) => rows.push(row))
+                .on('end', () => resolve(rows))
+                .on('error', (err) => reject(err));
+        });
+    };
+
+    let rows;
+    try {
+        rows = await parseCSV();
+    } catch (error) {
+        cleanupFile();
+        throw new ApiError(httpStatus.BAD_REQUEST, `Error parsing CSV file: ${error.message}`);
+    }
+
+    if (!rows || rows.length === 0) {
+        cleanupFile();
+        throw new ApiError(httpStatus.BAD_REQUEST, "CSV file is empty or contains no valid data");
+    }
+
+    const validationErrors = [];
+    const validatedTeachers = [];
+
+    for (let i = 0; i < rows.length; i++) {
+        const row = rows[i];
+        const rowNumber = i + 2; // header is row 1
+
+        const { error, value } = teacherValidation.csvTeacherRowSchema.validate(row, { abortEarly: false });
+        if (error) {
+            const errorMessages = error.details.map(d => d.message).join('; ');
+            validationErrors.push({ row: rowNumber, email: row.email || 'N/A', errors: errorMessages });
+        } else {
+            validatedTeachers.push({ ...value, rowNumber });
+        }
+    }
+
+    if (validationErrors.length > 0) {
+        cleanupFile();
+        throw new ApiError(
+            httpStatus.BAD_REQUEST,
+            `Validation failed for ${validationErrors.length} row(s). No teachers were added.`,
+            validationErrors
+        );
+    }
+
+    const transaction = await sequelize.transaction();
+    let committed = false;
+    try {
+        const emails = validatedTeachers.map(t => t.email.toLowerCase());
+        const phoneNumbers = validatedTeachers.map(t => t.phoneNumber);
+
+        // Duplicate emails within CSV
+        const emailSet = new Set();
+        const duplicateEmails = [];
+        for (const t of validatedTeachers) {
+            const e = t.email.toLowerCase();
+            if (emailSet.has(e)) duplicateEmails.push({ row: t.rowNumber, email: t.email });
+            emailSet.add(e);
+        }
+        if (duplicateEmails.length > 0) {
+            throw new ApiError(httpStatus.BAD_REQUEST, 'Duplicate emails found within CSV file', duplicateEmails);
+        }
+
+        // Duplicate phones within CSV
+        const phoneSet = new Set();
+        const duplicatePhones = [];
+        for (const t of validatedTeachers) {
+            const p = t.phoneNumber;
+            if (phoneSet.has(p)) duplicatePhones.push({ row: t.rowNumber, phoneNumber: p });
+            phoneSet.add(p);
+        }
+        if (duplicatePhones.length > 0) {
+            throw new ApiError(httpStatus.BAD_REQUEST, 'Duplicate phone numbers found within CSV file', duplicatePhones);
+        }
+
+        // Existing emails in DB
+        const existingByEmail = await Teacher.findAll({ where: { email: { [Op.in]: emails } }, transaction });
+        if (existingByEmail.length > 0) {
+            const existingEmails = existingByEmail.map(t => t.email);
+            throw new ApiError(httpStatus.BAD_REQUEST, `The following emails already exist in the database: ${existingEmails.join(', ')}`);
+        }
+
+        // Existing phones in DB
+        const existingByPhone = await Teacher.findAll({ where: { phoneNumber: { [Op.in]: phoneNumbers } }, transaction });
+        if (existingByPhone.length > 0) {
+            const existingPhones = existingByPhone.map(t => t.phoneNumber);
+            throw new ApiError(httpStatus.BAD_REQUEST, `The following phone numbers already exist in the database: ${existingPhones.join(', ')}`);
+        }
+
+        const toCreate = validatedTeachers.map(t => ({
+            firstName: t.firstName,
+            middleName: t.middleName || null,
+            lastName: t.lastName,
+            email: t.email.toLowerCase(),
+            phoneNumber: t.phoneNumber,
+            gender: t.gender,
+            highestQualification: t.highestQualification || null,
+            role: t.role,
+            isActive: t.isActive !== undefined ? t.isActive : true
+        }));
+
+        const created = await Teacher.bulkCreate(toCreate, {
+            transaction,
+            individualHooks: true,
+            returning: true
+        });
+
+        await transaction.commit();
+        committed = true;
+        cleanupFile();
+
+        res.status(httpStatus.CREATED).json(
+            new ApiResponse(
+                httpStatus.CREATED,
+                `Successfully created ${created.length} teachers from CSV`,
+                {
+                    createdCount: created.length,
+                    teachers: created.map(t => ({ id: t.id, email: t.email, firstName: t.firstName, lastName: t.lastName }))
+                }
+            )
+        );
+    } catch (error) {
+        if (!committed) await transaction.rollback();
+        cleanupFile();
+        throw error;
+    }
+});
+
 
 export {
     getTeacher,
@@ -682,5 +830,6 @@ export {
     addTeachingSubject,
     removeTeachingSubject,
     bulkCreateTeachers,
-    bulkDeleteTeachers
+    bulkDeleteTeachers,
+    bulkCreateTeachersFromCSV
 }
