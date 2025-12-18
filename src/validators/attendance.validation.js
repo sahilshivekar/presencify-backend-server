@@ -233,6 +233,34 @@ const getAttendanceOfAnyStudentForSpecificCourseInSemester = {
             })
             .messages({
                 'string.base': 'End date must be a string'
+            }),
+        semesterNumber: Joi.number()
+            .integer()
+            .optional()
+            .allow(null),
+        academicStartYear: Joi.number()
+            .integer()
+            .optional()
+            .allow(null),
+        academicEndYear: Joi.number()
+            .integer()
+            .optional()
+            .allow(null),
+        branchId: Joi.string()
+            .uuid()
+            .optional()
+            .allow(null, '')
+            .messages({
+                'string.guid': 'Branch ID must be a valid UUID',
+                'string.base': 'Branch ID must be a string'
+            }),
+        schemeId: Joi.string()
+            .uuid()
+            .optional()
+            .allow(null, '')
+            .messages({
+                'string.guid': 'Scheme ID must be a valid UUID',
+                'string.base': 'Scheme ID must be a string'
             })
     })
 };
@@ -304,6 +332,34 @@ const getAttendanceOfSelfForSpecificCourseInSemester = {
             })
             .messages({
                 'string.base': 'End date must be a string'
+            }),
+        semesterNumber: Joi.number()
+            .integer()
+            .optional()
+            .allow(null),
+        academicStartYear: Joi.number()
+            .integer()
+            .optional()
+            .allow(null),
+        academicEndYear: Joi.number()
+            .integer()
+            .optional()
+            .allow(null),
+        branchId: Joi.string()
+            .uuid()
+            .optional()
+            .allow(null, '')
+            .messages({
+                'string.guid': 'Branch ID must be a valid UUID',
+                'string.base': 'Branch ID must be a string'
+            }),
+        schemeId: Joi.string()
+            .uuid()
+            .optional()
+            .allow(null, '')
+            .messages({
+                'string.guid': 'Scheme ID must be a valid UUID',
+                'string.base': 'Scheme ID must be a string'
             })
     })
 };
@@ -375,6 +431,34 @@ const getAttendanceOfAllForSemesterDivisionBatchCourse = {
             })
             .messages({
                 'string.base': 'End date must be a string'
+            }),
+        semesterNumber: Joi.number()
+            .integer()
+            .optional()
+            .allow(null),
+        academicStartYear: Joi.number()
+            .integer()
+            .optional()
+            .allow(null),
+        academicEndYear: Joi.number()
+            .integer()
+            .optional()
+            .allow(null),
+        branchId: Joi.string()
+            .uuid()
+            .optional()
+            .allow(null, '')
+            .messages({
+                'string.guid': 'Branch ID must be a valid UUID',
+                'string.base': 'Branch ID must be a string'
+            }),
+        schemeId: Joi.string()
+            .uuid()
+            .optional()
+            .allow(null, '')
+            .messages({
+                'string.guid': 'Scheme ID must be a valid UUID',
+                'string.base': 'Scheme ID must be a string'
             })
     })
 };

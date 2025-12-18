@@ -13,6 +13,7 @@ import Division from '../db/models/division.model.js';
 import Semester from '../db/models/semester.model.js';
 import BranchCourseSemester from '../db/models/branchCourseSemester.model.js';
 import Branch from '../db/models/branch.model.js';
+import Scheme from '../db/models/scheme.model.js';
 import Student from '../db/models/student.model.js';
 import { Attendance, AttendanceStudent } from '../db/models/attendance.model.js';
 import StudentDivision from '../db/models/studentDivision.model.js';
@@ -325,7 +326,12 @@ const getAttendanceOfStudentForSpecificCourseInSemester = asyncHandler(async (re
         divisionId,
         batchId,
         startDate,
-        endDate
+        endDate,
+        semesterNumber,
+        academicStartYear,
+        academicEndYear,
+        branchId,
+        schemeId
     } = req.query;
 
     // courseid, semesterid, studentId
@@ -356,6 +362,18 @@ const getAttendanceOfStudentForSpecificCourseInSemester = asyncHandler(async (re
             throw new ApiError(httpStatus.NOT_FOUND, "Division not found")
         }
     }
+    if (branchId) {
+        const branch = await Branch.findByPk(branchId);
+        if (!branch) {
+            throw new ApiError(httpStatus.NOT_FOUND, "Branch not found")
+        }
+    }
+    if (schemeId) {
+        const scheme = await Scheme.findByPk(schemeId);
+        if (!scheme) {
+            throw new ApiError(httpStatus.NOT_FOUND, "Scheme not found")
+        }
+    }
     // for the rest of the subjects 
     const attendance = await getAttendanceOfStudentForSpecificCourseInSemesterQuery(
         studentId,
@@ -364,7 +382,12 @@ const getAttendanceOfStudentForSpecificCourseInSemester = asyncHandler(async (re
         divisionId ? divisionId : null,
         batchId ? batchId : null,
         startDate ? startDate : null,
-        endDate ? endDate : null
+        endDate ? endDate : null,
+        semesterNumber ? Number(semesterNumber) : null,
+        academicStartYear ? Number(academicStartYear) : null,
+        academicEndYear ? Number(academicEndYear) : null,
+        branchId ? branchId : null,
+        schemeId ? schemeId : null
     );
 
     res.status(httpStatus.OK).json(new ApiResponse(httpStatus.OK, "Attendance fetched successfully", attendance));
@@ -377,7 +400,12 @@ const getAttendanceOfAllForSemesterDivisionBatchCourse = asyncHandler(async (req
         batchId,
         courseId,
         startDate,
-        endDate
+        endDate,
+        semesterNumber,
+        academicStartYear,
+        academicEndYear,
+        branchId,
+        schemeId
     } = req.query;
 
 
@@ -408,6 +436,18 @@ const getAttendanceOfAllForSemesterDivisionBatchCourse = asyncHandler(async (req
             throw new ApiError(httpStatus.NOT_FOUND, "Batch not found")
         }
     }
+    if (branchId) {
+        const branch = await Branch.findByPk(branchId);
+        if (!branch) {
+            throw new ApiError(httpStatus.NOT_FOUND, "Branch not found")
+        }
+    }
+    if (schemeId) {
+        const scheme = await Scheme.findByPk(schemeId);
+        if (!scheme) {
+            throw new ApiError(httpStatus.NOT_FOUND, "Scheme not found")
+        }
+    }
 
     const attendance = await getAttendanceOfAllForSemesterDivisionBatchCourseQuery(
         semesterId,
@@ -415,7 +455,12 @@ const getAttendanceOfAllForSemesterDivisionBatchCourse = asyncHandler(async (req
         batchId,
         courseId,
         startDate,
-        endDate
+        endDate,
+        semesterNumber ? Number(semesterNumber) : null,
+        academicStartYear ? Number(academicStartYear) : null,
+        academicEndYear ? Number(academicEndYear) : null,
+        branchId ? branchId : null,
+        schemeId ? schemeId : null
     )
     res.status(httpStatus.OK).json(new ApiResponse(httpStatus.OK, "Attendance fetched successfully", attendance));
 })
@@ -430,7 +475,12 @@ const getAttendanceOfStudentForSpecificCourseInSemesterQuery = async (
     divisionId,
     batchId,
     startDate,
-    endDate
+    endDate,
+    semesterNumber,
+    academicStartYear,
+    academicEndYear,
+    branchId,
+    schemeId
 ) => {
 
     // for getting total and attended lectures of a student for a specific course
@@ -456,6 +506,11 @@ const getAttendanceOfStudentForSpecificCourseInSemesterQuery = async (
         attendance_students.student_id = '${studentId}'
         AND courses.course_id = '${courseId}'
         ${semesterId ? `AND semesters.semester_id = '${semesterId}'` : ''}
+        ${semesterNumber != null ? `AND semesters.semester_number = ${semesterNumber}` : ''}
+        ${academicStartYear != null ? `AND semesters.academic_start_year = ${academicStartYear}` : ''}
+        ${academicEndYear != null ? `AND semesters.academic_end_year = ${academicEndYear}` : ''}
+        ${branchId ? `AND semesters.branch_id = '${branchId}'` : ''}
+        ${schemeId ? `AND semesters.scheme_id = '${schemeId}'` : ''}
         ${divisionId ? `AND divisions.division_id = '${divisionId}'` : ''}
         ${batchId ? `AND batches.batch_id = '${batchId}'` : ''}
         ${startDate ? `AND attendances.attendance_date >= '${startDate}'` : ''}
@@ -485,6 +540,11 @@ const getAttendanceOfStudentForSpecificCourseInSemesterQuery = async (
         attendance_students.student_id = '${studentId}'
         AND courses.course_id = '${courseId}'
         ${semesterId ? `AND semesters.semester_id = '${semesterId}'` : ''}
+        ${semesterNumber != null ? `AND semesters.semester_number = ${semesterNumber}` : ''}
+        ${academicStartYear != null ? `AND semesters.academic_start_year = ${academicStartYear}` : ''}
+        ${academicEndYear != null ? `AND semesters.academic_end_year = ${academicEndYear}` : ''}
+        ${branchId ? `AND semesters.branch_id = '${branchId}'` : ''}
+        ${schemeId ? `AND semesters.scheme_id = '${schemeId}'` : ''}
         ${divisionId ? `AND divisions.division_id = '${divisionId}'` : ''}
         ${batchId ? `AND batches.batch_id = '${batchId}'` : ''}
         ${startDate ? `AND attendances.attendance_date >= '${startDate}'` : ''}
@@ -506,15 +566,29 @@ const getAttendanceOfAllForSemesterDivisionBatchCourseQuery = async (
     batchId,
     courseId,
     startDate,
-    endDate
+    endDate,
+    semesterNumber,
+    academicStartYear,
+    academicEndYear,
+    branchId,
+    schemeId
 ) => {
-    if (!semesterId && !divisionId && !courseId && !batchId && !startDate && !endDate) {
-        throw new ApiError(httpStatus.BAD_REQUEST, "One of the parameters is required: semesterId, divisionId, courseId, batchId, startDate, endDate")
+    if (!semesterId && !divisionId && !courseId && !batchId && !startDate && !endDate &&
+        semesterNumber == null && academicStartYear == null && academicEndYear == null && !branchId && !schemeId) {
+        throw new ApiError(
+            httpStatus.BAD_REQUEST,
+            "One of the parameters is required: semesterId, divisionId, courseId, batchId, startDate, endDate, semesterNumber, academicStartYear, academicEndYear, branchId, schemeId"
+        )
     }
 
     // Build WHERE clause dynamically
     const conditions = [];
     if (semesterId) conditions.push(`semesters.semester_id = '${semesterId}'`);
+    if (semesterNumber != null) conditions.push(`semesters.semester_number = ${semesterNumber}`);
+    if (academicStartYear != null) conditions.push(`semesters.academic_start_year = ${academicStartYear}`);
+    if (academicEndYear != null) conditions.push(`semesters.academic_end_year = ${academicEndYear}`);
+    if (branchId) conditions.push(`semesters.branch_id = '${branchId}'`);
+    if (schemeId) conditions.push(`semesters.scheme_id = '${schemeId}'`);
     if (divisionId) conditions.push(`timetables.division_id = '${divisionId}'`);
     if (batchId) conditions.push(`classes.batch_id = '${batchId}'`);
     if (courseId) conditions.push(`classes.course_id = '${courseId}'`);

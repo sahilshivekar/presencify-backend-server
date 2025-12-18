@@ -493,6 +493,24 @@ describe('Attendance API - getAttendanceOfAllForSemesterDivisionBatchCourse', ()
                 expect(Array.isArray(response.body.data)).toBe(true);
             });
 
+            test('should filter using semesterNumber, academic years, branchId and schemeId', async () => {
+                const response = await request(app)
+                    .get('/api/v1/attendances/all')
+                    .set('Authorization', `Bearer ${adminToken}`)
+                    .query({
+                        semesterNumber: 1,
+                        academicStartYear: 2024,
+                        academicEndYear: 2025,
+                        branchId: branch.id,
+                        schemeId: scheme.id,
+                    });
+
+                expect(response.status).toBe(httpStatus.OK);
+                expect(response.body.success).toBe(true);
+                expect(Array.isArray(response.body.data)).toBe(true);
+                expect(response.body.data.length).toBeGreaterThan(0);
+            });
+
             test('should combine multiple filters correctly', async () => {
                 const response = await request(app)
                     .get('/api/v1/attendances/all')

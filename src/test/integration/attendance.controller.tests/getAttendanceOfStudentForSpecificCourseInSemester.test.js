@@ -432,6 +432,25 @@ describe('Attendance API - getAttendanceOfStudentForSpecificCourseInSemester', (
                 expect(response.body.data.detailedAttendance[0].date).toBe('2024-01-15');
             });
 
+            test('should filter by semesterNumber, academic years, branchId and schemeId', async () => {
+                const response = await request(app)
+                    .get('/api/v1/attendances/student')
+                    .set('Authorization', `Bearer ${adminToken}`)
+                    .query({
+                        studentId: student1.id,
+                        courseId: course.id,
+                        semesterNumber: 1,
+                        academicStartYear: 2024,
+                        academicEndYear: 2025,
+                        branchId: branch.id,
+                        schemeId: scheme.id,
+                    });
+
+                expect(response.status).toBe(httpStatus.OK);
+                expect(response.body.success).toBe(true);
+                expect(response.body.data.aggregatedAttendance).toHaveLength(1);
+            });
+
             test('should get attendance for student in specific course successfully with teacher token', async () => {
                 const response = await request(app)
                     .get('/api/v1/attendances/student')
