@@ -68,10 +68,12 @@ describe('Room Controller - updateRoom', () => {
     const res = await request(app)
       .put(`${url}/${room.id}`)
       .set('Authorization', `Bearer ${adminToken}`)
-      .send({ roomNumber: 'A102', sittingCapacity: 45 });
+      .send({ roomNumber: 'A102', sittingCapacity: 45, name: 'HOD office', type: 'Office' });
     expect(res.status).toBe(httpStatus.OK);
     expect(res.body.success).toBe(true);
     expect(res.body.data.roomNumber).toBe('A102');
     expect(res.body.data.sittingCapacity).toBe(45);
+    expect(res.body.data.name).toBe('HOD office');
+    expect(res.body.data.type).toBe('Office');
   });
 });

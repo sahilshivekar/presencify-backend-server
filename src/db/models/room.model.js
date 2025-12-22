@@ -27,6 +27,18 @@ Room.init(
                 }
             }
         },
+        name: {
+            type: Sequelize.STRING,
+            allowNull: true,
+            defaultValue: null,
+            field: 'room_name'
+        },
+        type: {
+            type: Sequelize.ENUM('Classroom', 'Lab', 'Office'),
+            allowNull: true,
+            defaultValue: null,
+            field: 'room_type'
+        },
         sittingCapacity: {
             type: Sequelize.INTEGER,
             allowNull: false,

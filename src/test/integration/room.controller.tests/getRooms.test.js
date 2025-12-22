@@ -25,6 +25,10 @@ describe('Room Controller - getRooms', () => {
         { roomNumber: 'C303', sittingCapacity: 60 },
         { roomNumber: 'D404', sittingCapacity: 70 },
       ]);
+      // Additional rooms covering name and type
+      await Room.create({ roomNumber: 'L1', sittingCapacity: 30, name: 'Chemistry lab', type: 'Lab' });
+      await Room.create({ roomNumber: 'O1', sittingCapacity: 10, name: 'HOD office', type: 'Office' });
+      await Room.create({ roomNumber: 'G12', sittingCapacity: 80, name: null, type: 'Classroom' });
     } catch (err) {
       console.error('Room.bulkCreate error:', err);
       throw err;
@@ -81,5 +85,40 @@ describe('Room Controller - getRooms', () => {
     expect(res.status).toBe(httpStatus.OK);
     expect(res.body.success).toBe(true);
     expect(res.body.data.rooms[0].sittingCapacity).toBeGreaterThanOrEqual(res.body.data.rooms[1].sittingCapacity);
+  });
+
+  test('should search rooms by name (searchQuery)', async () => {
+    const res = await request(app)
+      .get(url)
+      .set('Authorization', `Bearer ${adminToken}`)
+      .query({ searchQuery: 'Chemistry' });
+    expect(res.status).toBe(httpStatus.OK);
+    expect(res.body.success).toBe(true);
+    const rooms = res.body.data.rooms;
+    expect(rooms.some(r => r.name === 'Chemistry lab')).toBe(true);
+  });
+
+  test('should search rooms by type (searchQuery)', async () => {
+    const res = await request(app)
+      .get(url)
+      .set('Authorization', `Bearer ${adminToken}`)
+      .query({ searchQuery: 'Lab', getAll: true });
+    expect(res.status).toBe(httpStatus.OK);
+    expect(res.body.success).toBe(true);
+    const rooms = res.body.data.rooms;
+    // at least one Lab should appear
+    expect(rooms.some(r => r.type === 'Lab')).toBe(true);
+  });
+
+  test('should filter rooms by type via query param', async () => {
+    const res = await request(app)
+      .get(url)
+      .set('Authorization', `Bearer ${adminToken}`)
+      .query({ type: 'Office', getAll: true });
+    expect(res.status).toBe(httpStatus.OK);
+    expect(res.body.success).toBe(true);
+    const rooms = res.body.data.rooms;
+    expect(rooms.length).toBeGreaterThanOrEqual(1);
+    expect(rooms.every(r => r.type === 'Office')).toBe(true);
   });
 });

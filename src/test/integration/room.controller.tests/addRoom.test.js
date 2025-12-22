@@ -64,10 +64,12 @@ describe('Room Controller - addRoom', () => {
     const res = await request(app)
       .post(url)
       .set('Authorization', `Bearer ${adminToken}`)
-      .send({ roomNumber: 'B202', sittingCapacity: 50 });
+      .send({ roomNumber: 'B202', sittingCapacity: 50, name: 'Chemistry lab', type: 'Lab' });
     expect(res.status).toBe(httpStatus.CREATED);
     expect(res.body.success).toBe(true);
     expect(res.body.data.roomNumber).toBe('B202');
     expect(res.body.data.sittingCapacity).toBe(50);
+    expect(res.body.data.name).toBe('Chemistry lab');
+    expect(res.body.data.type).toBe('Lab');
   });
 });

@@ -1,4 +1,4 @@
-import { Op } from 'sequelize';
+import { Op, col, where as sqWhere, cast } from 'sequelize';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { ApiResponse } from '../utils/ApiResponse.js';
 import { ApiError } from '../utils/ApiError.js';
@@ -7,11 +7,13 @@ import Class from '../db/models/class.model.js';
 import httpStatus from 'http-status';
 
 const addRoom = asyncHandler(async (req, res) => {
-    const { roomNumber, sittingCapacity } = req.body;
+    const { roomNumber, sittingCapacity, name = null, type = null } = req.body;
 
     const room = await Room.create({
         roomNumber,
-        sittingCapacity
+        sittingCapacity,
+        name: name === '' ? null : name,
+        type
     });
 
     res.status(httpStatus.CREATED).json(new ApiResponse(httpStatus.CREATED, "Room added successfully", room));
@@ -27,16 +29,22 @@ const getRooms = asyncHandler(async (req, res) => {
         page = 1,
         limit = 10,
         getAll = false,
+        type
     } = req.query;
 
     const offset = (parseInt(page, 10) - 1) * parseInt(limit, 10);
 
-    let searchClause = {};
-
+    const where = {};
     if (searchQuery) {
-        searchClause = {
-            roomNumber: { [Op.iLike]: `%${searchQuery}%` }
-        }
+        where[Op.or] = [
+            { roomNumber: { [Op.iLike]: `%${searchQuery}%` } },
+            { name: { [Op.iLike]: `%${searchQuery}%` } },
+            // Cast enum column to text for ILIKE search
+            sqWhere(cast(col('room_type'), 'TEXT'), { [Op.iLike]: `%${searchQuery}%` })
+        ];
+    }
+    if (type) {
+        where.type = type;
     }
 
     const include = [];
@@ -56,7 +64,7 @@ const getRooms = asyncHandler(async (req, res) => {
     }
 
     const rooms = await Room.findAndCountAll({
-        where: searchClause,
+        where,
         ...(include.length ? { include } : {}),
         order: [[sortBy, sortOrder]],
         ...(limit && getAll === false ? { limit } : {}),
@@ -89,7 +97,7 @@ const getRoomById = asyncHandler(async (req, res) => {
 
 const updateRoom = asyncHandler(async (req, res) => {
     const { id } = req.params;
-    const { roomNumber, sittingCapacity } = req.body;
+    const { roomNumber, sittingCapacity, name, type } = req.body;
 
     const room = await Room.findByPk(id);
 
@@ -97,6 +105,8 @@ const updateRoom = asyncHandler(async (req, res) => {
 
     room.roomNumber = roomNumber || room.roomNumber;
     room.sittingCapacity = sittingCapacity || room.sittingCapacity;
+    if (name !== undefined) room.name = name === '' ? null : name;
+    if (type !== undefined) room.type = type;
 
     await room.save();
 
