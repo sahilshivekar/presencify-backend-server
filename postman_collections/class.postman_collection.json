@@ -1,0 +1,236 @@
+{
+  "info": {
+    "name": "Class API",
+    "_postman_id": "class-api-collection",
+    "description": "Postman collection for Class API endpoints",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Get Classes",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/v1/classes",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "classes"]
+        }
+      }
+    },
+    {
+      "name": "Add Class",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/v1/classes",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "classes"]
+        }
+      }
+    },
+    {
+      "name": "Get Cancelled Classes",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/v1/classes/cancelled",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "classes", "cancelled"]
+        }
+      }
+    },
+    {
+      "name": "Cancel Class",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/v1/classes/cancelled",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "classes", "cancelled"]
+        }
+      }
+    },
+    {
+      "name": "Get Class by ID",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/v1/classes/:id",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "classes", ":id"],
+          "variable": [
+            {
+              "key": "id",
+              "value": ""
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Extend Active Till Date of Class",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/v1/classes/:id",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "classes", ":id"],
+          "variable": [
+            {
+              "key": "id",
+              "value": ""
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Remove Class",
+      "request": {
+        "method": "DELETE",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/v1/classes/:id",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "classes", ":id"],
+          "variable": [
+            {
+              "key": "id",
+              "value": ""
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Add Extra Class",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/v1/classes/extra",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "classes", "extra"]
+        }
+      }
+    },
+    {
+      "name": "Bulk Create Classes",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/v1/classes/bulk/create",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "classes", "bulk", "create"]
+        }
+      }
+    },
+    {
+      "name": "Bulk Delete Classes",
+      "request": {
+        "method": "DELETE",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/v1/classes/bulk/delete",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "classes", "bulk", "delete"]
+        }
+      }
+    },
+    {
+      "name": "Bulk Create Classes from CSV",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/v1/classes/bulk/csv-upload",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "classes", "bulk", "csv-upload"]
+        }
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:3000"
+    },
+    {
+      "key": "token",
+      "value": ""
+    }
+  ]
+}

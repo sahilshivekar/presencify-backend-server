@@ -1,0 +1,110 @@
+{
+  "info": {
+    "name": "Admin API",
+    "_postman_id": "admin-api-collection",
+    "description": "Postman collection for Admin API endpoints",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Get Admin Details",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/v1/admins/me",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "admins", "me"]
+        }
+      }
+    },
+    {
+      "name": "Update Admin Details",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/v1/admins/me",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "admins", "me"]
+        }
+      }
+    },
+    {
+      "name": "Remove Admin",
+      "request": {
+        "method": "DELETE",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/v1/admins/me",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "admins", "me"]
+        }
+      }
+    },
+    {
+      "name": "Get Admins",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/v1/admins",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "admins"]
+        }
+      }
+    },
+    {
+      "name": "Add Admin",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/v1/admins",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "admins"]
+        }
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:3000"
+    },
+    {
+      "key": "token",
+      "value": ""
+    }
+  ]
+}

@@ -1,0 +1,224 @@
+{
+  "info": {
+    "name": "Course API",
+    "_postman_id": "course-api-collection",
+    "description": "Postman collection for Course API endpoints",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Get Courses",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/v1/courses",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "courses"]
+        }
+      }
+    },
+    {
+      "name": "Add Course",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/v1/courses",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "courses"]
+        }
+      }
+    },
+    {
+      "name": "Get Course by ID",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/v1/courses/:id",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "courses", ":id"],
+          "variable": [
+            {
+              "key": "id",
+              "value": ""
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Update Course",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/v1/courses/:id",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "courses", ":id"],
+          "variable": [
+            {
+              "key": "id",
+              "value": ""
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Remove Course",
+      "request": {
+        "method": "DELETE",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/v1/courses/:id",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "courses", ":id"],
+          "variable": [
+            {
+              "key": "id",
+              "value": ""
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Add Course to Branch with Semester Number",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/v1/courses/branch",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "courses", "branch"]
+        }
+      }
+    },
+    {
+      "name": "Remove Course from Branch with Semester Number",
+      "request": {
+        "method": "DELETE",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/v1/courses/branch/:branchCourseSemesterId",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "courses", "branch", ":branchCourseSemesterId"],
+          "variable": [
+            {
+              "key": "branchCourseSemesterId",
+              "value": ""
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Bulk Create Courses",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/v1/courses/bulk/create",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "courses", "bulk", "create"]
+        }
+      }
+    },
+    {
+      "name": "Bulk Delete Courses",
+      "request": {
+        "method": "DELETE",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/v1/courses/bulk/delete",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "courses", "bulk", "delete"]
+        }
+      }
+    },
+    {
+      "name": "Bulk Create Courses from CSV",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/v1/courses/bulk/csv",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "courses", "bulk", "csv"]
+        }
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:3000"
+    },
+    {
+      "key": "token",
+      "value": ""
+    }
+  ]
+}

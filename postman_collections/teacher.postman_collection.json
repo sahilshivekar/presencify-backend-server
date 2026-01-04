@@ -1,0 +1,284 @@
+{
+  "info": {
+    "name": "Teacher API",
+    "_postman_id": "teacher-api-collection",
+    "description": "Postman collection for Teacher API endpoints",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Get Teachers",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/v1/teachers",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "teachers"]
+        }
+      }
+    },
+    {
+      "name": "Add Teacher",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/v1/teachers",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "teachers"]
+        }
+      }
+    },
+    {
+      "name": "Remove Teacher",
+      "request": {
+        "method": "DELETE",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/v1/teachers",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "teachers"]
+        }
+      }
+    },
+    {
+      "name": "Update Teacher Image",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/v1/teachers/image",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "teachers", "image"]
+        }
+      }
+    },
+    {
+      "name": "Remove Teacher Image",
+      "request": {
+        "method": "DELETE",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/v1/teachers/image",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "teachers", "image"]
+        }
+      }
+    },
+    {
+      "name": "Update Teacher Password",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/v1/teachers/password",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "teachers", "password"]
+        }
+      }
+    },
+    {
+      "name": "Get Teaching Subjects",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/v1/teachers/subjects",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "teachers", "subjects"]
+        }
+      }
+    },
+    {
+      "name": "Add Teaching Subject",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/v1/teachers/subjects",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "teachers", "subjects"]
+        }
+      }
+    },
+    {
+      "name": "Remove Teaching Subject",
+      "request": {
+        "method": "DELETE",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/v1/teachers/subjects",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "teachers", "subjects"]
+        }
+      }
+    },
+    {
+      "name": "Bulk Create Teachers",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/v1/teachers/bulk/create",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "teachers", "bulk", "create"]
+        }
+      }
+    },
+    {
+      "name": "Bulk Delete Teachers",
+      "request": {
+        "method": "DELETE",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/v1/teachers/bulk/delete",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "teachers", "bulk", "delete"]
+        }
+      }
+    },
+    {
+      "name": "Bulk Create Teachers from CSV",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/v1/teachers/bulk/csv",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "teachers", "bulk", "csv"]
+        }
+      }
+    },
+    {
+      "name": "Get Teacher by ID",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/v1/teachers/:id",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "teachers", ":id"],
+          "variable": [
+            {
+              "key": "id",
+              "value": ""
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Update Teacher Details",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/v1/teachers/:id",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "teachers", ":id"],
+          "variable": [
+            {
+              "key": "id",
+              "value": ""
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:3000"
+    },
+    {
+      "key": "token",
+      "value": ""
+    }
+  ]
+}

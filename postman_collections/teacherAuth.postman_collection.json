@@ -1,0 +1,110 @@
+{
+  "info": {
+    "name": "Teacher Auth API",
+    "_postman_id": "teacher-auth-api-collection",
+    "description": "Postman collection for Teacher Auth API endpoints",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Login Teacher",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/api/v1/auth/teachers/login",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "auth", "teachers", "login"]
+        }
+      }
+    },
+    {
+      "name": "Send Verification Code to Email",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/api/v1/auth/teachers/send-verification-code",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "auth", "teachers", "send-verification-code"]
+        }
+      }
+    },
+    {
+      "name": "Refresh Tokens",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/api/v1/auth/teachers/access-token",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "auth", "teachers", "access-token"]
+        }
+      }
+    },
+    {
+      "name": "Update Teacher Password",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/v1/auth/teachers/update-password",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "auth", "teachers", "update-password"]
+        }
+      }
+    },
+    {
+      "name": "Verify Code",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/v1/auth/teachers/verify-code",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "auth", "teachers", "verify-code"]
+        }
+      }
+    },
+    {
+      "name": "Logout",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/v1/auth/teachers/logout",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "auth", "teachers", "logout"]
+        }
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:3000"
+    },
+    {
+      "key": "token",
+      "value": ""
+    }
+  ]
+}

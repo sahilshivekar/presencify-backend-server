@@ -1,0 +1,140 @@
+{
+  "info": {
+    "name": "Admin Auth API",
+    "_postman_id": "admin-auth-api-collection",
+    "description": "Postman collection for Admin Auth API endpoints",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Login",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/api/v1/auth/admins/login",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "auth", "admins", "login"]
+        }
+      }
+    },
+    {
+      "name": "Forgot Password",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/api/v1/auth/admins/forgot-password",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "auth", "admins", "forgot-password"]
+        }
+      }
+    },
+    {
+      "name": "Verify Code",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/api/v1/auth/admins/verify-code",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "auth", "admins", "verify-code"]
+        }
+      }
+    },
+    {
+      "name": "Refresh Tokens",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/api/v1/auth/admins/access-token",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "auth", "admins", "access-token"]
+        }
+      }
+    },
+    {
+      "name": "Verify Password",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/v1/auth/admins/verify-password",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "auth", "admins", "verify-password"]
+        }
+      }
+    },
+    {
+      "name": "Update Password",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/v1/auth/admins/update-password",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "auth", "admins", "update-password"]
+        }
+      }
+    },
+    {
+      "name": "Logout",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/v1/auth/admins/logout",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "auth", "admins", "logout"]
+        }
+      }
+    },
+    {
+      "name": "Send Email Verification",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/v1/auth/admins/email-verification",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "auth", "admins", "email-verification"]
+        }
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:3000"
+    },
+    {
+      "key": "token",
+      "value": ""
+    }
+  ]
+}

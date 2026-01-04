@@ -1,0 +1,182 @@
+{
+  "info": {
+    "name": "Semester API",
+    "_postman_id": "semester-api-collection",
+    "description": "Postman collection for Semester API endpoints",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Get Semesters",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/v1/semesters",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "semesters"]
+        }
+      }
+    },
+    {
+      "name": "Add Semester",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/v1/semesters",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "semesters"]
+        }
+      }
+    },
+    {
+      "name": "Get Courses of Semester",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/v1/semesters/courses",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "semesters", "courses"]
+        }
+      }
+    },
+    {
+      "name": "Get Semester by ID",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/v1/semesters/:id",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "semesters", ":id"],
+          "variable": [
+            {
+              "key": "id",
+              "value": ""
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Update Semester",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/v1/semesters/:id",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "semesters", ":id"],
+          "variable": [
+            {
+              "key": "id",
+              "value": ""
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Remove Semester",
+      "request": {
+        "method": "DELETE",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/v1/semesters/:id",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "semesters", ":id"],
+          "variable": [
+            {
+              "key": "id",
+              "value": ""
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Bulk Create Semesters",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/v1/semesters/bulk/create",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "semesters", "bulk", "create"]
+        }
+      }
+    },
+    {
+      "name": "Bulk Delete Semesters",
+      "request": {
+        "method": "DELETE",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/v1/semesters/bulk/delete",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "semesters", "bulk", "delete"]
+        }
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:3000"
+    },
+    {
+      "key": "token",
+      "value": ""
+    }
+  ]
+}

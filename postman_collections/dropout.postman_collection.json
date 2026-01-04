@@ -1,0 +1,98 @@
+{
+  "info": {
+    "name": "Dropout API",
+    "_postman_id": "dropout-api-collection",
+    "description": "Postman collection for Dropout API endpoints",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Add Student to Dropout",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/v1/dropouts",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "dropouts"]
+        }
+      }
+    },
+    {
+      "name": "Remove Student from Dropout",
+      "request": {
+        "method": "DELETE",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/v1/dropouts",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "dropouts"]
+        }
+      }
+    },
+    {
+      "name": "Get Dropout Details of Student",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/v1/dropouts/student",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "dropouts", "student"]
+        }
+      }
+    },
+    {
+      "name": "Get Dropout by ID",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/v1/dropouts/:id",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "dropouts", ":id"],
+          "variable": [
+            {
+              "key": "id",
+              "value": ""
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:3000"
+    },
+    {
+      "key": "token",
+      "value": ""
+    }
+  ]
+}

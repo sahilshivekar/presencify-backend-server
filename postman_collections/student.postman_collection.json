@@ -1,0 +1,542 @@
+{
+  "info": {
+    "name": "Student API",
+    "_postman_id": "student-api-collection",
+    "description": "Postman collection for Student API endpoints",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Get Students",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/v1/students",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "students"]
+        }
+      }
+    },
+    {
+      "name": "Add Student",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/v1/students",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "students"]
+        }
+      }
+    },
+    {
+      "name": "Update Student Password",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/v1/students/password",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "students", "password"]
+        }
+      }
+    },
+    {
+      "name": "Update Student Image",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/v1/students/image",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "students", "image"]
+        }
+      }
+    },
+    {
+      "name": "Remove Student Image",
+      "request": {
+        "method": "DELETE",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/v1/students/image",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "students", "image"]
+        }
+      }
+    },
+    {
+      "name": "Get Student Semesters by ID",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/v1/students/:id/semesters",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "students", ":id", "semesters"],
+          "variable": [
+            {
+              "key": "id",
+              "value": ""
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Get Student Divisions by ID",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/v1/students/:id/divisions",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "students", ":id", "divisions"],
+          "variable": [
+            {
+              "key": "id",
+              "value": ""
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Get Student Batches by ID",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/v1/students/:id/batches",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "students", ":id", "batches"],
+          "variable": [
+            {
+              "key": "id",
+              "value": ""
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Add Student to Semester",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/v1/students/semester",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "students", "semester"]
+        }
+      }
+    },
+    {
+      "name": "Remove Student from Semester",
+      "request": {
+        "method": "DELETE",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/v1/students/semester",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "students", "semester"]
+        }
+      }
+    },
+    {
+      "name": "Add Student to Division",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/v1/students/division",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "students", "division"]
+        }
+      }
+    },
+    {
+      "name": "Change Student Division",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/v1/students/division",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "students", "division"]
+        }
+      }
+    },
+    {
+      "name": "Revert Add Student to Division",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/v1/students/division/revert-add",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "students", "division", "revert-add"]
+        }
+      }
+    },
+    {
+      "name": "Revert Change Student Division",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/v1/students/division/revert-change",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "students", "division", "revert-change"]
+        }
+      }
+    },
+    {
+      "name": "Add Student to Batch",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/v1/students/batch",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "students", "batch"]
+        }
+      }
+    },
+    {
+      "name": "Change Student Batch",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/v1/students/batch",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "students", "batch"]
+        }
+      }
+    },
+    {
+      "name": "Revert Add Student to Batch",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/v1/students/batch/revert-add",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "students", "batch", "revert-add"]
+        }
+      }
+    },
+    {
+      "name": "Revert Change Student Batch",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/v1/students/batch/revert-change",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "students", "batch", "revert-change"]
+        }
+      }
+    },
+    {
+      "name": "Get Student Details by ID",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/v1/students/:id",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "students", ":id"],
+          "variable": [
+            {
+              "key": "id",
+              "value": ""
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Update Student Details",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/v1/students/:id",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "students", ":id"],
+          "variable": [
+            {
+              "key": "id",
+              "value": ""
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Remove Student",
+      "request": {
+        "method": "DELETE",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/v1/students/:id",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "students", ":id"],
+          "variable": [
+            {
+              "key": "id",
+              "value": ""
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Bulk Create Students",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/v1/students/bulk/create",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "students", "bulk", "create"]
+        }
+      }
+    },
+    {
+      "name": "Bulk Delete Students",
+      "request": {
+        "method": "DELETE",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/v1/students/bulk/delete",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "students", "bulk", "delete"]
+        }
+      }
+    },
+    {
+      "name": "Bulk Add Students to Semester",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/v1/students/bulk/semester",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "students", "bulk", "semester"]
+        }
+      }
+    },
+    {
+      "name": "Bulk Add Students to Division",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/v1/students/bulk/division",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "students", "bulk", "division"]
+        }
+      }
+    },
+    {
+      "name": "Bulk Add Students to Batch",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/v1/students/bulk/batch",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "students", "bulk", "batch"]
+        }
+      }
+    },
+    {
+      "name": "Bulk Create Students from CSV",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/v1/students/bulk/csv",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "students", "bulk", "csv"]
+        }
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:3000"
+    },
+    {
+      "key": "token",
+      "value": ""
+    }
+  ]
+}

@@ -1,0 +1,218 @@
+{
+  "info": {
+    "name": "Attendance API",
+    "_postman_id": "attendance-api-collection",
+    "description": "Postman collection for Attendance API endpoints",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Get Attendance",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/v1/attendances",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "attendances"]
+        }
+      }
+    },
+    {
+      "name": "Create Attendance",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/v1/attendances",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "attendances"]
+        }
+      }
+    },
+    {
+      "name": "Remove Attendance",
+      "request": {
+        "method": "DELETE",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/v1/attendances",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "attendances"]
+        }
+      }
+    },
+    {
+      "name": "Add Students Attendance",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/v1/attendances/students",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "attendances", "students"]
+        }
+      }
+    },
+    {
+      "name": "Update Student Attendance",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/v1/attendances/students",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "attendances", "students"]
+        }
+      }
+    },
+    {
+      "name": "Get Attendance of Student",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/v1/attendances/student",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "attendances", "student"]
+        }
+      }
+    },
+    {
+      "name": "Get My Attendance",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/v1/attendances/me",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "attendances", "me"]
+        }
+      }
+    },
+    {
+      "name": "Get Attendance of All",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/v1/attendances/all",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "attendances", "all"]
+        }
+      }
+    },
+    {
+      "name": "Get Active Attendance Sheet",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/v1/attendances/active",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "attendances", "active"]
+        }
+      }
+    },
+    {
+      "name": "Send Attendance Report",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/v1/attendances/report",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "attendances", "report"]
+        }
+      }
+    },
+    {
+      "name": "Bulk Update Student Attendance",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/v1/attendances/bulk/update",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "attendances", "bulk", "update"]
+        }
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:3000"
+    },
+    {
+      "key": "token",
+      "value": ""
+    }
+  ]
+}

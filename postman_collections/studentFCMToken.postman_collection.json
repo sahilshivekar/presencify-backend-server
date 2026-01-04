@@ -1,0 +1,74 @@
+{
+  "info": {
+    "name": "Student FCM Token API",
+    "_postman_id": "student-fcm-token-api-collection",
+    "description": "Postman collection for Student FCM Token API endpoints",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Add Student FCM Tokens",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/v1/student-fcm-tokens",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "student-fcm-tokens"]
+        }
+      }
+    },
+    {
+      "name": "Update Student FCM Tokens",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/v1/student-fcm-tokens",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "student-fcm-tokens"]
+        }
+      }
+    },
+    {
+      "name": "Remove Student FCM Tokens",
+      "request": {
+        "method": "DELETE",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/v1/student-fcm-tokens",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "student-fcm-tokens"]
+        }
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:3000"
+    },
+    {
+      "key": "token",
+      "value": ""
+    }
+  ]
+}
