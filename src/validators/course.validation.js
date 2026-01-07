@@ -60,8 +60,8 @@ const updateCourse = {
             .messages({ 'string.min': 'Code must be at least 1 character', 'string.max': 'Code cannot exceed 50 characters' }),
         name: Joi.string().trim().min(1).max(200)
             .messages({ 'string.min': 'Name must be at least 1 character', 'string.max': 'Name cannot exceed 200 characters' }),
-        abbreviation: Joi.string().trim().max(20)
-            .messages({ 'string.max': 'Abbreviation cannot exceed 20 characters' }),
+        optionalSubject: Joi.string().trim().allow(null, '')
+            .messages({ 'string.base': 'Optional subject must be a string' }),
         schemeId: uuid.messages({ 'string.guid': 'Scheme ID must be a valid UUID' })
     }).min(1).messages({ 'object.min': 'Provide at least one field to update' })
 };

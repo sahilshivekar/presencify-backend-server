@@ -199,7 +199,7 @@ const removeCourseFromBranchWithSemesterNumber = asyncHandler(async (req, res) =
 //* update course
 const updateCourse = asyncHandler(async (req, res) => {
     const { id } = req.params;
-    const { code, name, abbreviation, schemeId } = req.body;
+    const { code, name, optionalSubject, schemeId } = req.body;
 
     // Remove input validation for presence, handled by validator
 
@@ -210,7 +210,7 @@ const updateCourse = asyncHandler(async (req, res) => {
     }
 
     course.name = name || course.name;
-    course.abbreviation = abbreviation || course.abbreviation;
+    course.optionalSubject = optionalSubject || course.optionalSubject;
     course.schemeId = schemeId || course.schemeId;
     course.code = code || course.code;
 
