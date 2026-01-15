@@ -197,7 +197,7 @@ const logout = asyncHandler(async (req, res) => {
             new ApiResponse(
                 httpStatus.OK,
                 "Logged out successfully",
-                "If you are not accessing this api from a browser then you must manually remove the tokens stored"
+                null
             )
         );
 });
