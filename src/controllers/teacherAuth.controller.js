@@ -102,13 +102,13 @@ const loginTeacher = asyncHandler(async (req, res) => {
     })
 
     if (!teacher) {
-        throw new ApiError(httpStatus.NOT_FOUND, "No teacher found with entered credentials")
+        throw new ApiError(httpStatus.BAD_REQUEST, "No teacher found with entered credentials")
     }
 
     const isPasswordMatching = await teacher.isPasswordMatching(password);
 
     if (!isPasswordMatching) {
-        throw new ApiError(httpStatus.UNAUTHORIZED, "Password didn't match")
+        throw new ApiError(httpStatus.BAD_REQUEST, "Password didn't match")
     }
 
     const { newAccessToken, newRefreshToken } = await generateAccessAndRefreshTokens(teacher);

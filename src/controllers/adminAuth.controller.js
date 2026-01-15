@@ -101,13 +101,13 @@ const login = asyncHandler(async (req, res) => {
     });
 
     if (!admin) {
-        throw new ApiError(httpStatus.UNAUTHORIZED, "Invalid email or username");
+        throw new ApiError(httpStatus.BAD_REQUEST, "Invalid email or username");
     }
 
     const isPasswordMatching = await admin.isPasswordMatching(password);
 
     if (!isPasswordMatching) {
-        throw new ApiError(httpStatus.UNAUTHORIZED, "Invalid password");
+        throw new ApiError(httpStatus.BAD_REQUEST, "Invalid password");
     }
 
     const { newAccessToken, newRefreshToken } = await generateAccessAndRefreshTokens(admin);
