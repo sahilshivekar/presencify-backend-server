@@ -9,6 +9,8 @@ import Course from '../db/models/course.model.js';
 import BranchCourseSemester from '../db/models/branchCourseSemester.model.js';
 import University from '../db/models/university.model.js';
 import SemesterCourse from '../db/models/semesterCourse.model.js';
+import Division from '../db/models/division.model.js';
+import Batch from '../db/models/batch.model.js';
 import httpStatus from 'http-status';
 import sequelize from '../config/db.connection.js';
 
@@ -71,6 +73,16 @@ const getSemesters = asyncHandler(async (req, res) => {
                 model: Scheme,
                 required: true,
                 duplicating: false,
+            },
+            {
+                model: Division,
+                duplicating: false,
+                include: [
+                    {
+                        model: Batch,
+                        duplicating: false,
+                    }
+                ]
             }
         ],
         ...(limit && getAll === false ? { offset: offset, } : {}),

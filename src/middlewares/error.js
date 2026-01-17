@@ -24,6 +24,9 @@ const errorHandler = (err, req, res, next) => {
         statusCode = httpStatus.INTERNAL_SERVER_ERROR;
         message = httpStatus[httpStatus.INTERNAL_SERVER_ERROR];
     }
+    if (err.statusCode === httpStatus.UNAUTHORIZED) {
+        res.set('WWW-Authenticate', 'Bearer');
+    }
 
     res.locals.errorMessage = err.message;
     res.locals.stack = err.stack;

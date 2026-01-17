@@ -6,6 +6,7 @@ import { Op } from 'sequelize';
 import Semester from '../db/models/semester.model.js';
 import Branch from '../db/models/branch.model.js';
 import Scheme from '../db/models/scheme.model.js';
+import Batch from '../db/models/batch.model.js';
 import httpStatus from 'http-status';
 
 const getDivisions = asyncHandler(async (req, res) => {
@@ -63,28 +64,32 @@ const getDivisions = asyncHandler(async (req, res) => {
                 ...(semesterId ? [{ semesterId }] : []),
             ]
         },
-        include: {
-            model: Semester,
-            required: true,
-            where: semesterWhereClause,
-            duplicating: false,
-            include: [
-                {
-                    model: Branch,
-                    required: true,
-                    duplicating: false,
-                },
-                {
-                    model: Scheme,
-                    required: true,
-                    duplicating: false,
-                }
-            ]
-        },
+        include: [
+            {
+                model: Semester,
+                required: true,
+                where: semesterWhereClause,
+                duplicating: false,
+                include: [
+                    {
+                        model: Branch,
+                        required: true,
+                        duplicating: false,
+                    },
+                    {
+                        model: Scheme,
+                        required: true,
+                        duplicating: false,
+                    }
+                ]
+            },
+            {
+                model: Batch,
+            }
+        ],
         ...(limit ? { offset: offset, } : {}),
         ...(limit && getAll === false ? { limit } : {})
     });
-
     res.status(httpStatus.OK).json(new ApiResponse(httpStatus.OK, "Divisions fetched successfully", {
         divisions: divisions.rows,
         totalCount: divisions.count
