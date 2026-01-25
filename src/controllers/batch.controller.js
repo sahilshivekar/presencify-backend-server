@@ -157,6 +157,16 @@ const addBatch = asyncHandler(async (req, res) => {
         throw new ApiError(httpStatus.NOT_FOUND, "Division not found");
     }
 
+    const existingBatch = await Batch.findOne({
+        where: {
+            batchCode: batchCode,
+            divisionId: divisionId
+        }
+    });
+    if (existingBatch) {
+        throw new ApiError(httpStatus.CONFLICT, "Batch with this code already exists in the division");
+    }
+
     const batch = await Batch.create({
         batchCode: batchCode,
         divisionId: divisionId,
@@ -177,6 +187,19 @@ const updateBatch = asyncHandler(async (req, res) => {
 
     if (!batch) {
         throw new ApiError(httpStatus.NOT_FOUND, "Batch not found");
+    }
+
+    if (batchCode && batchCode !== batch.batchCode) {
+        const existingBatch = await Batch.findOne({
+            where: {
+                batchCode: batchCode,
+                divisionId: batch.divisionId,
+                id: { [Op.ne]: id }
+            }
+        });
+        if (existingBatch) {
+            throw new ApiError(httpStatus.CONFLICT, "Batch with this code already exists in the division");
+        }
     }
 
     batch.batchCode = batchCode;

@@ -24,10 +24,6 @@ Batch.init(
                 notEmpty: {
                     msg: 'Batch code cannot be empty'
                 }
-            },
-            unique: {
-                name: 'batch_unique',
-                msg: 'Batch already exists'
             }
         },
         divisionId: {

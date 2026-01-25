@@ -117,7 +117,7 @@ const addDivision = asyncHandler(async (req, res) => {
         }
     });
     if (existingDivision) {
-        throw new ApiError(httpStatus.CONFLICT, "Duplicate divisionCode in the same semester is not allowed");
+        throw new ApiError(httpStatus.CONFLICT, "Duplicate Division Code in the same semester is not allowed");
     }
 
     const division = await Division.create({
@@ -142,6 +142,19 @@ const updateDivision = asyncHandler(async (req, res) => {
 
     if (!division) {
         throw new ApiError(httpStatus.NOT_FOUND, "Division not found");
+    }
+
+    if (divisionCode && divisionCode !== division.divisionCode) {
+        const existingDivision = await Division.findOne({
+            where: {
+                divisionCode: divisionCode,
+                semesterId: division.semesterId,
+                id: { [Op.ne]: id }
+            }
+        });
+        if (existingDivision) {
+            throw new ApiError(httpStatus.CONFLICT, "Duplicate divisionCode in the same semester is not allowed");
+        }
     }
 
     division.divisionCode = divisionCode;

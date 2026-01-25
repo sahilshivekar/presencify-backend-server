@@ -512,6 +512,51 @@ const getStudentDetailsById = asyncHandler(async (req, res) => {
             {
                 model: Scheme,
                 required: true
+            },
+            {
+                model: StudentSemester,
+                include: [
+                    {
+                        model: Semester,
+                        required: true
+                    }
+                ]
+            },
+            {
+                model: StudentDivision,
+                include: [
+                    {
+                        model: Division,
+                        required: true,
+                        include: [
+                            {
+                                model: Semester,
+                                required: true
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                model: StudentBatch,
+                include: [
+                    {
+                        model: Batch,
+                        required: true,
+                        include: [
+                            {
+                                model: Division,
+                                required: true,
+                                include: [
+                                    {
+                                        model: Semester,
+                                        required: true
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                ]
             }
         ]
     });

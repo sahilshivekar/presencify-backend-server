@@ -23,10 +23,6 @@ Division.init(
                 notEmpty: {
                     msg: 'Division code cannot be empty'
                 }
-            },
-            unique: {
-                name: 'division_unique',
-                msg: 'Division already exists'
             }
         },
         semesterId: {
