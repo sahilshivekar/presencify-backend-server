@@ -377,10 +377,10 @@ const removeSemester = asyncHandler(async (req, res) => {
     await semester.destroy();
 
     res
-        .status(httpStatus.NO_CONTENT)
+        .status(httpStatus.OK)
         .json(
             new ApiResponse(
-                httpStatus.NO_CONTENT,
+                httpStatus.OK,
                 "Semester deleted successfully",
                 null
             )

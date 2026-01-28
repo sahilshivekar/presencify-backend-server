@@ -103,10 +103,10 @@ const removeBranch = asyncHandler(async (req, res) => {
     await branch.destroy();
 
     res
-        .status(httpStatus.NO_CONTENT)
+        .status(httpStatus.OK)
         .json(
             new ApiResponse(
-                httpStatus.NO_CONTENT,
+                httpStatus.OK,
                 "Branch deleted successfully",
                 null
             )

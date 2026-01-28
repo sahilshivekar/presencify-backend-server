@@ -72,7 +72,7 @@ describe('Teacher API - DELETE /api/v1/teachers', () => {
       .delete('/api/v1/teachers')
       .set('Authorization', `Bearer ${adminToken}`)
       .query({ id: teacher.id });
-    expect(res.status).toBe(httpStatus.NO_CONTENT);
+    expect(res.status).toBe(httpStatus.OK);
 
     const found = await Teacher.findByPk(teacher.id);
     expect(found).toBeNull();

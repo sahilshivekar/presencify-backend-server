@@ -187,7 +187,7 @@ const removeTimetable = asyncHandler(async (req, res) => {
 
     await timetable.destroy();
 
-    res.status(httpStatus.NO_CONTENT).json(new ApiResponse(httpStatus.NO_CONTENT, "Timetable deleted successfully", null));
+    res.status(httpStatus.OK).json(new ApiResponse(httpStatus.OK, "Timetable deleted successfully", null));
 });
 
 export {

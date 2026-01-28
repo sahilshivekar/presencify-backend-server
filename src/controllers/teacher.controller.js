@@ -305,7 +305,7 @@ const updateTeacherPassword = asyncHandler(async (req, res) => {
 const updateTeacherImage = asyncHandler(async (req, res) => {
     const {
         id
-    } = req.body;
+    } = req.params;
     const teacherImageLocalPath = req.file?.path
 
     // Validation moved to @teacher.validation.js
@@ -381,7 +381,7 @@ const removeImage = asyncHandler(async (req, res) => {
 //* remove teacher
 const removeTeacher = asyncHandler(async (req, res) => {
 
-    const { id } = req.query;
+    const { id } = req.params;
 
     const teacher = await Teacher.findByPk(id);
 
@@ -404,10 +404,10 @@ const removeTeacher = asyncHandler(async (req, res) => {
         await transaction.commit();
         
         res
-            .status(httpStatus.NO_CONTENT)
+            .status(httpStatus.OK)
             .json(
                 new ApiResponse(
-                    httpStatus.NO_CONTENT,
+                    httpStatus.OK,
                     "Teacher deleted successfully",
                     null
                 )
@@ -476,10 +476,10 @@ const removeTeachingSubject = asyncHandler(async (req, res) => {
         await teacherSubject.destroy({ transaction });
         await transaction.commit();
         res
-            .status(httpStatus.NO_CONTENT)
+            .status(httpStatus.OK)
             .json(
                 new ApiResponse(
-                    httpStatus.NO_CONTENT,
+                    httpStatus.OK,
                     "Teaching subject deleted successfully",
                     null
                 )

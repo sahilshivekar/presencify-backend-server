@@ -94,7 +94,7 @@ describe('Scheme API - DELETE /api/v1/schemes/:id', () => {
     test('should delete scheme successfully with admin token', async () => {
       const res = await request(app).delete(`/api/v1/schemes/${scheme.id}`).set('Authorization', `Bearer ${adminToken}`);
       // Express typically sends no body on 204; assert status and DB deletion only
-      expect(res.status).toBe(httpStatus.NO_CONTENT);
+      expect(res.status).toBe(httpStatus.OK);
 
       const deleted = await Scheme.findByPk(scheme.id);
       expect(deleted).toBeNull();

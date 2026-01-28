@@ -128,7 +128,7 @@ describe('Teacher API - Teaching Subjects', () => {
 
     // 204 success
     res = await request(app).delete('/api/v1/teachers/subjects').set('Authorization', `Bearer ${adminToken}`).query({ teacherSubjectId: entry.id });
-    expect(res.status).toBe(httpStatus.NO_CONTENT);
+    expect(res.status).toBe(httpStatus.OK);
     const found = await TeacherTeachesCourse.findByPk(entry.id);
     expect(found).toBeNull();
   });

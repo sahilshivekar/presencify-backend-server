@@ -80,10 +80,10 @@ const removeUniversity = asyncHandler(async (req, res) => {
     await university.destroy();
 
     res
-        .status(httpStatus.NO_CONTENT)
+        .status(httpStatus.OK)
         .json(
             new ApiResponse(
-                httpStatus.NO_CONTENT,
+                httpStatus.OK,
                 "University deleted successfully",
                 null
             )

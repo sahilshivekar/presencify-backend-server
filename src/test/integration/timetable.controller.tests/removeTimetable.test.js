@@ -88,7 +88,7 @@ describe('Timetable API - DELETE /api/v1/timetables/:id', () => {
     const res = await request(app)
       .delete(url(timetable.id))
       .set('Authorization', `Bearer ${adminToken}`);
-    expect(res.status).toBe(httpStatus.NO_CONTENT);
+    expect(res.status).toBe(httpStatus.OK);
     // Some frameworks still send a body with 204; we just ensure no error and entity removed
     const found = await Timetable.findByPk(timetable.id);
     expect(found).toBeNull();

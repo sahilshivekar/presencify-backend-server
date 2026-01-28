@@ -49,6 +49,11 @@ router.route('/')
         verifyJWT([ROLES.ADMIN]),
         addStudent
     )
+    .put(
+        validate(studentValidation.updateStudentDetails),
+        verifyJWT([ROLES.ADMIN, ROLES.STUDENT]),
+        updateStudentDetails
+    )
 
 // Password management (admin only) - must be before /:id route
 router.route('/password')
@@ -126,11 +131,6 @@ router.route('/:id')
         validate(studentValidation.getStudentDetailsById),
         verifyJWT([ROLES.ADMIN, ROLES.TEACHER, ROLES.STUDENT]),
         getStudentDetailsById
-    )
-    .put(
-        validate(studentValidation.updateStudentDetails),
-        verifyJWT([ROLES.ADMIN, ROLES.STUDENT]),
-        updateStudentDetails
     )
     .delete(
         validate(studentValidation.removeStudent),

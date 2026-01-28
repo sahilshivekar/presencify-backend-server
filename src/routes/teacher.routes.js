@@ -36,11 +36,12 @@ router.route('/')
         verifyJWT([ROLES.ADMIN]),
         addTeacher
     )
-    .delete(
-        validate(teacherValidation.removeTeacher),
-        verifyJWT([ROLES.ADMIN]),
-        removeTeacher
-    );
+    .put(
+        validate(teacherValidation.updateTeacherDetails),
+        verifyJWT([ROLES.ADMIN, ROLES.TEACHER]),
+        updateTeacherDetails
+    )
+    
 
 // Teacher profile image management (place before dynamic routes)
 router.route('/image')
@@ -101,10 +102,10 @@ router.route('/:id')
         verifyJWT([ROLES.ADMIN, ROLES.TEACHER, ROLES.STUDENT]),
         getTeacherById
     )
-    .put(
-        validate(teacherValidation.updateTeacherDetails),
-        verifyJWT([ROLES.ADMIN, ROLES.TEACHER]),
-        updateTeacherDetails
-    );
+    .delete(
+        validate(teacherValidation.removeTeacher),
+        verifyJWT([ROLES.ADMIN]),
+        removeTeacher
+    )
 
 export default router;

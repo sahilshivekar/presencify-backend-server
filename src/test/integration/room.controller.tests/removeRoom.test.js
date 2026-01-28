@@ -55,7 +55,7 @@ describe('Room Controller - removeRoom', () => {
     const res = await request(app)
       .delete(`${url}/${room.id}`)
       .set('Authorization', `Bearer ${adminToken}`);
-    expect([httpStatus.NO_CONTENT, httpStatus.OK]).toContain(res.status);
+    expect([httpStatus.OK, httpStatus.OK]).toContain(res.status);
     if (res.status === httpStatus.OK) {
       expect(res.body.success).toBe(true);
       expect(res.body.data).toBe(null);

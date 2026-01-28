@@ -67,6 +67,6 @@ describe('University API - DELETE /api/v1/universities/:id', () => {
     const res = await request(app)
       .delete(`/api/v1/universities/${uni.id}`)
       .set('Authorization', `Bearer ${adminToken}`);
-    expect(res.status).toBe(httpStatus.NO_CONTENT);
+    expect(res.status).toBe(httpStatus.OK);
   });
 });

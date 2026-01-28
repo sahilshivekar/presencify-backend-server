@@ -354,8 +354,8 @@ const addStudent = asyncHandler(async (req, res) => {
 
 //* Update student details
 const updateStudentDetails = asyncHandler(async (req, res) => {
-    const { id } = req.params;
     const {
+        id,
         firstName,
         middleName,
         lastName,

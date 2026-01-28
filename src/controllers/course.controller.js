@@ -186,10 +186,10 @@ const removeCourseFromBranchWithSemesterNumber = asyncHandler(async (req, res) =
     await branchCourseSemester.destroy();
 
     res
-        .status(httpStatus.NO_CONTENT)
+        .status(httpStatus.OK)
         .json(
             new ApiResponse(
-                httpStatus.NO_CONTENT,
+                httpStatus.OK,
                 "BranchCourseSemester deleted successfully",
                 null
             )
@@ -242,10 +242,10 @@ const removeCourse = asyncHandler(async (req, res) => {
     await course.destroy();
 
     res
-        .status(httpStatus.NO_CONTENT)
+        .status(httpStatus.OK)
         .json(
             new ApiResponse(
-                httpStatus.NO_CONTENT,
+                httpStatus.OK,
                 "Course deleted successfully",
                 null
             )

@@ -47,8 +47,8 @@ const addStudent = {
 };
 
 const updateStudentDetails = {
-	params: Joi.object().keys({ id: uuid.required().messages({ 'any.required': 'Student ID is required', 'string.guid': 'Student ID must be a valid UUID' }) }),
 	body: Joi.object().keys({
+        id: uuid.required().messages({ 'any.required': 'Student ID is required', 'string.guid': 'Student ID must be a valid UUID' }),
 		firstName: Joi.string().trim().min(1).max(100).messages({ 'string.min': 'First name must be at least 1 character', 'string.max': 'First name cannot exceed 100 characters' }),
 		middleName: Joi.string().allow('', null).messages({ 'string.base': 'Middle name must be a string' }),
 		lastName: Joi.string().trim().min(1).max(100).messages({ 'string.min': 'Last name must be at least 1 character', 'string.max': 'Last name cannot exceed 100 characters' }),

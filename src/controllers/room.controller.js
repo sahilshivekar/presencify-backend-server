@@ -122,7 +122,7 @@ const removeRoom = asyncHandler(async (req, res) => {
 
     await room.destroy();
 
-    res.status(httpStatus.NO_CONTENT).json(new ApiResponse(httpStatus.NO_CONTENT, "Room deleted successfully", null));
+    res.status(httpStatus.OK).json(new ApiResponse(httpStatus.OK, "Room deleted successfully", null));
 });
 
 const getRoomShedule = asyncHandler(async (req, res) => {

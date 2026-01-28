@@ -161,7 +161,7 @@ describe('Branch API - removeBranch', () => {
                     .delete(`/api/v1/branches/${branchToDelete.id}`)
                     .set('Authorization', `Bearer ${adminToken}`);
 
-                expect(response.status).toBe(httpStatus.NO_CONTENT);
+                expect(response.status).toBe(httpStatus.OK);
 
                 // Verify branch is deleted from database
                 const deletedBranch = await Branch.findByPk(branchToDelete.id);

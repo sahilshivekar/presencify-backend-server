@@ -104,10 +104,10 @@ const removeScheme = asyncHandler(async (req, res) => {
     await scheme.destroy();
 
     res
-        .status(httpStatus.NO_CONTENT)
+        .status(httpStatus.OK)
         .json(
             new ApiResponse(
-                httpStatus.NO_CONTENT,
+                httpStatus.OK,
                 "Scheme deleted successfully",
                 null
             )

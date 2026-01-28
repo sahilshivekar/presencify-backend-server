@@ -114,7 +114,7 @@ describe('Semester API - DELETE /api/v1/semesters/:id', () => {
     const res = await request(app)
       .delete(`/api/v1/semesters/${semester.id}`)
       .set('Authorization', `Bearer ${adminToken}`);
-    expect(res.status).toBe(httpStatus.NO_CONTENT);
+    expect(res.status).toBe(httpStatus.OK);
 
     const deleted = await Semester.findByPk(semester.id);
     expect(deleted).toBeNull();

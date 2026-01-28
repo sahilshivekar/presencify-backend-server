@@ -58,11 +58,11 @@ const updateTeacherImage = {
 };
 
 const removeImage = {
-	query: Joi.object().keys({ id: uuid.required().messages({ 'any.required': 'Teacher ID is required', 'string.guid': 'Teacher ID must be a valid UUID' }) })
+	params: Joi.object().keys({ id: uuid.required().messages({ 'any.required': 'Teacher ID is required', 'string.guid': 'Teacher ID must be a valid UUID' }) })
 };
 
 const removeTeacher = {
-	query: Joi.object().keys({ id: uuid.required().messages({ 'any.required': 'Teacher ID is required', 'string.guid': 'Teacher ID must be a valid UUID' }) })
+	params: Joi.object().keys({ id: uuid.required().messages({ 'any.required': 'Teacher ID is required', 'string.guid': 'Teacher ID must be a valid UUID' }) })
 };
 
 const getTeachingSubjects = {

@@ -59,7 +59,7 @@ describe('Course Controller - removeCourse', () => {
     const res = await request(app)
       .delete(url(course.id))
       .set('Authorization', `Bearer ${adminToken}`);
-    expect(res.status).toBe(httpStatus.NO_CONTENT);
+    expect(res.status).toBe(httpStatus.OK);
     // For 204 No Content, response body is empty
     const deleted = await Course.findByPk(course.id);
     expect(deleted).toBeNull();
