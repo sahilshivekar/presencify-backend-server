@@ -12,6 +12,8 @@ import { parse } from 'path';
 import fs from 'fs';
 import csvParser from 'csv-parser';
 import Semester from '../db/models/semester.model.js';
+import TeacherTeachesCourse from '../db/models/teacherTeachesCourse.model.js';
+import Teacher from '../db/models/teacher.model.js';
 import httpStatus from 'http-status';
 import courseValidation from '../validators/course.validation.js';
 
@@ -25,9 +27,9 @@ const getCourses = asyncHandler(async (req, res) => {
         page = 1,
         limit = 10,
         getAll = false,
-        onlyOptional = false
+        onlyOptional = false,
+        teacherId
     } = req.query;
-    console.log(branchId, semesterNumber, schemeId, onlyOptional, getAll);
     const whereClause = {};
 
     if (searchQuery) {
@@ -84,6 +86,17 @@ const getCourses = asyncHandler(async (req, res) => {
                 duplicating: false,
                 include: {
                     model: University,
+                    required: true,
+                    duplicating: false,
+                }
+            },
+            {
+                model: TeacherTeachesCourse,
+                required: teacherId ? true : false,
+                where: teacherId ? { teacherId: teacherId } : {},
+                duplicating: false,
+                include: {
+                    model: Teacher,
                     required: true,
                     duplicating: false,
                 }

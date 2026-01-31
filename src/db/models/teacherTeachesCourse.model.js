@@ -12,7 +12,7 @@ TeacherTeachesCourse.init(
             type: Sequelize.UUID,
             defaultValue: UUIDV4,
             primaryKey: true,
-            field: 'teacher_subject_id',
+            field: 'teacher_course_id',
             autoIncrement: true,
         },
         teacherId: {
@@ -29,7 +29,7 @@ TeacherTeachesCourse.init(
                 }
             },
             unique: {
-                name: 'one_subject_for_one_teacher_only_once',
+                name: 'one_course_for_one_teacher_only_once',
                 msg: 'Teacher already have this course in the teaching list'
             }
         },
@@ -47,7 +47,7 @@ TeacherTeachesCourse.init(
                 }
             },
             unique: {
-                name: 'one_subject_for_one_teacher_only_once',
+                name: 'one_course_for_one_teacher_only_once',
                 msg: 'Teacher already have this course in the teaching list'
             }
         },

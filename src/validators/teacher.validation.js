@@ -65,19 +65,21 @@ const removeTeacher = {
 	params: Joi.object().keys({ id: uuid.required().messages({ 'any.required': 'Teacher ID is required', 'string.guid': 'Teacher ID must be a valid UUID' }) })
 };
 
-const getTeachingSubjects = {
+const getTeachingCourses = {
 	query: Joi.object().keys({ teacherId: uuid.required().messages({ 'any.required': 'Teacher ID is required', 'string.guid': 'Teacher ID must be a valid UUID' }) })
 };
 
-const addTeachingSubject = {
+const addTeachingCourse = {
 	body: Joi.object().keys({
 		teacherId: uuid.required().messages({ 'any.required': 'Teacher ID is required', 'string.guid': 'Teacher ID must be a valid UUID' }),
 		courseId: uuid.required().messages({ 'any.required': 'Course ID is required', 'string.guid': 'Course ID must be a valid UUID' })
 	})
 };
 
-const removeTeachingSubject = {
-	query: Joi.object().keys({ teacherSubjectId: uuid.required().messages({ 'any.required': 'teacherSubjectId is required', 'string.guid': 'teacherSubjectId must be a valid UUID' }) })
+const removeTeachingCourse = {
+	params: Joi.object().keys({
+		teacherTeachesCourseId: uuid.required().messages({ 'any.required': 'TeacherTeachesCourse ID is required', 'string.guid': 'TeacherTeachesCourse ID must be a valid UUID' })
+	})
 };
 
 const bulkCreateTeachers = {
@@ -131,9 +133,9 @@ export default {
 	updateTeacherImage,
 	removeImage,
 	removeTeacher,
-	getTeachingSubjects,
-	addTeachingSubject,
-	removeTeachingSubject,
+	getTeachingCourses,
+	addTeachingCourse,
+	removeTeachingCourse,
 	bulkCreateTeachers,
 	bulkDeleteTeachers,
 	bulkCreateTeachersFromCSV,

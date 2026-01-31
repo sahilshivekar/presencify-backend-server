@@ -115,7 +115,7 @@
       }
     },
     {
-      "name": "Get Teaching Subjects",
+      "name": "Get Teaching Courses",
       "request": {
         "method": "GET",
         "header": [
@@ -126,9 +126,9 @@
           }
         ],
         "url": {
-          "raw": "{{base_url}}/api/v1/teachers/subjects",
+          "raw": "{{base_url}}/api/v1/teachers/courses",
           "host": ["{{base_url}}"],
-          "path": ["api", "v1", "teachers", "subjects"]
+          "path": ["api", "v1", "teachers", "courses"]
         }
       }
     },
@@ -144,9 +144,9 @@
           }
         ],
         "url": {
-          "raw": "{{base_url}}/api/v1/teachers/subjects",
+          "raw": "{{base_url}}/api/v1/teachers/courses",
           "host": ["{{base_url}}"],
-          "path": ["api", "v1", "teachers", "subjects"]
+          "path": ["api", "v1", "teachers", "courses"]
         }
       }
     },
@@ -162,9 +162,9 @@
           }
         ],
         "url": {
-          "raw": "{{base_url}}/api/v1/teachers/subjects",
+          "raw": "{{base_url}}/api/v1/teachers/courses",
           "host": ["{{base_url}}"],
-          "path": ["api", "v1", "teachers", "subjects"]
+          "path": ["api", "v1", "teachers", "courses"]
         }
       }
     },

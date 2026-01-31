@@ -78,7 +78,7 @@ describe('Student API - bulkCreateStudents', () => {
                 username: 'testteacher',
                 gender: 'Male',
                 role: 'Teacher',
-                teachingSubject: 'Computer Science',
+                teachingCourse: 'Computer Science',
                 universityId: university.id
             });
 

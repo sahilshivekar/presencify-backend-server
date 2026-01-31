@@ -176,7 +176,7 @@ const addBatch = asyncHandler(async (req, res) => {
         throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, "Some issue occured while adding batch");
     }
 
-    res.status(httpStatus.CREATED).json(new ApiResponse(httpStatus.CREATED, "Batch added successfully", { batch }));
+    res.status(httpStatus.CREATED).json(new ApiResponse(httpStatus.CREATED, "Batch added successfully", batch));
 });
 
 const updateBatch = asyncHandler(async (req, res) => {

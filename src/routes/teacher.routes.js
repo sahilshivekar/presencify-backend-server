@@ -8,9 +8,9 @@ import {
     removeTeacher,
     removeImage,
     getTeacherById,
-    getTeachingSubjects,
-    addTeachingSubject,
-    removeTeachingSubject,
+    getTeachingCourses,
+    addTeachingCourse,
+    removeTeachingCourse,
     bulkCreateTeachers,
     bulkDeleteTeachers,
     bulkCreateTeachersFromCSV
@@ -61,22 +61,24 @@ router.route('/image')
 router.route('/password')
     .put(validate(teacherValidation.updateTeacherPassword), verifyJWT([ROLES.ADMIN]), updateTeacherPassword);
 
-// Teaching subjects management
-router.route('/subjects')
+// Teaching courses management
+router.route('/courses')
     .get(
-        validate(teacherValidation.getTeachingSubjects),
+        validate(teacherValidation.getTeachingCourses),
         verifyJWT([ROLES.ADMIN, ROLES.TEACHER, ROLES.STUDENT]),
-        getTeachingSubjects
+        getTeachingCourses
     )
     .post(
-        validate(teacherValidation.addTeachingSubject),
+        validate(teacherValidation.addTeachingCourse),
         verifyJWT([ROLES.ADMIN]),
-        addTeachingSubject
-    )
+        addTeachingCourse
+    );
+
+router.route('/courses/:teacherTeachesCourseId')
     .delete(
-        validate(teacherValidation.removeTeachingSubject),
+        validate(teacherValidation.removeTeachingCourse),
         verifyJWT([ROLES.ADMIN]),
-        removeTeachingSubject
+        removeTeachingCourse
     );
 
 // Bulk operations (admin only)

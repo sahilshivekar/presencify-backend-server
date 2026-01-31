@@ -153,7 +153,7 @@ const updateDivision = asyncHandler(async (req, res) => {
             }
         });
         if (existingDivision) {
-            throw new ApiError(httpStatus.CONFLICT, "Duplicate divisionCode in the same semester is not allowed");
+            throw new ApiError(httpStatus.CONFLICT, "Duplicate Division Code in the same semester is not allowed");
         }
     }
 

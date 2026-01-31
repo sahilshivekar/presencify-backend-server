@@ -140,7 +140,7 @@ const addSemester = asyncHandler(async (req, res) => {
         throw new ApiError(httpStatus.BAD_REQUEST, "End date cannot be greater than academic end year");
     }
 
-    // searching courses for the semeseter to be added bcz if the semester contains optional courses then we must create a entry in SemesterCourse table to tell the optional subjects for a particular semester
+    // searching courses for the semeseter to be added bcz if the semester contains optional courses then we must create a entry in SemesterCourse table to tell the optional courses for a particular semester
     let branchClause = {}
     if (branchId) {
         branchClause = { branchId: branchId }
@@ -188,7 +188,7 @@ const addSemester = asyncHandler(async (req, res) => {
     // creating a map to store the optional courses and the courses that belong to them
     const requiredOptionalCourses = {}
     for (const course of courses) {
-        if (requiredOptionalCourses[course.optionalCourse]) { // differentiating between the optional subjects based on the unique string for each optional course
+        if (requiredOptionalCourses[course.optionalCourse]) { // differentiating between the optional courses based on the unique string for each optional course
             requiredOptionalCourses[course.optionalCourse] = [...requiredOptionalCourses[course.optionalCourse], course.id]
         } else {
             requiredOptionalCourses[course.optionalCourse] = [course.id]

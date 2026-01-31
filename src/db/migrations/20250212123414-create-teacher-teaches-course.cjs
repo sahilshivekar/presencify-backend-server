@@ -10,7 +10,7 @@ module.exports = {
                     type: Sequelize.UUID,
                     defaultValue: Sequelize.UUIDV4,
                     primaryKey: true,
-                    field: 'teacher_subject_id',
+                    field: 'teacher_course_id',
                 },
                 teacherId: {
                     type: Sequelize.UUID,
@@ -49,7 +49,7 @@ module.exports = {
                 timestamps: true,
                 freezeTableName: true,
                 uniqueKeys: {
-                    one_subject_for_one_teacher_only_once: {
+                    one_course_for_one_teacher_only_once: {
                         fields: ['teacher_id', 'course_id'],
                     }
                 }

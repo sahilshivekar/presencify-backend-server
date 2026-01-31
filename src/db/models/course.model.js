@@ -57,7 +57,7 @@ Course.init(
         optionalCourse: {
             type: Sequelize.STRING(255),
             allowNull: true,
-            field: 'course_optional_subject',
+            field: 'course_optional_course',
         },
         createdAt: {
             type: Sequelize.DATE,

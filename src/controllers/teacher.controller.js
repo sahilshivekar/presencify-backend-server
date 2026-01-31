@@ -420,7 +420,7 @@ const removeTeacher = asyncHandler(async (req, res) => {
 
 //! logout is remaining
 
-const addTeachingSubject = asyncHandler(async (req, res) => {
+const addTeachingCourse = asyncHandler(async (req, res) => {
     const { teacherId, courseId } = req.body;
 
     const transaction = await sequelize.transaction();
@@ -464,16 +464,18 @@ const addTeachingSubject = asyncHandler(async (req, res) => {
 });
 
 
-const removeTeachingSubject = asyncHandler(async (req, res) => {
-    const { teacherSubjectId } = req.query;
+const removeTeachingCourse = asyncHandler(async (req, res) => {
+    const { teacherTeachesCourseId } = req.params;
 
     const transaction = await sequelize.transaction();
     try {
-        const teacherSubject = await TeacherTeachesCourse.findByPk(teacherSubjectId, { transaction });
-        if (!teacherSubject) {
+        const teacherCourse = await TeacherTeachesCourse.findByPk(teacherTeachesCourseId, {
+            transaction
+        });
+        if (!teacherCourse) {
             throw new ApiError(httpStatus.NOT_FOUND, "Teacher course not found");
         }
-        await teacherSubject.destroy({ transaction });
+        await teacherCourse.destroy({ transaction });
         await transaction.commit();
         res
             .status(httpStatus.OK)
@@ -490,7 +492,7 @@ const removeTeachingSubject = asyncHandler(async (req, res) => {
     }
 });
 
-const getTeachingSubjects = asyncHandler(async (req, res) => {
+const getTeachingCourses = asyncHandler(async (req, res) => {
     const { teacherId } = req.query;
 
     // Validation moved to @teacher.validation.js
@@ -501,7 +503,7 @@ const getTeachingSubjects = asyncHandler(async (req, res) => {
         throw new ApiError(httpStatus.NOT_FOUND, "Teacher not found");
     }
 
-    const teachingSubjects = await TeacherTeachesCourse.findAll({
+    const teachingCourses = await TeacherTeachesCourse.findAll({
         where: {
             teacherId: teacherId
         },
@@ -524,8 +526,8 @@ const getTeachingSubjects = asyncHandler(async (req, res) => {
         .json(
             new ApiResponse(
                 httpStatus.OK,
-                "Teaching subjects retrieved successfully",
-                teachingSubjects
+                "Teaching courses retrieved successfully",
+                teachingCourses
             )
         );
 });
@@ -826,9 +828,9 @@ export {
     removeTeacher,
     removeImage,
     getTeacherById,
-    getTeachingSubjects,
-    addTeachingSubject,
-    removeTeachingSubject,
+    getTeachingCourses,
+    addTeachingCourse,
+    removeTeachingCourse,
     bulkCreateTeachers,
     bulkDeleteTeachers,
     bulkCreateTeachersFromCSV

@@ -374,7 +374,7 @@ const getAttendanceOfStudentForSpecificCourseInSemester = asyncHandler(async (re
             throw new ApiError(httpStatus.NOT_FOUND, "Scheme not found")
         }
     }
-    // for the rest of the subjects 
+    // for the rest of the courses 
     const attendance = await getAttendanceOfStudentForSpecificCourseInSemesterQuery(
         studentId,
         courseId,
