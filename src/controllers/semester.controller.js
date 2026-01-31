@@ -128,15 +128,15 @@ const addSemester = asyncHandler(async (req, res) => {
     const startDateObj = new Date(startDate);
     const endDateObj = new Date(endDate);
 
-    if(startDateObj >= endDateObj) {
+    if (startDateObj >= endDateObj) {
         throw new ApiError(httpStatus.BAD_REQUEST, "End date cannot be less than or equal to start date");
     }
 
-    if(startDateObj.getFullYear() < Number(academicStartYear)) {
+    if (startDateObj.getFullYear() < Number(academicStartYear)) {
         throw new ApiError(httpStatus.BAD_REQUEST, "Start date cannot be lesser than academic start year");
     }
 
-    if(endDateObj.getFullYear() > Number(academicEndYear)) {
+    if (endDateObj.getFullYear() > Number(academicEndYear)) {
         throw new ApiError(httpStatus.BAD_REQUEST, "End date cannot be greater than academic end year");
     }
 
@@ -256,7 +256,7 @@ const addSemester = asyncHandler(async (req, res) => {
             new ApiResponse(
                 httpStatus.CREATED,
                 'Semester added successfully',
-                { semester, addedOptionalCourses }
+                semester
             )
         )
 
@@ -319,7 +319,8 @@ const updateSemester = asyncHandler(async (req, res) => {
     const { id } = req.params;
     const {
         startDate,
-        endDate
+        endDate,
+        optionalCourseIds
     } = req.body;
 
     // Remove input validation already handled by @semester.validation.js
@@ -329,26 +330,128 @@ const updateSemester = asyncHandler(async (req, res) => {
     if (!semester) {
         throw new ApiError(httpStatus.NOT_FOUND, "Semester not found");
     }
-    
-    const startDateObj = new Date(startDate);
-    const endDateObj = new Date(endDate);
 
-    if(startDateObj >= endDateObj) {
-        throw new ApiError(httpStatus.BAD_REQUEST, "End date cannot be less than or equal to start date");
+    // searching courses for the semester to be updated
+    let branchClause = { branchId: semester.branchId }
+    let semesterNumberClause = { semesterNumber: semester.semesterNumber }
+
+    const branchCourseSemesterWhereClause = {
+        [Op.and]: [
+            branchClause,
+            semesterNumberClause
+        ]
     }
 
-    if(startDateObj.getFullYear() < semester.academicStartYear) {
-        throw new ApiError(httpStatus.BAD_REQUEST, "Start date cannot be lesser than academic start year");
+    let schemeClause = { schemeId: semester.schemeId }
+
+    const courses = await Course.findAll({
+        where: {
+            [Op.and]: [
+                schemeClause,
+                { optionalSubject: { [Op.ne]: null } }
+            ]
+        },
+        include: [
+            {
+                model: BranchCourseSemester,
+                required: true,
+                where: branchCourseSemesterWhereClause,
+                duplicating: false,
+                include: {
+                    model: Branch,
+                    required: true,
+                    duplicating: false,
+                }
+            }
+        ]
+    });
+
+    // creating a map to store the optional courses and the courses that belong to them
+    const requiredOptionalCourses = {}
+    for (const course of courses) {
+        if (requiredOptionalCourses[course.optionalSubject]) {
+            requiredOptionalCourses[course.optionalSubject] = [...requiredOptionalCourses[course.optionalSubject], course.id]
+        } else {
+            requiredOptionalCourses[course.optionalSubject] = [course.id]
+        }
     }
 
-    if(endDateObj.getFullYear() > semester.academicEndYear) {
-        throw new ApiError(httpStatus.BAD_REQUEST, "End date cannot be greater than academic end year");
+    const countOfRequiredOptionalCourses = Object.keys(requiredOptionalCourses).length
+
+    // if the semester contains optional courses then we must check if the courses that are being added are valid
+    if (optionalCourseIds && countOfRequiredOptionalCourses > 0) {
+        if (optionalCourseIds.length !== countOfRequiredOptionalCourses) {
+            throw new ApiError(httpStatus.BAD_REQUEST, `Please give ${countOfRequiredOptionalCourses} optional courses`)
+        }
+
+        for (let optionalCourseId of optionalCourseIds) {
+            for (let optionalCourseList of Object.values(requiredOptionalCourses)) {
+                if (optionalCourseList.includes(optionalCourseId)) {
+                    optionalCourseList.length = 0; // making length 0 bcz each courseId from the input list must belong to a diff optionCourseList
+                    break
+                }
+            }
+        }
+
+        // if the length of any of the optionCourseList is greater than 0 then the courses that are being added are not valid
+        for (let optionalCourseList of Object.values(requiredOptionalCourses)) {
+            if (optionalCourseList.length > 0) {
+                throw new ApiError(httpStatus.BAD_REQUEST, `Invalid optional courses`)
+            }
+        }
     }
 
-    semester.endDate = endDate || semester.endDate;
-    semester.startDate = startDate || semester.startDate;
+    if (startDate || endDate) {
+        const startDateObj = new Date(startDate || semester.startDate);
+        const endDateObj = new Date(endDate || semester.endDate);
+
+        if (startDateObj >= endDateObj) {
+            throw new ApiError(httpStatus.BAD_REQUEST, "End date cannot be less than or equal to start date");
+        }
+
+        if (startDateObj.getFullYear() < semester.academicStartYear) {
+            throw new ApiError(httpStatus.BAD_REQUEST, "Start date cannot be lesser than academic start year");
+        }
+
+        if (endDateObj.getFullYear() > semester.academicEndYear) {
+            throw new ApiError(httpStatus.BAD_REQUEST, "End date cannot be greater than academic end year");
+        }
+
+        semester.endDate = endDate || semester.endDate;
+        semester.startDate = startDate || semester.startDate;
+    }
 
     await semester.save();
+
+    const existingOptionalCourses = await SemesterCourse.findAll({
+        where: { semesterId: id },
+        attributes: ['courseId']
+    });
+    const existingCourseIds = existingOptionalCourses.map(sc => sc.courseId);
+
+    if (optionalCourseIds !== undefined) {
+        const newCourseIds = optionalCourseIds;
+        const arraysEqual = (a, b) => a.length === b.length && a.every((val, index) => val === b[index]);
+        const hasChanged = !arraysEqual(existingCourseIds.sort(), newCourseIds.sort());
+
+        if (hasChanged) {
+            const toAdd = newCourseIds.filter(id => !existingCourseIds.includes(id));
+            const toRemove = existingCourseIds.filter(id => !newCourseIds.includes(id));
+
+            if (toRemove.length > 0) {
+                await SemesterCourse.destroy({
+                    where: { semesterId: id, courseId: toRemove }
+                });
+            }
+
+            for (let courseId of toAdd) {
+                await SemesterCourse.create({
+                    semesterId: id,
+                    courseId: courseId
+                });
+            }
+        }
+    }
 
     res
         .status(httpStatus.OK)
@@ -425,9 +528,9 @@ const getSemesterById = asyncHandler(async (req, res) => {
 //* bulk create semesters
 const bulkCreateSemesters = asyncHandler(async (req, res) => {
     const { semesters } = req.body;
-    
+
     const transaction = await sequelize.transaction();
-    
+
     try {
         // Validate all branches exist
         const branchIds = [...new Set(semesters.map(semester => semester.branchId))];
@@ -436,18 +539,18 @@ const bulkCreateSemesters = asyncHandler(async (req, res) => {
             attributes: ['id'],
             transaction
         });
-        
+
         const existingBranchIds = existingBranches.map(branch => branch.id);
         const invalidBranchIds = branchIds.filter(id => !existingBranchIds.includes(id));
-        
+
         if (invalidBranchIds.length > 0) {
             await transaction.rollback();
             throw new ApiError(
-                httpStatus.BAD_REQUEST, 
+                httpStatus.BAD_REQUEST,
                 `Invalid branch IDs: ${invalidBranchIds.join(', ')}`
             );
         }
-        
+
         // Validate all schemes exist
         const schemeIds = [...new Set(semesters.map(semester => semester.schemeId))];
         const existingSchemes = await Scheme.findAll({
@@ -455,56 +558,56 @@ const bulkCreateSemesters = asyncHandler(async (req, res) => {
             attributes: ['id'],
             transaction
         });
-        
+
         const existingSchemeIds = existingSchemes.map(scheme => scheme.id);
         const invalidSchemeIds = schemeIds.filter(id => !existingSchemeIds.includes(id));
-        
+
         if (invalidSchemeIds.length > 0) {
             await transaction.rollback();
             throw new ApiError(
-                httpStatus.BAD_REQUEST, 
+                httpStatus.BAD_REQUEST,
                 `Invalid scheme IDs: ${invalidSchemeIds.join(', ')}`
             );
         }
-        
+
         // Validate business logic for each semester
         for (const semester of semesters) {
             if (semester.academicEndYear < semester.academicStartYear) {
                 await transaction.rollback();
                 throw new ApiError(
-                    httpStatus.BAD_REQUEST, 
+                    httpStatus.BAD_REQUEST,
                     "Academic end year cannot be less than academic start year"
                 );
             }
-            
+
             const startDateObj = new Date(semester.startDate);
             const endDateObj = new Date(semester.endDate);
-            
+
             if (startDateObj >= endDateObj) {
                 await transaction.rollback();
                 throw new ApiError(
-                    httpStatus.BAD_REQUEST, 
+                    httpStatus.BAD_REQUEST,
                     "End date cannot be less than or equal to start date"
                 );
             }
-            
+
             if (startDateObj.getFullYear() < semester.academicStartYear) {
                 await transaction.rollback();
                 throw new ApiError(
-                    httpStatus.BAD_REQUEST, 
+                    httpStatus.BAD_REQUEST,
                     "Start date cannot be lesser than academic start year"
                 );
             }
-            
+
             if (endDateObj.getFullYear() > semester.academicEndYear) {
                 await transaction.rollback();
                 throw new ApiError(
-                    httpStatus.BAD_REQUEST, 
+                    httpStatus.BAD_REQUEST,
                     "End date cannot be greater than academic end year"
                 );
             }
         }
-        
+
         // Check for unique constraint violations
         const duplicateCheck = await Promise.all(
             semesters.map(async (semester) => {
@@ -521,25 +624,25 @@ const bulkCreateSemesters = asyncHandler(async (req, res) => {
                 return existing ? semester : null;
             })
         );
-        
+
         const duplicates = duplicateCheck.filter(Boolean);
         if (duplicates.length > 0) {
             await transaction.rollback();
             throw new ApiError(
-                httpStatus.CONFLICT, 
+                httpStatus.CONFLICT,
                 `Duplicate semesters found`
             );
         }
-        
+
         // Create semesters
         const createdSemesters = await Semester.bulkCreate(semesters, {
             transaction,
             validate: true,
             returning: true
         });
-        
+
         await transaction.commit();
-        
+
         res
             .status(httpStatus.CREATED)
             .json(
@@ -549,7 +652,7 @@ const bulkCreateSemesters = asyncHandler(async (req, res) => {
                     { semesters: createdSemesters }
                 )
             );
-            
+
     } catch (error) {
         await transaction.rollback();
         throw error;

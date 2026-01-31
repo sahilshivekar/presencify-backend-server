@@ -37,7 +37,8 @@ const updateSemester = {
 	params: Joi.object().keys({ id: uuid.required().messages({ 'any.required': 'Semester ID is required', 'string.guid': 'Semester ID must be a valid UUID' }) }),
 	body: Joi.object().keys({
 		startDate: Joi.date().iso().required().messages({ 'any.required': 'Start date is required' }),
-		endDate: Joi.date().iso().required().messages({ 'any.required': 'End date is required' })
+		endDate: Joi.date().iso().required().messages({ 'any.required': 'End date is required' }),
+		optionalCourseIds: Joi.array().items(uuid.messages({ 'string.guid': 'Each optional course ID must be a valid UUID' }))
 	})
 };
 

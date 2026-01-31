@@ -17,6 +17,8 @@ const getCourses = {
             }),
         schemeId: uuid.allow(null)
             .messages({ 'string.guid': 'Scheme ID must be a valid UUID' }),
+        onlyOptional: Joi.boolean().default(false)
+            .messages({ 'boolean.base': 'onlyOptional must be a boolean' }),
         page: Joi.number().integer().min(1).default(1)
             .messages({ 'number.base': 'Page must be a number', 'number.min': 'Page must be at least 1' }),
         limit: Joi.number().integer().min(1).max(100).default(10)

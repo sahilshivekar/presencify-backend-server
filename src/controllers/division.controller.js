@@ -129,7 +129,7 @@ const addDivision = asyncHandler(async (req, res) => {
         throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, "Some issue occured while adding division");
     }
 
-    res.status(httpStatus.CREATED).json(new ApiResponse(httpStatus.CREATED, "Division added successfully", { division }));
+    res.status(httpStatus.CREATED).json(new ApiResponse(httpStatus.CREATED, "Division added successfully", division));
 });
 
 const updateDivision = asyncHandler(async (req, res) => {
@@ -201,6 +201,9 @@ const getDivisionById = asyncHandler(async (req, res) => {
                         required: true,
                     }
                 ]
+            },
+            {
+                model: Batch,
             }
         ]
     });
