@@ -128,10 +128,13 @@ describe('Semester API - GET /api/v1/semesters/courses', () => {
       .query({ semesterId: semester.id });
     expect(res.status).toBe(httpStatus.OK);
     expect(res.body.success).toBe(true);
-    // Controller returns combined array of BCS and SemesterCourse with included Course
-    // so length should be 4 (2 compulsory + 2 optional)
-    expect(Array.isArray(res.body.data)).toBe(true);
-    expect(res.body.data.length).toBe(4);
+    // Controller returns object with compulsoryCourses and optionalCourses arrays
+    expect(res.body.data).toHaveProperty('compulsoryCourses');
+    expect(res.body.data).toHaveProperty('optionalCourses');
+    expect(Array.isArray(res.body.data.compulsoryCourses)).toBe(true);
+    expect(Array.isArray(res.body.data.optionalCourses)).toBe(true);
+    expect(res.body.data.compulsoryCourses.length).toBe(2);
+    expect(res.body.data.optionalCourses.length).toBe(2);
   });
 
   test('should return courses for Teacher', async () => {

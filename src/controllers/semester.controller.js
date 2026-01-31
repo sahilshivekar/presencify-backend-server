@@ -300,15 +300,14 @@ const getCoursesOfSemester = asyncHandler(async (req, res) => {
             required: true,
         },
     });
-
+    
     res
         .status(httpStatus.OK)
         .json(
             new ApiResponse(
                 httpStatus.OK,
                 "Courses retrieved successfully.",
-                //! send full courses
-                [...compulsaryCourses, ...optionalCourses]
+                [...compulsaryCourses.map(bcs => bcs.Course), ...optionalCourses.map(sc => sc.Course)]
             )
         );
 })
