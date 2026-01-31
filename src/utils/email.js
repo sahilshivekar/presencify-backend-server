@@ -18,7 +18,7 @@ const sendAttendanceReportToEmail = async (to, text) => {
     const mailOptions = {
         from: process.env.NODEMAILER_USER,
         to: to,
-        subject: "Attendance Report of student from <College-Name> college",
+        course: "Attendance Report of student from <College-Name> college",
         text: text
     };
 
@@ -38,12 +38,12 @@ const sendVerificationCode = async (to, verificationCode) => {
     const transporter = createTransporter();
 
     const text = `Verification code: ${verificationCode}`
-    const subject = `Email verification code`
+    const course = `Email verification code`
 
     const mailOptions = {
         from: process.env.NODEMAILER_USER,
         to,
-        subject,
+        course,
         text
     };
 

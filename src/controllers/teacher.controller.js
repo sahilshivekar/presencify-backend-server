@@ -453,7 +453,7 @@ const addTeachingSubject = asyncHandler(async (req, res) => {
             .json(
                 new ApiResponse(
                     httpStatus.CREATED,
-                    "Teaching subject added successfully",
+                    "Teaching course added successfully",
                     teacherTeachesCourseEntry
                 )
             );
@@ -471,7 +471,7 @@ const removeTeachingSubject = asyncHandler(async (req, res) => {
     try {
         const teacherSubject = await TeacherTeachesCourse.findByPk(teacherSubjectId, { transaction });
         if (!teacherSubject) {
-            throw new ApiError(httpStatus.NOT_FOUND, "Teacher subject not found");
+            throw new ApiError(httpStatus.NOT_FOUND, "Teacher course not found");
         }
         await teacherSubject.destroy({ transaction });
         await transaction.commit();
@@ -480,7 +480,7 @@ const removeTeachingSubject = asyncHandler(async (req, res) => {
             .json(
                 new ApiResponse(
                     httpStatus.OK,
-                    "Teaching subject deleted successfully",
+                    "Teaching course deleted successfully",
                     null
                 )
             );

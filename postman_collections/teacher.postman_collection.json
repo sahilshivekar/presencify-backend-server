@@ -133,7 +133,7 @@
       }
     },
     {
-      "name": "Add Teaching Subject",
+      "name": "Add Teaching Course",
       "request": {
         "method": "POST",
         "header": [
@@ -151,7 +151,7 @@
       }
     },
     {
-      "name": "Remove Teaching Subject",
+      "name": "Remove Teaching Course",
       "request": {
         "method": "DELETE",
         "header": [

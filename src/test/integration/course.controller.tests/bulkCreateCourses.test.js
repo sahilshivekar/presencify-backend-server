@@ -363,7 +363,7 @@ describe('Course API - bulkCreateCourses', () => {
 
             test('should handle optional fields correctly', async () => {
                 const dataWithOptionals = { ...validCoursesData() };
-                dataWithOptionals.courses[0].optionalSubject = 'Programming Fundamentals';
+                dataWithOptionals.courses[0].optionalCourse = 'Programming Fundamentals';
 
                 const response = await request(app)
                     .post('/api/v1/courses/bulk/create')
@@ -373,7 +373,7 @@ describe('Course API - bulkCreateCourses', () => {
                 expect(response.status).toBe(httpStatus.CREATED);
                 expect(response.body.success).toBe(true);
                 expect(response.body.message).toBe('3 courses created successfully');
-                expect(response.body.data.courses[0]).toHaveProperty('optionalSubject', 'Programming Fundamentals');
+                expect(response.body.data.courses[0]).toHaveProperty('optionalCourse', 'Programming Fundamentals');
             });
         });
     });

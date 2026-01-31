@@ -167,7 +167,7 @@ const addSemester = asyncHandler(async (req, res) => {
         where: {
             [Op.and]: [
                 schemeClause,
-                { optionalSubject: { [Op.ne]: null } }
+                { optionalCourse: { [Op.ne]: null } }
             ]
         },
         include: [
@@ -188,10 +188,10 @@ const addSemester = asyncHandler(async (req, res) => {
     // creating a map to store the optional courses and the courses that belong to them
     const requiredOptionalCourses = {}
     for (const course of courses) {
-        if (requiredOptionalCourses[course.optionalSubject]) { // differentiating between the optional subjects based on the unique string for each optional subject
-            requiredOptionalCourses[course.optionalSubject] = [...requiredOptionalCourses[course.optionalSubject], course.id]
+        if (requiredOptionalCourses[course.optionalCourse]) { // differentiating between the optional subjects based on the unique string for each optional course
+            requiredOptionalCourses[course.optionalCourse] = [...requiredOptionalCourses[course.optionalCourse], course.id]
         } else {
-            requiredOptionalCourses[course.optionalSubject] = [course.id]
+            requiredOptionalCourses[course.optionalCourse] = [course.id]
         }
     }
 
@@ -284,7 +284,7 @@ const getCoursesOfSemester = asyncHandler(async (req, res) => {
                 [Op.and]: [
                     {
                         schemeId: semester.schemeId,
-                        optionalSubject: null
+                        optionalCourse: null
                     }
                 ]
             }
@@ -348,7 +348,7 @@ const updateSemester = asyncHandler(async (req, res) => {
         where: {
             [Op.and]: [
                 schemeClause,
-                { optionalSubject: { [Op.ne]: null } }
+                { optionalCourse: { [Op.ne]: null } }
             ]
         },
         include: [
@@ -369,10 +369,10 @@ const updateSemester = asyncHandler(async (req, res) => {
     // creating a map to store the optional courses and the courses that belong to them
     const requiredOptionalCourses = {}
     for (const course of courses) {
-        if (requiredOptionalCourses[course.optionalSubject]) {
-            requiredOptionalCourses[course.optionalSubject] = [...requiredOptionalCourses[course.optionalSubject], course.id]
+        if (requiredOptionalCourses[course.optionalCourse]) {
+            requiredOptionalCourses[course.optionalCourse] = [...requiredOptionalCourses[course.optionalCourse], course.id]
         } else {
-            requiredOptionalCourses[course.optionalSubject] = [course.id]
+            requiredOptionalCourses[course.optionalCourse] = [course.id]
         }
     }
 

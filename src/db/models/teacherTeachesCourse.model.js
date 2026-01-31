@@ -30,7 +30,7 @@ TeacherTeachesCourse.init(
             },
             unique: {
                 name: 'one_subject_for_one_teacher_only_once',
-                msg: 'Teacher already have this subject in the teaching list'
+                msg: 'Teacher already have this course in the teaching list'
             }
         },
         courseId: {
@@ -48,7 +48,7 @@ TeacherTeachesCourse.init(
             },
             unique: {
                 name: 'one_subject_for_one_teacher_only_once',
-                msg: 'Teacher already have this subject in the teaching list'
+                msg: 'Teacher already have this course in the teaching list'
             }
         },
         createdAt: {

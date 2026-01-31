@@ -76,7 +76,7 @@ describe('Teacher API - Teaching Subjects', () => {
   });
 
   test('GET /subjects - includes Course->Scheme', async () => {
-    // seed one subject
+    // seed one course
     await TeacherTeachesCourse.create({ teacherId: teacher.id, courseId: course.id });
     const adminLoginRes = await request(app).post('/api/v1/auth/admins/login').send({ emailOrUsername: 'admin@example.com', password: 'Admin@12345' });
     const token = adminLoginRes.body.data.accessToken;
@@ -124,7 +124,7 @@ describe('Teacher API - Teaching Subjects', () => {
     // 404 not found
     res = await request(app).delete('/api/v1/teachers/subjects').set('Authorization', `Bearer ${adminToken}`).query({ teacherSubjectId: 'aaaaaaaa-aaaa-4aaa-aaaa-aaaaaaaaaaaa' });
     expect(res.status).toBe(httpStatus.NOT_FOUND);
-    expect(res.body.message).toBe('Teacher subject not found');
+    expect(res.body.message).toBe('Teacher course not found');
 
     // 204 success
     res = await request(app).delete('/api/v1/teachers/subjects').set('Authorization', `Bearer ${adminToken}`).query({ teacherSubjectId: entry.id });

@@ -239,14 +239,14 @@ describe('Semester API - POST /api/v1/semesters', () => {
   });
 
   describe('Optional courses validation and success', () => {
-    let c1a, c1b, c2a; // optionalSubject groups OS1 and OS2
+    let c1a, c1b, c2a; // optionalCourse groups OS1 and OS2
     const semesterNumber = 7;
 
     beforeEach(async () => {
       // Create optional courses within the same scheme
-      c1a = await Course.create({ schemeId: scheme.id, code: 'C1A', name: 'Course 1A', optionalSubject: 'OS1' });
-      c1b = await Course.create({ schemeId: scheme.id, code: 'C1B', name: 'Course 1B', optionalSubject: 'OS1' });
-      c2a = await Course.create({ schemeId: scheme.id, code: 'C2A', name: 'Course 2A', optionalSubject: 'OS2' });
+      c1a = await Course.create({ schemeId: scheme.id, code: 'C1A', name: 'Course 1A', optionalCourse: 'OS1' });
+      c1b = await Course.create({ schemeId: scheme.id, code: 'C1B', name: 'Course 1B', optionalCourse: 'OS1' });
+      c2a = await Course.create({ schemeId: scheme.id, code: 'C2A', name: 'Course 2A', optionalCourse: 'OS2' });
 
       // Map these courses to the branch and target semester number
       await BranchCourseSemester.create({ branchId: branch.id, courseId: c1a.id, semesterNumber });

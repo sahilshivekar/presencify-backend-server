@@ -63,14 +63,14 @@ describe('Course API - POST /api/v1/courses/bulk/csv', () => {
 
   describe('Authentication', () => {
     test('401 when no token', async () => {
-      const csv = `code,name,optionalSubject,schemeId\nCS101,Computer Basics,,${scheme.id}`;
+      const csv = `code,name,optionalCourse,schemeId\nCS101,Computer Basics,,${scheme.id}`;
       const filePath = createTempCSV(csv);
       const res = await request(app).post('/api/v1/courses/bulk/csv').attach('csvFile', filePath);
       expect(res.status).toBe(httpStatus.UNAUTHORIZED);
     });
 
     test('401 when invalid token', async () => {
-      const csv = `code,name,optionalSubject,schemeId\nCS101,Computer Basics,,${scheme.id}`;
+      const csv = `code,name,optionalCourse,schemeId\nCS101,Computer Basics,,${scheme.id}`;
       const filePath = createTempCSV(csv);
       const res = await request(app)
         .post('/api/v1/courses/bulk/csv')
@@ -90,7 +90,7 @@ describe('Course API - POST /api/v1/courses/bulk/csv', () => {
     });
 
     test('400 when CSV empty', async () => {
-      const csv = `code,name,optionalSubject,schemeId`;
+      const csv = `code,name,optionalCourse,schemeId`;
       const filePath = createTempCSV(csv, 'test_empty_courses.csv');
       const res = await request(app)
         .post('/api/v1/courses/bulk/csv')
@@ -103,7 +103,7 @@ describe('Course API - POST /api/v1/courses/bulk/csv', () => {
 
   describe('Row Validation', () => {
     test('400 when schemeId invalid UUID', async () => {
-      const csv = `code,name,optionalSubject,schemeId\nCS101,Computer Basics,,not-a-uuid`;
+      const csv = `code,name,optionalCourse,schemeId\nCS101,Computer Basics,,not-a-uuid`;
       const filePath = createTempCSV(csv, 'test_invalid_schemeid_courses.csv');
       const res = await request(app)
         .post('/api/v1/courses/bulk/csv')
@@ -114,7 +114,7 @@ describe('Course API - POST /api/v1/courses/bulk/csv', () => {
     });
 
     test('400 when code missing', async () => {
-      const csv = `code,name,optionalSubject,schemeId\n,Computer Basics,,${scheme.id}`;
+      const csv = `code,name,optionalCourse,schemeId\n,Computer Basics,,${scheme.id}`;
       const filePath = createTempCSV(csv, 'test_missing_code_courses.csv');
       const res = await request(app)
         .post('/api/v1/courses/bulk/csv')
@@ -127,7 +127,7 @@ describe('Course API - POST /api/v1/courses/bulk/csv', () => {
 
   describe('Duplicates & Foreign Keys', () => {
     test('400 when duplicate codes in CSV', async () => {
-      const csv = `code,name,optionalSubject,schemeId\nCS101,Computer Basics,,${scheme.id}\nCS101,Advanced CS,,${scheme.id}`;
+      const csv = `code,name,optionalCourse,schemeId\nCS101,Computer Basics,,${scheme.id}\nCS101,Advanced CS,,${scheme.id}`;
       const filePath = createTempCSV(csv, 'test_dup_codes_courses.csv');
       const res = await request(app)
         .post('/api/v1/courses/bulk/csv')
@@ -139,7 +139,7 @@ describe('Course API - POST /api/v1/courses/bulk/csv', () => {
 
     test('404 when scheme IDs do not exist', async () => {
       const fakeSchemeId = faker.string.uuid();
-      const csv = `code,name,optionalSubject,schemeId\nCS101,Computer Basics,,${fakeSchemeId}`;
+      const csv = `code,name,optionalCourse,schemeId\nCS101,Computer Basics,,${fakeSchemeId}`;
       const filePath = createTempCSV(csv, 'test_invalid_scheme_courses.csv');
       const res = await request(app)
         .post('/api/v1/courses/bulk/csv')
@@ -151,7 +151,7 @@ describe('Course API - POST /api/v1/courses/bulk/csv', () => {
 
     test('409 when code exists in DB', async () => {
       await Course.create({ code: 'CS101', name: 'Existing', schemeId: scheme.id });
-      const csv = `code,name,optionalSubject,schemeId\nCS101,Computer Basics,,${scheme.id}`;
+      const csv = `code,name,optionalCourse,schemeId\nCS101,Computer Basics,,${scheme.id}`;
       const filePath = createTempCSV(csv, 'test_existing_code_courses.csv');
       const res = await request(app)
         .post('/api/v1/courses/bulk/csv')
@@ -164,7 +164,7 @@ describe('Course API - POST /api/v1/courses/bulk/csv', () => {
 
   describe('Success & Rollback', () => {
     test('creates single course', async () => {
-      const csv = `code,name,optionalSubject,schemeId\nCS101,Computer Basics,,${scheme.id}`;
+      const csv = `code,name,optionalCourse,schemeId\nCS101,Computer Basics,,${scheme.id}`;
       const filePath = createTempCSV(csv, 'test_single_courses.csv');
       const res = await request(app)
         .post('/api/v1/courses/bulk/csv')
@@ -176,7 +176,7 @@ describe('Course API - POST /api/v1/courses/bulk/csv', () => {
     });
 
     test('creates multiple courses', async () => {
-      const csv = `code,name,optionalSubject,schemeId\nCS101,Computer Basics,,${scheme.id}\nCS102,Advanced CS,,${scheme.id}`;
+      const csv = `code,name,optionalCourse,schemeId\nCS101,Computer Basics,,${scheme.id}\nCS102,Advanced CS,,${scheme.id}`;
       const filePath = createTempCSV(csv, 'test_multiple_courses.csv');
       const res = await request(app)
         .post('/api/v1/courses/bulk/csv')
@@ -189,7 +189,7 @@ describe('Course API - POST /api/v1/courses/bulk/csv', () => {
 
     test('rollback if second row invalid schemeId', async () => {
       const fakeSchemeId = faker.string.uuid();
-      const csv = `code,name,optionalSubject,schemeId\nCS101,Computer Basics,,${scheme.id}\nCS102,Advanced CS,,${fakeSchemeId}`;
+      const csv = `code,name,optionalCourse,schemeId\nCS101,Computer Basics,,${scheme.id}\nCS102,Advanced CS,,${fakeSchemeId}`;
       const filePath = createTempCSV(csv, 'test_rollback_courses.csv');
       const res = await request(app)
         .post('/api/v1/courses/bulk/csv')

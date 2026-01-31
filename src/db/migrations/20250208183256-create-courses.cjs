@@ -32,7 +32,7 @@ module.exports = {
                     allowNull: false,
                     field: 'course_name',
                 },
-                optionalSubject: {
+                optionalCourse: {
                     type: Sequelize.STRING(255),
                     allowNull: true,
                     field: 'course_optional_subject',

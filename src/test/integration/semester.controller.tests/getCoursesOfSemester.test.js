@@ -54,11 +54,11 @@ describe('Semester API - GET /api/v1/semesters/courses', () => {
         .send({ emailOrPRN: 'student1@example.com', password: 'Student@123' });
       studentToken = studentLoginRes.body.data.accessToken;
 
-      // Seed courses: 2 compulsory (optionalSubject null), 2 optional with groups
-      comp1 = await Course.create({ schemeId: scheme.id, code: 'C-COMP-1', name: 'Compulsory 1', optionalSubject: null });
-      comp2 = await Course.create({ schemeId: scheme.id, code: 'C-COMP-2', name: 'Compulsory 2', optionalSubject: null });
-      opt1 = await Course.create({ schemeId: scheme.id, code: 'C-OPT-1', name: 'Optional 1', optionalSubject: 'OS1' });
-      opt2 = await Course.create({ schemeId: scheme.id, code: 'C-OPT-2', name: 'Optional 2', optionalSubject: 'OS2' });
+      // Seed courses: 2 compulsory (optionalCourse null), 2 optional with groups
+      comp1 = await Course.create({ schemeId: scheme.id, code: 'C-COMP-1', name: 'Compulsory 1', optionalCourse: null });
+      comp2 = await Course.create({ schemeId: scheme.id, code: 'C-COMP-2', name: 'Compulsory 2', optionalCourse: null });
+      opt1 = await Course.create({ schemeId: scheme.id, code: 'C-OPT-1', name: 'Optional 1', optionalCourse: 'OS1' });
+      opt2 = await Course.create({ schemeId: scheme.id, code: 'C-OPT-2', name: 'Optional 2', optionalCourse: 'OS2' });
 
       // Map comp courses to branch+semesterNumber via BranchCourseSemester
       const semesterNumber = 6;
