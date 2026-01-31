@@ -300,7 +300,7 @@ const getCoursesOfSemester = asyncHandler(async (req, res) => {
             required: true,
         },
     });
-    
+
     res
         .status(httpStatus.OK)
         .json(
