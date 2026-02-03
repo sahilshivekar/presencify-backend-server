@@ -28,7 +28,7 @@ const getCourses = asyncHandler(async (req, res) => {
         limit = 10,
         getAll = false,
         onlyOptional = false,
-        teacherId
+        teacherIds
     } = req.query;
     const whereClause = {};
 
@@ -63,6 +63,13 @@ const getCourses = asyncHandler(async (req, res) => {
         schemeClause = { id: schemeId }
     }
 
+    // Handle teacherIds - can be a single ID or comma-separated IDs
+    let teacherClause = {};
+    if (teacherIds) {
+        const teacherIdArray = Array.isArray(teacherIds) ? teacherIds : teacherIds.split(',');
+        teacherClause = { teacherId: { [Op.in]: teacherIdArray } };
+    }
+
     const offset = (parseInt(page, 10) - 1) * parseInt(limit, 10);
 
     const courses = await Course.findAndCountAll({
@@ -92,8 +99,8 @@ const getCourses = asyncHandler(async (req, res) => {
             },
             {
                 model: TeacherTeachesCourse,
-                required: teacherId ? true : false,
-                where: teacherId ? { teacherId: teacherId } : {},
+                required: teacherIds ? true : false,
+                where: teacherClause,
                 duplicating: false,
                 include: {
                     model: Teacher,
@@ -279,8 +286,34 @@ const getCourseById = asyncHandler(async (req, res) => {
         where: { id: id },
         include: [
             {
+                model: BranchCourseSemester,
+                required: false,
+                duplicating: false,
+                include: {
+                    model: Branch,
+                    required: true,
+                    duplicating: false,
+                }
+            },
+            {
                 model: Scheme,
-                required: true
+                required: true,
+                duplicating: false,
+                include: {
+                    model: University,
+                    required: true,
+                    duplicating: false,
+                }
+            },
+            {
+                model: TeacherTeachesCourse,
+                required: false,
+                duplicating: false,
+                include: {
+                    model: Teacher,
+                    required: true,
+                    duplicating: false,
+                }
             }
         ]
     })

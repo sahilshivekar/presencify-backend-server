@@ -151,4 +151,14 @@ describe('Course Controller - getCourses', () => {
     expect(res.status).toBe(httpStatus.BAD_REQUEST);
     expect(res.body.success).toBe(false);
   });
+
+  test('should return 400 for invalid teacherIds', async () => {
+    const res = await request(app)
+      .get(url)
+      .set('Authorization', `Bearer ${adminToken}`)
+      .query({ teacherIds: 'not-a-uuid,also-not-uuid' });
+    expect(res.status).toBe(httpStatus.BAD_REQUEST);
+    expect(res.body.success).toBe(false);
+    expect(res.body.message).toContain('valid UUID');
+  });
 });

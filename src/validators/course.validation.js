@@ -17,6 +17,19 @@ const getCourses = {
             }),
         schemeId: uuid.allow(null)
             .messages({ 'string.guid': 'Scheme ID must be a valid UUID' }),
+        teacherIds: Joi.string().allow(null)
+            .custom((value, helpers) => {
+                if (!value) return value;
+                const ids = value.split(',').map(id => id.trim());
+                for (const id of ids) {
+                    const { error } = uuid.validate(id);
+                    if (error) {
+                        return helpers.error('any.invalid', { message: 'All teacher IDs must be valid UUIDs' });
+                    }
+                }
+                return value;
+            })
+            .messages({ 'any.invalid': 'All teacher IDs must be valid UUIDs' }),
         onlyOptional: Joi.boolean().default(false)
             .messages({ 'boolean.base': 'onlyOptional must be a boolean' }),
         page: Joi.number().integer().min(1).default(1)
