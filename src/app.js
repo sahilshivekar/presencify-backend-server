@@ -46,6 +46,16 @@ logger.info('Serving static files from /public');
 app.use(cookieParser())
 logger.info('Cookie parser enabled');
 
+// Add 1.5 second delay to all requests (for development/testing)
+
+if (config.env === 'development') {
+    app.use((_, __, next) => {
+        setTimeout(() => {
+            next();
+        }, 700);
+    });
+    logger.info('Request delay middleware enabled (700ms delay)');
+}
 
 // limit repeated failed requests to auth endpoints
 if (config.env === 'production') {
@@ -114,4 +124,4 @@ app.use(errorHandler);
 logger.info('Error handler middleware registered');
 
 
-export default app 
+export default app
