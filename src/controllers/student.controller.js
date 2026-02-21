@@ -782,7 +782,7 @@ const addStudentToSemester = asyncHandler(async (req, res) => {
     });
 
     if (alreadyExistsInOtherSemesterForSameAcademicYear) {
-        throw new ApiError(httpStatus.BAD_REQUEST, `Student is already added in other semester of another year for the same academic year`);
+        throw new ApiError(httpStatus.BAD_REQUEST, `Student is already added in other semester for the same academic year`);
     }
 
     // check if student is in dropout for same semester academic year

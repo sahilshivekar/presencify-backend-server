@@ -83,7 +83,7 @@ describe('Student Controller - Revert assignments', () => {
     expect(sb).toBeTruthy();
 
     const revertRes = await request(app)
-      .post('/api/v1/students/division/revert-add')
+      .delete('/api/v1/students/division/revert-add')
       .set('Authorization', `Bearer ${adminToken}`)
       .send({ studentDivisionId: sd.id });
     expect(revertRes.status).toBe(httpStatus.OK);
@@ -125,7 +125,7 @@ describe('Student Controller - Revert assignments', () => {
     expect(newBatch).toBeTruthy();
 
     const revertRes = await request(app)
-      .post('/api/v1/students/division/revert-change')
+      .delete('/api/v1/students/division/revert-change')
       .set('Authorization', `Bearer ${adminToken}`)
       .send({ newStudentDivisionId: newDiv.id });
     expect(revertRes.status).toBe(httpStatus.OK);
@@ -156,7 +156,7 @@ describe('Student Controller - Revert assignments', () => {
     expect(sb).toBeTruthy();
 
     const revertRes = await request(app)
-      .post('/api/v1/students/batch/revert-add')
+      .delete('/api/v1/students/batch/revert-add')
       .set('Authorization', `Bearer ${adminToken}`)
       .send({ studentBatchId: sb.id });
     expect(revertRes.status).toBe(httpStatus.OK);
@@ -192,7 +192,7 @@ describe('Student Controller - Revert assignments', () => {
     expect(newBatch).toBeTruthy();
 
     const revertRes = await request(app)
-      .post('/api/v1/students/batch/revert-change')
+      .delete('/api/v1/students/batch/revert-change')
       .set('Authorization', `Bearer ${adminToken}`)
       .send({ newStudentBatchId: newBatch.id });
     expect(revertRes.status).toBe(httpStatus.OK);

@@ -109,10 +109,10 @@ router.route('/division')
     .put(validate(studentValidation.changeStudentDivision), verifyJWT([ROLES.ADMIN]), changeStudentDivision);
 
 router.route('/division/revert-add')
-    .post(validate(studentValidation.revertAddStudentToDivision), verifyJWT([ROLES.ADMIN]), revertAddStudentToDivision);
+    .delete(validate(studentValidation.revertAddStudentToDivision), verifyJWT([ROLES.ADMIN]), revertAddStudentToDivision);
 
 router.route('/division/revert-change')
-    .post(validate(studentValidation.revertChangeStudentDivision), verifyJWT([ROLES.ADMIN]), revertChangeStudentDivision);
+    .delete(validate(studentValidation.revertChangeStudentDivision), verifyJWT([ROLES.ADMIN]), revertChangeStudentDivision);
 
 // Batch management (admin only)
 router.route('/batch')
@@ -120,10 +120,10 @@ router.route('/batch')
     .put(validate(studentValidation.changeStudentBatch), verifyJWT([ROLES.ADMIN]), changeStudentBatch);
 
 router.route('/batch/revert-add')
-    .post(validate(studentValidation.revertAddStudentToBatch), verifyJWT([ROLES.ADMIN]), revertAddStudentToBatch);
+    .delete(validate(studentValidation.revertAddStudentToBatch), verifyJWT([ROLES.ADMIN]), revertAddStudentToBatch);
 
 router.route('/batch/revert-change')
-    .post(validate(studentValidation.revertChangeStudentBatch), verifyJWT([ROLES.ADMIN]), revertChangeStudentBatch);
+    .delete(validate(studentValidation.revertChangeStudentBatch), verifyJWT([ROLES.ADMIN]), revertChangeStudentBatch);
 
 // CRUD by ID — placed after management endpoints to avoid matching '/division' or '/batch'
 router.route('/:id')
