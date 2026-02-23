@@ -7,8 +7,15 @@ module.exports = {
     async up(queryInterface, Sequelize) {
         const rooms = [];
 
-        // Function to generate a random number between min and max (inclusive)
-        const getRandomCapacity = () => Math.floor(Math.random() * (70 - 30 + 1)) + 30;
+        // Function to get capacity based on room type
+        const getCapacity = (type) => {
+            switch (type) {
+                case 'Office': return 0;
+                case 'Classroom': return 90;
+                case 'Lab': return 30;
+                default: return 0;
+            }
+        };
 
         // Define room numbers
         const roomNumbers = [
@@ -45,11 +52,12 @@ module.exports = {
         // Create room objects
         let typeIndex = 0;
         roomNumbers.forEach((roomNumber) => {
+            const type = types[typeIndex++];
             rooms.push({
                 room_id: uuidv4(), 
                 room_number: roomNumber,
-                room_type: types[typeIndex++],
-                sitting_capacity: getRandomCapacity(),
+                room_type: type,
+                sitting_capacity: getCapacity(type),
                 created_at: new Date(),
                 updated_at: new Date()
             });

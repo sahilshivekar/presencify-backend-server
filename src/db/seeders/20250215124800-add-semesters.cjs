@@ -44,40 +44,20 @@ module.exports = {
 
         // 3. Fetch Courses to link to semesters
         const courses = await queryInterface.sequelize.query(
-            `SELECT course_id, course_code FROM courses;`,
+            `SELECT course_id, course_code, course_name FROM courses;`,
             { type: queryInterface.sequelize.QueryTypes.SELECT }
         );
-        const courseIdMap = courses.reduce((map, course) => {
-            map[course.course_code] = course.course_id;
-            return map;
-        }, {});
 
-        // 4. Prepare and insert semester_courses data
+        // 4. Prepare and insert Optional courses for Sem 8
         const semesterCoursesToInsert = [];
         const findSemesterId = (branchId, semNum) => semestersToInsert.find(s => s.branch_id === branchId && s.semester_number === semNum).id;
-
-        // Comp Sem 5
-        const compSem5Id = findSemesterId(compBranchId, 5);
-        if (compSem5Id) {
-            semesterCoursesToInsert.push({ id: uuidv4(), semester_id: compSem5Id, course_id: courseIdMap['CSDLO5012'], created_at: new Date(), updated_at: new Date() });
-        }
-        // Comp Sem 6
-        const compSem6Id = findSemesterId(compBranchId, 6);
-        if (compSem6Id) {
-            semesterCoursesToInsert.push({ id: uuidv4(), semester_id: compSem6Id, course_id: courseIdMap['CSDLO6011'], created_at: new Date(), updated_at: new Date() });
-        }
-        // Comp Sem 7
-        const compSem7Id = findSemesterId(compBranchId, 7);
-        if (compSem7Id) {
-            ['CSDC7011', 'CSDL7011', 'CSDC7021'].forEach(code => {
-                semesterCoursesToInsert.push({ id: uuidv4(), semester_id: compSem7Id, course_id: courseIdMap[code], created_at: new Date(), updated_at: new Date() });
-            });
-        }
-        // Comp Sem 8
         const compSem8Id = findSemesterId(compBranchId, 8);
         if (compSem8Id) {
-            ['CSDC8011', 'CSDL8011', 'CSDC8021'].forEach(code => {
-                semesterCoursesToInsert.push({ id: uuidv4(), semester_id: compSem8Id, course_id: courseIdMap[code], created_at: new Date(), updated_at: new Date() });
+            
+            const optionalCourseNames = ['Digital Forensic', 'Digital Forensic Lab', 'Social Media Analytics', 'Social Media Analytics Lab', 'Environmental Management'];
+            const optionalCourses = courses.filter(c => optionalCourseNames.includes(c.course_name));
+            optionalCourses.forEach(course => {
+                semesterCoursesToInsert.push({ id: uuidv4(), semester_id: compSem8Id, course_id: course.course_id, created_at: new Date(), updated_at: new Date() });
             });
         }
 
