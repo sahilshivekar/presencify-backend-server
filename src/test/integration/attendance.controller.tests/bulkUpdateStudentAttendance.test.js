@@ -75,17 +75,17 @@ describe('PUT /api/v1/attendances/bulk/update', () => {
             });
             
             validScheme = await Scheme.create({
-                name: 'CS 2025 Scheme',
+                name: 'CS 2026 Scheme',
                 universityId: validUniversity.id,
             });
             
             validSemester = await Semester.create({
                 semesterNumber: 1,
                 branchId: validBranch.id,
-                academicStartYear: 2024,
-                academicEndYear: 2025,
-                startDate: '2024-08-01',
-                endDate: '2024-12-31',
+                academicStartYear: 2025,
+                academicEndYear: 2026,
+                startDate: '2025-08-01',
+                endDate: '2025-12-31',
                 schemeId: validScheme.id,
             });
             
@@ -137,8 +137,8 @@ describe('PUT /api/v1/attendances/bulk/update', () => {
                 dayOfWeek: 'Monday',
                 roomId: validRoom.id,
                 batchId: validBatch.id,
-                activeFrom: '2024-08-01',
-                activeTill: '2024-12-31',
+                activeFrom: '2025-08-01',
+                activeTill: '2025-12-31',
                 classType: 'Lecture',
                 courseId: validCourse.id,
                 timetableId: validTimetable.id,
@@ -155,7 +155,7 @@ describe('PUT /api/v1/attendances/bulk/update', () => {
                 password: 'Student@123',
                 schemeId: validScheme.id,
                 branchId: validBranch.id,
-                admissionYear: 2024,
+                admissionYear: 2025,
                 admissionType: 'FE',
                 gender: 'Male'
             });
@@ -169,7 +169,7 @@ describe('PUT /api/v1/attendances/bulk/update', () => {
                 password: 'Student@123',
                 schemeId: validScheme.id,
                 branchId: validBranch.id,
-                admissionYear: 2024,
+                admissionYear: 2025,
                 admissionType: 'FE',
                 gender: 'Male'
             });
@@ -183,7 +183,7 @@ describe('PUT /api/v1/attendances/bulk/update', () => {
                 password: 'Student@123',
                 schemeId: validScheme.id,
                 branchId: validBranch.id,
-                admissionYear: 2024,
+                admissionYear: 2025,
                 admissionType: 'FE',
                 gender: 'Male'
             });
@@ -205,44 +205,44 @@ describe('PUT /api/v1/attendances/bulk/update', () => {
             await StudentDivision.create({
                 studentId: validStudent1.id,
                 divisionId: validDivision.id,
-                startDate: '2024-08-01',
+                startDate: '2025-08-01',
             });
             await StudentDivision.create({
                 studentId: validStudent2.id,
                 divisionId: validDivision.id,
-                startDate: '2024-08-01',
+                startDate: '2025-08-01',
             });
             await StudentDivision.create({
                 studentId: validStudent3.id,
                 divisionId: validDivision.id,
-                startDate: '2024-08-01',
+                startDate: '2025-08-01',
             });
 
             await StudentBatch.create({
                 studentId: validStudent1.id,
                 batchId: validBatch.id,
-                startDate: '2024-08-01',
+                startDate: '2025-08-01',
             });
             await StudentBatch.create({
                 studentId: validStudent2.id,
                 batchId: validBatch.id,
-                startDate: '2024-08-01',
+                startDate: '2025-08-01',
             });
             await StudentBatch.create({
                 studentId: validStudent3.id,
                 batchId: validBatch.id,
-                startDate: '2024-08-01',
+                startDate: '2025-08-01',
             });
 
             // Create test attendance records
             testAttendance1 = await Attendance.create({
                 classId: validClass.id,
-                date: '2024-09-16'
+                date: '2025-09-16'
             });
 
             testAttendance2 = await Attendance.create({
                 classId: validClass.id,
-                date: '2024-09-17'
+                date: '2025-09-17'
             });
 
             // Create test attendance student records
@@ -756,7 +756,7 @@ describe('PUT /api/v1/attendances/bulk/update', () => {
             for (let i = 0; i < 5; i++) {
                 // Create additional student
                 const student = await Student.create({
-                    prn: `PRN2024${String(i).padStart(6, '0')}`,
+                    prn: `PRN2025${String(i).padStart(6, '0')}`,
                     firstName: `TestStudent${i}`,
                     lastName: `BatchTest${i}`,
                     studentCollegeId: `BATCH${String(i).padStart(3, '0')}`,
@@ -764,7 +764,7 @@ describe('PUT /api/v1/attendances/bulk/update', () => {
                     email: `batchtest${i}@example.com`,
                     gender: 'Male',
                     dateOfBirth: '2000-01-01',
-                    admissionYear: 2024,
+                    admissionYear: 2025,
                     admissionType: 'FE',
                     universityId: validUniversity.id,
                     branchId: validBranch.id,
@@ -775,14 +775,14 @@ describe('PUT /api/v1/attendances/bulk/update', () => {
                 await StudentDivision.create({
                     studentId: student.id,
                     divisionId: validDivision.id,
-                    startDate: '2024-01-01'
+                    startDate: '2025-01-01'
                 });
 
                 // Create student batch association
                 await StudentBatch.create({
                     studentId: student.id,
                     batchId: validBatch.id,
-                    startDate: '2024-01-01'
+                    startDate: '2025-01-01'
                 });
 
                 // Create attendance student record

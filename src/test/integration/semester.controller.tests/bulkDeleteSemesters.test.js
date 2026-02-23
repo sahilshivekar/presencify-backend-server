@@ -51,7 +51,7 @@ describe('DELETE /api/v1/semesters/bulk/delete', () => {
 
             // Create test scheme
             validScheme = await Scheme.create({
-                name: 'CS 2025 Scheme',
+                name: 'CS 2026 Scheme',
                 universityId: validUniversity.id
             });
 
@@ -59,20 +59,20 @@ describe('DELETE /api/v1/semesters/bulk/delete', () => {
             testSemester1 = await Semester.create({
                 branchId: validBranch.id,
                 semesterNumber: 1,
-                academicStartYear: 2024,
-                academicEndYear: 2025,
-                startDate: '2024-08-01',
-                endDate: '2024-12-31',
+                academicStartYear: 2025,
+                academicEndYear: 2026,
+                startDate: '2025-08-01',
+                endDate: '2025-12-31',
                 schemeId: validScheme.id
             });
 
             testSemester2 = await Semester.create({
                 branchId: validBranch.id,
                 semesterNumber: 2,
-                academicStartYear: 2024,
-                academicEndYear: 2025,
-                startDate: '2025-01-01',
-                endDate: '2025-05-31',
+                academicStartYear: 2025,
+                academicEndYear: 2026,
+                startDate: '2026-01-01',
+                endDate: '2026-05-31',
                 schemeId: validScheme.id
             });
         } catch (error) {
@@ -251,7 +251,7 @@ describe('DELETE /api/v1/semesters/bulk/delete', () => {
                 password: 'Student@123',
                 schemeId: validScheme.id,
                 branchId: validBranch.id,
-                admissionYear: 2024,
+                admissionYear: 2025,
                 admissionType: 'FE',
                 gender: 'Male'
             });

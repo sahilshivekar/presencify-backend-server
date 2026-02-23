@@ -37,7 +37,7 @@ describe('Student Auth API - logout', () => {
 
         // Create test student
         testStudent = await Student.create({
-            prn: 'TU2024001',
+            prn: 'TU2025001',
             firstName: 'John',
             lastName: 'Doe',
             email: 'john.doe@test.com',
@@ -45,7 +45,7 @@ describe('Student Auth API - logout', () => {
             password: 'TestPass123!', // This should trigger password hashing hook
             schemeId: testScheme.id,
             branchId: testBranch.id,
-            admissionYear: 2024,
+            admissionYear: 2025,
             admissionType: 'FE',
             gender: "Male",
         });

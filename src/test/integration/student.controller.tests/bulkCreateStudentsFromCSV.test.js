@@ -78,7 +78,7 @@ describe('Student API - POST /api/v1/students/bulk/csv', () => {
                 abbreviation: 'CS',
             });
             scheme = await Scheme.create({
-                name: 'CS 2025 Scheme',
+                name: 'CS 2026 Scheme',
                 universityId: university.id,
             });
         } catch (err) {
@@ -94,7 +94,7 @@ describe('Student API - POST /api/v1/students/bulk/csv', () => {
     describe('Authentication Tests', () => {
         test('should return 401 when no token is provided', async () => {
             const csvContent = `prn,firstName,lastName,email,phoneNumber,gender,schemeId,admissionYear,admissionType,branchId
-STU001,John,Doe,john@example.com,+919876543210,Male,${scheme.id},2024,FE,${branch.id}`;
+STU001,John,Doe,john@example.com,+919876543210,Male,${scheme.id},2025,FE,${branch.id}`;
             const filePath = createTempCSV(csvContent);
 
             const res = await request(app)
@@ -106,7 +106,7 @@ STU001,John,Doe,john@example.com,+919876543210,Male,${scheme.id},2024,FE,${branc
 
         test('should return 401 when invalid token is provided', async () => {
             const csvContent = `prn,firstName,lastName,email,phoneNumber,gender,schemeId,admissionYear,admissionType,branchId
-STU001,John,Doe,john@example.com,+919876543210,Male,${scheme.id},2024,FE,${branch.id}`;
+STU001,John,Doe,john@example.com,+919876543210,Male,${scheme.id},2025,FE,${branch.id}`;
             const filePath = createTempCSV(csvContent);
 
             const res = await request(app)
@@ -145,7 +145,7 @@ STU001,John,Doe,john@example.com,+919876543210,Male,${scheme.id},2024,FE,${branc
     describe('CSV Row Validation Tests', () => {
         test('should return 400 when prn is missing in a row', async () => {
             const csvContent = `prn,firstName,lastName,email,phoneNumber,gender,schemeId,admissionYear,admissionType,branchId
-,John,Doe,john@example.com,+919876543210,Male,${scheme.id},2024,FE,${branch.id}`;
+,John,Doe,john@example.com,+919876543210,Male,${scheme.id},2025,FE,${branch.id}`;
             const filePath = createTempCSV(csvContent, 'test_missing_prn.csv');
 
             const res = await request(app)
@@ -159,7 +159,7 @@ STU001,John,Doe,john@example.com,+919876543210,Male,${scheme.id},2024,FE,${branc
 
         test('should return 400 when email is invalid in a row', async () => {
             const csvContent = `prn,firstName,lastName,email,phoneNumber,gender,schemeId,admissionYear,admissionType,branchId
-STU001,John,Doe,invalid-email,+919876543210,Male,${scheme.id},2024,FE,${branch.id}`;
+STU001,John,Doe,invalid-email,+919876543210,Male,${scheme.id},2025,FE,${branch.id}`;
             const filePath = createTempCSV(csvContent, 'test_invalid_email.csv');
 
             const res = await request(app)
@@ -173,7 +173,7 @@ STU001,John,Doe,invalid-email,+919876543210,Male,${scheme.id},2024,FE,${branch.i
 
         test('should return 400 when gender is invalid', async () => {
             const csvContent = `prn,firstName,lastName,email,phoneNumber,gender,schemeId,admissionYear,admissionType,branchId
-STU001,John,Doe,john@example.com,+919876543210,InvalidGender,${scheme.id},2024,FE,${branch.id}`;
+STU001,John,Doe,john@example.com,+919876543210,InvalidGender,${scheme.id},2025,FE,${branch.id}`;
             const filePath = createTempCSV(csvContent, 'test_invalid_gender.csv');
 
             const res = await request(app)
@@ -187,7 +187,7 @@ STU001,John,Doe,john@example.com,+919876543210,InvalidGender,${scheme.id},2024,F
 
         test('should return 400 when admissionType is invalid', async () => {
             const csvContent = `prn,firstName,lastName,email,phoneNumber,gender,schemeId,admissionYear,admissionType,branchId
-STU001,John,Doe,john@example.com,+919876543210,Male,${scheme.id},2024,INVALID,${branch.id}`;
+STU001,John,Doe,john@example.com,+919876543210,Male,${scheme.id},2025,INVALID,${branch.id}`;
             const filePath = createTempCSV(csvContent, 'test_invalid_admission_type.csv');
 
             const res = await request(app)
@@ -201,7 +201,7 @@ STU001,John,Doe,john@example.com,+919876543210,Male,${scheme.id},2024,INVALID,${
 
         test('should return 400 when schemeId is not a valid UUID', async () => {
             const csvContent = `prn,firstName,lastName,email,phoneNumber,gender,schemeId,admissionYear,admissionType,branchId
-STU001,John,Doe,john@example.com,+919876543210,Male,invalid-uuid,2024,FE,${branch.id}`;
+STU001,John,Doe,john@example.com,+919876543210,Male,invalid-uuid,2025,FE,${branch.id}`;
             const filePath = createTempCSV(csvContent, 'test_invalid_schemeid.csv');
 
             const res = await request(app)
@@ -215,7 +215,7 @@ STU001,John,Doe,john@example.com,+919876543210,Male,invalid-uuid,2024,FE,${branc
 
         test('should return 400 when branchId is not a valid UUID', async () => {
             const csvContent = `prn,firstName,lastName,email,phoneNumber,gender,schemeId,admissionYear,admissionType,branchId
-STU001,John,Doe,john@example.com,+919876543210,Male,${scheme.id},2024,FE,invalid-uuid`;
+STU001,John,Doe,john@example.com,+919876543210,Male,${scheme.id},2025,FE,invalid-uuid`;
             const filePath = createTempCSV(csvContent, 'test_invalid_branchid.csv');
 
             const res = await request(app)
@@ -231,8 +231,8 @@ STU001,John,Doe,john@example.com,+919876543210,Male,${scheme.id},2024,FE,invalid
     describe('Duplicate Detection Tests', () => {
         test('should return 400 when CSV contains duplicate emails', async () => {
             const csvContent = `prn,firstName,lastName,email,phoneNumber,gender,schemeId,admissionYear,admissionType,branchId
-STU001,John,Doe,john@example.com,+919876543210,Male,${scheme.id},2024,FE,${branch.id}
-STU002,Jane,Smith,john@example.com,+919876543211,Female,${scheme.id},2024,FE,${branch.id}`;
+STU001,John,Doe,john@example.com,+919876543210,Male,${scheme.id},2025,FE,${branch.id}
+STU002,Jane,Smith,john@example.com,+919876543211,Female,${scheme.id},2025,FE,${branch.id}`;
             const filePath = createTempCSV(csvContent, 'test_dup_emails.csv');
 
             const res = await request(app)
@@ -246,8 +246,8 @@ STU002,Jane,Smith,john@example.com,+919876543211,Female,${scheme.id},2024,FE,${b
 
         test('should return 400 when CSV contains duplicate PRNs', async () => {
             const csvContent = `prn,firstName,lastName,email,phoneNumber,gender,schemeId,admissionYear,admissionType,branchId
-STU001,John,Doe,john@example.com,+919876543210,Male,${scheme.id},2024,FE,${branch.id}
-STU001,Jane,Smith,jane@example.com,+919876543211,Female,${scheme.id},2024,FE,${branch.id}`;
+STU001,John,Doe,john@example.com,+919876543210,Male,${scheme.id},2025,FE,${branch.id}
+STU001,Jane,Smith,jane@example.com,+919876543211,Female,${scheme.id},2025,FE,${branch.id}`;
             const filePath = createTempCSV(csvContent, 'test_dup_prns.csv');
 
             const res = await request(app)
@@ -269,13 +269,13 @@ STU001,Jane,Smith,jane@example.com,+919876543211,Female,${scheme.id},2024,FE,${b
                 phoneNumber: '+919876543200',
                 gender: 'Male',
                 schemeId: scheme.id,
-                admissionYear: 2024,
+                admissionYear: 2025,
                 admissionType: 'FE',
                 branchId: branch.id
             });
 
             const csvContent = `prn,firstName,lastName,email,phoneNumber,gender,schemeId,admissionYear,admissionType,branchId
-STU001,John,Doe,existing@example.com,+919876543210,Male,${scheme.id},2024,FE,${branch.id}`;
+STU001,John,Doe,existing@example.com,+919876543210,Male,${scheme.id},2025,FE,${branch.id}`;
             const filePath = createTempCSV(csvContent, 'test_existing_email.csv');
 
             const res = await request(app)
@@ -297,13 +297,13 @@ STU001,John,Doe,existing@example.com,+919876543210,Male,${scheme.id},2024,FE,${b
                 phoneNumber: '+919876543200',
                 gender: 'Male',
                 schemeId: scheme.id,
-                admissionYear: 2024,
+                admissionYear: 2025,
                 admissionType: 'FE',
                 branchId: branch.id
             });
 
             const csvContent = `prn,firstName,lastName,email,phoneNumber,gender,schemeId,admissionYear,admissionType,branchId
-EXISTING001,John,Doe,john@example.com,+919876543210,Male,${scheme.id},2024,FE,${branch.id}`;
+EXISTING001,John,Doe,john@example.com,+919876543210,Male,${scheme.id},2025,FE,${branch.id}`;
             const filePath = createTempCSV(csvContent, 'test_existing_prn.csv');
 
             const res = await request(app)
@@ -325,13 +325,13 @@ EXISTING001,John,Doe,john@example.com,+919876543210,Male,${scheme.id},2024,FE,${
                 phoneNumber: '+919876543200',
                 gender: 'Male',
                 schemeId: scheme.id,
-                admissionYear: 2024,
+                admissionYear: 2025,
                 admissionType: 'FE',
                 branchId: branch.id
             });
 
             const csvContent = `prn,firstName,lastName,email,phoneNumber,gender,schemeId,admissionYear,admissionType,branchId
-STU001,John,Doe,john@example.com,+919876543200,Male,${scheme.id},2024,FE,${branch.id}`;
+STU001,John,Doe,john@example.com,+919876543200,Male,${scheme.id},2025,FE,${branch.id}`;
             const filePath = createTempCSV(csvContent, 'test_existing_phone.csv');
 
             const res = await request(app)
@@ -348,7 +348,7 @@ STU001,John,Doe,john@example.com,+919876543200,Male,${scheme.id},2024,FE,${branc
         test('should return 404 when scheme does not exist', async () => {
             const fakeSchemeId = faker.string.uuid();
             const csvContent = `prn,firstName,lastName,email,phoneNumber,gender,schemeId,admissionYear,admissionType,branchId
-STU001,John,Doe,john@example.com,+919876543210,Male,${fakeSchemeId},2024,FE,${branch.id}`;
+STU001,John,Doe,john@example.com,+919876543210,Male,${fakeSchemeId},2025,FE,${branch.id}`;
             const filePath = createTempCSV(csvContent, 'test_invalid_scheme.csv');
 
             const res = await request(app)
@@ -363,7 +363,7 @@ STU001,John,Doe,john@example.com,+919876543210,Male,${fakeSchemeId},2024,FE,${br
         test('should return 404 when branch does not exist', async () => {
             const fakeBranchId = faker.string.uuid();
             const csvContent = `prn,firstName,lastName,email,phoneNumber,gender,schemeId,admissionYear,admissionType,branchId
-STU001,John,Doe,john@example.com,+919876543210,Male,${scheme.id},2024,FE,${fakeBranchId}`;
+STU001,John,Doe,john@example.com,+919876543210,Male,${scheme.id},2025,FE,${fakeBranchId}`;
             const filePath = createTempCSV(csvContent, 'test_invalid_branch.csv');
 
             const res = await request(app)
@@ -379,7 +379,7 @@ STU001,John,Doe,john@example.com,+919876543210,Male,${scheme.id},2024,FE,${fakeB
     describe('Success Tests', () => {
         test('should successfully create a single student from CSV', async () => {
             const csvContent = `prn,firstName,lastName,email,phoneNumber,gender,schemeId,admissionYear,admissionType,branchId
-STU001,John,Doe,john@example.com,+919876543210,Male,${scheme.id},2024,FE,${branch.id}`;
+STU001,John,Doe,john@example.com,+919876543210,Male,${scheme.id},2025,FE,${branch.id}`;
             const filePath = createTempCSV(csvContent, 'test_single_success.csv');
 
             const res = await request(app)
@@ -404,8 +404,8 @@ STU001,John,Doe,john@example.com,+919876543210,Male,${scheme.id},2024,FE,${branc
 
         test('should successfully create multiple students from CSV', async () => {
             const csvContent = `prn,firstName,lastName,email,phoneNumber,gender,schemeId,admissionYear,admissionType,branchId
-STU001,John,Doe,john@example.com,+919876543210,Male,${scheme.id},2024,FE,${branch.id}
-STU002,Jane,Smith,jane@example.com,+919876543211,Female,${scheme.id},2024,DSE,${branch.id}
+STU001,John,Doe,john@example.com,+919876543210,Male,${scheme.id},2025,FE,${branch.id}
+STU002,Jane,Smith,jane@example.com,+919876543211,Female,${scheme.id},2025,DSE,${branch.id}
 STU003,Bob,Wilson,bob@example.com,+919876543212,Male,${scheme.id},2023,FE,${branch.id}`;
             const filePath = createTempCSV(csvContent, 'test_multiple_success.csv');
 
@@ -426,7 +426,7 @@ STU003,Bob,Wilson,bob@example.com,+919876543212,Male,${scheme.id},2023,FE,${bran
 
         test('should successfully create students with optional fields', async () => {
             const csvContent = `prn,firstName,middleName,lastName,email,phoneNumber,gender,dob,schemeId,admissionYear,admissionType,branchId,parentEmail
-STU001,John,Michael,Doe,john@example.com,+919876543210,Male,1999/01/15,${scheme.id},2024,FE,${branch.id},parent@example.com`;
+STU001,John,Michael,Doe,john@example.com,+919876543210,Male,1999/01/15,${scheme.id},2025,FE,${branch.id},parent@example.com`;
             const filePath = createTempCSV(csvContent, 'test_optional_fields.csv');
 
             const res = await request(app)
@@ -447,7 +447,7 @@ STU001,John,Michael,Doe,john@example.com,+919876543210,Male,1999/01/15,${scheme.
 
         test('should normalize email to lowercase', async () => {
             const csvContent = `prn,firstName,lastName,email,phoneNumber,gender,schemeId,admissionYear,admissionType,branchId
-STU001,John,Doe,JOHN@EXAMPLE.COM,+919876543210,Male,${scheme.id},2024,FE,${branch.id}`;
+STU001,John,Doe,JOHN@EXAMPLE.COM,+919876543210,Male,${scheme.id},2025,FE,${branch.id}`;
             const filePath = createTempCSV(csvContent, 'test_email_normalize.csv');
 
             const res = await request(app)
@@ -464,9 +464,9 @@ STU001,John,Doe,JOHN@EXAMPLE.COM,+919876543210,Male,${scheme.id},2024,FE,${branc
 
         test('should handle different gender values correctly', async () => {
             const csvContent = `prn,firstName,lastName,email,phoneNumber,gender,schemeId,admissionYear,admissionType,branchId
-STU001,John,Doe,john@example.com,+919876543210,Male,${scheme.id},2024,FE,${branch.id}
-STU002,Jane,Smith,jane@example.com,+919876543211,Female,${scheme.id},2024,FE,${branch.id}
-STU003,Alex,Other,alex@example.com,+919876543212,Other,${scheme.id},2024,FE,${branch.id}`;
+STU001,John,Doe,john@example.com,+919876543210,Male,${scheme.id},2025,FE,${branch.id}
+STU002,Jane,Smith,jane@example.com,+919876543211,Female,${scheme.id},2025,FE,${branch.id}
+STU003,Alex,Other,alex@example.com,+919876543212,Other,${scheme.id},2025,FE,${branch.id}`;
             const filePath = createTempCSV(csvContent, 'test_genders.csv');
 
             const res = await request(app)
@@ -485,7 +485,7 @@ STU003,Alex,Other,alex@example.com,+919876543212,Other,${scheme.id},2024,FE,${br
 
         test('should set default password for all students', async () => {
             const csvContent = `prn,firstName,lastName,email,phoneNumber,gender,schemeId,admissionYear,admissionType,branchId
-STU001,John,Doe,john@example.com,+919876543210,Male,${scheme.id},2024,FE,${branch.id}`;
+STU001,John,Doe,john@example.com,+919876543210,Male,${scheme.id},2025,FE,${branch.id}`;
             const filePath = createTempCSV(csvContent, 'test_default_password.csv');
 
             const res = await request(app)
@@ -507,9 +507,9 @@ STU001,John,Doe,john@example.com,+919876543210,Male,${scheme.id},2024,FE,${branc
         test('should rollback all changes if validation fails for any row', async () => {
             // Row 3 has invalid email
             const csvContent = `prn,firstName,lastName,email,phoneNumber,gender,schemeId,admissionYear,admissionType,branchId
-STU001,John,Doe,john@example.com,+919876543210,Male,${scheme.id},2024,FE,${branch.id}
-STU002,Jane,Smith,jane@example.com,+919876543211,Female,${scheme.id},2024,FE,${branch.id}
-STU003,Bob,Wilson,invalid-email,+919876543212,Male,${scheme.id},2024,FE,${branch.id}`;
+STU001,John,Doe,john@example.com,+919876543210,Male,${scheme.id},2025,FE,${branch.id}
+STU002,Jane,Smith,jane@example.com,+919876543211,Female,${scheme.id},2025,FE,${branch.id}
+STU003,Bob,Wilson,invalid-email,+919876543212,Male,${scheme.id},2025,FE,${branch.id}`;
             const filePath = createTempCSV(csvContent, 'test_partial_invalid.csv');
 
             const res = await request(app)
@@ -528,8 +528,8 @@ STU003,Bob,Wilson,invalid-email,+919876543212,Male,${scheme.id},2024,FE,${branch
             const fakeSchemeId = faker.string.uuid();
             // First row is valid, second row has invalid schemeId
             const csvContent = `prn,firstName,lastName,email,phoneNumber,gender,schemeId,admissionYear,admissionType,branchId
-STU001,John,Doe,john@example.com,+919876543210,Male,${scheme.id},2024,FE,${branch.id}
-STU002,Jane,Smith,jane@example.com,+919876543211,Female,${fakeSchemeId},2024,FE,${branch.id}`;
+STU001,John,Doe,john@example.com,+919876543210,Male,${scheme.id},2025,FE,${branch.id}
+STU002,Jane,Smith,jane@example.com,+919876543211,Female,${fakeSchemeId},2025,FE,${branch.id}`;
             const filePath = createTempCSV(csvContent, 'test_fk_rollback.csv');
 
             const res = await request(app)
@@ -548,7 +548,7 @@ STU002,Jane,Smith,jane@example.com,+919876543211,Female,${fakeSchemeId},2024,FE,
     describe('File Cleanup Tests', () => {
         test('should clean up temp file after successful upload', async () => {
             const csvContent = `prn,firstName,lastName,email,phoneNumber,gender,schemeId,admissionYear,admissionType,branchId
-STU001,John,Doe,john@example.com,+919876543210,Male,${scheme.id},2024,FE,${branch.id}`;
+STU001,John,Doe,john@example.com,+919876543210,Male,${scheme.id},2025,FE,${branch.id}`;
             const filePath = createTempCSV(csvContent, 'test_cleanup_success.csv');
             
             // Verify file exists before request
@@ -565,7 +565,7 @@ STU001,John,Doe,john@example.com,+919876543210,Male,${scheme.id},2024,FE,${branc
 
         test('should clean up temp file after validation error', async () => {
             const csvContent = `prn,firstName,lastName,email,phoneNumber,gender,schemeId,admissionYear,admissionType,branchId
-,John,Doe,john@example.com,+919876543210,Male,${scheme.id},2024,FE,${branch.id}`;
+,John,Doe,john@example.com,+919876543210,Male,${scheme.id},2025,FE,${branch.id}`;
             const filePath = createTempCSV(csvContent, 'test_cleanup_error.csv');
 
             await request(app)

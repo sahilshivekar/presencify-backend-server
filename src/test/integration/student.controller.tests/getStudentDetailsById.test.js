@@ -65,10 +65,10 @@ describe('Student API - GET /api/v1/students/:id', () => {
 
             // Create Scheme
             const scheme = await Scheme.create({
-                name: 'Test Scheme 2024',
-                schemeCode: 'TS2024',
+                name: 'Test Scheme 2025',
+                schemeCode: 'TS2025',
                 schemeName: 'Test Scheme',
-                academicStartYear: 2024,
+                academicStartYear: 2025,
                 academicEndYear: 2028,
                 duration: 4,
                 branchId: branch.id,
@@ -210,7 +210,7 @@ describe('Student API - GET /api/v1/students/:id', () => {
             expect(res.body.success).toBe(true);
             expect(res.body.data.Branch).toHaveProperty('name', 'Computer Science');
             expect(res.body.data.Branch).toHaveProperty('abbreviation', 'CS');
-            expect(res.body.data.Scheme).toHaveProperty('name', 'Test Scheme 2024');
+            expect(res.body.data.Scheme).toHaveProperty('name', 'Test Scheme 2025');
             expect(res.body.data.Scheme).toHaveProperty('universityId');
         });
 

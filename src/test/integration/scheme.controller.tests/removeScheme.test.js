@@ -38,7 +38,7 @@ describe('Scheme API - DELETE /api/v1/schemes/:id', () => {
       scheme = await Scheme.create({ name: 'Old Scheme Name', universityId: university.id });
 
       // Student for token
-      await Student.create({ firstName: 'Jane', lastName: 'Smith', email: 'student1@example.com', phoneNumber: '+919876543210', prn: 'STU001', password: 'Student@123', schemeId: scheme.id, branchId: branch.id, admissionYear: 2024, admissionType: 'FE', gender: 'Male' });
+      await Student.create({ firstName: 'Jane', lastName: 'Smith', email: 'student1@example.com', phoneNumber: '+919876543210', prn: 'STU001', password: 'Student@123', schemeId: scheme.id, branchId: branch.id, admissionYear: 2025, admissionType: 'FE', gender: 'Male' });
       const studentLoginRes = await request(app).post('/api/v1/auth/students/login').send({ emailOrPRN: 'student1@example.com', password: 'Student@123' });
       studentToken = studentLoginRes.body.data.accessToken;
     } catch (err) {

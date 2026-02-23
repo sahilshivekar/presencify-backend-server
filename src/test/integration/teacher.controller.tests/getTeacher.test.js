@@ -43,7 +43,7 @@ describe('Teacher API - GET /api/v1/teachers', () => {
 
   // Courses and mapping for courseId filter
   const university = await University.create({ name: 'Tech University', abbreviation: 'TU' });
-  const scheme = await Scheme.create({ name: 'CS 2025', universityId: university.id });
+  const scheme = await Scheme.create({ name: 'CS 2026', universityId: university.id });
       course1 = await Course.create({ name: 'Algorithms', code: 'CS201', schemeId: scheme.id });
       course2 = await Course.create({ name: 'Databases', code: 'CS202', schemeId: scheme.id });
 

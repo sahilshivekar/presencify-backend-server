@@ -63,14 +63,14 @@ describe('Class API - addExtraClass', () => {
     // Academic setup
     university = await University.create({ name: 'Test University', abbreviation: 'TU' });
     branch = await Branch.create({ name: 'Computer Science', abbreviation: 'CS' });
-    scheme = await Scheme.create({ name: 'CS 2025 Scheme', universityId: university.id });
+    scheme = await Scheme.create({ name: 'CS 2026 Scheme', universityId: university.id });
     semester = await Semester.create({
       semesterNumber: 1,
       branchId: branch.id,
-      academicStartYear: 2024,
-      academicEndYear: 2025,
-      startDate: '2024-08-01',
-      endDate: '2024-12-31',
+      academicStartYear: 2025,
+      academicEndYear: 2026,
+      startDate: '2025-08-01',
+      endDate: '2025-12-31',
       schemeId: scheme.id,
     });
     division = await Division.create({ divisionCode: 'A', semesterId: semester.id });
@@ -96,7 +96,7 @@ describe('Class API - addExtraClass', () => {
 
     // Student + login (for 403 test)
     const student = await Student.create({
-      firstName: 'Jane', lastName: 'Smith', email: 'student@example.com', phoneNumber: '+919876543210', prn: 'STU001', password: 'Student@123', schemeId: scheme.id, branchId: branch.id, admissionYear: 2024, admissionType: 'FE', gender: 'Female'
+      firstName: 'Jane', lastName: 'Smith', email: 'student@example.com', phoneNumber: '+919876543210', prn: 'STU001', password: 'Student@123', schemeId: scheme.id, branchId: branch.id, admissionYear: 2025, admissionType: 'FE', gender: 'Female'
     });
     const studentLogin = await request(app).post('/api/v1/auth/students/login').send({ emailOrPRN: 'student@example.com', password: 'Student@123' });
     studentToken = studentLogin.body.data.accessToken;
@@ -109,8 +109,8 @@ describe('Class API - addExtraClass', () => {
     dayOfWeek: 'Monday',
     roomId: room101.id,
     batchId: null,
-    activeFrom: '2024-09-01',
-    activeTill: '2024-11-30',
+    activeFrom: '2025-09-01',
+    activeTill: '2025-11-30',
     classType: 'Lecture',
     courseId: coursePF.id,
     timetableId: timetable.id,
@@ -123,8 +123,8 @@ describe('Class API - addExtraClass', () => {
     dayOfWeek: 'Monday',
     roomId: room102.id,
     batchId: batchA.id,
-    activeFrom: '2024-09-01',
-    activeTill: '2024-11-30',
+    activeFrom: '2025-09-01',
+    activeTill: '2025-11-30',
     classType: 'Practical',
     courseId: coursePF.id,
     timetableId: timetable.id,
@@ -292,7 +292,7 @@ describe('Class API - addExtraClass', () => {
     });
 
     test('should return 400 if activeFrom is out of semester bounds', async () => {
-      const payload = { ...validLecturePayload(), activeFrom: '2024-07-31' }; // before start
+      const payload = { ...validLecturePayload(), activeFrom: '2025-07-31' }; // before start
       const res = await request(app)
         .post('/api/v1/classes/extra')
         .set('Authorization', `Bearer ${adminToken}`)
@@ -303,7 +303,7 @@ describe('Class API - addExtraClass', () => {
     });
 
     test('should return 400 if activeTill is out of semester bounds', async () => {
-      const payload = { ...validLecturePayload(), activeTill: '2025-01-01' }; // after end
+      const payload = { ...validLecturePayload(), activeTill: '2026-01-01' }; // after end
       const res = await request(app)
         .post('/api/v1/classes/extra')
         .set('Authorization', `Bearer ${adminToken}`)
@@ -321,7 +321,7 @@ describe('Class API - addExtraClass', () => {
         teacherId: teacherJohn.id,
         startTime: '09:30:00', endTime: '10:30:00', dayOfWeek: 'Monday',
         roomId: room101.id, batchId: null,
-        activeFrom: '2024-09-10', activeTill: '2024-12-01',
+        activeFrom: '2025-09-10', activeTill: '2025-12-01',
         classType: 'Lecture', courseId: coursePF.id, timetableId: timetable.id, isExtraClass: true
       });
 
@@ -340,7 +340,7 @@ describe('Class API - addExtraClass', () => {
         teacherId: teacherJane.id, // different teacher (valid FK)
         startTime: '09:30:00', endTime: '10:30:00', dayOfWeek: 'Monday',
         roomId: room101.id, batchId: null,
-        activeFrom: '2024-09-10', activeTill: '2024-12-01',
+        activeFrom: '2025-09-10', activeTill: '2025-12-01',
         classType: 'Lecture', courseId: coursePF.id, timetableId: timetable.id, isExtraClass: true
       });
 
@@ -359,7 +359,7 @@ describe('Class API - addExtraClass', () => {
         teacherId: teacherJane.id,
         startTime: '09:30:00', endTime: '10:30:00', dayOfWeek: 'Monday',
         roomId: room102.id, batchId: null,
-        activeFrom: '2024-09-10', activeTill: '2024-12-01',
+        activeFrom: '2025-09-10', activeTill: '2025-12-01',
         classType: 'Lecture', courseId: coursePF.id, timetableId: timetable.id, isExtraClass: true
       });
 
@@ -378,7 +378,7 @@ describe('Class API - addExtraClass', () => {
         teacherId: teacherJane.id, // different teacher to avoid teacher conflict
         startTime: '10:15:00', endTime: '11:15:00', dayOfWeek: 'Monday',
         roomId: room101.id, batchId: null,
-        activeFrom: '2024-09-10', activeTill: '2024-12-01',
+        activeFrom: '2025-09-10', activeTill: '2025-12-01',
         classType: 'Lecture', courseId: coursePF.id, timetableId: timetable.id, isExtraClass: true
       });
 

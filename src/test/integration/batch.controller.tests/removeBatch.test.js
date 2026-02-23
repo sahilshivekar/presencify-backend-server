@@ -37,18 +37,18 @@ describe('Batch API - removeBatch', () => {
         // Create dependencies and batch
         branch = await Branch.create({ name: 'CE', abbreviation: 'CE' });
         university = await University.create({ name: 'Test University', abbreviation: 'TU' });
-        scheme = await Scheme.create({ name: 'CE 2025 Scheme', universityId: university.id });
+        scheme = await Scheme.create({ name: 'CE 2026 Scheme', universityId: university.id });
         semester = await Semester.create({
             branchId: branch.id,
             semesterNumber: 5,
-            academicStartYear: 2025,
+            academicStartYear: 2026,
             academicEndYear: 2026,
-            startDate: '2025-08-01',
-            endDate: '2025-12-15',
+            startDate: '2026-08-01',
+            endDate: '2026-12-15',
             schemeId: scheme.id,
         });
         division = await Division.create({ divisionCode: 'F', semesterId: semester.id });
-        batch = await Batch.create({ batchCode: '2025-F', divisionId: division.id });
+        batch = await Batch.create({ batchCode: '2026-F', divisionId: division.id });
     });
 
     describe('DELETE /api/v1/batches/:id', () => {

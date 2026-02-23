@@ -41,21 +41,21 @@ describe('Timetable API - GET /api/v1/timetables/:id', () => {
       // University/Branch/Scheme + semester/division/timetable
       university = await University.create({ name: 'Test University', abbreviation: 'TU' });
       branch = await Branch.create({ name: 'Computer Science', abbreviation: 'CS' });
-      scheme = await Scheme.create({ name: 'CS 2025', universityId: university.id });
+      scheme = await Scheme.create({ name: 'CS 2026', universityId: university.id });
       semester = await Semester.create({
         semesterNumber: 1,
         branchId: branch.id,
-        academicStartYear: 2024,
-        academicEndYear: 2025,
-        startDate: '2024-08-01',
-        endDate: '2024-12-31',
+        academicStartYear: 2025,
+        academicEndYear: 2026,
+        startDate: '2025-08-01',
+        endDate: '2025-12-31',
         schemeId: scheme.id,
       });
       division = await Division.create({ divisionCode: 'A', semesterId: semester.id });
       timetable = await Timetable.create({ divisionId: division.id, timetableVersion: 1 });
 
       // Student + login (needs branchId & schemeId)
-      await Student.create({ firstName: 'Jane', lastName: 'Smith', email: 'student1@example.com', phoneNumber: '+919876543210', prn: 'STU001', password: 'Student@123', schemeId: scheme.id, branchId: branch.id, admissionYear: 2024, admissionType: 'FE', gender: 'Male' });
+      await Student.create({ firstName: 'Jane', lastName: 'Smith', email: 'student1@example.com', phoneNumber: '+919876543210', prn: 'STU001', password: 'Student@123', schemeId: scheme.id, branchId: branch.id, admissionYear: 2025, admissionType: 'FE', gender: 'Male' });
       const studentLoginRes = await request(app).post('/api/v1/auth/students/login').send({ emailOrPRN: 'student1@example.com', password: 'Student@123' });
       studentToken = studentLoginRes.body.data.accessToken;
     } catch (err) {

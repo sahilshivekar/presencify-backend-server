@@ -40,22 +40,22 @@ describe('Batch API - getBatches', () => {
         // Create dependencies
         branch = await Branch.create({ name: 'ECE', abbreviation: 'ECE' });
         university = await University.create({ name: 'Test University', abbreviation: 'TU' });
-        scheme = await Scheme.create({ name: 'ECE 2025 Scheme', universityId: university.id });
+        scheme = await Scheme.create({ name: 'ECE 2026 Scheme', universityId: university.id });
         semester = await Semester.create({
             branchId: branch.id,
             semesterNumber: 3,
-            academicStartYear: 2025,
+            academicStartYear: 2026,
             academicEndYear: 2026,
-            startDate: '2025-08-01',
-            endDate: '2025-12-15',
+            startDate: '2026-08-01',
+            endDate: '2026-12-15',
             schemeId: scheme.id,
         });
         divisionA = await Division.create({ divisionCode: 'C', semesterId: semester.id });
         divisionB = await Division.create({ divisionCode: 'D', semesterId: semester.id });
 
         // Create batches
-        await Batch.create({ batchCode: '2025-C', divisionId: divisionA.id });
-        await Batch.create({ batchCode: '2025-D', divisionId: divisionB.id });
+        await Batch.create({ batchCode: '2026-C', divisionId: divisionA.id });
+        await Batch.create({ batchCode: '2026-D', divisionId: divisionB.id });
     });
 
     describe('GET /api/v1/batches', () => {

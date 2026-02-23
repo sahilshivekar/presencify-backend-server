@@ -78,14 +78,14 @@ describe('Class API - getCancelledClasses', () => {
     // Academic setup
     university = await University.create({ name: 'Test University', abbreviation: 'TU' });
     branch = await Branch.create({ name: 'Computer Science', abbreviation: 'CS' });
-    scheme = await Scheme.create({ name: 'CS 2025 Scheme', universityId: university.id });
+    scheme = await Scheme.create({ name: 'CS 2026 Scheme', universityId: university.id });
     semester = await Semester.create({
       semesterNumber: 1,
       branchId: branch.id,
-      academicStartYear: 2024,
-      academicEndYear: 2025,
-      startDate: '2024-08-01',
-      endDate: '2024-12-31',
+      academicStartYear: 2025,
+      academicEndYear: 2026,
+      startDate: '2025-08-01',
+      endDate: '2025-12-31',
       schemeId: scheme.id,
     });
     divisionA = await Division.create({ divisionCode: 'A', semesterId: semester.id });
@@ -107,7 +107,7 @@ describe('Class API - getCancelledClasses', () => {
 
     // A student for auth (Student role is allowed for GET)
     student = await Student.create({
-      firstName: 'Jane', lastName: 'Smith', email: 'student@example.com', phoneNumber: '+919876543210', prn: 'STU001', password: 'Student@123', schemeId: scheme.id, branchId: branch.id, admissionYear: 2024, admissionType: 'FE', gender: 'Female'
+      firstName: 'Jane', lastName: 'Smith', email: 'student@example.com', phoneNumber: '+919876543210', prn: 'STU001', password: 'Student@123', schemeId: scheme.id, branchId: branch.id, admissionYear: 2025, admissionType: 'FE', gender: 'Female'
     });
     const studentLogin = await request(app).post('/api/v1/auth/students/login').send({ emailOrPRN: 'student@example.com', password: 'Student@123' });
     studentToken = studentLogin.body.data.accessToken;
@@ -117,7 +117,7 @@ describe('Class API - getCancelledClasses', () => {
       teacherId: teacherJohn.id,
       startTime: '09:00:00', endTime: '10:00:00', dayOfWeek: 'Monday',
       roomId: room101.id, batchId: null,
-      activeFrom: '2024-08-01', activeTill: '2024-12-31',
+      activeFrom: '2025-08-01', activeTill: '2025-12-31',
       classType: 'Lecture', courseId: coursePF.id, timetableId: timetableA.id, isExtraClass: false
     });
 
@@ -125,7 +125,7 @@ describe('Class API - getCancelledClasses', () => {
       teacherId: teacherJohn.id,
       startTime: '10:00:00', endTime: '11:00:00', dayOfWeek: 'Monday',
       roomId: room101.id, batchId: batchA1.id,
-      activeFrom: '2024-08-01', activeTill: '2024-12-31',
+      activeFrom: '2025-08-01', activeTill: '2025-12-31',
       classType: 'Practical', courseId: coursePF.id, timetableId: timetableA.id, isExtraClass: false
     });
 
@@ -133,14 +133,14 @@ describe('Class API - getCancelledClasses', () => {
       teacherId: teacherJohn.id,
       startTime: '11:00:00', endTime: '12:00:00', dayOfWeek: 'Tuesday',
       roomId: room101.id, batchId: batchB1.id,
-      activeFrom: '2024-08-01', activeTill: '2024-12-31',
+      activeFrom: '2025-08-01', activeTill: '2025-12-31',
       classType: 'Practical', courseId: coursePF.id, timetableId: timetableB.id, isExtraClass: false
     });
 
     // Cancelled records on different dates
-    await CancelledClass.create({ classId: classALecture.id, date: '2024-09-10', reason: 'Holiday' });
-    await CancelledClass.create({ classId: classBPracticalB1.id, date: '2024-09-10', reason: 'Event' });
-    await CancelledClass.create({ classId: classAPracticalA1.id, date: '2024-09-11', reason: 'Maintenance' });
+    await CancelledClass.create({ classId: classALecture.id, date: '2025-09-10', reason: 'Holiday' });
+    await CancelledClass.create({ classId: classBPracticalB1.id, date: '2025-09-10', reason: 'Event' });
+    await CancelledClass.create({ classId: classAPracticalA1.id, date: '2025-09-11', reason: 'Maintenance' });
   });
 
   const url = '/api/v1/classes/cancelled';
@@ -232,11 +232,11 @@ describe('Class API - getCancelledClasses', () => {
       const res = await request(app)
         .get(url)
         .set('Authorization', `Bearer ${adminToken}`)
-        .query({ date: '2024-09-10' });
+        .query({ date: '2025-09-10' });
       expect(res.status).toBe(httpStatus.OK);
       const rows = res.body.data.cancelledClasses;
       expect(rows.length).toBe(2);
-      expect(rows.every(r => r.date === '2024-09-10')).toBe(true);
+      expect(rows.every(r => r.date === '2025-09-10')).toBe(true);
     });
 
     test('should filter by divisionId (via timetable)', async () => {

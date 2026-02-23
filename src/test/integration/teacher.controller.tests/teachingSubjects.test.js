@@ -28,7 +28,7 @@ describe('Teacher API - Teaching Courses', () => {
   const teacherLoginRes = await request(app).post('/api/v1/auth/teachers/login').send({ email: 'subj@example.com', password: 'Teacher@123' });
   teacherToken = teacherLoginRes.body.data.accessToken;
       const university = await University.create({ name: 'Tech University', abbreviation: 'TU' });
-      const scheme = await Scheme.create({ name: 'CS 2025', universityId: university.id });
+      const scheme = await Scheme.create({ name: 'CS 2026', universityId: university.id });
       course = await Course.create({ name: 'Networks', code: 'CS203', schemeId: scheme.id, optionalCourse: null });
     } catch (err) {
       // eslint-disable-next-line no-console

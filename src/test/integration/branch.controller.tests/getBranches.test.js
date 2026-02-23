@@ -72,7 +72,7 @@ describe('Branch API - getBranches', () => {
 
             // Create dependencies for student
             const scheme = await Scheme.create({
-                name: 'CS 2025 Scheme',
+                name: 'CS 2026 Scheme',
                 universityId: university.id,
             });
 
@@ -104,7 +104,7 @@ describe('Branch API - getBranches', () => {
                 password: 'Student@123',
                 schemeId: scheme.id,
                 branchId: branch1.id,
-                admissionYear: 2024,
+                admissionYear: 2025,
                 admissionType: 'FE',
                 gender: 'Male'
             });

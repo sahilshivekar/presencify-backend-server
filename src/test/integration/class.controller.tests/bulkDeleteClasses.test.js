@@ -62,7 +62,7 @@ describe('DELETE /api/v1/classes/bulk/delete', () => {
 
             // Create test scheme
             validScheme = await Scheme.create({
-                name: 'CS 2025 Scheme',
+                name: 'CS 2026 Scheme',
                 universityId: validUniversity.id
             });
 
@@ -70,10 +70,10 @@ describe('DELETE /api/v1/classes/bulk/delete', () => {
             validSemester = await Semester.create({
                 branchId: validBranch.id,
                 semesterNumber: 1,
-                academicStartYear: 2024,
-                academicEndYear: 2025,
-                startDate: '2024-08-01',
-                endDate: '2024-12-31',
+                academicStartYear: 2025,
+                academicEndYear: 2026,
+                startDate: '2025-08-01',
+                endDate: '2025-12-31',
                 schemeId: validScheme.id
             });
 
@@ -126,8 +126,8 @@ describe('DELETE /api/v1/classes/bulk/delete', () => {
                 dayOfWeek: 'Monday',
                 roomId: validRoom.id,
                 batchId: validBatch.id,
-                activeFrom: '2024-08-01',
-                activeTill: '2024-12-31',
+                activeFrom: '2025-08-01',
+                activeTill: '2025-12-31',
                 classType: 'Lecture',
                 courseId: validCourse.id,
                 timetableId: validTimetable.id,
@@ -141,8 +141,8 @@ describe('DELETE /api/v1/classes/bulk/delete', () => {
                 dayOfWeek: 'Tuesday',
                 roomId: validRoom.id,
                 batchId: validBatch.id,
-                activeFrom: '2024-08-01',
-                activeTill: '2024-12-31',
+                activeFrom: '2025-08-01',
+                activeTill: '2025-12-31',
                 classType: 'Tutorial',
                 courseId: validCourse.id,
                 timetableId: validTimetable.id,
@@ -285,7 +285,7 @@ describe('DELETE /api/v1/classes/bulk/delete', () => {
             await Attendance.create({
                 classId: testClass1.id,
                 teacherId: validTeacher.id,
-                date: '2024-09-16',
+                date: '2025-09-16',
                 startTime: '09:00:00',
                 endTime: '10:00:00',
                 status: 'Present',
@@ -456,8 +456,8 @@ describe('DELETE /api/v1/classes/bulk/delete', () => {
                     dayOfWeek: 'Wednesday',
                     roomId: validRoom.id,
                     batchId: validBatch.id,
-                    activeFrom: '2024-08-01',
-                    activeTill: '2024-12-31',
+                    activeFrom: '2025-08-01',
+                    activeTill: '2025-12-31',
                     classType: 'Lecture',
                     courseId: validCourse.id,
                     timetableId: validTimetable.id,

@@ -37,23 +37,23 @@ describe('Batch API - updateBatch', () => {
         // Create dependencies and batch
         branch = await Branch.create({ name: 'ME', abbreviation: 'ME' });
         university = await University.create({ name: 'Test University', abbreviation: 'TU' });
-        scheme = await Scheme.create({ name: 'ME 2025 Scheme', universityId: university.id });
+        scheme = await Scheme.create({ name: 'ME 2026 Scheme', universityId: university.id });
         semester = await Semester.create({
             branchId: branch.id,
             semesterNumber: 4,
-            academicStartYear: 2025,
+            academicStartYear: 2026,
             academicEndYear: 2026,
-            startDate: '2025-08-01',
-            endDate: '2025-12-15',
+            startDate: '2026-08-01',
+            endDate: '2026-12-15',
             schemeId: scheme.id,
         });
         division = await Division.create({ divisionCode: 'E', semesterId: semester.id });
-        batch = await Batch.create({ batchCode: '2025-E', divisionId: division.id });
+        batch = await Batch.create({ batchCode: '2026-E', divisionId: division.id });
     });
 
     describe('PUT /api/v1/batches/:id', () => {
         test('should update batch when request is valid', async () => {
-            const updatedCode = '2025-E1';
+            const updatedCode = '2026-E1';
             const res = await request(app)
                 .put(`/api/v1/batches/${batch.id}`)
                 .set('Authorization', `Bearer ${adminToken}`)
@@ -75,7 +75,7 @@ describe('Batch API - updateBatch', () => {
             const res = await request(app)
                 .put(`/api/v1/batches/${fakeId}`)
                 .set('Authorization', `Bearer ${adminToken}`)
-                .send({ batchCode: '2025-X' })
+                .send({ batchCode: '2026-X' })
                 .expect(httpStatus.NOT_FOUND);
 
             expect(res.body.success).toBe(false);
@@ -86,7 +86,7 @@ describe('Batch API - updateBatch', () => {
             const res = await request(app)
                 .put('/api/v1/batches/invalid-uuid')
                 .set('Authorization', `Bearer ${adminToken}`)
-                .send({ batchCode: '2025-X' })
+                .send({ batchCode: '2026-X' })
                 .expect(httpStatus.BAD_REQUEST);
 
             expect(res.body.success).toBe(false);
@@ -107,7 +107,7 @@ describe('Batch API - updateBatch', () => {
         test('should return 401 when no token', async () => {
             const res = await request(app)
                 .put(`/api/v1/batches/${batch.id}`)
-                .send({ batchCode: '2025-F' })
+                .send({ batchCode: '2026-F' })
                 .expect(httpStatus.UNAUTHORIZED);
 
             expect(res.body.success).toBe(false);
@@ -118,7 +118,7 @@ describe('Batch API - updateBatch', () => {
             const res = await request(app)
                 .put(`/api/v1/batches/${batch.id}`)
                 .set('Authorization', 'Bearer invalidtoken')
-                .send({ batchCode: '2025-F' })
+                .send({ batchCode: '2026-F' })
                 .expect(httpStatus.UNAUTHORIZED);
 
             expect(res.body.success).toBe(false);

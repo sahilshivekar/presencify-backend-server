@@ -77,20 +77,20 @@ describe('Student API - PUT /api/v1/students/image', () => {
             });
             
             scheme = await Scheme.create({
-                name: 'Test Scheme 2024',
-                year: 2024,
+                name: 'Test Scheme 2025',
+                year: 2025,
                 universityId: university.id
             });
 
             student = await Student.create({
-                prn: 'CS20240001',
+                prn: 'CS20250001',
                 firstName: 'John',
                 lastName: 'Doe',
                 email: 'john.doe@example.com',
                 phoneNumber: '+911234567890',
                 password: 'Student@123',
                 gender: 'Male',
-                admissionYear: 2024,
+                admissionYear: 2025,
                 admissionType: 'FE',
                 universityId: university.id,
                 branchId: branch.id,

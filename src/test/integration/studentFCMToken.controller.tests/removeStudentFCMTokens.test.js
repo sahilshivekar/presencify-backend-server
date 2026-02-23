@@ -41,7 +41,7 @@ describe('Student FCM Token API - DELETE /api/v1/student-fcm-tokens', () => {
       // University/Branch/Scheme
       university = await University.create({ name: 'Test University', abbreviation: 'TU' });
       branch = await Branch.create({ name: 'Computer Science', abbreviation: 'CS' });
-      scheme = await Scheme.create({ name: 'CS 2025', universityId: university.id });
+      scheme = await Scheme.create({ name: 'CS 2026', universityId: university.id });
 
       // Student + login
       student = await Student.create({
@@ -53,7 +53,7 @@ describe('Student FCM Token API - DELETE /api/v1/student-fcm-tokens', () => {
         password: 'Student@123',
         schemeId: scheme.id,
         branchId: branch.id,
-        admissionYear: 2024,
+        admissionYear: 2025,
         admissionType: 'FE',
         gender: 'Male',
       });

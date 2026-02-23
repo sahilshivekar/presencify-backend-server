@@ -60,16 +60,16 @@ describe('Student API - GET /api/v1/students', () => {
                 abbreviation: 'CS',
             });
             scheme = await Scheme.create({
-                name: 'CS 2025 Scheme',
+                name: 'CS 2026 Scheme',
                 universityId: university.id,
             });
             semester = await Semester.create({
                 semesterNumber: 1,
                 branchId: branch.id,
-                academicStartYear: 2024,
-                academicEndYear: 2025,
-                startDate: '2024-08-01',
-                endDate: '2024-12-31',
+                academicStartYear: 2025,
+                academicEndYear: 2026,
+                startDate: '2025-08-01',
+                endDate: '2025-12-31',
                 schemeId: scheme.id,
             });
             division = await Division.create({
@@ -109,7 +109,7 @@ describe('Student API - GET /api/v1/students', () => {
                 password: 'Student@123',
                 schemeId: scheme.id,
                 branchId: branch.id,
-                admissionYear: 2024,
+                admissionYear: 2025,
                 admissionType: 'FE',
                 gender: 'Male'
             });
@@ -122,7 +122,7 @@ describe('Student API - GET /api/v1/students', () => {
                 password: 'Student@123',
                 schemeId: scheme.id,
                 branchId: branch.id,
-                admissionYear: 2024,
+                admissionYear: 2025,
                 admissionType: 'FE',
                 gender: 'Male'
             });
@@ -135,7 +135,7 @@ describe('Student API - GET /api/v1/students', () => {
                 password: 'Student@123',
                 schemeId: scheme.id,
                 branchId: branch.id,
-                admissionYear: 2024,
+                admissionYear: 2025,
                 admissionType: 'FE',
                 gender: 'Male'
             });
@@ -165,33 +165,33 @@ describe('Student API - GET /api/v1/students', () => {
             await StudentDivision.create({
                 studentId: student1.id,
                 divisionId: division.id,
-                startDate: '2024-08-01',
+                startDate: '2025-08-01',
             });
             await StudentDivision.create({
                 studentId: student2.id,
                 divisionId: division.id,
-                startDate: '2024-08-01',
+                startDate: '2025-08-01',
             });
             await StudentDivision.create({
                 studentId: student3.id,
                 divisionId: division.id,
-                startDate: '2024-08-01',
+                startDate: '2025-08-01',
             });
 
             await StudentBatch.create({
                 studentId: student1.id,
                 batchId: batch.id,
-                startDate: '2024-08-01',
+                startDate: '2025-08-01',
             });
             await StudentBatch.create({
                 studentId: student2.id,
                 batchId: batch.id,
-                startDate: '2024-08-01',
+                startDate: '2025-08-01',
             });
             await StudentBatch.create({
                 studentId: student3.id,
                 batchId: batch.id,
-                startDate: '2024-08-01',
+                startDate: '2025-08-01',
             });
         } catch (err) {
             console.error('beforeEach setup error:', err);
@@ -352,7 +352,7 @@ describe('Student API - GET /api/v1/students', () => {
         test('should filter students by admission year', async () => {
             const res = await request(app)
                 .get('/api/v1/students')
-                .query({ admissionYear: 2024 })
+                .query({ admissionYear: 2025 })
                 .set('Authorization', `Bearer ${adminToken}`);
             expect(res.status).toBe(httpStatus.OK);
             expect(res.body.data.students).toHaveLength(3);
@@ -424,7 +424,7 @@ describe('Student API - GET /api/v1/students', () => {
                 .set('Authorization', `Bearer ${adminToken}`);
             expect(res.status).toBe(httpStatus.OK);
             expect(res.body.data.students[0]).toHaveProperty('Scheme');
-            expect(res.body.data.students[0].Scheme.name).toBe('CS 2025 Scheme');
+            expect(res.body.data.students[0].Scheme.name).toBe('CS 2026 Scheme');
         });
 
         test('should include division information', async () => {

@@ -52,7 +52,7 @@ describe('Course API - POST /api/v1/courses/bulk/csv', () => {
       adminToken = adminLoginRes.body.data.accessToken;
 
       const uni = await University.create({ name: 'Test Uni', abbreviation: 'TU' });
-      scheme = await Scheme.create({ name: 'Scheme 2025', universityId: uni.id });
+      scheme = await Scheme.create({ name: 'Scheme 2026', universityId: uni.id });
     } catch (err) {
       console.error('beforeEach setup error:', err);
       throw err;

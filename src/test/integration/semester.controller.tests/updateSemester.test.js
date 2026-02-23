@@ -41,10 +41,10 @@ describe('Semester API - PUT /api/v1/semesters/:id', () => {
       // University/Branch/Scheme
       university = await University.create({ name: 'Test University', abbreviation: 'TU' });
       branch = await Branch.create({ name: 'Computer Science', abbreviation: 'CS' });
-      scheme = await Scheme.create({ name: 'CS 2025', universityId: university.id });
+      scheme = await Scheme.create({ name: 'CS 2026', universityId: university.id });
 
       // Student + login (403)
-      await Student.create({ firstName: 'Jane', lastName: 'Smith', email: 'student1@example.com', phoneNumber: '+919876543210', prn: 'STU001', password: 'Student@123', schemeId: scheme.id, branchId: branch.id, admissionYear: 2024, admissionType: 'FE', gender: 'Male' });
+      await Student.create({ firstName: 'Jane', lastName: 'Smith', email: 'student1@example.com', phoneNumber: '+919876543210', prn: 'STU001', password: 'Student@123', schemeId: scheme.id, branchId: branch.id, admissionYear: 2025, admissionType: 'FE', gender: 'Male' });
       const studentLoginRes = await request(app)
         .post('/api/v1/auth/students/login')
         .send({ emailOrPRN: 'student1@example.com', password: 'Student@123' });
@@ -55,9 +55,9 @@ describe('Semester API - PUT /api/v1/semesters/:id', () => {
         branchId: branch.id,
         schemeId: scheme.id,
         semesterNumber: 4,
-        academicStartYear: 2025,
+        academicStartYear: 2026,
         academicEndYear: 2026,
-        startDate: '2025-08-01',
+        startDate: '2026-08-01',
         endDate: '2026-01-01'
       });
     } catch (err) {
@@ -70,7 +70,7 @@ describe('Semester API - PUT /api/v1/semesters/:id', () => {
   test('should return 401 when no token is provided', async () => {
     const res = await request(app)
       .put(`/api/v1/semesters/${semester.id}`)
-      .send({ startDate: '2025-08-10', endDate: '2025-12-10' });
+      .send({ startDate: '2026-08-10', endDate: '2026-12-10' });
     expect(res.status).toBe(httpStatus.UNAUTHORIZED);
   });
 
@@ -78,7 +78,7 @@ describe('Semester API - PUT /api/v1/semesters/:id', () => {
     const res = await request(app)
       .put(`/api/v1/semesters/${semester.id}`)
       .set('Authorization', 'Bearer invalidtoken')
-      .send({ startDate: '2025-08-10', endDate: '2025-12-10' });
+      .send({ startDate: '2026-08-10', endDate: '2026-12-10' });
     expect(res.status).toBe(httpStatus.UNAUTHORIZED);
   });
 
@@ -86,7 +86,7 @@ describe('Semester API - PUT /api/v1/semesters/:id', () => {
     const res = await request(app)
       .put(`/api/v1/semesters/${semester.id}`)
       .set('Authorization', `Bearer ${teacherToken}`)
-      .send({ startDate: '2025-08-10', endDate: '2025-12-10' });
+      .send({ startDate: '2026-08-10', endDate: '2026-12-10' });
     expect(res.status).toBe(httpStatus.FORBIDDEN);
   });
 
@@ -94,7 +94,7 @@ describe('Semester API - PUT /api/v1/semesters/:id', () => {
     const res = await request(app)
       .put(`/api/v1/semesters/${semester.id}`)
       .set('Authorization', `Bearer ${studentToken}`)
-      .send({ startDate: '2025-08-10', endDate: '2025-12-10' });
+      .send({ startDate: '2026-08-10', endDate: '2026-12-10' });
     expect(res.status).toBe(httpStatus.FORBIDDEN);
   });
 
@@ -103,7 +103,7 @@ describe('Semester API - PUT /api/v1/semesters/:id', () => {
       const res = await request(app)
         .put('/api/v1/semesters/not-a-uuid')
         .set('Authorization', `Bearer ${adminToken}`)
-        .send({ startDate: '2025-08-10', endDate: '2025-12-10' });
+        .send({ startDate: '2026-08-10', endDate: '2026-12-10' });
       expect(res.status).toBe(httpStatus.BAD_REQUEST);
       expect(res.body.message).toContain('Semester ID must be a valid UUID');
     });
@@ -112,7 +112,7 @@ describe('Semester API - PUT /api/v1/semesters/:id', () => {
       const res = await request(app)
         .put(`/api/v1/semesters/${semester.id}`)
         .set('Authorization', `Bearer ${adminToken}`)
-        .send({ endDate: '2025-12-10' });
+        .send({ endDate: '2026-12-10' });
       expect(res.status).toBe(httpStatus.BAD_REQUEST);
       expect(res.body.message).toContain('Start date is required');
     });
@@ -121,7 +121,7 @@ describe('Semester API - PUT /api/v1/semesters/:id', () => {
       const res = await request(app)
         .put(`/api/v1/semesters/${semester.id}`)
         .set('Authorization', `Bearer ${adminToken}`)
-        .send({ startDate: '2025-08-10' });
+        .send({ startDate: '2026-08-10' });
       expect(res.status).toBe(httpStatus.BAD_REQUEST);
       expect(res.body.message).toContain('End date is required');
     });
@@ -132,7 +132,7 @@ describe('Semester API - PUT /api/v1/semesters/:id', () => {
       const res = await request(app)
         .put(`/api/v1/semesters/${semester.id}`)
         .set('Authorization', `Bearer ${adminToken}`)
-        .send({ startDate: '2025-12-10', endDate: '2025-12-10' });
+        .send({ startDate: '2026-12-10', endDate: '2026-12-10' });
       expect(res.status).toBe(httpStatus.BAD_REQUEST);
       expect(res.body.message).toBe('End date cannot be less than or equal to start date');
     });
@@ -141,7 +141,7 @@ describe('Semester API - PUT /api/v1/semesters/:id', () => {
       const res = await request(app)
         .put(`/api/v1/semesters/${semester.id}`)
         .set('Authorization', `Bearer ${adminToken}`)
-        .send({ startDate: '2024-12-31', endDate: '2025-12-10' });
+        .send({ startDate: '2025-12-31', endDate: '2026-12-10' });
       expect(res.status).toBe(httpStatus.BAD_REQUEST);
       expect(res.body.message).toBe('Start date cannot be lesser than academic start year');
     });
@@ -150,7 +150,7 @@ describe('Semester API - PUT /api/v1/semesters/:id', () => {
       const res = await request(app)
         .put(`/api/v1/semesters/${semester.id}`)
         .set('Authorization', `Bearer ${adminToken}`)
-        .send({ startDate: '2025-08-10', endDate: '2027-12-31' });
+        .send({ startDate: '2026-08-10', endDate: '2027-12-31' });
       expect(res.status).toBe(httpStatus.BAD_REQUEST);
       expect(res.body.message).toBe('End date cannot be greater than academic end year');
     });
@@ -161,7 +161,7 @@ describe('Semester API - PUT /api/v1/semesters/:id', () => {
     const res = await request(app)
       .put(`/api/v1/semesters/${nonExistId}`)
       .set('Authorization', `Bearer ${adminToken}`)
-      .send({ startDate: '2025-10-01', endDate: '2025-12-10' });
+      .send({ startDate: '2026-10-01', endDate: '2026-12-10' });
     expect(res.status).toBe(httpStatus.NOT_FOUND);
     expect(res.body.message).toBe('Semester not found');
   });
@@ -170,16 +170,16 @@ describe('Semester API - PUT /api/v1/semesters/:id', () => {
     const res = await request(app)
       .put(`/api/v1/semesters/${semester.id}`)
       .set('Authorization', `Bearer ${adminToken}`)
-      .send({ startDate: '2025-08-15', endDate: '2025-12-15' });
+      .send({ startDate: '2026-08-15', endDate: '2026-12-15' });
     expect(res.status).toBe(httpStatus.OK);
     expect(res.body.success).toBe(true);
     expect(res.body.message).toBe('Semester updated successfully');
     expect(res.body.data.id).toBe(semester.id);
-    expect(res.body.data.startDate).toBe('2025-08-15');
-    expect(res.body.data.endDate).toBe('2025-12-15');
+    expect(res.body.data.startDate).toBe('2026-08-15');
+    expect(res.body.data.endDate).toBe('2026-12-15');
 
     const updated = await Semester.findByPk(semester.id);
-    expect(updated.startDate).toBe('2025-08-15');
-    expect(updated.endDate).toBe('2025-12-15');
+    expect(updated.startDate).toBe('2026-08-15');
+    expect(updated.endDate).toBe('2026-12-15');
   });
 });

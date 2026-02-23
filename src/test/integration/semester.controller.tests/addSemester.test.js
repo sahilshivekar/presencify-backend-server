@@ -43,10 +43,10 @@ describe('Semester API - POST /api/v1/semesters', () => {
       // University/Branch/Scheme
       university = await University.create({ name: 'Test University', abbreviation: 'TU' });
       branch = await Branch.create({ name: 'Computer Science', abbreviation: 'CS' });
-      scheme = await Scheme.create({ name: 'CS 2025', universityId: university.id });
+      scheme = await Scheme.create({ name: 'CS 2026', universityId: university.id });
 
       // Student + login (for 403 tests)
-      await Student.create({ firstName: 'Jane', lastName: 'Smith', email: 'student1@example.com', phoneNumber: '+919876543210', prn: 'STU001', password: 'Student@123', schemeId: scheme.id, branchId: branch.id, admissionYear: 2024, admissionType: 'FE', gender: 'Male' });
+      await Student.create({ firstName: 'Jane', lastName: 'Smith', email: 'student1@example.com', phoneNumber: '+919876543210', prn: 'STU001', password: 'Student@123', schemeId: scheme.id, branchId: branch.id, admissionYear: 2025, admissionType: 'FE', gender: 'Male' });
       const studentLoginRes = await request(app)
         .post('/api/v1/auth/students/login')
         .send({ emailOrPRN: 'student1@example.com', password: 'Student@123' });
@@ -61,10 +61,10 @@ describe('Semester API - POST /api/v1/semesters', () => {
   const validPayload = () => ({
     branchId: branch.id,
     semesterNumber: 1,
-    academicStartYear: 2025,
-    academicEndYear: 2025,
-    startDate: '2025-01-01',
-    endDate: '2025-06-01',
+    academicStartYear: 2026,
+    academicEndYear: 2026,
+    startDate: '2026-01-01',
+    endDate: '2026-06-01',
     schemeId: scheme.id,
     optionalCourseIds: []
   });
@@ -198,7 +198,7 @@ describe('Semester API - POST /api/v1/semesters', () => {
 
   describe('Business rule validations', () => {
     test('should return 400 when academicEndYear < academicStartYear', async () => {
-      const payload = { ...validPayload(), academicStartYear: 2025, academicEndYear: 2024 };
+      const payload = { ...validPayload(), academicStartYear: 2026, academicEndYear: 2025 };
       const res = await request(app)
         .post('/api/v1/semesters')
         .set('Authorization', `Bearer ${adminToken}`)
@@ -208,7 +208,7 @@ describe('Semester API - POST /api/v1/semesters', () => {
     });
 
     test('should return 400 when startDate >= endDate', async () => {
-      const payload = { ...validPayload(), startDate: '2025-02-01', endDate: '2025-02-01' };
+      const payload = { ...validPayload(), startDate: '2026-02-01', endDate: '2026-02-01' };
       const res = await request(app)
         .post('/api/v1/semesters')
         .set('Authorization', `Bearer ${adminToken}`)
@@ -218,7 +218,7 @@ describe('Semester API - POST /api/v1/semesters', () => {
     });
 
     test('should return 400 when startDate year < academicStartYear', async () => {
-      const payload = { ...validPayload(), academicStartYear: 2025, academicEndYear: 2025, startDate: '2024-12-31', endDate: '2025-01-02' };
+      const payload = { ...validPayload(), academicStartYear: 2026, academicEndYear: 2026, startDate: '2025-12-31', endDate: '2026-01-02' };
       const res = await request(app)
         .post('/api/v1/semesters')
         .set('Authorization', `Bearer ${adminToken}`)
@@ -228,7 +228,7 @@ describe('Semester API - POST /api/v1/semesters', () => {
     });
 
     test('should return 400 when endDate year > academicEndYear', async () => {
-      const payload = { ...validPayload(), academicStartYear: 2025, academicEndYear: 2025, startDate: '2025-08-01', endDate: '2026-01-01' };
+      const payload = { ...validPayload(), academicStartYear: 2026, academicEndYear: 2026, startDate: '2026-08-01', endDate: '2026-01-01' };
       const res = await request(app)
         .post('/api/v1/semesters')
         .set('Authorization', `Bearer ${adminToken}`)

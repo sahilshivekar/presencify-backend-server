@@ -72,16 +72,16 @@ describe('Class API - addClass', () => {
                 abbreviation: 'CS',
             });
             scheme = await Scheme.create({
-                name: 'CS 2025 Scheme',
+                name: 'CS 2026 Scheme',
                 universityId: university.id,
             });
             semester = await Semester.create({
                 semesterNumber: 1,
                 branchId: branch.id,
-                academicStartYear: 2024,
-                academicEndYear: 2025,
-                startDate: '2024-08-01',
-                endDate: '2024-12-31',
+                academicStartYear: 2025,
+                academicEndYear: 2026,
+                startDate: '2025-08-01',
+                endDate: '2025-12-31',
                 schemeId: scheme.id,
             });
             division = await Division.create({
@@ -121,7 +121,7 @@ describe('Class API - addClass', () => {
                 password: 'Student@123',
                 schemeId: scheme.id,
                 branchId: branch.id,
-                admissionYear: 2024,
+                admissionYear: 2025,
                 admissionType: 'FE',
                 gender: 'Male'
             });
@@ -174,8 +174,8 @@ describe('Class API - addClass', () => {
             dayOfWeek: 'Monday',
             roomId: room.id,
             batchId: null, // Lecture (no batch)
-            activeFrom: '2024-08-01',
-            activeTill: '2024-12-31',
+            activeFrom: '2025-08-01',
+            activeTill: '2025-12-31',
             classType: 'Lecture',
             courseId: course.id,
             timetableId: timetable.id,
@@ -519,7 +519,7 @@ describe('Class API - addClass', () => {
 
             test('should return 400 if activeFrom date is out of semester bounds', async () => {
                 const classData = validClassData();
-                classData.activeFrom = '2024-07-01'; // Before semester start
+                classData.activeFrom = '2025-07-01'; // Before semester start
 
                 const response = await request(app)
                     .post('/api/v1/classes')
@@ -532,7 +532,7 @@ describe('Class API - addClass', () => {
 
             test('should return 400 if activeTill date is out of semester bounds', async () => {
                 const classData = validClassData();
-                classData.activeTill = '2025-01-01'; // After semester end
+                classData.activeTill = '2026-01-01'; // After semester end
 
                 const response = await request(app)
                     .post('/api/v1/classes')
@@ -569,8 +569,8 @@ describe('Class API - addClass', () => {
                     dayOfWeek: 'Monday',
                     roomId: room.id,
                     batchId: null,
-                    activeFrom: '2024-08-01',
-                    activeTill: '2024-12-31',
+                    activeFrom: '2025-08-01',
+                    activeTill: '2025-12-31',
                     classType: 'Lecture',
                     courseId: course.id,
                     timetableId: timetable.id,
@@ -626,8 +626,8 @@ describe('Class API - addClass', () => {
                     dayOfWeek: 'Monday',
                     roomId: room.id,
                     batchId: null,
-                    activeFrom: '2024-08-01',
-                    activeTill: '2024-12-31',
+                    activeFrom: '2025-08-01',
+                    activeTill: '2025-12-31',
                     classType: 'Lecture',
                     courseId: anotherCourse.id,
                     timetableId: timetable.id,
@@ -688,8 +688,8 @@ describe('Class API - addClass', () => {
                     dayOfWeek: 'Monday',
                     roomId: anotherRoom.id,
                     batchId: null,
-                    activeFrom: '2024-08-01',
-                    activeTill: '2024-12-31',
+                    activeFrom: '2025-08-01',
+                    activeTill: '2025-12-31',
                     classType: 'Lecture',
                     courseId: anotherCourse.id,
                     timetableId: timetable.id,
@@ -750,8 +750,8 @@ describe('Class API - addClass', () => {
                     dayOfWeek: 'Monday',
                     roomId: anotherRoom.id,
                     batchId: batch.id,
-                    activeFrom: '2024-08-01',
-                    activeTill: '2024-12-31',
+                    activeFrom: '2025-08-01',
+                    activeTill: '2025-12-31',
                     classType: 'Practical',
                     courseId: anotherCourse.id,
                     timetableId: timetable.id,

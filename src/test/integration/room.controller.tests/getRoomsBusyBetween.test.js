@@ -44,14 +44,14 @@ describe('Room Controller - getRooms with busyBetween filters', () => {
     // Minimal graph copied from attendance tests
     university = await University.create({ name: 'Test University', abbreviation: 'TU' });
     branch = await Branch.create({ name: 'Computer Science', abbreviation: 'CS' });
-    scheme = await Scheme.create({ name: 'CS 2025 Scheme', universityId: university.id });
+    scheme = await Scheme.create({ name: 'CS 2026 Scheme', universityId: university.id });
     semester = await Semester.create({
       semesterNumber: 1,
       branchId: branch.id,
-      academicStartYear: 2024,
-      academicEndYear: 2025,
-      startDate: '2025-08-01',
-      endDate: '2025-12-31',
+      academicStartYear: 2025,
+      academicEndYear: 2026,
+      startDate: '2026-08-01',
+      endDate: '2026-12-31',
       schemeId: scheme.id,
     });
     division = await Division.create({ divisionCode: 'A', semesterId: semester.id });
@@ -78,8 +78,8 @@ describe('Room Controller - getRooms with busyBetween filters', () => {
       dayOfWeek: 'Monday',
       roomId: room1.id,
       batchId: batch.id,
-      activeFrom: '2025-01-01',
-      activeTill: '2025-12-31',
+      activeFrom: '2026-01-01',
+      activeTill: '2026-12-31',
       classType: 'Lecture',
       courseId: course.id,
       timetableId: timetable.id,
@@ -93,8 +93,8 @@ describe('Room Controller - getRooms with busyBetween filters', () => {
       dayOfWeek: 'Monday',
       roomId: room2.id,
       batchId: batch.id,
-      activeFrom: '2025-01-01',
-      activeTill: '2025-12-31',
+      activeFrom: '2026-01-01',
+      activeTill: '2026-12-31',
       classType: 'Lecture',
       courseId: course.id,
       timetableId: timetable.id,
@@ -108,8 +108,8 @@ describe('Room Controller - getRooms with busyBetween filters', () => {
       dayOfWeek: 'Monday',
       roomId: room3.id,
       batchId: batch.id,
-      activeFrom: '2024-01-01',
-      activeTill: '2024-01-01',
+      activeFrom: '2025-01-01',
+      activeTill: '2025-01-01',
       classType: 'Lecture',
       courseId: course.id,
       timetableId: timetable.id,

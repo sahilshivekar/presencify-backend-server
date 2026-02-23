@@ -71,16 +71,16 @@ describe('Attendance API - addStudentsAttendance', () => {
             abbreviation: 'CS',
         });
         scheme = await Scheme.create({
-            name: 'CS 2025 Scheme',
+            name: 'CS 2026 Scheme',
             universityId: university.id,
         });
         semester = await Semester.create({
             semesterNumber: 1,
             branchId: branch.id,
-            academicStartYear: 2024,
-            academicEndYear: 2025,
-            startDate: '2024-08-01',
-            endDate: '2024-12-31',
+            academicStartYear: 2025,
+            academicEndYear: 2026,
+            startDate: '2025-08-01',
+            endDate: '2025-12-31',
             schemeId: scheme.id,
         });
         division = await Division.create({
@@ -120,7 +120,7 @@ describe('Attendance API - addStudentsAttendance', () => {
             password: 'Student@123',
             schemeId: scheme.id,
             branchId: branch.id,
-            admissionYear: 2024,
+            admissionYear: 2025,
             admissionType: 'FE',
             gender: 'Male'
         });
@@ -133,7 +133,7 @@ describe('Attendance API - addStudentsAttendance', () => {
             password: 'Student@123',
             schemeId: scheme.id,
             branchId: branch.id,
-            admissionYear: 2024,
+            admissionYear: 2025,
             admissionType: 'FE',
             gender: 'Male'
         });
@@ -146,7 +146,7 @@ describe('Attendance API - addStudentsAttendance', () => {
             password: 'Student@123',
             schemeId: scheme.id,
             branchId: branch.id,
-            admissionYear: 2024,
+            admissionYear: 2025,
             admissionType: 'FE',
             gender: 'Male'
         });
@@ -176,33 +176,33 @@ describe('Attendance API - addStudentsAttendance', () => {
         await StudentDivision.create({
             studentId: student1.id,
             divisionId: division.id,
-            startDate: '2024-08-01',
+            startDate: '2025-08-01',
         });
         await StudentDivision.create({
             studentId: student2.id,
             divisionId: division.id,
-            startDate: '2024-08-01',
+            startDate: '2025-08-01',
         });
         await StudentDivision.create({
             studentId: student3.id,
             divisionId: division.id,
-            startDate: '2024-08-01',
+            startDate: '2025-08-01',
         });
 
         await StudentBatch.create({
             studentId: student1.id,
             batchId: batch.id,
-            startDate: '2024-08-01',
+            startDate: '2025-08-01',
         });
         await StudentBatch.create({
             studentId: student2.id,
             batchId: batch.id,
-            startDate: '2024-08-01',
+            startDate: '2025-08-01',
         });
         await StudentBatch.create({
             studentId: student3.id,
             batchId: batch.id,
-            startDate: '2024-08-01',
+            startDate: '2025-08-01',
         });
 
         // Create course, room, timetable, class
@@ -225,8 +225,8 @@ describe('Attendance API - addStudentsAttendance', () => {
             dayOfWeek: 'Monday',
             roomId: room.id,
             batchId: batch.id,
-            activeFrom: '2024-01-01',
-            activeTill: '2024-12-31',
+            activeFrom: '2025-01-01',
+            activeTill: '2025-12-31',
             classType: 'Lecture',
             courseId: course.id,
             timetableId: timetable.id,
@@ -235,7 +235,7 @@ describe('Attendance API - addStudentsAttendance', () => {
         // Create attendance
         attendance = await Attendance.create({
             classId: classEntity.id,
-            date: '2024-09-10',
+            date: '2025-09-10',
         });
     });
 

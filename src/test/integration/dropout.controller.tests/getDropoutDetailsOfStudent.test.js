@@ -31,7 +31,7 @@ describe('Dropout Controller - getDropoutDetailsOfStudent', () => {
 
     university = await University.create({ name: 'Test University', abbreviation: 'TU' });
     branch = await Branch.create({ name: 'Computer Science', abbreviation: 'CS' });
-    scheme = await Scheme.create({ name: 'CS 2025 Scheme', universityId: university.id });
+    scheme = await Scheme.create({ name: 'CS 2026 Scheme', universityId: university.id });
 
     student = await Student.create({
       firstName: 'Jane',
@@ -55,7 +55,7 @@ describe('Dropout Controller - getDropoutDetailsOfStudent', () => {
     dropout2 = await Dropout.create({
       studentId: student.id,
       academicStartYear: 2023,
-      academicEndYear: 2024
+      academicEndYear: 2025
     });
   });
 

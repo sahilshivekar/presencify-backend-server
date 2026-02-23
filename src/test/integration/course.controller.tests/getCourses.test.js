@@ -33,14 +33,14 @@ describe('Course Controller - getCourses', () => {
 
     university = await University.create({ name: 'Test University', abbreviation: 'TU' });
     branch = await Branch.create({ name: 'Computer Science', abbreviation: 'CS' });
-    scheme = await Scheme.create({ name: 'CS 2025 Scheme', universityId: university.id });
+    scheme = await Scheme.create({ name: 'CS 2026 Scheme', universityId: university.id });
     semester = await Semester.create({
       semesterNumber: 1,
       branchId: branch.id,
-      academicStartYear: 2024,
-      academicEndYear: 2025,
-      startDate: '2024-08-01',
-      endDate: '2024-12-31',
+      academicStartYear: 2025,
+      academicEndYear: 2026,
+      startDate: '2025-08-01',
+      endDate: '2025-12-31',
       schemeId: scheme.id,
     });
     coursePF = await Course.create({ name: 'Programming Fundamentals', code: 'CS101', schemeId: scheme.id });

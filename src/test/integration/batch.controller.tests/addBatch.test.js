@@ -47,16 +47,16 @@ describe('Batch API - addBatch', () => {
             abbreviation: 'CS',
         });
         scheme = await Scheme.create({
-            name: 'CS 2025 Scheme',
+            name: 'CS 2026 Scheme',
             universityId: university.id,
         });
         semester = await Semester.create({
             branchId: branch.id,
             semesterNumber: 1,
-            academicStartYear: 2025,
+            academicStartYear: 2026,
             academicEndYear: 2026,
-            startDate: '2025-08-01',
-            endDate: '2025-12-15',
+            startDate: '2026-08-01',
+            endDate: '2026-12-15',
             schemeId: scheme.id,
         });
         division = await Division.create({
@@ -68,7 +68,7 @@ describe('Batch API - addBatch', () => {
     describe('POST /api/v1/batches', () => {
         test('should create a new batch when request is valid', async () => {
             const batchData = {
-                batchCode: '2025-A',
+                batchCode: '2026-A',
                 divisionId: division.id,
             };
 
@@ -96,7 +96,7 @@ describe('Batch API - addBatch', () => {
                 .post('/api/v1/batches')
                 .set('Authorization', `Bearer ${adminToken}`)
                 .send({
-                    batchCode: '2025-B',
+                    batchCode: '2026-B',
                     divisionId: faker.string.uuid(),
                 })
                 .expect(httpStatus.NOT_FOUND);
@@ -120,7 +120,7 @@ describe('Batch API - addBatch', () => {
             const res = await request(app)
                 .post('/api/v1/batches')
                 .set('Authorization', `Bearer ${adminToken}`)
-                .send({ batchCode: '2025-C', divisionId: 'invalid-uuid' })
+                .send({ batchCode: '2026-C', divisionId: 'invalid-uuid' })
                 .expect(httpStatus.BAD_REQUEST);
 
             expect(res.body.success).toBe(false);
@@ -130,7 +130,7 @@ describe('Batch API - addBatch', () => {
         test('should return 401 when no authorization token is provided', async () => {
             const res = await request(app)
                 .post('/api/v1/batches')
-                .send({ batchCode: '2025-D', divisionId: division.id })
+                .send({ batchCode: '2026-D', divisionId: division.id })
                 .expect(httpStatus.UNAUTHORIZED);
 
             expect(res.body.success).toBe(false);

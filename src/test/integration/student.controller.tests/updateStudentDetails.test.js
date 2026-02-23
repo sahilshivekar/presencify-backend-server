@@ -51,11 +51,11 @@ describe('Student API - PUT /api/v1/students/:id', () => {
                 abbreviation: 'IT',
             });
             scheme = await Scheme.create({
-                name: 'CS 2025 Scheme',
+                name: 'CS 2026 Scheme',
                 universityId: university.id,
             });
             scheme2 = await Scheme.create({
-                name: 'IT 2025 Scheme',
+                name: 'IT 2026 Scheme',
                 universityId: university.id,
             });
 
@@ -69,7 +69,7 @@ describe('Student API - PUT /api/v1/students/:id', () => {
                 password: 'Student@123',
                 schemeId: scheme.id,
                 branchId: branch.id,
-                admissionYear: 2024,
+                admissionYear: 2025,
                 admissionType: 'FE',
                 gender: 'Male'
             });

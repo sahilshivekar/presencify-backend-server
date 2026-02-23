@@ -35,17 +35,17 @@ describe('Semester API - GET /api/v1/semesters', () => {
       // University/Branch/Scheme
       university = await University.create({ name: 'Test University', abbreviation: 'TU' });
       branch = await Branch.create({ name: 'Computer Science', abbreviation: 'CS' });
-      scheme = await Scheme.create({ name: 'CS 2025', universityId: university.id });
+      scheme = await Scheme.create({ name: 'CS 2026', universityId: university.id });
 
       // Student + login (needs branchId & schemeId)
-      await Student.create({ firstName: 'Jane', lastName: 'Smith', email: 'student1@example.com', phoneNumber: '+919876543210', prn: 'STU001', password: 'Student@123', schemeId: scheme.id, branchId: branch.id, admissionYear: 2024, admissionType: 'FE', gender: 'Male' });
+      await Student.create({ firstName: 'Jane', lastName: 'Smith', email: 'student1@example.com', phoneNumber: '+919876543210', prn: 'STU001', password: 'Student@123', schemeId: scheme.id, branchId: branch.id, admissionYear: 2025, admissionType: 'FE', gender: 'Male' });
       const studentLoginRes = await request(app).post('/api/v1/auth/students/login').send({ emailOrPRN: 'student1@example.com', password: 'Student@123' });
       studentToken = studentLoginRes.body.data.accessToken;
 
       // Seed semesters (avoid bulkCreate due to UUID quoting issue)
-      await Semester.create({ branchId: branch.id, schemeId: scheme.id, semesterNumber: 1, academicStartYear: 2024, academicEndYear: 2025, startDate: '2024-08-01', endDate: '2025-01-01' });
-      await Semester.create({ branchId: branch.id, schemeId: scheme.id, semesterNumber: 2, academicStartYear: 2024, academicEndYear: 2025, startDate: '2025-01-15', endDate: '2025-06-01' });
-      await Semester.create({ branchId: branch.id, schemeId: scheme.id, semesterNumber: 3, academicStartYear: 2025, academicEndYear: 2026, startDate: '2025-08-01', endDate: '2026-01-01' });
+      await Semester.create({ branchId: branch.id, schemeId: scheme.id, semesterNumber: 1, academicStartYear: 2025, academicEndYear: 2026, startDate: '2025-08-01', endDate: '2026-01-01' });
+      await Semester.create({ branchId: branch.id, schemeId: scheme.id, semesterNumber: 2, academicStartYear: 2025, academicEndYear: 2026, startDate: '2026-01-15', endDate: '2026-06-01' });
+      await Semester.create({ branchId: branch.id, schemeId: scheme.id, semesterNumber: 3, academicStartYear: 2026, academicEndYear: 2026, startDate: '2026-08-01', endDate: '2026-01-01' });
     } catch (err) {
       // eslint-disable-next-line no-console
       console.error('beforeEach setup error:', err);
@@ -100,12 +100,12 @@ describe('Semester API - GET /api/v1/semesters', () => {
   test('should filter by academicStartYear and academicEndYear', async () => {
     const res = await request(app)
       .get('/api/v1/semesters')
-      .query({ academicStartYear: 2025, academicEndYear: 2026 })
+      .query({ academicStartYear: 2026, academicEndYear: 2026 })
       .set('Authorization', `Bearer ${adminToken}`);
     expect(res.status).toBe(httpStatus.OK);
     expect(res.body.success).toBe(true);
     expect(res.body.data.totalCount).toBe(1);
-    expect(res.body.data.semesters[0].academicStartYear).toBe(2025);
+    expect(res.body.data.semesters[0].academicStartYear).toBe(2026);
   });
 
   test('should filter by branchId and schemeId', async () => {

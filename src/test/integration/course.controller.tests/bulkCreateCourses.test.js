@@ -34,7 +34,7 @@ describe('Course API - bulkCreateCourses', () => {
 
             // Create test scheme
             scheme = await Scheme.create({
-                name: 'CS 2025 Scheme',
+                name: 'CS 2026 Scheme',
                 universityId: university.id,
             });
 
@@ -84,7 +84,7 @@ describe('Course API - bulkCreateCourses', () => {
                 password: 'Student@123',
                 schemeId: scheme.id,
                 branchId: branch.id,
-                admissionYear: 2024,
+                admissionYear: 2025,
                 admissionType: 'FE',
                 gender: 'Male'
             });

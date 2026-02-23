@@ -69,14 +69,14 @@ describe('Class API - getClasses', () => {
     // Core academic entities (created before student to satisfy not-null FKs)
     university = await University.create({ name: 'Test University', abbreviation: 'TU' });
     branch = await Branch.create({ name: 'Computer Science', abbreviation: 'CS' });
-    scheme = await Scheme.create({ name: 'CS 2025 Scheme', universityId: university.id });
+    scheme = await Scheme.create({ name: 'CS 2026 Scheme', universityId: university.id });
     semester = await Semester.create({
       semesterNumber: 1,
       branchId: branch.id,
-      academicStartYear: 2024,
-      academicEndYear: 2025,
-      startDate: '2024-08-01',
-      endDate: '2024-12-31',
+      academicStartYear: 2025,
+      academicEndYear: 2026,
+      startDate: '2025-08-01',
+      endDate: '2025-12-31',
       schemeId: scheme.id,
     });
     division = await Division.create({ divisionCode: 'A', semesterId: semester.id });
@@ -96,7 +96,7 @@ describe('Class API - getClasses', () => {
 
     // Student and login (after scheme/branch exist)
     const student = await Student.create({
-      firstName: 'Jane', lastName: 'Smith', email: 'student@example.com', phoneNumber: '+919876543210', prn: 'STU001', password: 'Student@123', schemeId: scheme.id, branchId: branch.id, admissionYear: 2024, admissionType: 'FE', gender: 'Female'
+      firstName: 'Jane', lastName: 'Smith', email: 'student@example.com', phoneNumber: '+919876543210', prn: 'STU001', password: 'Student@123', schemeId: scheme.id, branchId: branch.id, admissionYear: 2025, admissionType: 'FE', gender: 'Female'
     });
     const studentLogin = await request(app).post('/api/v1/auth/students/login').send({ emailOrPRN: 'student@example.com', password: 'Student@123' });
     studentToken = studentLogin.body.data.accessToken;
@@ -109,8 +109,8 @@ describe('Class API - getClasses', () => {
       dayOfWeek: 'Monday',
       roomId: room101.id,
       batchId: null,
-      activeFrom: '2024-08-01',
-      activeTill: '2024-10-31',
+      activeFrom: '2025-08-01',
+      activeTill: '2025-10-31',
       classType: 'Lecture',
       courseId: coursePF.id,
       timetableId: timetable.id,
@@ -124,8 +124,8 @@ describe('Class API - getClasses', () => {
       dayOfWeek: 'Monday',
       roomId: room102.id,
       batchId: batchA.id,
-      activeFrom: '2024-08-15',
-      activeTill: '2024-12-15',
+      activeFrom: '2025-08-15',
+      activeTill: '2025-12-15',
       classType: 'Practical',
       courseId: coursePF.id,
       timetableId: timetable.id,
@@ -139,8 +139,8 @@ describe('Class API - getClasses', () => {
       dayOfWeek: 'Tuesday',
       roomId: room102.id,
       batchId: batchB.id,
-  activeFrom: '2024-09-01',
-  activeTill: '2024-11-30',
+  activeFrom: '2025-09-01',
+  activeTill: '2025-11-30',
       classType: 'Practical',
       courseId: coursePF.id,
       timetableId: timetable.id,
@@ -154,8 +154,8 @@ describe('Class API - getClasses', () => {
       dayOfWeek: 'Wednesday',
       roomId: room101.id,
       batchId: null,
-      activeFrom: '2024-09-10',
-      activeTill: '2024-09-20',
+      activeFrom: '2025-09-10',
+      activeTill: '2025-09-20',
       classType: 'Lecture',
       courseId: courseDS.id,
       timetableId: timetable.id,
@@ -257,20 +257,20 @@ describe('Class API - getClasses', () => {
       const res = await request(app)
         .get('/api/v1/classes')
         .set('Authorization', `Bearer ${adminToken}`)
-        .query({ activeFrom: '2024-09-01' });
+        .query({ activeFrom: '2025-09-01' });
       expect(res.status).toBe(httpStatus.OK);
       const af = res.body.data.classes.map(c => c.activeFrom);
-      expect(af.every(d => d >= '2024-09-01')).toBe(true);
+      expect(af.every(d => d >= '2025-09-01')).toBe(true);
     });
 
     test('should filter by activeTill <= provided', async () => {
       const res = await request(app)
         .get('/api/v1/classes')
         .set('Authorization', `Bearer ${adminToken}`)
-        .query({ activeTill: '2024-10-31' });
+        .query({ activeTill: '2025-10-31' });
       expect(res.status).toBe(httpStatus.OK);
       const at = res.body.data.classes.map(c => c.activeTill);
-      expect(at.every(d => d <= '2024-10-31')).toBe(true);
+      expect(at.every(d => d <= '2025-10-31')).toBe(true);
     });
 
     test('should filter by teacherId', async () => {
@@ -380,13 +380,13 @@ describe('Class API - getClasses', () => {
       await Class.create({
         teacherId: teacherJohn.id,
         startTime: '13:00:00', endTime: '14:00:00', dayOfWeek: 'Thursday',
-        roomId: room101.id, batchId: null, activeFrom: '2024-08-01', activeTill: '2024-12-31',
+        roomId: room101.id, batchId: null, activeFrom: '2025-08-01', activeTill: '2025-12-31',
         classType: 'Lecture', courseId: coursePF.id, timetableId: timetable.id, isExtraClass: false
       });
       await Class.create({
         teacherId: teacherJohn.id,
         startTime: '14:00:00', endTime: '15:00:00', dayOfWeek: 'Friday',
-        roomId: room101.id, batchId: null, activeFrom: '2024-08-01', activeTill: '2024-12-31',
+        roomId: room101.id, batchId: null, activeFrom: '2025-08-01', activeTill: '2025-12-31',
         classType: 'Lecture', courseId: coursePF.id, timetableId: timetable.id, isExtraClass: false
       });
 

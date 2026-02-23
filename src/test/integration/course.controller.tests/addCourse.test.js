@@ -22,7 +22,7 @@ describe('Course Controller - addCourse', () => {
     adminToken = adminLoginRes.body.data.accessToken;
 
     university = await University.create({ name: 'Test University', abbreviation: 'TU' });
-    scheme = await Scheme.create({ name: 'CS 2025 Scheme', universityId: university.id });
+    scheme = await Scheme.create({ name: 'CS 2026 Scheme', universityId: university.id });
   });
 
   const url = '/api/v1/courses';

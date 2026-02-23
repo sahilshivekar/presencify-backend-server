@@ -67,16 +67,16 @@ describe('Attendance API - updateStudentAttendance', () => {
             abbreviation: 'CS',
         });
         scheme = await Scheme.create({
-            name: 'CS 2025 Scheme',
+            name: 'CS 2026 Scheme',
             universityId: university.id,
         });
         semester = await Semester.create({
             semesterNumber: 1,
             branchId: branch.id,
-            academicStartYear: 2024,
-            academicEndYear: 2025,
-            startDate: '2024-08-01',
-            endDate: '2024-12-31',
+            academicStartYear: 2025,
+            academicEndYear: 2026,
+            startDate: '2025-08-01',
+            endDate: '2025-12-31',
             schemeId: scheme.id,
         });
         division = await Division.create({
@@ -116,7 +116,7 @@ describe('Attendance API - updateStudentAttendance', () => {
             password: 'Student@123',
             schemeId: scheme.id,
             branchId: branch.id,
-            admissionYear: 2024,
+            admissionYear: 2025,
             admissionType: 'FE',
             gender: 'Male'
         });
@@ -129,7 +129,7 @@ describe('Attendance API - updateStudentAttendance', () => {
             password: 'Student@123',
             schemeId: scheme.id,
             branchId: branch.id,
-            admissionYear: 2024,
+            admissionYear: 2025,
             admissionType: 'FE',
             gender: 'Male'
         });
@@ -162,8 +162,8 @@ describe('Attendance API - updateStudentAttendance', () => {
             dayOfWeek: 'Monday',
             roomId: room.id,
             batchId: batch.id,
-            activeFrom: '2024-01-01',
-            activeTill: '2024-12-31',
+            activeFrom: '2025-01-01',
+            activeTill: '2025-12-31',
             classType: 'Lecture',
             courseId: course.id,
             timetableId: timetable.id,
@@ -172,7 +172,7 @@ describe('Attendance API - updateStudentAttendance', () => {
         // Create attendance and attendance students
         attendance = await Attendance.create({
             classId: classEntity.id,
-            date: '2024-01-15',
+            date: '2025-01-15',
         });
 
         attendanceStudent1 = await AttendanceStudent.create({
@@ -433,7 +433,7 @@ describe('Attendance API - updateStudentAttendance', () => {
                     password: 'Student@123',
                     schemeId: scheme.id,
                     branchId: branch.id,
-                    admissionYear: 2024,
+                    admissionYear: 2025,
                     admissionType: 'FE',
                     gender: 'Male'
                 });

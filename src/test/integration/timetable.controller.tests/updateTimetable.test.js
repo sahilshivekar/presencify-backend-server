@@ -34,14 +34,14 @@ describe('Timetable API - PUT /api/v1/timetables/:id', () => {
       // Seed minimal hierarchy for timetable
       const university = await University.create({ name: 'Test University', abbreviation: 'TU' });
       const branch = await Branch.create({ name: 'Computer Science', abbreviation: 'CS' });
-      const scheme = await Scheme.create({ name: 'CS 2025', universityId: university.id });
+      const scheme = await Scheme.create({ name: 'CS 2026', universityId: university.id });
       const semester = await Semester.create({
         semesterNumber: 1,
         branchId: branch.id,
-        academicStartYear: 2024,
-        academicEndYear: 2025,
-        startDate: '2024-08-01',
-        endDate: '2024-12-31',
+        academicStartYear: 2025,
+        academicEndYear: 2026,
+        startDate: '2025-08-01',
+        endDate: '2025-12-31',
         schemeId: scheme.id,
       });
       const division = await Division.create({ divisionCode: 'A', semesterId: semester.id });

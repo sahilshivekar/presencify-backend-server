@@ -71,16 +71,16 @@ describe('Attendance API - createAttendance', () => {
             abbreviation: 'CS',
         });
         scheme = await Scheme.create({
-            name: 'CS 2025 Scheme',
+            name: 'CS 2026 Scheme',
             universityId: university.id,
         });
         semester = await Semester.create({
             semesterNumber: 1,
             branchId: branch.id,
-            academicStartYear: 2024,
-            academicEndYear: 2025,
-            startDate: '2024-08-01',
-            endDate: '2024-12-31',
+            academicStartYear: 2025,
+            academicEndYear: 2026,
+            startDate: '2025-08-01',
+            endDate: '2025-12-31',
             schemeId: scheme.id,
         });
         division = await Division.create({
@@ -120,7 +120,7 @@ describe('Attendance API - createAttendance', () => {
             password: 'Student@123',
             schemeId: scheme.id,
             branchId: branch.id,
-            admissionYear: 2024,
+            admissionYear: 2025,
             admissionType: 'FE',
             gender: 'Male'
         });
@@ -133,7 +133,7 @@ describe('Attendance API - createAttendance', () => {
             password: 'Student@123',
             schemeId: scheme.id,
             branchId: branch.id,
-            admissionYear: 2024,
+            admissionYear: 2025,
             admissionType: 'FE',
             gender: 'Male'
         });
@@ -146,7 +146,7 @@ describe('Attendance API - createAttendance', () => {
             password: 'Student@123',
             schemeId: scheme.id,
             branchId: branch.id,
-            admissionYear: 2024,
+            admissionYear: 2025,
             admissionType: 'FE',
             gender: 'Male'
         });
@@ -176,33 +176,33 @@ describe('Attendance API - createAttendance', () => {
         await StudentDivision.create({
             studentId: student1.id,
             divisionId: division.id,
-            startDate: '2024-08-01',
+            startDate: '2025-08-01',
         });
         await StudentDivision.create({
             studentId: student2.id,
             divisionId: division.id,
-            startDate: '2024-08-01',
+            startDate: '2025-08-01',
         });
         await StudentDivision.create({
             studentId: student3.id,
             divisionId: division.id,
-            startDate: '2024-08-01',
+            startDate: '2025-08-01',
         });
 
         await StudentBatch.create({
             studentId: student1.id,
             batchId: batch.id,
-            startDate: '2024-08-01',
+            startDate: '2025-08-01',
         });
         await StudentBatch.create({
             studentId: student2.id,
             batchId: batch.id,
-            startDate: '2024-08-01',
+            startDate: '2025-08-01',
         });
         await StudentBatch.create({
             studentId: student3.id,
             batchId: batch.id,
-            startDate: '2024-08-01',
+            startDate: '2025-08-01',
         });
 
         // Create course, room, timetable, class
@@ -225,8 +225,8 @@ describe('Attendance API - createAttendance', () => {
             dayOfWeek: 'Monday',
             roomId: room.id,
             batchId: batch.id,
-            activeFrom: '2024-09-01',
-            activeTill: '2024-10-31',
+            activeFrom: '2025-09-01',
+            activeTill: '2025-10-31',
             classType: 'Lecture',
             courseId: course.id,
             timetableId: timetable.id,
@@ -235,14 +235,14 @@ describe('Attendance API - createAttendance', () => {
         // Create attendance
         // attendance = await Attendance.create({
         //     classId: classEntity.id,
-        //     date: '2024-09-10',
+        //     date: '2025-09-10',
         // });
     });
 
     describe('POST /api/v1/attendances', () => {
         const validAttendanceData = () => ({
             classId: classEntity.id,
-            date: '2024-09-10',
+            date: '2025-09-10',
         });
 
         describe('Authentication', () => {
@@ -321,7 +321,7 @@ describe('Attendance API - createAttendance', () => {
             });
 
             test('should return 400 if date format is invalid', async () => {
-                const invalidData = { ...validAttendanceData(), date: '15-01-2024' };
+                const invalidData = { ...validAttendanceData(), date: '15-01-2025' };
 
                 const response = await request(app)
                     .post('/api/v1/attendances')
@@ -334,7 +334,7 @@ describe('Attendance API - createAttendance', () => {
             });
 
             test('should return 400 if date is invalid', async () => {
-                const invalidData = { ...validAttendanceData(), date: '2024-13-32' };
+                const invalidData = { ...validAttendanceData(), date: '2025-13-32' };
 
                 const response = await request(app)
                     .post('/api/v1/attendances')
@@ -359,13 +359,13 @@ describe('Attendance API - createAttendance', () => {
                 expect(response.body.message).toContain('created successfully');
                 expect(response.body.data).toHaveProperty('id');
                 expect(response.body.data.classId).toBe(classEntity.id);
-                expect(response.body.data.date).toBe('2024-09-10');
+                expect(response.body.data.date).toBe('2025-09-10');
 
                 // Verify in database
                 const attendance = await Attendance.findByPk(response.body.data.id);
                 expect(attendance).toBeTruthy();
                 expect(attendance.classId).toBe(classEntity.id);
-                expect(attendance.date).toBe('2024-09-10');
+                expect(attendance.date).toBe('2025-09-10');
             });
 
             test('should create attendance successfully with teacher token', async () => {
@@ -379,7 +379,7 @@ describe('Attendance API - createAttendance', () => {
                 expect(response.body.message).toContain('created successfully');
                 expect(response.body.data).toHaveProperty('id');
                 expect(response.body.data.classId).toBe(classEntity.id);
-                expect(response.body.data.date).toBe('2024-09-10');
+                expect(response.body.data.date).toBe('2025-09-10');
             });
 
             test('should return 404 if class does not exist', async () => {

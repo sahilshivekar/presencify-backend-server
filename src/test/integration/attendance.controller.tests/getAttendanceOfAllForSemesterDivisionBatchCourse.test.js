@@ -71,16 +71,16 @@ describe('Attendance API - getAttendanceOfAllForSemesterDivisionBatchCourse', ()
             abbreviation: 'CS',
         });
         scheme = await Scheme.create({
-            name: 'CS 2025 Scheme',
+            name: 'CS 2026 Scheme',
             universityId: university.id,
         });
         semester = await Semester.create({
             semesterNumber: 1,
             branchId: branch.id,
-            academicStartYear: 2024,
-            academicEndYear: 2025,
-            startDate: '2024-08-01',
-            endDate: '2024-12-31',
+            academicStartYear: 2025,
+            academicEndYear: 2026,
+            startDate: '2025-08-01',
+            endDate: '2025-12-31',
             schemeId: scheme.id,
         });
         division = await Division.create({
@@ -120,7 +120,7 @@ describe('Attendance API - getAttendanceOfAllForSemesterDivisionBatchCourse', ()
             password: 'Student@123',
             schemeId: scheme.id,
             branchId: branch.id,
-            admissionYear: 2024,
+            admissionYear: 2025,
             admissionType: 'FE',
             gender: 'Male'
         });
@@ -133,7 +133,7 @@ describe('Attendance API - getAttendanceOfAllForSemesterDivisionBatchCourse', ()
             password: 'Student@123',
             schemeId: scheme.id,
             branchId: branch.id,
-            admissionYear: 2024,
+            admissionYear: 2025,
             admissionType: 'FE',
             gender: 'Male'
         });
@@ -159,23 +159,23 @@ describe('Attendance API - getAttendanceOfAllForSemesterDivisionBatchCourse', ()
         await StudentDivision.create({
             studentId: student1.id,
             divisionId: division.id,
-            startDate: '2024-08-01',
+            startDate: '2025-08-01',
         });
         await StudentDivision.create({
             studentId: student2.id,
             divisionId: division.id,
-            startDate: '2024-08-01',
+            startDate: '2025-08-01',
         });
 
         await StudentBatch.create({
             studentId: student1.id,
             batchId: batch.id,
-            startDate: '2024-08-01',
+            startDate: '2025-08-01',
         });
         await StudentBatch.create({
             studentId: student2.id,
             batchId: batch.id,
-            startDate: '2024-08-01',
+            startDate: '2025-08-01',
         });
 
         // Create courses
@@ -207,8 +207,8 @@ describe('Attendance API - getAttendanceOfAllForSemesterDivisionBatchCourse', ()
             dayOfWeek: 'Monday',
             roomId: room.id,
             batchId: batch.id,
-            activeFrom: '2024-01-01',
-            activeTill: '2024-12-31',
+            activeFrom: '2025-01-01',
+            activeTill: '2025-12-31',
             classType: 'Lecture',
             courseId: course1.id,
             timetableId: timetable.id,
@@ -221,8 +221,8 @@ describe('Attendance API - getAttendanceOfAllForSemesterDivisionBatchCourse', ()
             dayOfWeek: 'Tuesday',
             roomId: room.id,
             batchId: batch.id,
-            activeFrom: '2024-01-01',
-            activeTill: '2024-12-31',
+            activeFrom: '2025-01-01',
+            activeTill: '2025-12-31',
             classType: 'Practical',
             courseId: course2.id,
             timetableId: timetable.id,
@@ -231,17 +231,17 @@ describe('Attendance API - getAttendanceOfAllForSemesterDivisionBatchCourse', ()
         // Create attendances with student records
         attendance1 = await Attendance.create({
             classId: classEntity1.id,
-            date: '2024-01-15',
+            date: '2025-01-15',
         });
 
         attendance2 = await Attendance.create({
             classId: classEntity1.id,
-            date: '2024-01-22',
+            date: '2025-01-22',
         });
 
         attendance3 = await Attendance.create({
             classId: classEntity2.id,
-            date: '2024-01-16',
+            date: '2025-01-16',
         });
 
         // Add student attendance records for course 1
@@ -464,8 +464,8 @@ describe('Attendance API - getAttendanceOfAllForSemesterDivisionBatchCourse', ()
                     .set('Authorization', `Bearer ${adminToken}`)
                     .query({
                         semesterId: semester.id,
-                        startDate: '2024-01-15',
-                        endDate: '2024-01-22',
+                        startDate: '2025-01-15',
+                        endDate: '2025-01-22',
                     });
 
                 expect(response.status).toBe(httpStatus.OK);
@@ -475,9 +475,9 @@ describe('Attendance API - getAttendanceOfAllForSemesterDivisionBatchCourse', ()
                 response.body.data.forEach(course =>
                     course.attendanceSummary.forEach(attendance => dates.push(attendance.attendanceDate))
                 );
-                expect(dates).toContain('2024-01-15');
-                expect(dates).toContain('2024-01-16');
-                expect(dates).toContain('2024-01-22');
+                expect(dates).toContain('2025-01-15');
+                expect(dates).toContain('2025-01-16');
+                expect(dates).toContain('2025-01-22');
             });
 
             test('should get attendance with teacher token', async () => {
@@ -499,8 +499,8 @@ describe('Attendance API - getAttendanceOfAllForSemesterDivisionBatchCourse', ()
                     .set('Authorization', `Bearer ${adminToken}`)
                     .query({
                         semesterNumber: 1,
-                        academicStartYear: 2024,
-                        academicEndYear: 2025,
+                        academicStartYear: 2025,
+                        academicEndYear: 2026,
                         branchId: branch.id,
                         schemeId: scheme.id,
                     });
@@ -533,10 +533,10 @@ describe('Attendance API - getAttendanceOfAllForSemesterDivisionBatchCourse', ()
                 const newSemester = await Semester.create({
                     semesterNumber: 2,
                     branchId: branch.id,
-                    academicStartYear: 2024,
-                    academicEndYear: 2025,
-                    startDate: '2024-08-01',
-                    endDate: '2024-12-31',
+                    academicStartYear: 2025,
+                    academicEndYear: 2026,
+                    startDate: '2025-08-01',
+                    endDate: '2025-12-31',
                     schemeId: scheme.id,
                 });
 

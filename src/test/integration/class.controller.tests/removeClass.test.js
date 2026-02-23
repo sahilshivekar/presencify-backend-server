@@ -55,14 +55,14 @@ describe('Class API - removeClass', () => {
     // Academic setup
     university = await University.create({ name: 'Test University', abbreviation: 'TU' });
     branch = await Branch.create({ name: 'Computer Science', abbreviation: 'CS' });
-    scheme = await Scheme.create({ name: 'CS 2025 Scheme', universityId: university.id });
+    scheme = await Scheme.create({ name: 'CS 2026 Scheme', universityId: university.id });
     semester = await Semester.create({
       semesterNumber: 1,
       branchId: branch.id,
-      academicStartYear: 2024,
-      academicEndYear: 2025,
-      startDate: '2024-08-01',
-      endDate: '2024-12-31',
+      academicStartYear: 2025,
+      academicEndYear: 2026,
+      startDate: '2025-08-01',
+      endDate: '2025-12-31',
       schemeId: scheme.id,
     });
     division = await Division.create({ divisionCode: 'A', semesterId: semester.id });
@@ -77,7 +77,7 @@ describe('Class API - removeClass', () => {
 
     // Student + login
     const student = await Student.create({
-      firstName: 'Jane', lastName: 'Smith', email: 'student@example.com', phoneNumber: '+919876543210', prn: 'STU001', password: 'Student@123', schemeId: scheme.id, branchId: branch.id, admissionYear: 2024, admissionType: 'FE', gender: 'Female'
+      firstName: 'Jane', lastName: 'Smith', email: 'student@example.com', phoneNumber: '+919876543210', prn: 'STU001', password: 'Student@123', schemeId: scheme.id, branchId: branch.id, admissionYear: 2025, admissionType: 'FE', gender: 'Female'
     });
     const studentLogin = await request(app).post('/api/v1/auth/students/login').send({ emailOrPRN: 'student@example.com', password: 'Student@123' });
     studentToken = studentLogin.body.data.accessToken;
@@ -87,7 +87,7 @@ describe('Class API - removeClass', () => {
       teacherId: teacher.id,
       startTime: '09:00:00', endTime: '10:00:00', dayOfWeek: 'Monday',
       roomId: room.id, batchId: batch.id,
-      activeFrom: '2024-08-01', activeTill: '2024-12-31',
+      activeFrom: '2025-08-01', activeTill: '2025-12-31',
       classType: 'Lecture', courseId: course.id, timetableId: timetable.id, isExtraClass: false
     });
   });

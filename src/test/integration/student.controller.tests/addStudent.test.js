@@ -55,7 +55,7 @@ describe('Student API - POST /api/v1/students', () => {
                 abbreviation: 'CS',
             });
             scheme = await Scheme.create({
-                name: 'CS 2025 Scheme',
+                name: 'CS 2026 Scheme',
                 universityId: university.id,
             });
         } catch (err) {
@@ -76,7 +76,7 @@ describe('Student API - POST /api/v1/students', () => {
                     phoneNumber: '+919876543210',
                     gender: 'Male',
                     schemeId: scheme.id,
-                    admissionYear: 2024,
+                    admissionYear: 2025,
                     admissionType: 'FE',
                     branchId: branch.id
                 });
@@ -95,7 +95,7 @@ describe('Student API - POST /api/v1/students', () => {
                     phoneNumber: '+919876543210',
                     gender: 'Male',
                     schemeId: scheme.id,
-                    admissionYear: 2024,
+                    admissionYear: 2025,
                     admissionType: 'FE',
                     branchId: branch.id
                 });
@@ -114,7 +114,7 @@ describe('Student API - POST /api/v1/students', () => {
                     phoneNumber: '+919876543210',
                     gender: 'Male',
                     schemeId: scheme.id,
-                    admissionYear: 2024,
+                    admissionYear: 2025,
                     admissionType: 'FE',
                     branchId: branch.id
                 });
@@ -134,7 +134,7 @@ describe('Student API - POST /api/v1/students', () => {
                     phoneNumber: '+919876543210',
                     gender: 'Male',
                     schemeId: scheme.id,
-                    admissionYear: 2024,
+                    admissionYear: 2025,
                     admissionType: 'FE',
                     branchId: branch.id
                 });
@@ -153,7 +153,7 @@ describe('Student API - POST /api/v1/students', () => {
                     phoneNumber: '+919876543210',
                     gender: 'Male',
                     schemeId: scheme.id,
-                    admissionYear: 2024,
+                    admissionYear: 2025,
                     admissionType: 'FE',
                     branchId: branch.id
                 });
@@ -172,7 +172,7 @@ describe('Student API - POST /api/v1/students', () => {
                     phoneNumber: '+919876543210',
                     gender: 'Male',
                     schemeId: scheme.id,
-                    admissionYear: 2024,
+                    admissionYear: 2025,
                     admissionType: 'FE',
                     branchId: branch.id
                 });
@@ -191,7 +191,7 @@ describe('Student API - POST /api/v1/students', () => {
                     phoneNumber: '+919876543210',
                     gender: 'Male',
                     schemeId: scheme.id,
-                    admissionYear: 2024,
+                    admissionYear: 2025,
                     admissionType: 'FE',
                     branchId: branch.id
                 });
@@ -211,7 +211,7 @@ describe('Student API - POST /api/v1/students', () => {
                     phoneNumber: '+919876543210',
                     gender: 'Male',
                     schemeId: scheme.id,
-                    admissionYear: 2024,
+                    admissionYear: 2025,
                     admissionType: 'FE',
                     branchId: branch.id
                 });
@@ -230,7 +230,7 @@ describe('Student API - POST /api/v1/students', () => {
                     email: 'john@example.com',
                     gender: 'Male',
                     schemeId: scheme.id,
-                    admissionYear: 2024,
+                    admissionYear: 2025,
                     admissionType: 'FE',
                     branchId: branch.id
                 });
@@ -249,7 +249,7 @@ describe('Student API - POST /api/v1/students', () => {
                     email: 'john@example.com',
                     phoneNumber: '+919876543210',
                     schemeId: scheme.id,
-                    admissionYear: 2024,
+                    admissionYear: 2025,
                     admissionType: 'FE',
                     branchId: branch.id
                 });
@@ -269,7 +269,7 @@ describe('Student API - POST /api/v1/students', () => {
                     phoneNumber: '+919876543210',
                     gender: 'InvalidGender',
                     schemeId: scheme.id,
-                    admissionYear: 2024,
+                    admissionYear: 2025,
                     admissionType: 'FE',
                     branchId: branch.id
                 });
@@ -288,7 +288,7 @@ describe('Student API - POST /api/v1/students', () => {
                     email: 'john@example.com',
                     phoneNumber: '+919876543210',
                     gender: 'Male',
-                    admissionYear: 2024,
+                    admissionYear: 2025,
                     admissionType: 'FE',
                     branchId: branch.id
                 });
@@ -308,7 +308,7 @@ describe('Student API - POST /api/v1/students', () => {
                     phoneNumber: '+919876543210',
                     gender: 'Male',
                     schemeId: 'invalid-uuid',
-                    admissionYear: 2024,
+                    admissionYear: 2025,
                     admissionType: 'FE',
                     branchId: branch.id
                 });
@@ -328,7 +328,7 @@ describe('Student API - POST /api/v1/students', () => {
                     phoneNumber: '+919876543210',
                     gender: 'Male',
                     schemeId: scheme.id,
-                    admissionYear: 2024,
+                    admissionYear: 2025,
                     admissionType: 'FE'
                 });
             expect(res.status).toBe(httpStatus.BAD_REQUEST);
@@ -347,7 +347,7 @@ describe('Student API - POST /api/v1/students', () => {
                     phoneNumber: '+919876543210',
                     gender: 'Male',
                     schemeId: scheme.id,
-                    admissionYear: 2024,
+                    admissionYear: 2025,
                     admissionType: 'FE',
                     branchId: 'invalid-uuid'
                 });
@@ -386,7 +386,7 @@ describe('Student API - POST /api/v1/students', () => {
                     phoneNumber: '+919876543210',
                     gender: 'Male',
                     schemeId: scheme.id,
-                    admissionYear: 2024,
+                    admissionYear: 2025,
                     branchId: branch.id
                 });
             expect(res.status).toBe(httpStatus.BAD_REQUEST);
@@ -408,7 +408,7 @@ describe('Student API - POST /api/v1/students', () => {
                     phoneNumber: '+919876543210',
                     gender: 'Male',
                     schemeId: scheme.id,
-                    admissionYear: 2024,
+                    admissionYear: 2025,
                     admissionType: 'FE',
                     branchId: branch.id
                 });
@@ -425,7 +425,7 @@ describe('Student API - POST /api/v1/students', () => {
                     phoneNumber: '+919876543211',
                     gender: 'Female',
                     schemeId: scheme.id,
-                    admissionYear: 2024,
+                    admissionYear: 2025,
                     admissionType: 'FE',
                     branchId: branch.id
                 });
@@ -445,7 +445,7 @@ describe('Student API - POST /api/v1/students', () => {
                     phoneNumber: '+919876543210',
                     gender: 'Male',
                     schemeId: 'aaaaaaaa-aaaa-4aaa-aaaa-aaaaaaaaaaaa',
-                    admissionYear: 2024,
+                    admissionYear: 2025,
                     admissionType: 'FE',
                     branchId: branch.id
                 });
@@ -465,7 +465,7 @@ describe('Student API - POST /api/v1/students', () => {
                     phoneNumber: '+919876543210',
                     gender: 'Male',
                     schemeId: scheme.id,
-                    admissionYear: 2024,
+                    admissionYear: 2025,
                     admissionType: 'FE',
                     branchId: 'aaaaaaaa-aaaa-4aaa-aaaa-aaaaaaaaaaaa'
                 });
@@ -487,7 +487,7 @@ describe('Student API - POST /api/v1/students', () => {
                     phoneNumber: '+919876543210',
                     gender: 'Male',
                     schemeId: scheme.id,
-                    admissionYear: 2024,
+                    admissionYear: 2025,
                     admissionType: 'FE',
                     branchId: branch.id
                 });
@@ -514,7 +514,7 @@ describe('Student API - POST /api/v1/students', () => {
                     gender: 'Male',
                     dob: '1999-01-01',
                     schemeId: scheme.id,
-                    admissionYear: 2024,
+                    admissionYear: 2025,
                     admissionType: 'FE',
                     branchId: branch.id,
                     parentEmail: 'parent@example.com'
@@ -538,7 +538,7 @@ describe('Student API - POST /api/v1/students', () => {
                     phoneNumber: '+919876543210',
                     gender: 'Male',
                     schemeId: scheme.id,
-                    admissionYear: 2024,
+                    admissionYear: 2025,
                     admissionType: 'FE',
                     branchId: branch.id
                 });

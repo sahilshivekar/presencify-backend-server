@@ -38,7 +38,7 @@ describe('Student Auth API - sendVerificationCodeToEmail', () => {
 
         // Create test student
         testStudent = await Student.create({
-            prn: 'TU2024001',
+            prn: 'TU2025001',
             firstName: 'John',
             lastName: 'Doe',
             email: faker.internet.email().toLowerCase(),
@@ -46,7 +46,7 @@ describe('Student Auth API - sendVerificationCodeToEmail', () => {
             password: 'TestPass123!', // This should trigger password hashing hook
             schemeId: testScheme.id,
             branchId: testBranch.id,
-            admissionYear: 2024,
+            admissionYear: 2025,
             admissionType: 'FE',
             gender: "Male",
         });

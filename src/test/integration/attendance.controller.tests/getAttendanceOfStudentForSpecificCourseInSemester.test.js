@@ -68,16 +68,16 @@ describe('Attendance API - getAttendanceOfStudentForSpecificCourseInSemester', (
             abbreviation: 'CS',
         });
         scheme = await Scheme.create({
-            name: 'CS 2025 Scheme',
+            name: 'CS 2026 Scheme',
             universityId: university.id,
         });
         semester = await Semester.create({
             semesterNumber: 1,
             branchId: branch.id,
-            academicStartYear: 2024,
-            academicEndYear: 2025,
-            startDate: '2024-08-01',
-            endDate: '2024-12-31',
+            academicStartYear: 2025,
+            academicEndYear: 2026,
+            startDate: '2025-08-01',
+            endDate: '2025-12-31',
             schemeId: scheme.id,
         });
         division = await Division.create({
@@ -117,7 +117,7 @@ describe('Attendance API - getAttendanceOfStudentForSpecificCourseInSemester', (
             password: 'Student@123',
             schemeId: scheme.id,
             branchId: branch.id,
-            admissionYear: 2024,
+            admissionYear: 2025,
             admissionType: 'FE',
             gender: 'Male'
         });
@@ -130,7 +130,7 @@ describe('Attendance API - getAttendanceOfStudentForSpecificCourseInSemester', (
             password: 'Student@123',
             schemeId: scheme.id,
             branchId: branch.id,
-            admissionYear: 2024,
+            admissionYear: 2025,
             admissionType: 'FE',
             gender: 'Male'
         });
@@ -156,23 +156,23 @@ describe('Attendance API - getAttendanceOfStudentForSpecificCourseInSemester', (
         await StudentDivision.create({
             studentId: student1.id,
             divisionId: division.id,
-            startDate: '2024-08-01',
+            startDate: '2025-08-01',
         });
         await StudentDivision.create({
             studentId: student2.id,
             divisionId: division.id,
-            startDate: '2024-08-01',
+            startDate: '2025-08-01',
         });
 
         await StudentBatch.create({
             studentId: student1.id,
             batchId: batch.id,
-            startDate: '2024-08-01',
+            startDate: '2025-08-01',
         });
         await StudentBatch.create({
             studentId: student2.id,
             batchId: batch.id,
-            startDate: '2024-08-01',
+            startDate: '2025-08-01',
         });
 
         // Create course, room, timetable, class
@@ -195,8 +195,8 @@ describe('Attendance API - getAttendanceOfStudentForSpecificCourseInSemester', (
             dayOfWeek: 'Monday',
             roomId: room.id,
             batchId: batch.id,
-            activeFrom: '2024-01-01',
-            activeTill: '2024-12-31',
+            activeFrom: '2025-01-01',
+            activeTill: '2025-12-31',
             classType: 'Lecture',
             courseId: course.id,
             timetableId: timetable.id,
@@ -205,12 +205,12 @@ describe('Attendance API - getAttendanceOfStudentForSpecificCourseInSemester', (
         // Create attendances with student records
         attendance1 = await Attendance.create({
             classId: classEntity.id,
-            date: '2024-01-15',
+            date: '2025-01-15',
         });
 
         attendance2 = await Attendance.create({
             classId: classEntity.id,
-            date: '2024-01-22',
+            date: '2025-01-22',
         });
 
         // Add student attendance records
@@ -422,14 +422,14 @@ describe('Attendance API - getAttendanceOfStudentForSpecificCourseInSemester', (
                     .query({
                         studentId: student1.id,
                         courseId: course.id,
-                        startDate: '2024-01-10',
-                        endDate: '2024-01-20',
+                        startDate: '2025-01-10',
+                        endDate: '2025-01-20',
                     });
 
                 expect(response.status).toBe(httpStatus.OK);
                 expect(response.body.success).toBe(true);
                 expect(response.body.data.detailedAttendance).toHaveLength(1);
-                expect(response.body.data.detailedAttendance[0].date).toBe('2024-01-15');
+                expect(response.body.data.detailedAttendance[0].date).toBe('2025-01-15');
             });
 
             test('should filter by semesterNumber, academic years, branchId and schemeId', async () => {
@@ -440,8 +440,8 @@ describe('Attendance API - getAttendanceOfStudentForSpecificCourseInSemester', (
                         studentId: student1.id,
                         courseId: course.id,
                         semesterNumber: 1,
-                        academicStartYear: 2024,
-                        academicEndYear: 2025,
+                        academicStartYear: 2025,
+                        academicEndYear: 2026,
                         branchId: branch.id,
                         schemeId: scheme.id,
                     });
@@ -562,13 +562,13 @@ describe('Attendance API - getAttendanceOfStudentForSpecificCourseInSemester', (
                     .set('Authorization', `Bearer ${studentToken}`)
                     .query({
                         courseId: course.id,
-                        startDate: '2024-01-10',
-                        endDate: '2024-01-20',
+                        startDate: '2025-01-10',
+                        endDate: '2025-01-20',
                     });
                 expect(response.status).toBe(httpStatus.OK);
                 expect(response.body.success).toBe(true);
                 expect(response.body.data.detailedAttendance).toHaveLength(1);
-                expect(response.body.data.detailedAttendance[0].date).toBe('2024-01-15');
+                expect(response.body.data.detailedAttendance[0].date).toBe('2025-01-15');
             });
 
             test('should return 404 if course does not exist', async () => {

@@ -29,7 +29,7 @@ describe('Course Controller - removeCourseFromBranchWithSemesterNumber', () => {
 
     university = await University.create({ name: 'Test University', abbreviation: 'TU' });
     branch = await Branch.create({ name: 'Computer Science', abbreviation: 'CS' });
-    scheme = await Scheme.create({ name: 'CS 2025 Scheme', universityId: university.id });
+    scheme = await Scheme.create({ name: 'CS 2026 Scheme', universityId: university.id });
     course = await Course.create({ name: 'Programming Fundamentals', code: 'CS101', schemeId: scheme.id });
     branchCourseSemester = await BranchCourseSemester.create({ branchId: branch.id, courseId: course.id, semesterNumber: 1 });
   });

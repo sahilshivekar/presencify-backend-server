@@ -58,14 +58,14 @@ describe('Class API - extendActiveTillDateOfClass', () => {
         // Academic setup
         university = await University.create({ name: 'Test University', abbreviation: 'TU' });
         branch = await Branch.create({ name: 'Computer Science', abbreviation: 'CS' });
-        scheme = await Scheme.create({ name: 'CS 2025 Scheme', universityId: university.id });
+        scheme = await Scheme.create({ name: 'CS 2026 Scheme', universityId: university.id });
         semester = await Semester.create({
             semesterNumber: 1,
             branchId: branch.id,
-            academicStartYear: 2024,
-            academicEndYear: 2025,
-            startDate: '2024-08-01',
-            endDate: '2024-12-31',
+            academicStartYear: 2025,
+            academicEndYear: 2026,
+            startDate: '2025-08-01',
+            endDate: '2025-12-31',
             schemeId: scheme.id,
         });
         division = await Division.create({ divisionCode: 'A', semesterId: semester.id });
@@ -83,7 +83,7 @@ describe('Class API - extendActiveTillDateOfClass', () => {
 
         // Student + login
         const student = await Student.create({
-            firstName: 'Jane', lastName: 'Smith', email: 'student@example.com', phoneNumber: '+919876543210', prn: 'STU001', password: 'Student@123', schemeId: scheme.id, branchId: branch.id, admissionYear: 2024, admissionType: 'FE', gender: 'Female'
+            firstName: 'Jane', lastName: 'Smith', email: 'student@example.com', phoneNumber: '+919876543210', prn: 'STU001', password: 'Student@123', schemeId: scheme.id, branchId: branch.id, admissionYear: 2025, admissionType: 'FE', gender: 'Female'
         });
         const studentLogin = await request(app).post('/api/v1/auth/students/login').send({ emailOrPRN: 'student@example.com', password: 'Student@123' });
         studentToken = studentLogin.body.data.accessToken;
@@ -93,7 +93,7 @@ describe('Class API - extendActiveTillDateOfClass', () => {
             teacherId: teacherJohn.id,
             startTime: '09:00:00', endTime: '10:00:00', dayOfWeek: 'Monday',
             roomId: room101.id, batchId: null,
-            activeFrom: '2024-08-01', activeTill: '2024-10-31',
+            activeFrom: '2025-08-01', activeTill: '2025-10-31',
             classType: 'Lecture', courseId: coursePF.id, timetableId: timetable.id, isExtraClass: false
         });
 
@@ -101,7 +101,7 @@ describe('Class API - extendActiveTillDateOfClass', () => {
             teacherId: teacherJohn.id,
             startTime: '10:00:00', endTime: '11:00:00', dayOfWeek: 'Monday',
             roomId: room102.id, batchId: batchA.id,
-            activeFrom: '2024-08-15', activeTill: '2024-10-15',
+            activeFrom: '2025-08-15', activeTill: '2025-10-15',
             classType: 'Practical', courseId: coursePF.id, timetableId: timetable.id, isExtraClass: false
         });
     });
@@ -110,7 +110,7 @@ describe('Class API - extendActiveTillDateOfClass', () => {
         test('should return 401 if no token provided', async () => {
             const res = await request(app)
                 .put(`/api/v1/classes/${classLecture.id}`)
-                .send({ newActiveTill: '2024-12-15' });
+                .send({ newActiveTill: '2025-12-15' });
             expect(res.status).toBe(httpStatus.UNAUTHORIZED);
             expect(res.body.success).toBe(false);
             expect(res.body.message).toContain('No token provided');
@@ -120,7 +120,7 @@ describe('Class API - extendActiveTillDateOfClass', () => {
             const res = await request(app)
                 .put(`/api/v1/classes/${classLecture.id}`)
                 .set('Authorization', 'Bearer invalidtoken')
-                .send({ newActiveTill: '2024-12-15' });
+                .send({ newActiveTill: '2025-12-15' });
             expect(res.status).toBe(httpStatus.UNAUTHORIZED);
             expect(res.body.success).toBe(false);
             expect(res.body.message).toContain('Invalid token');
@@ -130,7 +130,7 @@ describe('Class API - extendActiveTillDateOfClass', () => {
             const res = await request(app)
                 .put(`/api/v1/classes/${classLecture.id}`)
                 .set('Authorization', `Bearer ${teacherToken}`)
-                .send({ newActiveTill: '2024-12-15' });
+                .send({ newActiveTill: '2025-12-15' });
             expect(res.status).toBe(httpStatus.FORBIDDEN);
             expect(res.body.success).toBe(false);
             expect(res.body.message).toContain('Insufficient permissions');
@@ -140,7 +140,7 @@ describe('Class API - extendActiveTillDateOfClass', () => {
             const res = await request(app)
                 .put(`/api/v1/classes/${classLecture.id}`)
                 .set('Authorization', `Bearer ${studentToken}`)
-                .send({ newActiveTill: '2024-12-15' });
+                .send({ newActiveTill: '2025-12-15' });
             expect(res.status).toBe(httpStatus.FORBIDDEN);
             expect(res.body.success).toBe(false);
             expect(res.body.message).toContain('Insufficient permissions');
@@ -152,7 +152,7 @@ describe('Class API - extendActiveTillDateOfClass', () => {
             const res = await request(app)
                 .put('/api/v1/classes/invalid-uuid')
                 .set('Authorization', `Bearer ${adminToken}`)
-                .send({ newActiveTill: '2024-12-15' });
+                .send({ newActiveTill: '2025-12-15' });
             expect(res.status).toBe(httpStatus.BAD_REQUEST);
             expect(res.body.success).toBe(false);
             expect(res.body.message).toContain('Class ID must be a valid UUID');
@@ -172,7 +172,7 @@ describe('Class API - extendActiveTillDateOfClass', () => {
 
     describe('Success', () => {
         test('should extend activeTill successfully for lecture', async () => {
-            const newDate = '2024-12-15';
+            const newDate = '2025-12-15';
             const res = await request(app)
                 .put(`/api/v1/classes/${classLecture.id}`)
                 .set('Authorization', `Bearer ${adminToken}`)
@@ -191,14 +191,14 @@ describe('Class API - extendActiveTillDateOfClass', () => {
                 teacherId: teacherJohn.id,
                 startTime: '09:30:00', endTime: '10:30:00', dayOfWeek: 'Monday',
                 roomId: room101.id, batchId: null,
-                activeFrom: '2024-08-01', activeTill: '2024-12-31',
+                activeFrom: '2025-08-01', activeTill: '2025-12-31',
                 classType: 'Lecture', courseId: coursePF.id, timetableId: timetable.id, isExtraClass: false
             });
 
             const res = await request(app)
                 .put(`/api/v1/classes/${classLecture.id}`)
                 .set('Authorization', `Bearer ${adminToken}`)
-                .send({ newActiveTill: '2024-12-15' });
+                .send({ newActiveTill: '2025-12-15' });
 
             expect(res.status).toBe(httpStatus.CONFLICT);
             expect(res.body.success).toBe(false);
@@ -211,14 +211,14 @@ describe('Class API - extendActiveTillDateOfClass', () => {
                 teacherId: teacherJohn.id,
                 startTime: '09:30:00', endTime: '10:30:00', dayOfWeek: 'Monday',
                 roomId: room102.id, batchId: null,
-                activeFrom: '2024-08-01', activeTill: '2024-12-31',
+                activeFrom: '2025-08-01', activeTill: '2025-12-31',
                 classType: 'Lecture', courseId: coursePF.id, timetableId: timetable.id, isExtraClass: false
             });
 
             const res = await request(app)
                 .put(`/api/v1/classes/${classLecture.id}`)
                 .set('Authorization', `Bearer ${adminToken}`)
-                .send({ newActiveTill: '2024-12-15' });
+                .send({ newActiveTill: '2025-12-15' });
 
             expect(res.status).toBe(httpStatus.CONFLICT);
             expect(res.body.success).toBe(false);
@@ -231,14 +231,14 @@ describe('Class API - extendActiveTillDateOfClass', () => {
                 teacherId: teacherJohn.id,
                 startTime: '10:30:00', endTime: '11:30:00', dayOfWeek: 'Monday',
                 roomId: room101.id, batchId: null, // different room from classPractical to avoid room conflict
-                activeFrom: '2024-08-20', activeTill: '2024-12-31',
+                activeFrom: '2025-08-20', activeTill: '2025-12-31',
                 classType: 'Lecture', courseId: coursePF.id, timetableId: timetable.id, isExtraClass: false
             });
 
             const res = await request(app)
                 .put(`/api/v1/classes/${classPractical.id}`)
                 .set('Authorization', `Bearer ${adminToken}`)
-                .send({ newActiveTill: '2024-12-15' });
+                .send({ newActiveTill: '2025-12-15' });
 
             expect(res.status).toBe(httpStatus.CONFLICT);
             expect(res.body.success).toBe(false);
@@ -252,7 +252,7 @@ describe('Class API - extendActiveTillDateOfClass', () => {
             const res = await request(app)
                 .put(`/api/v1/classes/${fakeId}`)
                 .set('Authorization', `Bearer ${adminToken}`)
-                .send({ newActiveTill: '2024-12-15' });
+                .send({ newActiveTill: '2025-12-15' });
 
             // Depending on controller order, this should be 404
             expect(res.status).toBe(httpStatus.NOT_FOUND);

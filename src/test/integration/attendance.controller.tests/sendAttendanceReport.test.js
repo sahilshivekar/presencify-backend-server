@@ -96,16 +96,16 @@ describe('Attendance API - sendAttendanceReport', () => {
             abbreviation: 'CS',
         });
         scheme = await Scheme.create({
-            name: 'CS 2025 Scheme',
+            name: 'CS 2026 Scheme',
             universityId: university.id,
         });
         semester = await Semester.create({
             semesterNumber: 1,
             branchId: branch.id,
-            academicStartYear: 2024,
-            academicEndYear: 2025,
-            startDate: '2024-08-01',
-            endDate: '2024-12-31',
+            academicStartYear: 2025,
+            academicEndYear: 2026,
+            startDate: '2025-08-01',
+            endDate: '2025-12-31',
             schemeId: scheme.id,
         });
         division = await Division.create({
@@ -146,7 +146,7 @@ describe('Attendance API - sendAttendanceReport', () => {
             parentEmail: 'parent1@example.com',
             schemeId: scheme.id,
             branchId: branch.id,
-            admissionYear: 2024,
+            admissionYear: 2025,
             admissionType: 'FE',
             gender: 'Male'
         });
@@ -160,7 +160,7 @@ describe('Attendance API - sendAttendanceReport', () => {
             parentEmail: 'parent2@example.com',
             schemeId: scheme.id,
             branchId: branch.id,
-            admissionYear: 2024,
+            admissionYear: 2025,
             admissionType: 'FE',
             gender: 'Male'
         });
@@ -202,8 +202,8 @@ describe('Attendance API - sendAttendanceReport', () => {
             dayOfWeek: 'Monday',
             roomId: room.id,
             batchId: batch.id,
-            activeFrom: '2024-01-01',
-            activeTill: '2024-12-31',
+            activeFrom: '2025-01-01',
+            activeTill: '2025-12-31',
             classType: 'Lecture',
             courseId: course1.id,
             timetableId: timetable.id,
@@ -216,8 +216,8 @@ describe('Attendance API - sendAttendanceReport', () => {
             dayOfWeek: 'Tuesday',
             roomId: room.id,
             batchId: batch.id,
-            activeFrom: '2024-01-01',
-            activeTill: '2024-12-31',
+            activeFrom: '2025-01-01',
+            activeTill: '2025-12-31',
             classType: 'Practical',
             courseId: course2.id,
             timetableId: timetable.id,
@@ -226,12 +226,12 @@ describe('Attendance API - sendAttendanceReport', () => {
         // Create attendances with student records
         attendance1 = await Attendance.create({
             classId: classEntity1.id,
-            date: '2024-01-15',
+            date: '2025-01-15',
         });
 
         attendance2 = await Attendance.create({
             classId: classEntity2.id,
-            date: '2024-01-16',
+            date: '2025-01-16',
         });
 
         // Add student attendance records
@@ -357,7 +357,7 @@ describe('Attendance API - sendAttendanceReport', () => {
                     .set('Authorization', `Bearer ${adminToken}`)
                     .send({
                         studentIds: [student1.id],
-                        startDate: '15-01-2024',
+                        startDate: '15-01-2025',
                     });
 
                 expect(response.status).toBe(httpStatus.BAD_REQUEST);
@@ -371,7 +371,7 @@ describe('Attendance API - sendAttendanceReport', () => {
                     .set('Authorization', `Bearer ${adminToken}`)
                     .send({
                         studentIds: [student1.id],
-                        endDate: '20-01-2024',
+                        endDate: '20-01-2025',
                     });
 
                 expect(response.status).toBe(httpStatus.BAD_REQUEST);
@@ -442,8 +442,8 @@ describe('Attendance API - sendAttendanceReport', () => {
             test('should send attendance report with date range filter', async () => {
                 const requestBody = {
                     studentIds: [student1.id],
-                    startDate: '2024-01-15',
-                    endDate: '2024-01-15',
+                    startDate: '2025-01-15',
+                    endDate: '2025-01-15',
                 };
 
                 const response = await request(app)
@@ -480,8 +480,8 @@ describe('Attendance API - sendAttendanceReport', () => {
             test('should handle empty results gracefully', async () => {
                 const requestBody = {
                     studentIds: [student1.id],
-                    startDate: '2024-01-25',
-                    endDate: '2024-01-30', // Date range with no attendance
+                    startDate: '2025-01-25',
+                    endDate: '2025-01-30', // Date range with no attendance
                 };
 
                 const response = await request(app)
@@ -622,8 +622,8 @@ describe('Attendance API - sendAttendanceReport', () => {
                 const requestBody = {
                     studentIds: [student1.id, student2.id],
                     courseIds: [course1.id],
-                    startDate: '2024-01-15',
-                    endDate: '2024-01-15',
+                    startDate: '2025-01-15',
+                    endDate: '2025-01-15',
                 };
 
                 const response = await request(app)

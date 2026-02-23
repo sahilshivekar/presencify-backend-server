@@ -45,7 +45,7 @@ describe('POST /api/v1/semesters/bulk/create', () => {
 
             // Create test scheme
             validScheme = await Scheme.create({
-                name: 'Test Scheme 2024',
+                name: 'Test Scheme 2025',
                 universityId: validUniversity.id
             });
         } catch (error) {
@@ -62,10 +62,10 @@ describe('POST /api/v1/semesters/bulk/create', () => {
                     semesters: [{
                         branchId: validBranch.id,
                         semesterNumber: 1,
-                        academicStartYear: 2024,
-                        academicEndYear: 2025,
-                        startDate: '2024-08-01',
-                        endDate: '2024-12-31',
+                        academicStartYear: 2025,
+                        academicEndYear: 2026,
+                        startDate: '2025-08-01',
+                        endDate: '2025-12-31',
                         schemeId: validScheme.id
                     }]
                 });
@@ -82,10 +82,10 @@ describe('POST /api/v1/semesters/bulk/create', () => {
                     semesters: [{
                         branchId: validBranch.id,
                         semesterNumber: 1,
-                        academicStartYear: 2024,
-                        academicEndYear: 2025,
-                        startDate: '2024-08-01',
-                        endDate: '2024-12-31',
+                        academicStartYear: 2025,
+                        academicEndYear: 2026,
+                        startDate: '2025-08-01',
+                        endDate: '2025-12-31',
                         schemeId: validScheme.id
                     }]
                 });
@@ -134,10 +134,10 @@ describe('POST /api/v1/semesters/bulk/create', () => {
             const semesters = Array(51).fill().map((_, index) => ({
                 branchId: validBranch.id,
                 semesterNumber: 1,
-                academicStartYear: 2024,
-                academicEndYear: 2025,
-                startDate: '2024-08-01',
-                endDate: '2024-12-31',
+                academicStartYear: 2025,
+                academicEndYear: 2026,
+                startDate: '2025-08-01',
+                endDate: '2025-12-31',
                 schemeId: validScheme.id
             }));
 
@@ -157,10 +157,10 @@ describe('POST /api/v1/semesters/bulk/create', () => {
                 .send({
                     semesters: [{
                         semesterNumber: 1,
-                        academicStartYear: 2024,
-                        academicEndYear: 2025,
-                        startDate: '2024-08-01',
-                        endDate: '2024-12-31',
+                        academicStartYear: 2025,
+                        academicEndYear: 2026,
+                        startDate: '2025-08-01',
+                        endDate: '2025-12-31',
                         schemeId: validScheme.id
                     }]
                 });
@@ -177,10 +177,10 @@ describe('POST /api/v1/semesters/bulk/create', () => {
                     semesters: [{
                         branchId: 'invalid-uuid',
                         semesterNumber: 1,
-                        academicStartYear: 2024,
-                        academicEndYear: 2025,
-                        startDate: '2024-08-01',
-                        endDate: '2024-12-31',
+                        academicStartYear: 2025,
+                        academicEndYear: 2026,
+                        startDate: '2025-08-01',
+                        endDate: '2025-12-31',
                         schemeId: validScheme.id
                     }]
                 });
@@ -196,10 +196,10 @@ describe('POST /api/v1/semesters/bulk/create', () => {
                 .send({
                     semesters: [{
                         branchId: validBranch.id,
-                        academicStartYear: 2024,
-                        academicEndYear: 2025,
-                        startDate: '2024-08-01',
-                        endDate: '2024-12-31',
+                        academicStartYear: 2025,
+                        academicEndYear: 2026,
+                        startDate: '2025-08-01',
+                        endDate: '2025-12-31',
                         schemeId: validScheme.id
                     }]
                 });
@@ -216,10 +216,10 @@ describe('POST /api/v1/semesters/bulk/create', () => {
                     semesters: [{
                         branchId: validBranch.id,
                         semesterNumber: 0,
-                        academicStartYear: 2024,
-                        academicEndYear: 2025,
-                        startDate: '2024-08-01',
-                        endDate: '2024-12-31',
+                        academicStartYear: 2025,
+                        academicEndYear: 2026,
+                        startDate: '2025-08-01',
+                        endDate: '2025-12-31',
                         schemeId: validScheme.id
                     }]
                 });
@@ -236,9 +236,9 @@ describe('POST /api/v1/semesters/bulk/create', () => {
                     semesters: [{
                         branchId: validBranch.id,
                         semesterNumber: 1,
-                        academicEndYear: 2025,
-                        startDate: '2024-08-01',
-                        endDate: '2024-12-31',
+                        academicEndYear: 2026,
+                        startDate: '2025-08-01',
+                        endDate: '2025-12-31',
                         schemeId: validScheme.id
                     }]
                 });
@@ -255,10 +255,10 @@ describe('POST /api/v1/semesters/bulk/create', () => {
                     semesters: [{
                         branchId: validBranch.id,
                         semesterNumber: 1,
-                        academicStartYear: 2024,
-                        academicEndYear: 2025,
+                        academicStartYear: 2025,
+                        academicEndYear: 2026,
                         startDate: 'invalid-date',
-                        endDate: '2024-12-31',
+                        endDate: '2025-12-31',
                         schemeId: validScheme.id
                     }]
                 });
@@ -275,10 +275,10 @@ describe('POST /api/v1/semesters/bulk/create', () => {
                     semesters: [{
                         branchId: validBranch.id,
                         semesterNumber: 1,
-                        academicStartYear: 2024,
-                        academicEndYear: 2025,
-                        startDate: '2024-08-01',
-                        endDate: '2024-12-31'
+                        academicStartYear: 2025,
+                        academicEndYear: 2026,
+                        startDate: '2025-08-01',
+                        endDate: '2025-12-31'
                     }]
                 });
 
@@ -290,10 +290,10 @@ describe('POST /api/v1/semesters/bulk/create', () => {
             const largeSemesters = Array(100).fill().map((_, index) => ({
                 branchId: validBranch.id,
                 semesterNumber: index + 1,
-                academicStartYear: 2024,
-                academicEndYear: 2025,
-                startDate: '2024-08-01',
-                endDate: '2024-12-31',
+                academicStartYear: 2025,
+                academicEndYear: 2026,
+                startDate: '2025-08-01',
+                endDate: '2025-12-31',
                 schemeId: validScheme.id,
                 // Add large data to exceed payload limit
                 largeField: 'x'.repeat(10000)
@@ -318,10 +318,10 @@ describe('POST /api/v1/semesters/bulk/create', () => {
                     semesters: [{
                         branchId: '12345678-1234-1234-1234-123456789012',
                         semesterNumber: 1,
-                        academicStartYear: 2024,
-                        academicEndYear: 2025,
-                        startDate: '2024-08-01',
-                        endDate: '2024-12-31',
+                        academicStartYear: 2025,
+                        academicEndYear: 2026,
+                        startDate: '2025-08-01',
+                        endDate: '2025-12-31',
                         schemeId: validScheme.id
                     }]
                 });
@@ -338,10 +338,10 @@ describe('POST /api/v1/semesters/bulk/create', () => {
                     semesters: [{
                         branchId: validBranch.id,
                         semesterNumber: 1,
-                        academicStartYear: 2024,
-                        academicEndYear: 2025,
-                        startDate: '2024-08-01',
-                        endDate: '2024-12-31',
+                        academicStartYear: 2025,
+                        academicEndYear: 2026,
+                        startDate: '2025-08-01',
+                        endDate: '2025-12-31',
                         schemeId: '12345678-1234-1234-1234-123456789012'
                     }]
                 });
@@ -355,10 +355,10 @@ describe('POST /api/v1/semesters/bulk/create', () => {
             await Semester.create({
                 branchId: validBranch.id,
                 semesterNumber: 1,
-                academicStartYear: 2024,
-                academicEndYear: 2025,
-                startDate: '2024-08-01',
-                endDate: '2024-12-31',
+                academicStartYear: 2025,
+                academicEndYear: 2026,
+                startDate: '2025-08-01',
+                endDate: '2025-12-31',
                 schemeId: validScheme.id
             });
 
@@ -370,10 +370,10 @@ describe('POST /api/v1/semesters/bulk/create', () => {
                     semesters: [{
                         branchId: validBranch.id,
                         semesterNumber: 1,
-                        academicStartYear: 2024,
-                        academicEndYear: 2025,
-                        startDate: '2024-08-01',
-                        endDate: '2024-12-31',
+                        academicStartYear: 2025,
+                        academicEndYear: 2026,
+                        startDate: '2025-08-01',
+                        endDate: '2025-12-31',
                         schemeId: validScheme.id
                     }]
                 });
@@ -391,19 +391,19 @@ describe('POST /api/v1/semesters/bulk/create', () => {
                         {
                             branchId: validBranch.id,
                             semesterNumber: 1,
-                            academicStartYear: 2024,
-                            academicEndYear: 2025,
-                            startDate: '2024-08-01',
-                            endDate: '2024-12-31',
+                            academicStartYear: 2025,
+                            academicEndYear: 2026,
+                            startDate: '2025-08-01',
+                            endDate: '2025-12-31',
                             schemeId: validScheme.id
                         },
                         {
                             branchId: validBranch.id,
                             semesterNumber: 1,
-                            academicStartYear: 2024,
-                            academicEndYear: 2025,
-                            startDate: '2024-08-01',
-                            endDate: '2024-12-31',
+                            academicStartYear: 2025,
+                            academicEndYear: 2026,
+                            startDate: '2025-08-01',
+                            endDate: '2025-12-31',
                             schemeId: validScheme.id
                         }
                     ]
@@ -422,19 +422,19 @@ describe('POST /api/v1/semesters/bulk/create', () => {
                         {
                             branchId: validBranch.id,
                             semesterNumber: 1,
-                            academicStartYear: 2024,
-                            academicEndYear: 2025,
-                            startDate: '2024-08-01',
-                            endDate: '2024-12-31',
+                            academicStartYear: 2025,
+                            academicEndYear: 2026,
+                            startDate: '2025-08-01',
+                            endDate: '2025-12-31',
                             schemeId: validScheme.id
                         },
                         {
                             branchId: '12345678-1234-1234-1234-123456789012', // Invalid branch
                             semesterNumber: 2,
-                            academicStartYear: 2024,
-                            academicEndYear: 2025,
-                            startDate: '2024-08-01',
-                            endDate: '2024-12-31',
+                            academicStartYear: 2025,
+                            academicEndYear: 2026,
+                            startDate: '2025-08-01',
+                            endDate: '2025-12-31',
                             schemeId: validScheme.id
                         }
                     ]
@@ -450,10 +450,10 @@ describe('POST /api/v1/semesters/bulk/create', () => {
             const semesterData = {
                 branchId: validBranch.id,
                 semesterNumber: 1,
-                academicStartYear: 2024,
-                academicEndYear: 2025,
-                startDate: '2024-08-01',
-                endDate: '2024-12-31',
+                academicStartYear: 2025,
+                academicEndYear: 2026,
+                startDate: '2025-08-01',
+                endDate: '2025-12-31',
                 schemeId: validScheme.id
             };
 
@@ -479,8 +479,8 @@ describe('POST /api/v1/semesters/bulk/create', () => {
                 }
             });
             expect(createdSemester).toBeTruthy();
-            expect(createdSemester.academicStartYear).toBe(2024);
-            expect(createdSemester.academicEndYear).toBe(2025);
+            expect(createdSemester.academicStartYear).toBe(2025);
+            expect(createdSemester.academicEndYear).toBe(2026);
         });
 
         test('should successfully create multiple semesters', async () => {
@@ -488,19 +488,19 @@ describe('POST /api/v1/semesters/bulk/create', () => {
                 {
                     branchId: validBranch.id,
                     semesterNumber: 1,
-                    academicStartYear: 2024,
-                    academicEndYear: 2025,
-                    startDate: '2024-08-01',
-                    endDate: '2024-12-31',
+                    academicStartYear: 2025,
+                    academicEndYear: 2026,
+                    startDate: '2025-08-01',
+                    endDate: '2025-12-31',
                     schemeId: validScheme.id
                 },
                 {
                     branchId: validBranch.id,
                     semesterNumber: 2,
-                    academicStartYear: 2024,
-                    academicEndYear: 2025,
-                    startDate: '2025-01-01',
-                    endDate: '2025-05-31',
+                    academicStartYear: 2025,
+                    academicEndYear: 2026,
+                    startDate: '2026-01-01',
+                    endDate: '2026-05-31',
                     schemeId: validScheme.id
                 }
             ];
@@ -531,10 +531,10 @@ describe('POST /api/v1/semesters/bulk/create', () => {
             const semesterData = {
                 branchId: validBranch.id,
                 semesterNumber: 1,
-                academicStartYear: 2024,
-                academicEndYear: 2025,
-                startDate: '2024-08-01',
-                endDate: '2024-12-31',
+                academicStartYear: 2025,
+                academicEndYear: 2026,
+                startDate: '2025-08-01',
+                endDate: '2025-12-31',
                 schemeId: validScheme.id,
                 optionalCourseIds: []
             };
@@ -555,10 +555,10 @@ describe('POST /api/v1/semesters/bulk/create', () => {
             const semesterData = {
                 branchId: validBranch.id,
                 semesterNumber: 1,
-                academicStartYear: 2024,
-                academicEndYear: 2025,
-                startDate: '2024-08-01',
-                endDate: '2024-12-31',
+                academicStartYear: 2025,
+                academicEndYear: 2026,
+                startDate: '2025-08-01',
+                endDate: '2025-12-31',
                 schemeId: validScheme.id
             };
 

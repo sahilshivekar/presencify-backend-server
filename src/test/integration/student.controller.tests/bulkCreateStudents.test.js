@@ -39,7 +39,7 @@ describe('Student API - bulkCreateStudents', () => {
 
             // Create test scheme
             scheme = await Scheme.create({
-                name: 'CS 2025 Scheme',
+                name: 'CS 2026 Scheme',
                 universityId: university.id,
             });
 
@@ -47,10 +47,10 @@ describe('Student API - bulkCreateStudents', () => {
             semester = await Semester.create({
                 semesterNumber: 1,
                 branchId: branch.id,
-                academicStartYear: 2024,
-                academicEndYear: 2025,
-                startDate: '2024-08-01',
-                endDate: '2025-01-31',
+                academicStartYear: 2025,
+                academicEndYear: 2026,
+                startDate: '2025-08-01',
+                endDate: '2026-01-31',
                 schemeId: scheme.id
             });
 
@@ -96,7 +96,7 @@ describe('Student API - bulkCreateStudents', () => {
                 gender: 'Male',
                 schemeId: scheme.id,
                 branchId: branch.id,
-                admissionYear: 2024,
+                admissionYear: 2025,
                 admissionType: 'FE'
             });
 
@@ -119,7 +119,7 @@ describe('Student API - bulkCreateStudents', () => {
                     prn: 'STU101',
                     schemeId: scheme.id,
                     branchId: branch.id,
-                    admissionYear: 2024,
+                    admissionYear: 2025,
                     admissionType: 'FE',
                     gender: 'Female'
                 },
@@ -131,7 +131,7 @@ describe('Student API - bulkCreateStudents', () => {
                     prn: 'STU102',
                     schemeId: scheme.id,
                     branchId: branch.id,
-                    admissionYear: 2024,
+                    admissionYear: 2025,
                     admissionType: 'FE',
                     gender: 'Male'
                 }
@@ -215,7 +215,7 @@ describe('Student API - bulkCreateStudents', () => {
                     prn: `STU${index.toString().padStart(3, '0')}`,
                     schemeId: scheme.id,
                     branchId: branch.id,
-                    admissionYear: 2024,
+                    admissionYear: 2025,
                     admissionType: 'FE',
                     gender: 'Male'
                 }));
@@ -343,7 +343,7 @@ describe('Student API - bulkCreateStudents', () => {
                     prn: 'STU101', // Same as in validStudentsData
                     schemeId: scheme.id,
                     branchId: branch.id,
-                    admissionYear: 2024,
+                    admissionYear: 2025,
                     admissionType: 'FE',
                     gender: 'Male'
                 });

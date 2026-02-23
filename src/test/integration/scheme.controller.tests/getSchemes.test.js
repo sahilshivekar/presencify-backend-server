@@ -53,8 +53,8 @@ describe('Scheme API - GET /api/v1/schemes', () => {
 
       // Create some Schemes
       schemes = await Scheme.bulkCreate([
-        { name: 'Computer Science 2025', universityId: university.id },
-        { name: 'Electronics 2024', universityId: university.id },
+        { name: 'Computer Science 2026', universityId: university.id },
+        { name: 'Electronics 2025', universityId: university.id },
         { name: 'Mechanical 2023', universityId: university.id },
       ], { returning: true });
 
@@ -68,7 +68,7 @@ describe('Scheme API - GET /api/v1/schemes', () => {
         password: 'Student@123',
         schemeId: schemes[0].id,
         branchId: branch.id,
-        admissionYear: 2024,
+        admissionYear: 2025,
         admissionType: 'FE',
         gender: 'Male'
       });
@@ -140,7 +140,7 @@ describe('Scheme API - GET /api/v1/schemes', () => {
     expect(res.status).toBe(httpStatus.OK);
     expect(res.body.success).toBe(true);
     expect(res.body.data).toHaveLength(1);
-    expect(res.body.data[0].name).toMatch(/Electronics 2024/i);
+    expect(res.body.data[0].name).toMatch(/Electronics 2025/i);
   });
 
   test('should return empty array when no schemes match searchQuery', async () => {

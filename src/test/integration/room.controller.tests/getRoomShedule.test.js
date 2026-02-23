@@ -41,14 +41,14 @@ describe('Room Controller - getRoomShedule', () => {
 
     university = await University.create({ name: 'Test University', abbreviation: 'TU' });
     branch = await Branch.create({ name: 'Computer Science', abbreviation: 'CS' });
-    scheme = await Scheme.create({ name: 'CS 2025 Scheme', universityId: university.id });
+    scheme = await Scheme.create({ name: 'CS 2026 Scheme', universityId: university.id });
     semester = await Semester.create({
       semesterNumber: 1,
       branchId: branch.id,
-      academicStartYear: 2024,
-      academicEndYear: 2025,
-      startDate: '2025-08-01',
-      endDate: '2025-12-31',
+      academicStartYear: 2025,
+      academicEndYear: 2026,
+      startDate: '2026-08-01',
+      endDate: '2026-12-31',
       schemeId: scheme.id,
     });
     division = await Division.create({ divisionCode: 'A', semesterId: semester.id });
@@ -74,8 +74,8 @@ describe('Room Controller - getRoomShedule', () => {
       dayOfWeek: 'Monday',
       roomId: room1.id,
       batchId: batch.id,
-      activeFrom: '2025-01-01',
-      activeTill: '2025-12-31',
+      activeFrom: '2026-01-01',
+      activeTill: '2026-12-31',
       classType: 'Lecture',
       courseId: course.id,
       timetableId: timetable.id,
@@ -89,8 +89,8 @@ describe('Room Controller - getRoomShedule', () => {
       dayOfWeek: 'Monday',
       roomId: room1.id,
       batchId: batch.id,
-      activeFrom: '2025-01-01',
-      activeTill: '2025-12-31',
+      activeFrom: '2026-01-01',
+      activeTill: '2026-12-31',
       classType: 'Lecture',
       courseId: course.id,
       timetableId: timetable.id,
@@ -104,8 +104,8 @@ describe('Room Controller - getRoomShedule', () => {
       dayOfWeek: 'Tuesday',
       roomId: room1.id,
       batchId: batch.id,
-      activeFrom: '2024-01-01',
-      activeTill: '2024-01-01',
+      activeFrom: '2025-01-01',
+      activeTill: '2025-01-01',
       classType: 'Lecture',
       courseId: course.id,
       timetableId: timetable.id,
@@ -119,8 +119,8 @@ describe('Room Controller - getRoomShedule', () => {
       dayOfWeek: 'Monday',
       roomId: room2.id,
       batchId: batch.id,
-      activeFrom: '2025-01-01',
-      activeTill: '2025-12-31',
+      activeFrom: '2026-01-01',
+      activeTill: '2026-12-31',
       classType: 'Lecture',
       courseId: course.id,
       timetableId: timetable.id,
@@ -134,7 +134,7 @@ describe('Room Controller - getRoomShedule', () => {
 
   test('should require authentication', async () => {
     const res = await request(app).get(buildUrl(room1.id, {
-      startDate: '2025-01-01', endDate: '2025-12-31', startTime: '09:15:00', endTime: '09:45:00'
+      startDate: '2026-01-01', endDate: '2026-12-31', startTime: '09:15:00', endTime: '09:45:00'
     }));
     expect(res.status).toBe(httpStatus.UNAUTHORIZED);
   });
@@ -142,33 +142,33 @@ describe('Room Controller - getRoomShedule', () => {
   test('should validate params and query', async () => {
     // invalid UUID
     let res = await request(app)
-      .get(buildUrl('not-a-uuid', { startDate: '2025-01-01', endDate: '2025-12-31', startTime: '09:15:00', endTime: '09:45:00' }))
+      .get(buildUrl('not-a-uuid', { startDate: '2026-01-01', endDate: '2026-12-31', startTime: '09:15:00', endTime: '09:45:00' }))
       .set('Authorization', `Bearer ${adminToken}`);
     expect(res.status).toBe(httpStatus.BAD_REQUEST);
 
     // missing startDate
     res = await request(app)
-      .get(buildUrl(room1.id, { endDate: '2025-12-31', startTime: '09:15:00', endTime: '09:45:00' }))
+      .get(buildUrl(room1.id, { endDate: '2026-12-31', startTime: '09:15:00', endTime: '09:45:00' }))
       .set('Authorization', `Bearer ${adminToken}`);
     expect(res.status).toBe(httpStatus.BAD_REQUEST);
 
     // invalid time order
     res = await request(app)
-      .get(buildUrl(room1.id, { startDate: '2025-01-01', endDate: '2025-12-31', startTime: '10:00:00', endTime: '09:00:00' }))
+      .get(buildUrl(room1.id, { startDate: '2026-01-01', endDate: '2026-12-31', startTime: '10:00:00', endTime: '09:00:00' }))
       .set('Authorization', `Bearer ${adminToken}`);
     expect(res.status).toBe(httpStatus.BAD_REQUEST);
   });
 
   test('should return 404 if room not found', async () => {
     const res = await request(app)
-      .get(buildUrl('aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee', { startDate: '2025-01-01', endDate: '2025-12-31', startTime: '09:15:00', endTime: '09:45:00' }))
+      .get(buildUrl('aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee', { startDate: '2026-01-01', endDate: '2026-12-31', startTime: '09:15:00', endTime: '09:45:00' }))
       .set('Authorization', `Bearer ${adminToken}`);
     expect(res.status).toBe(httpStatus.NOT_FOUND);
   });
 
   test('should return only classes in the given time window and date range for the room', async () => {
     const res = await request(app)
-      .get(buildUrl(room1.id, { startDate: '2025-01-01', endDate: '2025-12-31', startTime: '09:15:00', endTime: '09:45:00' }))
+      .get(buildUrl(room1.id, { startDate: '2026-01-01', endDate: '2026-12-31', startTime: '09:15:00', endTime: '09:45:00' }))
       .set('Authorization', `Bearer ${adminToken}`);
 
     expect(res.status).toBe(httpStatus.OK);

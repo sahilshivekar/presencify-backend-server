@@ -69,10 +69,10 @@ describe('Student API - GET /api/v1/students/:id/semesters', () => {
 
             // Create Scheme
             const scheme = await Scheme.create({
-                name: 'Test Scheme 2024',
-                schemeCode: 'TS2024',
+                name: 'Test Scheme 2025',
+                schemeCode: 'TS2025',
                 schemeName: 'Test Scheme',
-                academicStartYear: 2024,
+                academicStartYear: 2025,
                 academicEndYear: 2028,
                 duration: 4,
                 branchId: branch.id,
@@ -111,20 +111,20 @@ describe('Student API - GET /api/v1/students/:id/semesters', () => {
                 semesterNumber: 1,
                 branchId: branch.id,
                 schemeId: scheme.id,
-                academicStartYear: 2024,
-                academicEndYear: 2025,
-                startDate: '2024-08-01',
-                endDate: '2025-01-01'
+                academicStartYear: 2025,
+                academicEndYear: 2026,
+                startDate: '2025-08-01',
+                endDate: '2026-01-01'
             });
 
             semester2 = await Semester.create({
                 semesterNumber: 2,
                 branchId: branch.id,
                 schemeId: scheme.id,
-                academicStartYear: 2024,
-                academicEndYear: 2025,
-                startDate: '2025-01-15',
-                endDate: '2025-06-01'
+                academicStartYear: 2025,
+                academicEndYear: 2026,
+                startDate: '2026-01-15',
+                endDate: '2026-06-01'
             });
 
             // Create StudentSemester associations
@@ -264,7 +264,7 @@ describe('Student API - GET /api/v1/students/:id/semesters', () => {
             expect(semesterNumbers).toEqual([1, 2]);
             
             const academicYears = res.body.data.map(ss => ss.Semester.academicStartYear).sort();
-            expect(academicYears).toEqual([2024, 2024]);
+            expect(academicYears).toEqual([2025, 2025]);
         });
 
         test('should return proper API response structure', async () => {

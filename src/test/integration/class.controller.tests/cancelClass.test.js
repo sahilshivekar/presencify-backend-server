@@ -62,14 +62,14 @@ describe('Class API - cancelClass', () => {
     // Academic setup
     university = await University.create({ name: 'Test University', abbreviation: 'TU' });
     branch = await Branch.create({ name: 'Computer Science', abbreviation: 'CS' });
-    scheme = await Scheme.create({ name: 'CS 2025 Scheme', universityId: university.id });
+    scheme = await Scheme.create({ name: 'CS 2026 Scheme', universityId: university.id });
     semester = await Semester.create({
       semesterNumber: 1,
       branchId: branch.id,
-      academicStartYear: 2024,
-      academicEndYear: 2025,
-      startDate: '2024-08-01',
-      endDate: '2024-12-31',
+      academicStartYear: 2025,
+      academicEndYear: 2026,
+      startDate: '2025-08-01',
+      endDate: '2025-12-31',
       schemeId: scheme.id,
     });
     division = await Division.create({ divisionCode: 'A', semesterId: semester.id });
@@ -84,20 +84,20 @@ describe('Class API - cancelClass', () => {
 
     // Students and memberships
     student1 = await Student.create({
-      firstName: 'Jane', lastName: 'Smith', email: 'student1@example.com', phoneNumber: '+919876543210', prn: 'STU001', password: 'Student@123', schemeId: scheme.id, branchId: branch.id, admissionYear: 2024, admissionType: 'FE', gender: 'Female'
+      firstName: 'Jane', lastName: 'Smith', email: 'student1@example.com', phoneNumber: '+919876543210', prn: 'STU001', password: 'Student@123', schemeId: scheme.id, branchId: branch.id, admissionYear: 2025, admissionType: 'FE', gender: 'Female'
     });
     student2 = await Student.create({
-      firstName: 'Bob', lastName: 'Johnson', email: 'student2@example.com', phoneNumber: '+919876543211', prn: 'STU002', password: 'Student@123', schemeId: scheme.id, branchId: branch.id, admissionYear: 2024, admissionType: 'FE', gender: 'Male'
+      firstName: 'Bob', lastName: 'Johnson', email: 'student2@example.com', phoneNumber: '+919876543211', prn: 'STU002', password: 'Student@123', schemeId: scheme.id, branchId: branch.id, admissionYear: 2025, admissionType: 'FE', gender: 'Male'
     });
     student3 = await Student.create({
-      firstName: 'Alice', lastName: 'Brown', email: 'student3@example.com', phoneNumber: '+919876543212', prn: 'STU003', password: 'Student@123', schemeId: scheme.id, branchId: branch.id, admissionYear: 2024, admissionType: 'FE', gender: 'Female'
+      firstName: 'Alice', lastName: 'Brown', email: 'student3@example.com', phoneNumber: '+919876543212', prn: 'STU003', password: 'Student@123', schemeId: scheme.id, branchId: branch.id, admissionYear: 2025, admissionType: 'FE', gender: 'Female'
     });
 
-    await StudentDivision.create({ studentId: student1.id, divisionId: division.id, startDate: '2024-08-01' });
-    await StudentDivision.create({ studentId: student2.id, divisionId: division.id, startDate: '2024-08-01' });
-    await StudentDivision.create({ studentId: student3.id, divisionId: division.id, startDate: '2024-08-01' });
-    await StudentBatch.create({ studentId: student1.id, batchId: batch.id, startDate: '2024-08-01' });
-    await StudentBatch.create({ studentId: student2.id, batchId: batch.id, startDate: '2024-08-01' });
+    await StudentDivision.create({ studentId: student1.id, divisionId: division.id, startDate: '2025-08-01' });
+    await StudentDivision.create({ studentId: student2.id, divisionId: division.id, startDate: '2025-08-01' });
+    await StudentDivision.create({ studentId: student3.id, divisionId: division.id, startDate: '2025-08-01' });
+    await StudentBatch.create({ studentId: student1.id, batchId: batch.id, startDate: '2025-08-01' });
+    await StudentBatch.create({ studentId: student2.id, batchId: batch.id, startDate: '2025-08-01' });
 
     // Student login
     const studentLogin = await request(app).post('/api/v1/auth/students/login').send({ emailOrPRN: 'student1@example.com', password: 'Student@123' });
@@ -108,7 +108,7 @@ describe('Class API - cancelClass', () => {
       teacherId: teacher.id,
       startTime: '09:00:00', endTime: '10:00:00', dayOfWeek: 'Monday',
       roomId: room.id, batchId: null,
-      activeFrom: '2024-08-01', activeTill: '2024-12-31',
+      activeFrom: '2025-08-01', activeTill: '2025-12-31',
       classType: 'Lecture', courseId: course.id, timetableId: timetable.id, isExtraClass: false
     });
 
@@ -116,7 +116,7 @@ describe('Class API - cancelClass', () => {
       teacherId: teacher.id,
       startTime: '10:00:00', endTime: '11:00:00', dayOfWeek: 'Monday',
       roomId: room.id, batchId: batch.id,
-      activeFrom: '2024-08-01', activeTill: '2024-12-31',
+      activeFrom: '2025-08-01', activeTill: '2025-12-31',
       classType: 'Practical', courseId: course.id, timetableId: timetable.id, isExtraClass: false
     });
   });
@@ -125,7 +125,7 @@ describe('Class API - cancelClass', () => {
 
   describe('Authentication and Authorization', () => {
     test('should return 401 if no token provided', async () => {
-      const res = await request(app).post(url).send({ classId: classLecture.id, date: '2024-09-01' });
+      const res = await request(app).post(url).send({ classId: classLecture.id, date: '2025-09-01' });
       expect(res.status).toBe(httpStatus.UNAUTHORIZED);
       expect(res.body.success).toBe(false);
       expect(res.body.message).toContain('No token provided');
@@ -135,7 +135,7 @@ describe('Class API - cancelClass', () => {
       const res = await request(app)
         .post(url)
         .set('Authorization', 'Bearer invalidtoken')
-        .send({ classId: classLecture.id, date: '2024-09-01' });
+        .send({ classId: classLecture.id, date: '2025-09-01' });
       expect(res.status).toBe(httpStatus.UNAUTHORIZED);
       expect(res.body.success).toBe(false);
       expect(res.body.message).toContain('Invalid token');
@@ -145,7 +145,7 @@ describe('Class API - cancelClass', () => {
       const res = await request(app)
         .post(url)
         .set('Authorization', `Bearer ${studentToken}`)
-        .send({ classId: classLecture.id, date: '2024-09-01' });
+        .send({ classId: classLecture.id, date: '2025-09-01' });
       expect(res.status).toBe(httpStatus.FORBIDDEN);
       expect(res.body.success).toBe(false);
       expect(res.body.message).toContain('Insufficient permissions');
@@ -155,12 +155,12 @@ describe('Class API - cancelClass', () => {
       const res = await request(app)
         .post(url)
         .set('Authorization', `Bearer ${adminToken}`)
-        .send({ classId: classLecture.id, date: '2024-09-01' });
+        .send({ classId: classLecture.id, date: '2025-09-01' });
       expect(res.status).toBe(httpStatus.OK);
       expect(res.body.success).toBe(true);
       expect(res.body.message).toContain('Class marked as cancelled successfully');
 
-      const record = await CancelledClass.findOne({ where: { classId: classLecture.id, date: '2024-09-01' } });
+      const record = await CancelledClass.findOne({ where: { classId: classLecture.id, date: '2025-09-01' } });
       expect(record).toBeTruthy();
     });
 
@@ -168,12 +168,12 @@ describe('Class API - cancelClass', () => {
       const res = await request(app)
         .post(url)
         .set('Authorization', `Bearer ${teacherToken}`)
-        .send({ classId: classPractical.id, date: '2024-09-01' });
+        .send({ classId: classPractical.id, date: '2025-09-01' });
       expect(res.status).toBe(httpStatus.OK);
       expect(res.body.success).toBe(true);
       expect(res.body.message).toContain('Class marked as cancelled successfully');
 
-      const record = await CancelledClass.findOne({ where: { classId: classPractical.id, date: '2024-09-01' } });
+      const record = await CancelledClass.findOne({ where: { classId: classPractical.id, date: '2025-09-01' } });
       expect(record).toBeTruthy();
     });
   });
@@ -183,7 +183,7 @@ describe('Class API - cancelClass', () => {
       const res = await request(app)
         .post(url)
         .set('Authorization', `Bearer ${adminToken}`)
-        .send({ date: '2024-09-01' });
+        .send({ date: '2025-09-01' });
       expect(res.status).toBe(httpStatus.BAD_REQUEST);
       expect(res.body.success).toBe(false);
       expect(res.body.message).toContain('Class ID is required');
@@ -193,7 +193,7 @@ describe('Class API - cancelClass', () => {
       const res = await request(app)
         .post(url)
         .set('Authorization', `Bearer ${adminToken}`)
-        .send({ classId: 'invalid-uuid', date: '2024-09-01' });
+        .send({ classId: 'invalid-uuid', date: '2025-09-01' });
       expect(res.status).toBe(httpStatus.BAD_REQUEST);
       expect(res.body.success).toBe(false);
       expect(res.body.message).toContain('Class ID must be a valid UUID');
@@ -216,7 +216,7 @@ describe('Class API - cancelClass', () => {
       const res = await request(app)
         .post(url)
         .set('Authorization', `Bearer ${adminToken}`)
-        .send({ classId: fakeId, date: '2024-09-01' });
+        .send({ classId: fakeId, date: '2025-09-01' });
       expect(res.status).toBe(httpStatus.NOT_FOUND);
       expect(res.body.success).toBe(false);
       expect(res.body.message).toContain('Class not found');
@@ -228,7 +228,7 @@ describe('Class API - cancelClass', () => {
       const res = await request(app)
         .post(url)
         .set('Authorization', `Bearer ${adminToken}`)
-        .send({ classId: classLecture.id, date: '2024-07-31' });
+        .send({ classId: classLecture.id, date: '2025-07-31' });
       expect(res.status).toBe(httpStatus.BAD_REQUEST);
       expect(res.body.success).toBe(false);
       expect(res.body.message).toContain('not in bounds');
@@ -238,7 +238,7 @@ describe('Class API - cancelClass', () => {
       const res = await request(app)
         .post(url)
         .set('Authorization', `Bearer ${adminToken}`)
-        .send({ classId: classLecture.id, date: '2025-01-01' });
+        .send({ classId: classLecture.id, date: '2026-01-01' });
       expect(res.status).toBe(httpStatus.BAD_REQUEST);
       expect(res.body.success).toBe(false);
       expect(res.body.message).toContain('not in bounds');
@@ -249,13 +249,13 @@ describe('Class API - cancelClass', () => {
       await request(app)
         .post(url)
         .set('Authorization', `Bearer ${adminToken}`)
-        .send({ classId: classLecture.id, date: '2024-09-02' });
+        .send({ classId: classLecture.id, date: '2025-09-02' });
 
       // Try again
       const res = await request(app)
         .post(url)
         .set('Authorization', `Bearer ${adminToken}`)
-        .send({ classId: classLecture.id, date: '2024-09-02' });
+        .send({ classId: classLecture.id, date: '2025-09-02' });
       expect(res.status).toBe(httpStatus.CONFLICT);
       expect(res.body.success).toBe(false);
       expect(res.body.message).toContain('already cancelled');
@@ -267,9 +267,9 @@ describe('Class API - cancelClass', () => {
       const res = await request(app)
         .post(url)
         .set('Authorization', `Bearer ${adminToken}`)
-        .send({ classId: classLecture.id, date: '2024-09-03' });
+        .send({ classId: classLecture.id, date: '2025-09-03' });
       expect(res.status).toBe(httpStatus.OK);
-      const record = await CancelledClass.findOne({ where: { classId: classLecture.id, date: '2024-09-03' } });
+      const record = await CancelledClass.findOne({ where: { classId: classLecture.id, date: '2025-09-03' } });
       expect(record).toBeTruthy();
     });
 
@@ -277,9 +277,9 @@ describe('Class API - cancelClass', () => {
       const res = await request(app)
         .post(url)
         .set('Authorization', `Bearer ${adminToken}`)
-        .send({ classId: classPractical.id, date: '2024-09-04' });
+        .send({ classId: classPractical.id, date: '2025-09-04' });
       expect(res.status).toBe(httpStatus.OK);
-      const record = await CancelledClass.findOne({ where: { classId: classPractical.id, date: '2024-09-04' } });
+      const record = await CancelledClass.findOne({ where: { classId: classPractical.id, date: '2025-09-04' } });
       expect(record).toBeTruthy();
     });
   });

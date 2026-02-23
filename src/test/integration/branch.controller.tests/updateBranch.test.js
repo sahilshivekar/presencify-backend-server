@@ -81,7 +81,7 @@ describe('Branch API - updateBranch', () => {
                 abbreviation: 'CS',
             });
             const scheme = await Scheme.create({
-                name: 'CS 2025 Scheme',
+                name: 'CS 2026 Scheme',
                 universityId: university.id,
             });
 
@@ -95,7 +95,7 @@ describe('Branch API - updateBranch', () => {
                 password: 'Student@123',
                 schemeId: scheme.id,
                 branchId: studentBranch.id,
-                admissionYear: 2024,
+                admissionYear: 2025,
                 admissionType: 'FE',
                 gender: 'Male'
             });

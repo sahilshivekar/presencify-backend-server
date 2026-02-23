@@ -62,7 +62,7 @@ describe('Scheme API - POST /api/v1/schemes', () => {
         password: 'Student@123',
         schemeId: existingScheme.id,
         branchId: branch.id,
-        admissionYear: 2024,
+        admissionYear: 2025,
         admissionType: 'FE',
         gender: 'Male'
       });

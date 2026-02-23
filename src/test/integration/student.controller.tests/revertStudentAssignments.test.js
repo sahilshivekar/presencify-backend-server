@@ -38,14 +38,14 @@ describe('Student Controller - Revert assignments', () => {
 
     university = await University.create({ name: 'Test University', abbreviation: 'TU' });
     branch = await Branch.create({ name: 'Computer Science', abbreviation: 'CS' });
-    scheme = await Scheme.create({ name: 'CS 2025 Scheme', universityId: university.id });
+    scheme = await Scheme.create({ name: 'CS 2026 Scheme', universityId: university.id });
     semester = await Semester.create({
       semesterNumber: 1,
       branchId: branch.id,
-      academicStartYear: 2024,
-      academicEndYear: 2025,
-      startDate: '2025-01-01',
-      endDate: '2025-12-31',
+      academicStartYear: 2025,
+      academicEndYear: 2026,
+      startDate: '2026-01-01',
+      endDate: '2026-12-31',
       schemeId: scheme.id,
     });
 
@@ -57,7 +57,7 @@ describe('Student Controller - Revert assignments', () => {
 
     student = await Student.create({
       prn: 'PRN001', firstName: 'Alice', lastName: 'Smith', email: 'alice@example.com',
-      phoneNumber: '+911234567890', gender: 'Female', schemeId: scheme.id, admissionYear: 2024,
+      phoneNumber: '+911234567890', gender: 'Female', schemeId: scheme.id, admissionYear: 2025,
       admissionType: 'FE', branchId: branch.id
     });
 
@@ -106,7 +106,7 @@ describe('Student Controller - Revert assignments', () => {
     const changeRes = await request(app)
       .put('/api/v1/students/division')
       .set('Authorization', `Bearer ${adminToken}`)
-      .send({ studentDivisionId: prevDiv.id, divisionId: division2.id, newDivisionStartDate: '2025-03-01' });
+      .send({ studentDivisionId: prevDiv.id, divisionId: division2.id, newDivisionStartDate: '2026-03-01' });
     if (changeRes.status !== httpStatus.OK) {
       // eslint-disable-next-line no-console
       console.log('changeDivision error body:', changeRes.body);
@@ -185,7 +185,7 @@ describe('Student Controller - Revert assignments', () => {
     const changeRes = await request(app)
       .put('/api/v1/students/batch')
       .set('Authorization', `Bearer ${adminToken}`)
-      .send({ studentBatchId: prevBatch.id, batchId: batchC.id, newBatchStartDate: '2025-04-01' });
+      .send({ studentBatchId: prevBatch.id, batchId: batchC.id, newBatchStartDate: '2026-04-01' });
     expect(changeRes.status).toBe(httpStatus.OK);
 
     const newBatch = await StudentBatch.findOne({ where: { studentId: student.id, batchId: batchC.id, endDate: null } });
