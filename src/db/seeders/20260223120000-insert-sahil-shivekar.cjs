@@ -87,7 +87,7 @@ module.exports = {
             middle_name: 'Nilesh',
             dob: '2004-02-01',
             gender: 'Male',
-            email: 'sahilshivekarce@gmail.com',
+            email: 'sahilshivekar124@gmail.com',
             phone_number: '+919867009968',
             password: password,
             refresh_token: null,

@@ -22,11 +22,33 @@ module.exports = {
             ...Array.from({ length: 5 }, (_, i) => `70${i + 1}`)   // 701...705
         ];
 
+        // Calculate room type counts
+        const totalRooms = roomNumbers.length;
+        const officeCount = Math.round(totalRooms * 0.05);
+        const classroomCount = Math.round(totalRooms * 0.40);
+        const labCount = totalRooms - officeCount - classroomCount;
+
+        let types = [];
+        for (let i = 0; i < officeCount; i++) types.push('Office');
+        for (let i = 0; i < classroomCount; i++) types.push('Classroom');
+        for (let i = 0; i < labCount; i++) types.push('Lab');
+
+        // Shuffle the types array
+        function shuffle(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+        }
+        shuffle(types);
+
         // Create room objects
+        let typeIndex = 0;
         roomNumbers.forEach((roomNumber) => {
             rooms.push({
-                room_id: uuidv4(), // Generate a UUID for each room
+                room_id: uuidv4(), 
                 room_number: roomNumber,
+                room_type: types[typeIndex++],
                 sitting_capacity: getRandomCapacity(),
                 created_at: new Date(),
                 updated_at: new Date()

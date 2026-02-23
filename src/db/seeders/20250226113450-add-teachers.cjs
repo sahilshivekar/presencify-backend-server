@@ -8,7 +8,7 @@ module.exports = {
     async up(queryInterface, Sequelize) {
 
         const password = await bcrypt.hash(
-            'Teacher@123',
+            'Sahil@124',
             Number(process.env.BCRYPT_SALT))
 
         let teacherCounter = 1;
@@ -33,7 +33,8 @@ module.exports = {
             { firstName: "Sandeep", lastName: "Cisneros", gender: "Male", role: "Teacher" },
             { firstName: "Pooja", lastName: "Clark", gender: "Female", role: "Teacher" },
             { firstName: "Vivek", lastName: "Clarke", gender: "Male", role: "Teacher" },
-            { firstName: "Sonia", lastName: "Clements", gender: "Female", role: "Teacher" }
+            { firstName: "Sonia", lastName: "Clements", gender: "Female", role: "Teacher" },
+            { firstName: "Sahil", lastName: "Shivekar", gender: "Male", role: "Teacher" }
         ];
 
         // The .map is synchronous here since bcrypt.hash is awaited beforehand
@@ -42,7 +43,7 @@ module.exports = {
             first_name: teacher.firstName,
             last_name: teacher.lastName,
             middle_name: null,
-            teacher_email: `${teacher.firstName.toLowerCase()}.${teacher.lastName.toLowerCase()}@gmail.com`,
+            teacher_email: `${teacher.firstName.toLowerCase()}.${teacher.lastName.toLowerCase()}124@gmail.com`,
             teacher_phone_number: `+91${9000000000 + teacherCounter++}`,
             teacher_gender: teacher.gender,
             teacher_highest_qualification: "M.Tech",
