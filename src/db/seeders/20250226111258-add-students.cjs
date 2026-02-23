@@ -168,7 +168,7 @@ module.exports = {
         // 4. Generate student data using the new dynamic UUIDs
         ['SE', 'TE', 'BE'].forEach((year) => {
             for (let i = 0; i < 60; i++) {
-                students.push(generateStudent(i, year, 'DSE', schemeIdMap['REV-2019 ‘C’ Scheme'], branchIdMap['Computer Engineering']));
+                students.push(generateStudent(i, year, 'FE', schemeIdMap['REV-2019 ‘C’ Scheme'], branchIdMap['Computer Engineering']));
             }
         });
 
