@@ -65,7 +65,7 @@ module.exports = {
                         student_batch_id: uuidv4(),
                         student_id: students[i],
                         batch_id: i < 15 ? batches[0] : batches[1], // First 15 students to first batch, next 15 to second
-                        start_date: '2025-01-08',
+                        start_date: '2026-01-08',
                         created_at: new Date(),
                         updated_at: new Date(),
                     });

@@ -57,7 +57,7 @@ module.exports = {
                     student_division_id: uuidv4(),
                     student_id: student.student_id,
                     division_id: index < 30 ? divisionA_Id : divisionB_Id, // First 30 to Div A, next to Div B
-                    start_date: '2025-01-08',
+                    start_date: '2026-01-08',
                     created_at: new Date(),
                     updated_at: new Date()
                 });

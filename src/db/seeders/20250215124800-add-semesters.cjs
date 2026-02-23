@@ -27,17 +27,17 @@ module.exports = {
         // 2. Prepare and insert Semester data
         const semestersToInsert = [
             // FE Comp & Civil (NEP 2020)
-            { id: uuidv4(), branch_id: compBranchId, semester_number: 1, scheme_id: nep2020SchemeId, academic_start_year: 2024, academic_end_year: 2025, start_date: '2024-07-08', end_date: '2024-12-31' },
-            { id: uuidv4(), branch_id: compBranchId, semester_number: 2, scheme_id: nep2020SchemeId, academic_start_year: 2024, academic_end_year: 2025, start_date: '2025-01-08', end_date: '2025-06-30' },
-            { id: uuidv4(), branch_id: civilBranchId, semester_number: 1, scheme_id: nep2020SchemeId, academic_start_year: 2024, academic_end_year: 2025, start_date: '2024-07-08', end_date: '2024-12-31' },
-            { id: uuidv4(), branch_id: civilBranchId, semester_number: 2, scheme_id: nep2020SchemeId, academic_start_year: 2024, academic_end_year: 2025, start_date: '2025-01-08', end_date: '2025-06-30' },
+            { id: uuidv4(), branch_id: compBranchId, semester_number: 1, scheme_id: nep2020SchemeId, academic_start_year: 2025, academic_end_year: 2026, start_date: '2025-07-08', end_date: '2025-12-31' },
+            { id: uuidv4(), branch_id: compBranchId, semester_number: 2, scheme_id: nep2020SchemeId, academic_start_year: 2025, academic_end_year: 2026, start_date: '2026-01-08', end_date: '2026-06-30' },
+            { id: uuidv4(), branch_id: civilBranchId, semester_number: 1, scheme_id: nep2020SchemeId, academic_start_year: 2025, academic_end_year: 2026, start_date: '2025-07-08', end_date: '2025-12-31' },
+            { id: uuidv4(), branch_id: civilBranchId, semester_number: 2, scheme_id: nep2020SchemeId, academic_start_year: 2025, academic_end_year: 2026, start_date: '2026-01-08', end_date: '2026-06-30' },
             // SE, TE, BE Comp (REV 2019)
-            { id: uuidv4(), branch_id: compBranchId, semester_number: 3, scheme_id: rev2019SchemeId, academic_start_year: 2024, academic_end_year: 2025, start_date: '2024-07-08', end_date: '2024-12-31' },
-            { id: uuidv4(), branch_id: compBranchId, semester_number: 4, scheme_id: rev2019SchemeId, academic_start_year: 2024, academic_end_year: 2025, start_date: '2025-01-08', end_date: '2025-06-30' },
-            { id: uuidv4(), branch_id: compBranchId, semester_number: 5, scheme_id: rev2019SchemeId, academic_start_year: 2024, academic_end_year: 2025, start_date: '2024-07-08', end_date: '2024-12-31' },
-            { id: uuidv4(), branch_id: compBranchId, semester_number: 6, scheme_id: rev2019SchemeId, academic_start_year: 2024, academic_end_year: 2025, start_date: '2025-01-08', end_date: '2025-06-30' },
-            { id: uuidv4(), branch_id: compBranchId, semester_number: 7, scheme_id: rev2019SchemeId, academic_start_year: 2024, academic_end_year: 2025, start_date: '2024-07-08', end_date: '2024-12-31' },
-            { id: uuidv4(), branch_id: compBranchId, semester_number: 8, scheme_id: rev2019SchemeId, academic_start_year: 2024, academic_end_year: 2025, start_date: '2025-01-08', end_date: '2025-06-30' },
+            { id: uuidv4(), branch_id: compBranchId, semester_number: 3, scheme_id: rev2019SchemeId, academic_start_year: 2025, academic_end_year: 2026, start_date: '2025-07-08', end_date: '2025-12-31' },
+            { id: uuidv4(), branch_id: compBranchId, semester_number: 4, scheme_id: rev2019SchemeId, academic_start_year: 2025, academic_end_year: 2026, start_date: '2026-01-08', end_date: '2026-06-30' },
+            { id: uuidv4(), branch_id: compBranchId, semester_number: 5, scheme_id: rev2019SchemeId, academic_start_year: 2025, academic_end_year: 2026, start_date: '2025-07-08', end_date: '2025-12-31' },
+            { id: uuidv4(), branch_id: compBranchId, semester_number: 6, scheme_id: rev2019SchemeId, academic_start_year: 2025, academic_end_year: 2026, start_date: '2026-01-08', end_date: '2026-06-30' },
+            { id: uuidv4(), branch_id: compBranchId, semester_number: 7, scheme_id: rev2019SchemeId, academic_start_year: 2025, academic_end_year: 2026, start_date: '2025-07-08', end_date: '2025-12-31' },
+            { id: uuidv4(), branch_id: compBranchId, semester_number: 8, scheme_id: rev2019SchemeId, academic_start_year: 2025, academic_end_year: 2026, start_date: '2026-01-08', end_date: '2026-06-30' },
         ].map(s => ({ ...s, created_at: new Date(), updated_at: new Date() }));
 
         await queryInterface.bulkInsert('semesters', semestersToInsert.map(({ id, ...rest }) => ({ semester_id: id, ...rest })));
