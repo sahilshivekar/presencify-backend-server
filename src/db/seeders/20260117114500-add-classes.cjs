@@ -68,6 +68,31 @@ module.exports = {
         const teacherMap = {};
         courseNames.forEach((name, idx) => { teacherMap[name] = teachers[idx].teacher_id; });
 
+        // ── 5a. Register teacher–course assignments in teacher_teaches_course ─
+        // Required by addClass controller: teacher must have the course assigned.
+        // Only insert pairs that don't already exist (avoid unique constraint errors).
+        const existingAssignments = await queryInterface.sequelize.query(
+            `SELECT teacher_id, course_id FROM teacher_teaches_course;`,
+            { type: queryInterface.sequelize.QueryTypes.SELECT }
+        );
+        const assignmentSet = new Set(
+            existingAssignments.map(r => `${r.teacher_id}__${r.course_id}`)
+        );
+
+        const newAssignments = courseNames
+            .map(name => ({
+                teacher_course_id: uuidv4(),
+                teacher_id: teacherMap[name],
+                course_id: courseMap[name],
+                created_at: new Date(),
+                updated_at: new Date()
+            }))
+            .filter(r => !assignmentSet.has(`${r.teacher_id}__${r.course_id}`));
+
+        if (newAssignments.length > 0) {
+            await queryInterface.bulkInsert('teacher_teaches_course', newAssignments);
+        }
+
         // ── 6. Resolve rooms ──────────────────────────────────────────────────
         const classroomsRaw = await queryInterface.sequelize.query(
             `SELECT room_id FROM rooms WHERE room_type = 'Classroom' LIMIT 1;`,
@@ -197,5 +222,7 @@ module.exports = {
 
     async down(queryInterface, Sequelize) {
         await queryInterface.bulkDelete('classes', null, {});
+        await queryInterface.bulkDelete('timetables', null, {});
+        await queryInterface.bulkDelete('teacher_teaches_course', null, {});
     }
 };

@@ -130,7 +130,7 @@ const addClass = asyncHandler(async (req, res) => {
         }
     })
     if (!teacherTeachesCourse) {
-        throw new ApiError(httpStatus.BAD_REQUEST, "Teacher is not teaching this course")
+        throw new ApiError(httpStatus.BAD_REQUEST, "Selected teacher haven't assigned the selected course, Assign this course to teacher before creating the class")
     }
 
     // Check for teacher conflict
