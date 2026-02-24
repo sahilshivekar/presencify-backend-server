@@ -46,7 +46,8 @@ const getStudents = asyncHandler(async (req, res) => {
         batchCode,
         page = 1,
         limit = 10,
-        getAll = false
+        getAll = false,
+        intention = null
     } = req.query;
 
     // Only convert to arrays, don't validate here
@@ -169,7 +170,7 @@ const getStudents = asyncHandler(async (req, res) => {
                                     }
                                 }] : []),
                                 ...(semesterId ? [{
-                                    id: semesterId    
+                                    id: semesterId
                                 }] : [])
 
                             ]
@@ -185,7 +186,7 @@ const getStudents = asyncHandler(async (req, res) => {
             },
             {
                 model: StudentDivision,
-                required: divisionId || divisionCode ? true : false,
+                required: divisionId || divisionCode || intention == "MODIFY_STUDENT_DIVISION" ? true : false,
                 duplicating: false,
                 where: {
                     [Op.and]: [
@@ -196,7 +197,7 @@ const getStudents = asyncHandler(async (req, res) => {
                 include: [
                     {
                         model: Division,
-                        required: divisionId || divisionCode ? true : false,
+                        required: divisionId || divisionCode || intention == "MODIFY_STUDENT_DIVISION" ? true : false,
                         duplicating: false,
                         where: {
                             [Op.and]: [
@@ -208,7 +209,7 @@ const getStudents = asyncHandler(async (req, res) => {
             },
             {
                 model: StudentBatch,
-                required: batchCode || batchId ? true : false,
+                required: batchCode || batchId || intention == "MODIFY_STUDENT_BATCH" ? true : false,
                 duplicating: false,
                 where: {
                     [Op.and]: [
@@ -219,7 +220,7 @@ const getStudents = asyncHandler(async (req, res) => {
                 include: [
                     {
                         model: Batch,
-                        required: batchCode || batchId ? true : false,
+                        required: batchCode || batchId || intention == "MODIFY_STUDENT_BATCH" ? true : false,
                         duplicating: false,
                         where: {
                             [Op.and]: [
@@ -347,7 +348,7 @@ const addStudent = asyncHandler(async (req, res) => {
         admissionType: admissionType,
         branchId: branchId
     });
-    
+
     res.status(httpStatus.CREATED).json(new ApiResponse(httpStatus.CREATED, "Student added successfully", addedStudent));
 });
 
@@ -464,7 +465,7 @@ const removeStudentImage = asyncHandler(async (req, res) => {
     const { studentId } = req.query;
 
     // Remove input validation, assume already validated
-    
+
     const student = await Student.findByPk(studentId);
     if (!student) throw new ApiError(httpStatus.NOT_FOUND, "Student not found");
 
@@ -937,7 +938,7 @@ const addStudentToDivision = asyncHandler(async (req, res) => {
     })
 
     if (studentPresentInOtherDivisions) {
-        throw new ApiError(httpStatus.BAD_REQUEST, "Student is already present in other divisions of the same semester. Please use the change division feature for moving student to different divsion.")
+        throw new ApiError(httpStatus.BAD_REQUEST, "Student is already present in other division of the same semester. Please use the change division feature for moving student to different divsion.")
     }
 
     const studentDivisionEntry = await StudentDivision.create({
@@ -1158,7 +1159,7 @@ const addStudentToBatch = asyncHandler(async (req, res) => {
     })
 
     if (studentPresentInOtherBatches) {
-        throw new ApiError(httpStatus.BAD_REQUEST, "Student is already present in other batches of the same division. Please use the change division feature for moving student to different batch.")
+        throw new ApiError(httpStatus.BAD_REQUEST, "Student is already present in other batch of the same division. Please use the change division feature for moving student to different batch.")
     }
 
     const studentBatchEntry = await StudentBatch.create({
@@ -1310,28 +1311,49 @@ const revertAddStudentToDivision = asyncHandler(async (req, res) => {
 const revertChangeStudentDivision = asyncHandler(async (req, res) => {
     const { newStudentDivisionId } = req.body;
 
-    const newDivision = await StudentDivision.findByPk(newStudentDivisionId);
+    const newDivision = await StudentDivision.findByPk(newStudentDivisionId, {
+        include: [
+            {
+                model: Division,
+                required: true
+            }
+        ]
+    });
     if (!newDivision) throw new ApiError(httpStatus.NOT_FOUND, "New StudentDivision not found");
-    if (newDivision.endDate !== null) throw new ApiError(httpStatus.BAD_REQUEST, "New division is not active");
+    if (newDivision.endDate !== null) throw new ApiError(httpStatus.BAD_REQUEST, "Student is not active in this division now to revert");
 
-    // Enforce LIFO: must be latest active division for the student
+    // Enforce LIFO: must be latest active division for the student in the same semester
     const latestActiveDivision = await StudentDivision.findOne({
         where: { studentId: newDivision.studentId, endDate: null },
+        include: [
+            {
+                model: Division,
+                required: true,
+                where: { semesterId: newDivision.Division.semesterId }
+            }
+        ],
         order: [["startDate", "DESC"]]
     });
     if (!latestActiveDivision || latestActiveDivision.id !== newDivision.id) {
-        throw new ApiError(httpStatus.BAD_REQUEST, "Only the latest active division change can be reverted");
+        throw new ApiError(httpStatus.BAD_REQUEST, "Only the latest active division change or assignment can be reverted");
     }
 
-    // Find previous division (most recent ended division)
+    // Find previous division (most recent ended division) in the same semester
     const prevDivision = await StudentDivision.findOne({
         where: {
             studentId: newDivision.studentId,
             endDate: { [Op.ne]: null }
         },
+        include: [
+            {
+                model: Division,
+                required: true,
+                where: { semesterId: newDivision.Division.semesterId }
+            }
+        ],
         order: [["endDate", "DESC"]]
     });
-    if (!prevDivision) throw new ApiError(httpStatus.BAD_REQUEST, "Previous StudentDivision not found for revert");
+    if (!prevDivision) throw new ApiError(httpStatus.BAD_REQUEST, "This is initial division assignment for the student in this semester, no previous division found for revert. Use Unassgign division option if you wish to just remove the division assignment.");
 
     const transaction = await sequelize.transaction();
     try {
@@ -1341,28 +1363,33 @@ const revertChangeStudentDivision = asyncHandler(async (req, res) => {
             where: {
                 studentId: newDivision.studentId,
                 batchId: { [Op.in]: batchesInNewDivision.map(b => b.id) },
-                endDate: null
+                startDate: { [Op.gte]: newDivision.startDate }
             },
             transaction
         });
 
-        // Restore previous division as active
-        prevDivision.endDate = null;
-        await prevDivision.save({ transaction });
+        if (prevDivision) {
+            // Store prevDivision endDate before nullifying
+            const prevDivisionEndDate = prevDivision.endDate;
 
-        // Restore previous batch endDate back to null if it matches prevEndDateISO
-        const batchesInPrevDivision = await Batch.findAll({ where: { divisionId: prevDivision.divisionId }, transaction });
-        await StudentBatch.update(
-            { endDate: null },
-            {
-                where: {
-                    studentId: newDivision.studentId,
-                    batchId: { [Op.in]: batchesInPrevDivision.map(b => b.id) },
-                    endDate: { [Op.ne]: null }
-                },
-                transaction
-            }
-        );
+            // Restore previous division as active
+            prevDivision.endDate = null;
+            await prevDivision.save({ transaction });
+
+            // Restore the latest batch that was ended with the division change
+            const batchesInPrevDivision = await Batch.findAll({ where: { divisionId: prevDivision.divisionId }, transaction });
+            await StudentBatch.update(
+                { endDate: null },
+                {
+                    where: {
+                        studentId: newDivision.studentId,
+                        batchId: { [Op.in]: batchesInPrevDivision.map(b => b.id) },
+                        endDate: prevDivisionEndDate
+                    },
+                    transaction
+                }
+            );
+        }
 
         // Delete new division row
         await newDivision.destroy({ transaction });
@@ -1401,33 +1428,57 @@ const revertAddStudentToBatch = asyncHandler(async (req, res) => {
 const revertChangeStudentBatch = asyncHandler(async (req, res) => {
     const { newStudentBatchId } = req.body;
 
-    const newBatch = await StudentBatch.findByPk(newStudentBatchId);
+    const newBatch = await StudentBatch.findByPk(newStudentBatchId, {
+        include: [
+            {
+                model: Batch,
+                required: true
+            }
+        ]
+    });
     if (!newBatch) throw new ApiError(httpStatus.NOT_FOUND, "New StudentBatch not found");
-    if (newBatch.endDate !== null) throw new ApiError(httpStatus.BAD_REQUEST, "New batch is not active");
+    if (newBatch.endDate !== null) throw new ApiError(httpStatus.BAD_REQUEST, "Student is not active in this batch now to revert");
 
-    // Enforce LIFO: must be latest active batch
+    // Enforce LIFO: must be latest active batch for the student in the same division
     const latestActiveBatch = await StudentBatch.findOne({
         where: { studentId: newBatch.studentId, endDate: null },
+        include: [
+            {
+                model: Batch,
+                required: true,
+                where: { divisionId: newBatch.Batch.divisionId }
+            }
+        ],
         order: [["startDate", "DESC"]]
     });
     if (!latestActiveBatch || latestActiveBatch.id !== newBatch.id) {
-        throw new ApiError(httpStatus.BAD_REQUEST, "Only the latest active batch change can be reverted");
+        throw new ApiError(httpStatus.BAD_REQUEST, "Only the latest active batch change or assignment can be reverted");
     }
 
+    // Find previous batch (most recent ended batch) in the same division
     const prevBatch = await StudentBatch.findOne({
         where: {
             studentId: newBatch.studentId,
             endDate: { [Op.ne]: null }
         },
+        include: [
+            {
+                model: Batch,
+                required: true,
+                where: { divisionId: newBatch.Batch.divisionId }
+            }
+        ],
         order: [["endDate", "DESC"]]
     });
-    if (!prevBatch) throw new ApiError(httpStatus.BAD_REQUEST, "Previous StudentBatch not found for revert");
+    if (!prevBatch) throw new ApiError(httpStatus.BAD_REQUEST, "This is initial batch assignment for the student in this division, no previous batch found for revert. Use Unassgign batch option if you wish to just remove the batch assignment.");
 
     const transaction = await sequelize.transaction();
     try {
-        // Restore previous batch as active
-        prevBatch.endDate = null;
-        await prevBatch.save({ transaction });
+        if (prevBatch) {
+            // Restore previous batch as active
+            prevBatch.endDate = null;
+            await prevBatch.save({ transaction });
+        }
 
         // Delete new batch row
         await newBatch.destroy({ transaction });
@@ -1450,7 +1501,7 @@ const bulkCreateStudents = asyncHandler(async (req, res) => {
         throw new ApiError(httpStatus.BAD_REQUEST, "Students array is required and must not be empty");
     }
 
-    
+
 
     const transaction = await sequelize.transaction();
     try {
@@ -1461,8 +1512,8 @@ const bulkCreateStudents = asyncHandler(async (req, res) => {
             const studentData = students[i];
             try {
                 // Validate required fields
-                if (!studentData.prn || !studentData.firstName || !studentData.lastName || 
-                    !studentData.email || !studentData.phoneNumber || !studentData.branchId || 
+                if (!studentData.prn || !studentData.firstName || !studentData.lastName ||
+                    !studentData.email || !studentData.phoneNumber || !studentData.branchId ||
                     !studentData.schemeId || !studentData.admissionType) {
                     errors.push({ index: i, error: "Missing required fields" });
                     continue;
@@ -1522,7 +1573,7 @@ const bulkCreateStudents = asyncHandler(async (req, res) => {
 
         await transaction.commit();
 
-        
+
 
         res.status(httpStatus.CREATED).json(
             new ApiResponse(
@@ -1554,7 +1605,7 @@ const bulkDeleteStudents = asyncHandler(async (req, res) => {
         throw new ApiError(httpStatus.BAD_REQUEST, "Student IDs array is required and must not be empty");
     }
 
-    
+
 
     const transaction = await sequelize.transaction();
     try {
@@ -1573,7 +1624,7 @@ const bulkDeleteStudents = asyncHandler(async (req, res) => {
             try {
                 await deleteFromCloudinary(student.studentImgPublicId);
             } catch (error) {
-                
+
             }
         }
 
@@ -1584,7 +1635,7 @@ const bulkDeleteStudents = asyncHandler(async (req, res) => {
 
         await transaction.commit();
 
-        
+
 
         res.status(httpStatus.OK).json(
             new ApiResponse(
@@ -1615,7 +1666,7 @@ const bulkAddStudentsToSemester = asyncHandler(async (req, res) => {
         throw new ApiError(httpStatus.BAD_REQUEST, "Semester ID is required");
     }
 
-    
+
 
     const transaction = await sequelize.transaction();
     try {
@@ -1669,7 +1720,7 @@ const bulkAddStudentsToSemester = asyncHandler(async (req, res) => {
 
         await transaction.commit();
 
-        
+
 
         res.status(httpStatus.CREATED).json(
             new ApiResponse(
@@ -1705,7 +1756,7 @@ const bulkAddStudentsToDivision = asyncHandler(async (req, res) => {
         throw new ApiError(httpStatus.BAD_REQUEST, "Division ID is required");
     }
 
-    
+
 
     const transaction = await sequelize.transaction();
     try {
@@ -1730,7 +1781,7 @@ const bulkAddStudentsToDivision = asyncHandler(async (req, res) => {
             try {
                 // Check if student is in the same semester as the division
                 const semester = await Semester.findByPk(division.semesterId, { transaction });
-                
+
                 const isStudentInSameSemesterAsDivision = await StudentSemester.findOne({
                     where: {
                         studentId: student.id,
@@ -1777,7 +1828,7 @@ const bulkAddStudentsToDivision = asyncHandler(async (req, res) => {
 
         await transaction.commit();
 
-        
+
 
         res.status(httpStatus.CREATED).json(
             new ApiResponse(
@@ -1813,7 +1864,7 @@ const bulkAddStudentsToBatch = asyncHandler(async (req, res) => {
         throw new ApiError(httpStatus.BAD_REQUEST, "Batch ID is required");
     }
 
-    
+
 
     const transaction = await sequelize.transaction();
     try {
@@ -1838,7 +1889,7 @@ const bulkAddStudentsToBatch = asyncHandler(async (req, res) => {
             try {
                 // Check if student is in the same division as the batch
                 const division = await Division.findByPk(batch.divisionId, { transaction });
-                
+
                 const isStudentInSameDivisionAsBatch = await StudentDivision.findOne({
                     where: {
                         studentId: student.id,
@@ -1890,7 +1941,7 @@ const bulkAddStudentsToBatch = asyncHandler(async (req, res) => {
 
         await transaction.commit();
 
-        
+
 
         res.status(httpStatus.CREATED).json(
             new ApiResponse(
@@ -2050,7 +2101,7 @@ const bulkCreateStudentsFromCSV = asyncHandler(async (req, res) => {
 
         // Validate all schemes exist
         const schemes = await Scheme.findAll({
-            where: {  },
+            where: {},
             transaction
         });
         console.log(schemes)
@@ -2146,7 +2197,7 @@ const bulkCreateStudentsFromCSV = asyncHandler(async (req, res) => {
         });
 
         // Bulk create students
-        const createdStudents = await Student.bulkCreate(studentsToCreate, { 
+        const createdStudents = await Student.bulkCreate(studentsToCreate, {
             transaction,
             individualHooks: true // This ensures password hashing via beforeCreate hook
         });
