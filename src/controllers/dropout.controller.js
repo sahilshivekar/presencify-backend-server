@@ -4,6 +4,9 @@ import { asyncHandler } from '../utils/asyncHandler.js';
 import { ApiError } from '../utils/ApiError.js';
 import { ApiResponse } from '../utils/ApiResponse.js';
 import Dropout from '../db/models/dropout.model.js'
+import Semester from '../db/models/semester.model.js';
+import StudentSemester from '../db/models/studentSemester.model.js';
+import sequelize from '../config/db.connection.js';
 import httpStatus from 'http-status';
 
 const addStudentToDropout = asyncHandler(async (req, res) => {
@@ -33,10 +36,41 @@ const addStudentToDropout = asyncHandler(async (req, res) => {
         throw new ApiError(httpStatus.CONFLICT, "Student is already in dropout")
     }
 
-    const dropout = await Dropout.create({
-        studentId,
-        academicStartYear,
-        academicEndYear
+    // Use transaction to ensure data consistency
+    const dropout = await sequelize.transaction(async (t) => {
+        // Find all semesters for the given academic year
+        const semesters = await Semester.findAll({
+            where: {
+                academicStartYear,
+                academicEndYear
+            },
+            attributes: ['id'],
+            transaction: t
+        })
+
+        const semesterIds = semesters.map(sem => sem.id)
+
+        // Remove all StudentSemester assignments for this student in the academic year
+        if (semesterIds.length > 0) {
+            await StudentSemester.destroy({
+                where: {
+                    studentId,
+                    semesterId: {
+                        [Op.in]: semesterIds
+                    }
+                },
+                transaction: t
+            })
+        }
+
+        // Create the dropout record
+        const dropoutRecord = await Dropout.create({
+            studentId,
+            academicStartYear,
+            academicEndYear
+        }, { transaction: t })
+
+        return dropoutRecord
     })
 
     res
