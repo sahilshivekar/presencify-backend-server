@@ -109,6 +109,7 @@ const getCourses = asyncHandler(async (req, res) => {
                 }
             }
         ],
+        order: [['name', 'ASC']],
         ...(limit && getAll === false ? { offset: offset, } : {}),
         ...(limit && getAll === false ? { limit: parseInt(limit, 10) } : {})
     });

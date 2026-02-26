@@ -106,6 +106,7 @@ const getTeacher = asyncHandler(async (req, res) => {
     const teacher = await Teacher.findAndCountAll({
         where: searchClause,
         include: includeClause,
+        order: [['firstName', 'ASC']],
         ...(limit && !isGetAll ? { offset: offset, } : {}),
         ...(limit && !isGetAll ? { limit: parseInt(limit, 10) } : {}),
         distinct: true,

@@ -3,7 +3,7 @@ import {
     addClass,
     getClasses,
     getClassById,
-    extendActiveTillDateOfClass,
+    editActiveDatesOfClass,
     removeClass,
     addExtraClass,
     getCancelledClasses,
@@ -53,9 +53,9 @@ router.route('/:id')
         getClassById
     )
     .put(
-        validate(classValidation.extendActiveTillDateOfClass),
+        validate(classValidation.editActiveDatesOfClass),
         verifyJWT([ROLES.ADMIN]),
-        extendActiveTillDateOfClass
+        editActiveDatesOfClass
     )
     .delete(
         validate(classValidation.removeClass),

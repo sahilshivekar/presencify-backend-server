@@ -49,11 +49,12 @@ const getClassById = {
 	params: Joi.object().keys({ id: uuid.required().messages({ 'any.required': 'Class ID is required', 'string.guid': 'Class ID must be a valid UUID' }) })
 };
 
-const extendActiveTillDateOfClass = {
+const editActiveDatesOfClass = {
 	params: Joi.object().keys({ id: uuid.required().messages({ 'any.required': 'Class ID is required', 'string.guid': 'Class ID must be a valid UUID' }) }),
 	body: Joi.object().keys({
-		newActiveTill: Joi.required().messages({ 'any.required': 'newActiveTill is required' })
-	})
+		newActiveFrom: Joi.optional(),
+		newActiveTill: Joi.optional()
+	}).or('newActiveFrom', 'newActiveTill').messages({ 'object.missing': 'At least one of newActiveFrom or newActiveTill is required' })
 };
 
 const removeClass = {
@@ -139,7 +140,7 @@ export default {
 	addClass,
 	getClasses,
 	getClassById,
-	extendActiveTillDateOfClass,
+	editActiveDatesOfClass,
 	removeClass,
 	addExtraClass,
 	getCancelledClasses,

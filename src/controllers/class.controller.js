@@ -398,6 +398,7 @@ const getClasses = asyncHandler(async (req, res) => {
                 duplicating: false
             }
         ],
+        order: [['startTime', 'ASC']],
         ...(limit && getAll === false ? { offset: offset, } : {}),
         ...(limit && getAll === false ? { limit: parseInt(limit, 10) } : {})
     })
@@ -449,6 +450,11 @@ const getClassById = asyncHandler(async (req, res) => {
                     ]
                 },
                 {
+                    model: Room,
+                    required: false,
+                    duplicating: false,
+                },
+                {
                     model: Batch,
                     required: false,
                     duplicating: false,
@@ -474,11 +480,11 @@ const getClassById = asyncHandler(async (req, res) => {
         );
 });
 
-const extendActiveTillDateOfClass = asyncHandler(async (req, res) => {
+const editActiveDatesOfClass = asyncHandler(async (req, res) => {
     const { id } = req.params;
-    const { newActiveTill } = req.body;
+    const { newActiveFrom, newActiveTill } = req.body;
 
-    // Input validation for id and newActiveTill is handled by @class.validation.js
+    // Input validation for id, newActiveFrom, and newActiveTill is handled by @class.validation.js
 
     const classObj = await Class.findByPk(id);
 
@@ -488,14 +494,25 @@ const extendActiveTillDateOfClass = asyncHandler(async (req, res) => {
     const division = await Division.findByPk(timetable.divisionId)
     const semester = await Semester.findByPk(division.semesterId)
 
-    if (newActiveTill) {
-        if (newActiveTill <= classObj.activeTill) {
-            throw new ApiError(httpStatus.BAD_REQUEST, "New active till date should be after the old active till date");
+    // Update activeFrom if provided
+    if (newActiveFrom) {
+        if (newActiveFrom < semester.startDate || newActiveFrom > semester.endDate) {
+            throw new ApiError(httpStatus.BAD_REQUEST, `New active from date must be within semester bounds (${semester.startDate} to ${semester.endDate})`);
         }
-        if (newActiveTill > semester.endDate) {
-            throw new ApiError(httpStatus.BAD_REQUEST, "New active till date should be before the semester end date");
+        classObj.activeFrom = newActiveFrom;
+    }
+
+    // Update activeTill if provided
+    if (newActiveTill) {
+        if (newActiveTill < semester.startDate || newActiveTill > semester.endDate) {
+            throw new ApiError(httpStatus.BAD_REQUEST, `New active till date must be within semester bounds (${semester.startDate} to ${semester.endDate})`);
         }
         classObj.activeTill = newActiveTill;
+    }
+
+    // Validate that activeFrom is before activeTill
+    if (classObj.activeFrom >= classObj.activeTill) {
+        throw new ApiError(httpStatus.BAD_REQUEST, "Active from date must be before active till date");
     }
 
     // Check for room conflict
@@ -1397,7 +1414,7 @@ export {
     addClass,
     getClasses,
     getClassById,
-    extendActiveTillDateOfClass,
+    editActiveDatesOfClass,
     removeClass,
     addExtraClass,
     getCancelledClasses,
