@@ -16,13 +16,16 @@ const getRooms = {
 		searchQuery: Joi.string().allow('', null).default('').messages({ 'string.base': 'Search query must be a string' }),
 		sortBy: Joi.string().valid('roomNumber', 'sittingCapacity').default('roomNumber').messages({ 'any.only': 'SortBy must be either roomNumber or sittingCapacity' }),
 		sortOrder: Joi.string().valid('ASC', 'DESC').default('ASC').messages({ 'any.only': 'SortOrder must be either ASC or DESC' }),
-		busyBetweenStartTime: Joi.string().pattern(/^\d{2}:\d{2}:\d{2}$/).messages({ 'string.pattern.base': 'busyBetweenStartTime must be in HH:mm:ss format', 'any.required': 'Start time is required' }),
-		busyBetweenEndTime: Joi.string().pattern(/^\d{2}:\d{2}:\d{2}$/).messages({ 'string.pattern.base': 'busyBetweenEndTime must be in HH:mm:ss format', 'any.required': 'End time is required' }),
+		freeBetweenStartTime: Joi.string().pattern(/^\d{2}:\d{2}:\d{2}$/).messages({ 'string.pattern.base': 'freeBetweenStartTime must be in HH:mm:ss format', 'any.required': 'Start time is required' }),
+		freeBetweenEndTime: Joi.string().pattern(/^\d{2}:\d{2}:\d{2}$/).messages({ 'string.pattern.base': 'freeBetweenEndTime must be in HH:mm:ss format', 'any.required': 'End time is required' }),
+		dayOfWeek: Joi.string().valid('Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday').messages({ 'any.only': 'dayOfWeek must be a valid day of the week' }),
 		page: Joi.number().integer().min(1).default(1).messages({ 'number.base': 'Page must be a number', 'number.min': 'Page must be at least 1' }),
 		limit: Joi.number().integer().min(1).max(100).default(10).messages({ 'number.base': 'Limit must be a number', 'number.min': 'Limit must be at least 1', 'number.max': 'Limit cannot exceed 100' }),
 		getAll: Joi.boolean().default(false).messages({ 'boolean.base': 'getAll must be a boolean' }),
-		type: Joi.string().valid('Classroom', 'Lab', 'Office').messages({ 'any.only': 'type must be one of Classroom, Lab, Office' })
-	}).and('busyBetweenStartTime', 'busyBetweenEndTime')
+		type: Joi.string().valid('Classroom', 'Lab', 'Office').messages({ 'any.only': 'type must be one of Classroom, Lab, Office' }),
+		minCapacity: Joi.number().integer().min(1).max(1000).messages({ 'number.base': 'minCapacity must be a number', 'number.min': 'minCapacity must be at least 1', 'number.max': 'minCapacity cannot exceed 1000' }),
+		maxCapacity: Joi.number().integer().min(1).max(1000).messages({ 'number.base': 'maxCapacity must be a number', 'number.min': 'maxCapacity must be at least 1', 'number.max': 'maxCapacity cannot exceed 1000' })
+	}).and('freeBetweenStartTime', 'freeBetweenEndTime', 'dayOfWeek')
 };
 
 const getRoomById = {

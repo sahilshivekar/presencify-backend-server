@@ -166,16 +166,17 @@ module.exports = {
         }
 
         // Lab schedule: 2:45-4:45, both batches in parallel, each lab 2x/week per batch
+        // Each batch gets each lab exactly twice per week, and no teacher teaches two batches simultaneously
         // Mon & Thu: BB1=Digital Forensic Lab,       BB2=Social Media Analytics Lab
-        // Tue & Fri: BB1=Social Media Analytics Lab, BB2=Digital Forensic Lab
-        // Wed & Sat: BB1=Distributed Computing Lab,  BB2=Distributed Computing Lab
+        // Tue & Fri: BB1=Social Media Analytics Lab, BB2=Distributed Computing Lab
+        // Wed & Sat: BB1=Distributed Computing Lab,  BB2=Digital Forensic Lab
         const labSchedule = [
             { day: 'Monday',    bb1: 'Digital Forensic Lab',       bb2: 'Social Media Analytics Lab' },
-            { day: 'Tuesday',   bb1: 'Social Media Analytics Lab', bb2: 'Digital Forensic Lab'       },
-            { day: 'Wednesday', bb1: 'Distributed Computing Lab',  bb2: 'Distributed Computing Lab'  },
+            { day: 'Tuesday',   bb1: 'Social Media Analytics Lab', bb2: 'Distributed Computing Lab'  },
+            { day: 'Wednesday', bb1: 'Distributed Computing Lab',  bb2: 'Digital Forensic Lab'       },
             { day: 'Thursday',  bb1: 'Digital Forensic Lab',       bb2: 'Social Media Analytics Lab' },
-            { day: 'Friday',    bb1: 'Social Media Analytics Lab', bb2: 'Digital Forensic Lab'       },
-            { day: 'Saturday',  bb1: 'Distributed Computing Lab',  bb2: 'Distributed Computing Lab'  }
+            { day: 'Friday',    bb1: 'Social Media Analytics Lab', bb2: 'Distributed Computing Lab'  },
+            { day: 'Saturday',  bb1: 'Distributed Computing Lab',  bb2: 'Digital Forensic Lab'       }
         ];
 
         for (const entry of labSchedule) {

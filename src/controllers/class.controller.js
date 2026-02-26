@@ -296,6 +296,10 @@ const getClasses = asyncHandler(async (req, res) => {
         classType,
         courseId,
         semesterId,
+        semesterNumber,
+        academicStartYearOfSemester,
+        academicEndYearOfSemester,
+        branchId,
         isExtraClass,
         page = 1,
         limit = 10,
@@ -308,10 +312,12 @@ const getClasses = asyncHandler(async (req, res) => {
         where: {
             [Op.and]: [
                 ...(timetableId ? [{ timetableId: timetableId }] : []),
-                ...(startTime ? [{ startTime: { [Op.gte]: startTime } }] : []),
-                ...(endTime ? [{ endTime: { [Op.lte]: endTime } }] : []),
-                ...(activeFrom ? [{ activeFrom: { [Op.gte]: activeFrom } }] : []),
-                ...(activeTill ? [{ activeTill: { [Op.lte]: activeTill } }] : []),
+                // Time range overlap: find classes that overlap with the query time range
+                ...(startTime ? [{ endTime: { [Op.gt]: startTime } }] : []),
+                ...(endTime ? [{ startTime: { [Op.lt]: endTime } }] : []),
+                // Date range overlap: find classes that overlap with the query date range
+                ...(activeFrom ? [{ activeTill: { [Op.gte]: activeFrom } }] : []),
+                ...(activeTill ? [{ activeFrom: { [Op.lte]: activeTill } }] : []),
                 ...(teacherId ? [{ teacherId: teacherId }] : []),
                 ...(dayOfWeek ? [{ dayOfWeek: dayOfWeek }] : []),
                 ...(roomId ? [{ roomId: roomId }] : []),
@@ -354,19 +360,32 @@ const getClasses = asyncHandler(async (req, res) => {
                                 where: {
                                     [Op.and]: [
                                         ...(semesterId ? [{ id: semesterId }] : []),
+                                        ...(semesterNumber ? [{ semesterNumber: semesterNumber }] : []),
+                                        ...(academicStartYearOfSemester ? [{ academicStartYear: academicStartYearOfSemester }] : []),
+                                        ...(academicEndYearOfSemester ? [{ academicEndYear: academicEndYearOfSemester }] : []),
                                     ]
                                 },
                                 include: [
                                     {
                                         model: Branch,
                                         required: true,
-                                        duplicating: false
+                                        duplicating: false,
+                                        where: {
+                                            [Op.and]: [
+                                                ...(branchId ? [{ id: branchId }] : []),
+                                            ]
+                                        }
                                     }
                                 ]
                             }
                         ]
                     }
                 ]
+            },
+            {
+                model: Room,
+                required: true,
+                duplicating: false,
             },
             {
                 model: Batch,

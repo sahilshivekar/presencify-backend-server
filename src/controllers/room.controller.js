@@ -24,12 +24,15 @@ const getRooms = asyncHandler(async (req, res) => {
         searchQuery,
         sortBy = 'roomNumber',
         sortOrder = 'ASC',
-        busyBetweenStartTime,
-        busyBetweenEndTime,
+        freeBetweenStartTime,
+        freeBetweenEndTime,
+        dayOfWeek,
         page = 1,
         limit = 10,
         getAll = false,
-        type
+        type,
+        minCapacity,
+        maxCapacity
     } = req.query;
 
     const offset = (parseInt(page, 10) - 1) * parseInt(limit, 10);
@@ -46,26 +49,51 @@ const getRooms = asyncHandler(async (req, res) => {
     if (type) {
         where.type = type;
     }
+    if (minCapacity) {
+        where.sittingCapacity = { ...where.sittingCapacity, [Op.gte]: parseInt(minCapacity, 10) };
+    }
+    if (maxCapacity) {
+        where.sittingCapacity = { ...where.sittingCapacity, [Op.lte]: parseInt(maxCapacity, 10) };
+    }
 
-    const include = [];
-    if (busyBetweenStartTime && busyBetweenEndTime) {
-        include.push({
-            model: Class,
-            required: false,
-            duplicating: false,
+    // Find rooms that are busy during the specified time range
+    if (freeBetweenStartTime && freeBetweenEndTime && dayOfWeek) {
+        const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
+        
+        // Find all active classes that overlap with the requested time range on the specified day
+        const busyClasses = await Class.findAll({
             where: {
                 [Op.and]: [
-                    { activeTill: { [Op.gte]: new Date() } },
-                    { startTime: { [Op.lte]: busyBetweenEndTime } },
-                    { endTime: { [Op.gte]: busyBetweenStartTime } }
+                    // Class must be active today
+                    { activeFrom: { [Op.lte]: today } },
+                    { activeTill: { [Op.gte]: today } },
+                    // Class must be on the specified day of week
+                    { dayOfWeek: dayOfWeek },
+                    // Time overlap: class time intersects with requested time
+                    {
+                        [Op.or]: [
+                            { startTime: { [Op.between]: [freeBetweenStartTime, freeBetweenEndTime] } },
+                            { endTime: { [Op.between]: [freeBetweenStartTime, freeBetweenEndTime] } },
+                            { startTime: { [Op.lte]: freeBetweenStartTime }, endTime: { [Op.gte]: freeBetweenEndTime } }
+                        ]
+                    }
                 ]
-            }
+            },
+            attributes: ['roomId'],
+            raw: true
         });
+
+        // Extract busy room IDs
+        const busyRoomIds = busyClasses.map(c => c.roomId);
+
+        // Exclude busy rooms from results
+        if (busyRoomIds.length > 0) {
+            where.id = { [Op.notIn]: busyRoomIds };
+        }
     }
 
     const rooms = await Room.findAndCountAll({
         where,
-        ...(include.length ? { include } : {}),
         order: [[sortBy, sortOrder]],
         ...(limit && getAll === false ? { limit } : {}),
         ...(limit && getAll === false ? { offset } : {})

@@ -113,6 +113,11 @@ const getCourses = asyncHandler(async (req, res) => {
         ...(limit && getAll === false ? { limit: parseInt(limit, 10) } : {})
     });
 
+    // server is sending duplicate values, the issue is not figured out yet even after hours of debugging. 
+    // This issue needs to be solved in future
+    // const coursesList = courses.rows.map(course => course.name);
+    // console.log(page)        
+    // console.log('Courses retrieved:', JSON.stringify(coursesList));
     res
         .status(httpStatus.OK)
         .json(

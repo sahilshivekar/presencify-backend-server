@@ -31,7 +31,7 @@ const verifyJWT = (allowedRoles) =>
             req.cookies?.studentAccessToken ||
             req.cookies?.accessToken ||
             req.header("Authorization")?.replace("Bearer ", "");
-        console.log(token)
+        // console.log(token)
         if (!token) {
             // //logger.warn(`No token provided for request ${req.method} ${req.originalUrl}`);
             throw new ApiError(StatusCodes.UNAUTHORIZED, "Unauthorized request: No token provided");
