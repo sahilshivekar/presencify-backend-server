@@ -34,50 +34,6 @@ const createAttendance = {
     })
 };
 
-
-const addStudentsAttendance = {
-    body: Joi.object().keys({
-        attendanceId: Joi.string()
-            .uuid()
-            .required()
-            .messages({
-                'string.guid': 'Attendance ID must be a valid UUID',
-                'any.required': 'Attendance ID is required',
-                'string.base': 'Attendance ID must be a string'
-            }),
-        presentStudentIds: Joi.array()
-            .items(Joi.string().uuid().messages({
-                'string.guid': 'Each present student ID must be a valid UUID',
-                'string.base': 'Each present student ID must be a string'
-            }))
-            .required()
-            .messages({
-                'any.required': 'Present student IDs are required',
-                'array.base': 'Present student IDs must be an array'
-            }),
-        absentStudentIds: Joi.array()
-            .items(Joi.string().uuid().messages({
-                'string.guid': 'Each absent student ID must be a valid UUID',
-                'string.base': 'Each absent student ID must be a string'
-            }))
-            .required()
-            .messages({
-                'any.required': 'Absent student IDs are required',
-                'array.base': 'Absent student IDs must be an array'
-            })
-    }).custom((value, helpers) => {
-        const presentSet = new Set(value.presentStudentIds);
-        const absentSet = new Set(value.absentStudentIds);
-        const duplicates = [...presentSet].filter(id => absentSet.has(id));
-
-        if (duplicates.length > 0) {
-            throw new Error(`These student IDs are in both present and absent lists: ${duplicates.join(', ')}`);
-        }
-
-        return value;
-    })
-};
-
 // validations/attendance.validation.js
 const updateStudentAttendance = {
     body: Joi.object().keys({
@@ -533,8 +489,20 @@ const sendAttendanceReport = {
     })
 };
 
-// validations/attendance.validation.js
-const getAttendance = {
+const getAttendanceById = {
+    params: Joi.object().keys({
+        attendanceId: Joi.string()
+            .uuid()
+            .required()
+            .messages({
+                'string.guid': 'Attendance ID must be a valid UUID',
+                'any.required': 'Attendance ID is required',
+                'string.base': 'Attendance ID must be a string'
+            })
+    })
+};
+
+const getAttendances = {
     query: Joi.object().keys({
         date: Joi.string()
             .optional()
@@ -552,14 +520,6 @@ const getAttendance = {
             })
             .messages({
                 'string.base': 'Date must be a string'
-            }),
-        attendanceId: Joi.string()
-            .uuid()
-            .optional()
-            .allow(null, '')
-            .messages({
-                'string.guid': 'Attendance ID must be a valid UUID',
-                'string.base': 'Attendance ID must be a string'
             }),
         classId: Joi.string()
             .uuid()
@@ -609,39 +569,59 @@ const getAttendance = {
                 'string.guid': 'Batch ID must be a valid UUID',
                 'string.base': 'Batch ID must be a string'
             }),
-        startDate: Joi.string()
+        branchId: Joi.string()
+            .uuid()
             .optional()
             .allow(null, '')
-            .custom((value, helpers) => {
-                const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
-                if (value && !dateRegex.test(value)) {
-                    throw new Error('Start date must be in YYYY-MM-DD format');
-                }
-                const [year, month, day] = value.split('-').map(Number);
-                if (month < 1 || month > 12 || day < 1 || day > 31) {
-                    throw new Error('Invalid date provided');
-                }
-                return value;
-            })
             .messages({
-                'string.base': 'Start date must be a string'
+                'string.guid': 'Branch ID must be a valid UUID',
+                'string.base': 'Branch ID must be a string'
             }),
-        endDate: Joi.string()
+        semesterNumber: Joi.number()
+            .integer()
             .optional()
-            .allow(null, '')
-            .custom((value, helpers) => {
-                const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
-                if (value && !dateRegex.test(value)) {
-                    throw new Error('End date must be in YYYY-MM-DD format');
-                }
-                const [year, month, day] = value.split('-').map(Number);
-                if (month < 1 || month > 12 || day < 1 || day > 31) {
-                    throw new Error('Invalid date provided');
-                }
-                return value;
-            })
+            .allow(null)
             .messages({
-                'string.base': 'End date must be a string'
+                'number.base': 'Semester number must be a number',
+                'number.integer': 'Semester number must be an integer'
+            }),
+        academicStartYear: Joi.number()
+            .integer()
+            .optional()
+            .allow(null)
+            .messages({
+                'number.base': 'Academic start year must be a number',
+                'number.integer': 'Academic start year must be an integer'
+            }),
+        academicEndYear: Joi.number()
+            .integer()
+            .optional()
+            .allow(null)
+            .messages({
+                'number.base': 'Academic end year must be a number',
+                'number.integer': 'Academic end year must be an integer'
+            }),
+        page: Joi.number()
+            .integer()
+            .min(1)
+            .optional()
+            .default(1)
+            .messages({
+                'number.base': 'Page must be a number',
+                'number.integer': 'Page must be an integer',
+                'number.min': 'Page must be at least 1'
+            }),
+        limit: Joi.number()
+            .integer()
+            .min(1)
+            .max(100)
+            .optional()
+            .default(10)
+            .messages({
+                'number.base': 'Limit must be a number',
+                'number.integer': 'Limit must be an integer',
+                'number.min': 'Limit must be at least 1',
+                'number.max': 'Limit cannot exceed 100'
             })
     })
 };
@@ -671,7 +651,6 @@ const getActiveAttendanceSheet = {
 
 export default {
     createAttendance,
-    addStudentsAttendance,
     updateStudentAttendance,
     bulkUpdateStudentAttendance,
     removeAttendance,
@@ -679,6 +658,7 @@ export default {
     getAttendanceOfSelfForSpecificCourseInSemester,
     getAttendanceOfAllForSemesterDivisionBatchCourse,
     sendAttendanceReport,
-    getAttendance,
+    getAttendanceById,
+    getAttendances,
     getActiveAttendanceSheet
 };

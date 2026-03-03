@@ -1,14 +1,14 @@
 import express from 'express';
 import {
     removeAttendance,
-    addStudentsAttendance,
     updateStudentAttendance,
     bulkUpdateStudentAttendance,
     createAttendance,
     getAttendanceOfStudentForSpecificCourseInSemester,
     getAttendanceOfAllForSemesterDivisionBatchCourse,
     sendAttendanceReport,
-    getAttendance,
+    getAttendanceById,
+    getAttendances,
     getActiveAttendanceSheet
 } from '../controllers/attendance.controller.js';
 import { verifyJWT } from '../middlewares/auth.middleware.js';
@@ -20,19 +20,17 @@ const router = express.Router();
 
 // Basic CRUD operations for attendance sheets
 router.route('/')
-    .get(validate(attendanceValidation.getAttendance), verifyJWT([ROLES.ADMIN, ROLES.TEACHER]), getAttendance)
+    .get(validate(attendanceValidation.getAttendances), verifyJWT([ROLES.ADMIN, ROLES.TEACHER]), getAttendances)
     .post(validate(attendanceValidation.createAttendance), verifyJWT([ROLES.ADMIN, ROLES.TEACHER]), createAttendance)
     .delete(validate(attendanceValidation.removeAttendance), verifyJWT([ROLES.ADMIN, ROLES.TEACHER]), removeAttendance);
 
 // Student-specific attendance operations
 router.route('/students')
-    .post(validate(attendanceValidation.addStudentsAttendance), verifyJWT([ROLES.ADMIN, ROLES.TEACHER]), addStudentsAttendance)
     .put(validate(attendanceValidation.updateStudentAttendance), verifyJWT([ROLES.ADMIN, ROLES.TEACHER]), updateStudentAttendance);
 
 // Individual student attendance queries
 router.route('/student')
     .get(validate(attendanceValidation.getAttendanceOfAnyStudentForSpecificCourseInSemester), verifyJWT([ROLES.ADMIN, ROLES.TEACHER]), getAttendanceOfStudentForSpecificCourseInSemester);
-
 
 router.route('/me')
     .get(validate(attendanceValidation.getAttendanceOfSelfForSpecificCourseInSemester), verifyJWT([ROLES.STUDENT]), getAttendanceOfStudentForSpecificCourseInSemester);
@@ -56,5 +54,9 @@ router.route('/bulk/update')
         verifyJWT([ROLES.ADMIN, ROLES.TEACHER]),
         bulkUpdateStudentAttendance
     );
+
+// Get single attendance by ID (must be LAST to avoid catching named routes)
+router.route('/:attendanceId')
+    .get(validate(attendanceValidation.getAttendanceById), verifyJWT([ROLES.ADMIN, ROLES.TEACHER]), getAttendanceById);
 
 export default router;

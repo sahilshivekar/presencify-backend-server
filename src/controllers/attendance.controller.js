@@ -27,7 +27,7 @@ import httpStatus from 'http-status';
 // removed logger import as per request to remove logs
 
 
-//* create attendance sheet type thing where student ids will be added
+//* Creates attendance record and automatically marks all students in the class as absent
 const createAttendance = asyncHandler(async (req, res) => {
     const {
         classId,
@@ -58,69 +58,59 @@ const createAttendance = asyncHandler(async (req, res) => {
     })
 
     if (checkIfAttendaceAlreadyCreatedForTodaysClass) {
-        return res.status(httpStatus.CONFLICT).json(new ApiResponse(httpStatus.CONFLICT, "Attendance already exists", checkIfAttendaceAlreadyCreatedForTodaysClass));
+        return res.status(httpStatus.OK).json(new ApiResponse(httpStatus.OK, "Attendance already exists", checkIfAttendaceAlreadyCreatedForTodaysClass));
     }
 
-    const attendance = await Attendance.create({
-        classId: classId,
-        date: date
-    });
+    // Get all students for this class (batch-specific or division-wide)
+    let studentIds = [];
 
-    res.status(httpStatus.CREATED).json(new ApiResponse(httpStatus.CREATED, "Attendance created successfully", attendance));
-
-})
-
-
-
-// ! this will be used by the teacher initially to mark all the students as absent so that attendance for all the students will remain in the database
-// ! or if the teacher manually want to add attendance
-const addStudentsAttendance = asyncHandler(async (req, res) => {
-    const {
-        attendanceId,
-        presentStudentIds,
-        absentStudentIds
-    } = req.body;
-
-    const attendance = await Attendance.findByPk(attendanceId)
-
-    if (!attendance) {
-        throw new ApiError(httpStatus.NOT_FOUND, "Attendance not found")
+    if (classObj.batchId) {
+        // Get students in this specific batch
+        const studentBatches = await StudentBatch.findAll({
+            where: {
+                batchId: classObj.batchId,
+                endDate: null
+            },
+            attributes: ['studentId']
+        });
+        studentIds = studentBatches.map(sb => sb.studentId);
+    } else {
+        // Get all students in the division
+        const studentDivisions = await StudentDivision.findAll({
+            where: {
+                divisionId: division.id,
+                endDate: null
+            },
+            attributes: ['studentId']
+        });
+        studentIds = studentDivisions.map(sd => sd.studentId);
     }
 
-    //!check if attendance is already added or not 
-    const alreadyAddedAttendance = await AttendanceStudent.findOne({
-        where: {
-            attendanceId: attendanceId
-        }
-    })
-
-    if (alreadyAddedAttendance) {
-        throw new ApiError(httpStatus.CONFLICT, "Attendance is already added. Use the update student attendance feature to modify students attendance status.")
+    if (studentIds.length === 0) {
+        throw new ApiError(httpStatus.BAD_REQUEST, "No students found in this class");
     }
 
-    const classObj = await Class.findByPk(attendance.classId);
-    const timetable = await Timetable.findByPk(classObj.timetableId);
-
-    // check course and semester id to know whether to update students individual channel or not
-    const division = await Division.findByPk(timetable.divisionId);
-    const semester = await Semester.findByPk(division.semesterId);
-
+    // Create attendance and mark all students as absent in a transaction
     const transaction = await sequelize.transaction();
     try {
+        const attendance = await Attendance.create({
+            classId: classId,
+            date: date
+        }, { transaction });
+
+        // Mark all students as absent by default
         await AttendanceStudent.bulkCreate(
-            [...presentStudentIds.map(studentId => ({
-                attendanceId,
-                studentId,
-                attendanceStatus: true
+            studentIds.map(studentId => ({
+                attendanceId: attendance.id,
+                studentId: studentId,
+                attendanceStatus: false // All students marked as absent initially
             })),
-            ...absentStudentIds.map(studentId => ({
-                attendanceId,
-                studentId,
-                attendanceStatus: false
-            }))],
             { transaction }
         );
+
         await transaction.commit();
+
+        res.status(httpStatus.CREATED).json(new ApiResponse(httpStatus.CREATED, "Attendance created successfully with all students marked as absent", attendance));
     } catch (error) {
         await transaction.rollback();
         if (error.name === 'SequelizeForeignKeyConstraintError') {
@@ -128,8 +118,6 @@ const addStudentsAttendance = asyncHandler(async (req, res) => {
         }
         throw error;
     }
-
-    res.status(httpStatus.CREATED).json(new ApiResponse(httpStatus.CREATED, "Students attendance added successfully", null));
 })
 
 
@@ -173,11 +161,11 @@ const updateStudentAttendance = asyncHandler(async (req, res) => {
 //* bulk update attendance status for multiple students
 const bulkUpdateStudentAttendance = asyncHandler(async (req, res) => {
     const { attendanceUpdates } = req.body;
-    
+
     // logging removed
-    
+
     const transaction = await sequelize.transaction();
-    
+
     try {
         // Validate all attendance records exist
         const attendanceIds = [...new Set(attendanceUpdates.map(update => update.attendanceId))];
@@ -186,17 +174,17 @@ const bulkUpdateStudentAttendance = asyncHandler(async (req, res) => {
             attributes: ['id'],
             transaction
         });
-        
+
         const existingAttendanceIds = existingAttendances.map(attendance => attendance.id);
         const invalidAttendanceIds = attendanceIds.filter(id => !existingAttendanceIds.includes(id));
-        
+
         if (invalidAttendanceIds.length > 0) {
             throw new ApiError(
-                httpStatus.NOT_FOUND, 
+                httpStatus.NOT_FOUND,
                 `Attendance records not found: ${invalidAttendanceIds.join(', ')}`
             );
         }
-        
+
         // Validate all students exist
         const studentIds = [...new Set(attendanceUpdates.map(update => update.studentId))];
         const existingStudents = await Student.findAll({
@@ -204,17 +192,17 @@ const bulkUpdateStudentAttendance = asyncHandler(async (req, res) => {
             attributes: ['id'],
             transaction
         });
-        
+
         const existingStudentIds = existingStudents.map(student => student.id);
         const invalidStudentIds = studentIds.filter(id => !existingStudentIds.includes(id));
-        
+
         if (invalidStudentIds.length > 0) {
             throw new ApiError(
-                httpStatus.NOT_FOUND, 
+                httpStatus.NOT_FOUND,
                 `Students not found: ${invalidStudentIds.join(', ')}`
             );
         }
-        
+
         // Validate all attendance-student combinations exist
         const attendanceStudentChecks = await Promise.all(
             attendanceUpdates.map(async (update) => {
@@ -228,15 +216,15 @@ const bulkUpdateStudentAttendance = asyncHandler(async (req, res) => {
                 return attendanceStudent ? null : update;
             })
         );
-        
+
         const invalidCombinations = attendanceStudentChecks.filter(Boolean);
         if (invalidCombinations.length > 0) {
             throw new ApiError(
-                httpStatus.NOT_FOUND, 
+                httpStatus.NOT_FOUND,
                 `Invalid attendance-student combinations found`
             );
         }
-        
+
         // Filter out updates that don't change the status
         const validUpdates = [];
         for (const update of attendanceUpdates) {
@@ -247,19 +235,19 @@ const bulkUpdateStudentAttendance = asyncHandler(async (req, res) => {
                 },
                 transaction
             });
-            
+
             if (existingRecord && existingRecord.attendanceStatus !== update.newAttendanceStatus) {
                 validUpdates.push(update);
             }
         }
-        
+
         if (validUpdates.length === 0) {
             throw new ApiError(
-                httpStatus.BAD_REQUEST, 
+                httpStatus.BAD_REQUEST,
                 "No attendance status changes to apply"
             );
         }
-        
+
         // Perform bulk updates
         let updatedCount = 0;
         for (const update of validUpdates) {
@@ -275,10 +263,10 @@ const bulkUpdateStudentAttendance = asyncHandler(async (req, res) => {
             );
             updatedCount += affectedRows;
         }
-        
-    await transaction.commit();
-    // logging removed
-        
+
+        await transaction.commit();
+        // logging removed
+
         res
             .status(httpStatus.OK)
             .json(
@@ -288,7 +276,7 @@ const bulkUpdateStudentAttendance = asyncHandler(async (req, res) => {
                     { updatedCount, processedUpdates: validUpdates.length }
                 )
             );
-            
+
     } catch (error) {
         if (!transaction.finished) {
             await transaction.rollback();
@@ -798,79 +786,11 @@ const sendAttendanceReport = asyncHandler(async (req, res) => {
         throw error;
     }
 })
-// following controller needed to get attendance in diff aspects    
-// use only for getting attendance from a attendance id
-const getAttendance = asyncHandler(async (req, res) => {
-    const {
-        date,
-        attendanceId,
-        classId,
-        studentId,
-        courseId,
-        semesterId,
-        divisionId,
-        batchId,
-        startDate,
-        endDate
-    } = req.query;
+// Get a single attendance record by its ID with all related data
+const getAttendanceById = asyncHandler(async (req, res) => {
+    const { attendanceId } = req.params;
 
-    if (studentId) {
-        const student = await Student.findByPk(studentId);
-        if (!student) {
-            throw new ApiError(httpStatus.NOT_FOUND, "Student not found")
-        }
-    }
-
-    if (courseId) {
-        const course = await Course.findByPk(courseId);
-        if (!course) {
-            throw new ApiError(httpStatus.NOT_FOUND, "Course not found")
-        }
-    }
-
-    if (semesterId) {
-        const semester = await Semester.findByPk(semesterId);
-        if (!semester) {
-            throw new ApiError(httpStatus.NOT_FOUND, "Semester not found")
-        }
-    }
-
-    if (divisionId) {
-        const division = await Division.findByPk(divisionId);
-        if (!division) {
-            throw new ApiError(httpStatus.NOT_FOUND, "Division not found")
-        }
-    }
-
-    if (attendanceId) {
-        const attendance = await Attendance.findByPk(attendanceId);
-        if (!attendance) {
-            throw new ApiError(httpStatus.NOT_FOUND, "Attendance not found")
-        }
-    }
-
-    if (classId) {
-        const classObj = await Class.findByPk(classId);
-        if (!classObj) {
-            throw new ApiError(httpStatus.NOT_FOUND, "Class not found")
-        }
-    }
-
-    if (courseId) {
-        const course = await Course.findByPk(courseId);
-        if (!course) {
-            throw new ApiError(httpStatus.NOT_FOUND, "Course not found")
-        }
-    }
-
-    const attendance = await Attendance.findAll({
-        where: {
-            [Op.and]: [
-                ...(attendanceId ? [{ id: attendanceId }] : []),
-                ...(date ? [{ date: date }] : []),
-                ...(classId ? [{ classId: classId }] : []),
-            ],
-        },
+    const attendance = await Attendance.findByPk(attendanceId, {
         include: [
             {
                 model: Class,
@@ -881,11 +801,16 @@ const getAttendance = asyncHandler(async (req, res) => {
                         model: Course,
                         required: true,
                         duplicating: false,
-                        where: {
-                            [Op.and]: [
-                                ...(courseId ? [{ id: courseId }] : []),
-                            ]
-                        }
+                    },
+                    {
+                        model: Room,
+                        required: false,
+                        duplicating: false,
+                    },
+                    {
+                        model: Teacher,
+                        required: false,
+                        duplicating: false,
                     },
                     {
                         model: Timetable,
@@ -896,21 +821,18 @@ const getAttendance = asyncHandler(async (req, res) => {
                                 model: Division,
                                 required: true,
                                 duplicating: false,
-                                where: {
-                                    [Op.and]: [
-                                        ...(divisionId ? [{ id: divisionId }] : []),
-                                    ]
-                                },
                                 include: [
                                     {
                                         model: Semester,
                                         required: true,
                                         duplicating: false,
-                                        where: {
-                                            [Op.and]: [
-                                                ...(semesterId ? [{ id: semesterId }] : []),
-                                            ]
-                                        }
+                                        include: [
+                                            {
+                                                model: Branch,
+                                                required: false,
+                                                duplicating: false,
+                                            }
+                                        ]
                                     }
                                 ]
                             }
@@ -920,30 +842,265 @@ const getAttendance = asyncHandler(async (req, res) => {
             },
             {
                 model: AttendanceStudent,
-                required: true,
+                required: false,
                 duplicating: false,
                 include: [
                     {
                         model: Student,
                         required: true,
                         duplicating: false,
-                        where: {
-                            [Op.and]: [
-                                ...(studentId ? [{ id: studentId }] : []),
-                            ]
-                        }
                     },
                 ]
             },
         ]
-    })
-    // courseid, semesterid, studentId
+    });
 
     if (!attendance) {
-        throw new ApiError(httpStatus.NOT_FOUND, "Attendance not found")
+        throw new ApiError(httpStatus.NOT_FOUND, "Attendance not found");
     }
 
     res.status(httpStatus.OK).json(new ApiResponse(httpStatus.OK, "Attendance fetched successfully", attendance));
+});
+
+// Get paginated attendance records with optional filters
+const getAttendances = asyncHandler(async (req, res) => {
+    const {
+        date,
+        classId,
+        studentId,
+        courseId,
+        semesterId,
+        divisionId,
+        batchId,
+        branchId,
+        semesterNumber,
+        academicStartYear,
+        academicEndYear,
+        page = 1,
+        limit = 10
+    } = req.query;
+
+    const offset = (parseInt(page, 10) - 1) * parseInt(limit, 10);
+
+    // Validate referenced entities exist
+    if (studentId) {
+        const student = await Student.findByPk(studentId);
+        if (!student) {
+            throw new ApiError(httpStatus.NOT_FOUND, "Student not found");
+        }
+    }
+
+    if (courseId) {
+        const course = await Course.findByPk(courseId);
+        if (!course) {
+            throw new ApiError(httpStatus.NOT_FOUND, "Course not found");
+        }
+    }
+
+    if (semesterId) {
+        const semester = await Semester.findByPk(semesterId);
+        if (!semester) {
+            throw new ApiError(httpStatus.NOT_FOUND, "Semester not found");
+        }
+    }
+
+    if (divisionId) {
+        const division = await Division.findByPk(divisionId);
+        if (!division) {
+            throw new ApiError(httpStatus.NOT_FOUND, "Division not found");
+        }
+    }
+
+    if (classId) {
+        const classObj = await Class.findByPk(classId);
+        if (!classObj) {
+            throw new ApiError(httpStatus.NOT_FOUND, "Class not found");
+        }
+    }
+
+    if (batchId) {
+        const batch = await Batch.findByPk(batchId);
+        if (!batch) {
+            throw new ApiError(httpStatus.NOT_FOUND, "Batch not found");
+        }
+    }
+
+    if (branchId) {
+        const branch = await Branch.findByPk(branchId);
+        if (!branch) {
+            throw new ApiError(httpStatus.NOT_FOUND, "Branch not found");
+        }
+    }
+
+    // Build attendance where clause
+    const attendanceWhere = {};
+    if (date) attendanceWhere.date = date;
+    if (classId) attendanceWhere.classId = classId;
+
+    // Build semester where clause
+    const semesterWhere = {};
+    if (semesterId) semesterWhere.id = semesterId;
+    if (branchId) semesterWhere.branchId = branchId;
+    if (semesterNumber) semesterWhere.semesterNumber = Number(semesterNumber);
+    if (academicStartYear) semesterWhere.academicStartYear = Number(academicStartYear);
+    if (academicEndYear) semesterWhere.academicEndYear = Number(academicEndYear);
+
+    // Build class where clause for batchId
+    const classWhere = {};
+    if (batchId) classWhere.batchId = batchId;
+
+    // STEP 1: Get all matching attendance IDs with filters (for counting and pagination)
+    const allMatchingIds = await Attendance.findAll({
+        attributes: ['id'],
+        where: attendanceWhere,
+        include: [
+            {
+                model: Class,
+                required: true,
+                attributes: [],
+                where: Object.keys(classWhere).length > 0 ? classWhere : undefined,
+                include: [
+                    {
+                        model: Course,
+                        required: true,
+                        attributes: [],
+                        where: courseId ? { id: courseId } : undefined,
+                    },
+                    {
+                        model: Timetable,
+                        required: true,
+                        attributes: [],
+                        include: [
+                            {
+                                model: Division,
+                                required: true,
+                                attributes: [],
+                                where: divisionId ? { id: divisionId } : undefined,
+                                include: [
+                                    {
+                                        model: Semester,
+                                        required: true,
+                                        attributes: [],
+                                        where: Object.keys(semesterWhere).length > 0 ? semesterWhere : undefined,
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                ]
+            },
+            // Add studentId filter if provided
+            ...(studentId ? [{
+                model: AttendanceStudent,
+                required: true,
+                attributes: [],
+                include: [
+                    {
+                        model: Student,
+                        required: true,
+                        attributes: [],
+                        where: { id: studentId }
+                    },
+                ]
+            }] : [])
+        ],
+        order: [['date', 'DESC'], ['id', 'ASC']], // Add secondary sort for consistency
+        subQuery: false,
+        raw: true
+    });
+
+    // Deduplicate IDs (JOINs may create duplicates in rare cases)
+    const uniqueIdSet = new Set();
+    const uniqueIds = [];
+    for (const item of allMatchingIds) {
+        if (!uniqueIdSet.has(item.id)) {
+            uniqueIdSet.add(item.id);
+            uniqueIds.push(item);
+        }
+    }
+
+    const totalCount = uniqueIds.length;
+
+    // If no results, return empty response
+    if (totalCount === 0) {
+        return res.status(httpStatus.OK).json(new ApiResponse(httpStatus.OK, "Attendances fetched successfully", {
+            attendances: [],
+            totalCount: 0,
+            page: parseInt(page, 10),
+            limit: parseInt(limit, 10),
+            totalPages: 0
+        }));
+    }
+
+    // Apply pagination to the IDs
+    const paginatedIds = uniqueIds.slice(offset, offset + parseInt(limit, 10));
+
+    // STEP 2: Fetch full records with all includes using the paginated IDs
+    const attendanceIds = paginatedIds.map(a => a.id);
+    
+    const attendances = await Attendance.findAll({
+        where: {
+            id: {
+                [Op.in]: attendanceIds
+            }
+        },
+        include: [
+            {
+                model: Class,
+                required: true,
+                include: [
+                    {
+                        model: Course,
+                        required: true,
+                    },
+                    {
+                        model: Timetable,
+                        required: true,
+                        include: [
+                            {
+                                model: Division,
+                                required: true,
+                                include: [
+                                    {
+                                        model: Semester,
+                                        required: true,
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    {
+                        model: Room,
+                        required: false,
+                    },
+                    {
+                        model: Teacher,
+                        required: false,
+                    }
+                ]
+            },
+            {
+                model: AttendanceStudent,
+                required: false,
+                include: [
+                    {
+                        model: Student,
+                        required: true,
+                        where: studentId ? { id: studentId } : undefined,
+                    },
+                ]
+            },
+        ],
+        order: [['date', 'DESC'], ['id', 'ASC']] // Same order as step 1
+    });
+
+    res.status(httpStatus.OK).json(new ApiResponse(httpStatus.OK, "Attendances fetched successfully", {
+        attendances: attendances,
+        totalCount: totalCount,
+        page: parseInt(page, 10),
+        limit: parseInt(limit, 10),
+        totalPages: Math.ceil(totalCount / parseInt(limit, 10))
+    }));
 })
 
 
@@ -1021,13 +1178,13 @@ const getActiveAttendanceSheet = asyncHandler(async (req, res) => {
 
 export {
     removeAttendance,
-    addStudentsAttendance,
     updateStudentAttendance,
     bulkUpdateStudentAttendance,
     createAttendance,
     getAttendanceOfStudentForSpecificCourseInSemester,
     getAttendanceOfAllForSemesterDivisionBatchCourse,
     sendAttendanceReport,
-    getAttendance,
+    getAttendanceById,
+    getAttendances,
     getActiveAttendanceSheet
 }

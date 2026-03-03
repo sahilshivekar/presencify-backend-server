@@ -72,53 +72,109 @@ const getCourses = asyncHandler(async (req, res) => {
 
     const offset = (parseInt(page, 10) - 1) * parseInt(limit, 10);
 
-    const courses = await Course.findAndCountAll({
+    // STEP 1: Get all matching course IDs with filters (lightweight query for counting and pagination)
+    const allMatchingIds = await Course.findAll({
+        attributes: ['id'],
         where: whereClause,
         include: [
             {
                 model: BranchCourseSemester,
                 required: branchId || semesterNumber ? true : false,
                 where: branchCourseSemesterWhereClause,
-                duplicating: false,
-                include: {
-                    model: Branch,
-                    required: true,
-                    duplicating: false,
-                }
+                attributes: [],
             },
             {
                 model: Scheme,
                 required: true,
                 where: schemeClause,
-                duplicating: false,
-                include: {
-                    model: University,
-                    required: true,
-                    duplicating: false,
-                }
+                attributes: [],
             },
             {
                 model: TeacherTeachesCourse,
                 required: teacherIds ? true : false,
                 where: teacherClause,
-                duplicating: false,
+                attributes: [],
+            }
+        ],
+        order: [['name', 'ASC'], ['id', 'ASC']], // Add secondary sort for consistency
+        subQuery: false,
+        raw: true
+    });
+
+    // Deduplicate IDs (JOINs may create duplicates when Course has multiple branches/teachers)
+    const uniqueIdSet = new Set();
+    const uniqueIds = [];
+    for (const item of allMatchingIds) {
+        if (!uniqueIdSet.has(item.id)) {
+            uniqueIdSet.add(item.id);
+            uniqueIds.push(item);
+        }
+    }
+
+    const totalCount = uniqueIds.length;
+
+    // If getAll is false, apply pagination
+    let paginatedIds;
+    if (getAll === false && limit) {
+        paginatedIds = uniqueIds.slice(offset, offset + parseInt(limit, 10));
+    } else {
+        paginatedIds = uniqueIds;
+    }
+
+    // If no results, return empty response
+    if (paginatedIds.length === 0) {
+        return res.status(httpStatus.OK).json(
+            new ApiResponse(
+                httpStatus.OK,
+                "Courses retrieved successfully.",
+                {
+                    courses: [],
+                    totalCount: totalCount
+                }
+            )
+        );
+    }
+
+    // STEP 2: Fetch full records with all includes using the paginated IDs
+    const courseIds = paginatedIds.map(c => c.id);
+
+    const courses = await Course.findAll({
+        where: {
+            id: {
+                [Op.in]: courseIds
+            }
+        },
+        include: [
+            {
+                model: BranchCourseSemester,
+                required: false,
+                separate: true, // Fetch in separate query to avoid JOIN duplicates
+                include: {
+                    model: Branch,
+                    required: true,
+                }
+            },
+            {
+                model: Scheme,
+                required: true,
+                include: {
+                    model: University,
+                    required: true,
+                }
+            },
+            {
+                model: TeacherTeachesCourse,
+                required: false,
+                separate: true, // Fetch in separate query to avoid JOIN duplicates
                 include: {
                     model: Teacher,
                     required: true,
-                    duplicating: false,
                 }
             }
         ],
-        order: [['name', 'ASC']],
-        ...(limit && getAll === false ? { offset: offset, } : {}),
-        ...(limit && getAll === false ? { limit: parseInt(limit, 10) } : {})
+        order: [['name', 'ASC'], ['id', 'ASC']] // Same order as step 1
     });
 
-    // server is sending duplicate values, the issue is not figured out yet even after hours of debugging. 
-    // This issue needs to be solved in future
-    // const coursesList = courses.rows.map(course => course.name);
-    // console.log(page)        
-    // console.log('Courses retrieved:', JSON.stringify(coursesList));
     res
         .status(httpStatus.OK)
         .json(
@@ -126,8 +182,8 @@ const getCourses = asyncHandler(async (req, res) => {
                 httpStatus.OK,
                 "Courses retrieved successfully.",
                 {
-                    courses: courses.rows,
-                    totalCount: courses.count
+                    courses: courses,
+                    totalCount: totalCount
                 }
             )
         );
