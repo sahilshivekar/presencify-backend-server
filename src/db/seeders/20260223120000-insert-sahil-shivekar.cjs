@@ -117,7 +117,7 @@ module.exports = {
             student_division_id: uuidv4(),
             student_id: studentId,
             division_id: division.division_id,
-            start_date: '2025-07-08',
+            start_date: '2026-01-08',
             end_date: null,
             created_at: new Date(),
             updated_at: new Date()
@@ -128,7 +128,7 @@ module.exports = {
             student_batch_id: uuidv4(),
             student_id: studentId,
             batch_id: batch.batch_id,
-            start_date: '2025-07-08',
+            start_date: '2026-01-08',
             end_date: null,
             created_at: new Date(),
             updated_at: new Date()
