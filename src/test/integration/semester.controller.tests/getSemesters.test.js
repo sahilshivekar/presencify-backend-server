@@ -138,4 +138,37 @@ describe('Semester API - GET /api/v1/semesters', () => {
     expect(res.body.success).toBe(true);
     expect(res.body.data.semesters.length).toBe(3);
   });
+
+  test('should filter by isEven=true', async () => {
+    const res = await request(app)
+      .get('/api/v1/semesters')
+      .query({ isEven: true, isOdd: false })
+      .set('Authorization', `Bearer ${adminToken}`);
+    expect(res.status).toBe(httpStatus.OK);
+    expect(res.body.success).toBe(true);
+    expect(res.body.data.totalCount).toBe(1);
+    expect(res.body.data.semesters[0].semesterNumber).toBe(2);
+  });
+
+  test('should filter by isOdd=true', async () => {
+    const res = await request(app)
+      .get('/api/v1/semesters')
+      .query({ isOdd: true, isEven: false })
+      .set('Authorization', `Bearer ${adminToken}`);
+    expect(res.status).toBe(httpStatus.OK);
+    expect(res.body.success).toBe(true);
+    expect(res.body.data.totalCount).toBe(2);
+    const semesterNumbers = res.body.data.semesters.map(s => s.semesterNumber).sort();
+    expect(semesterNumbers).toEqual([1, 3]);
+  });
+
+  test('should return all when both isEven and isOdd are true', async () => {
+    const res = await request(app)
+      .get('/api/v1/semesters')
+      .query({ isEven: true, isOdd: true })
+      .set('Authorization', `Bearer ${adminToken}`);
+    expect(res.status).toBe(httpStatus.OK);
+    expect(res.body.success).toBe(true);
+    expect(res.body.data.totalCount).toBe(3);
+  });
 });

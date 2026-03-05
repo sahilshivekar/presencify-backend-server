@@ -26,6 +26,8 @@ const getSemesters = asyncHandler(async (req, res) => {
         page = 1,
         limit = 10,
         getAll = false,
+        isEven = true,
+        isOdd = true,
     } = req.query;
 
     const whereClause = {};
@@ -57,6 +59,16 @@ const getSemesters = asyncHandler(async (req, res) => {
         whereClause.schemeId = {
             [Op.eq]: schemeId
         }
+    }
+
+    if (isEven && !isOdd) {
+        whereClause[Op.and] = whereClause[Op.and] || [];
+        whereClause[Op.and].push(sequelize.literal('semester_number % 2 = 0'));
+    }
+
+    if (isOdd && !isEven) {
+        whereClause[Op.and] = whereClause[Op.and] || [];
+        whereClause[Op.and].push(sequelize.literal('semester_number % 2 = 1'));
     }
 
     const offset = (parseInt(page, 10) - 1) * parseInt(limit, 10);
