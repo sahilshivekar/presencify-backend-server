@@ -35,6 +35,55 @@ const getYearFromSemesterNumber = (semesterNumber) => {
     return "Invalid semester number"
 }
 
+const WEEK_DAY_TO_INDEX = {
+    Sunday: 0,
+    Monday: 1,
+    Tuesday: 2,
+    Wednesday: 3,
+    Thursday: 4,
+    Friday: 5,
+    Saturday: 6
+};
+
+const parseDateOnly = (dateString) => {
+    const [year, month, day] = dateString.split('-').map(Number);
+    return new Date(year, month - 1, day);
+};
+
+const getNextOccurrenceDate = ({
+    classDayOfWeek,
+    classStartTime,
+    activeFrom,
+    activeTill,
+    todayDate,
+    currentTime
+}) => {
+    const targetDayIndex = WEEK_DAY_TO_INDEX[classDayOfWeek];
+    if (targetDayIndex === undefined) {
+        return null;
+    }
+
+    const firstSearchDate = activeFrom > todayDate ? activeFrom : todayDate;
+    const baseDate = parseDateOnly(firstSearchDate);
+
+    const dayGap = (targetDayIndex - baseDate.getDay() + 7) % 7;
+    baseDate.setDate(baseDate.getDate() + dayGap);
+
+    const nextOccurrenceDate = getDateStringFromObj(baseDate);
+
+    if (nextOccurrenceDate === todayDate && classStartTime < currentTime) {
+        baseDate.setDate(baseDate.getDate() + 7);
+    }
+
+    const adjustedOccurrenceDate = getDateStringFromObj(baseDate);
+
+    if (adjustedOccurrenceDate > activeTill) {
+        return null;
+    }
+
+    return adjustedOccurrenceDate;
+};
+
 const getThrowableConflictMessage = async (conflictType, conflictName) => {
     const conflitCourse = await Course.findByPk(conflictType.courseId)
     const conflictTimeTable = await Timetable.findByPk(conflictType.timetableId)
@@ -406,6 +455,187 @@ const getClasses = asyncHandler(async (req, res) => {
     res.status(httpStatus.OK).json(new ApiResponse(httpStatus.OK, "Classes retrieved successfully.", {
         classes: classes.rows,
         totalCount: classes.count
+    }));
+});
+
+const getMyUpcomingClasses = asyncHandler(async (req, res) => {
+    const studentId = req.student?.id;
+
+    if (!studentId) {
+        throw new ApiError(httpStatus.UNAUTHORIZED, 'Student authentication required');
+    }
+
+    const now = new Date();
+    const todayDate = getDateStringFromObj(now);
+    const currentTime = now.toTimeString().slice(0, 8);
+
+    const studentDivisions = await StudentDivision.findAll({
+        where: {
+            studentId,
+            [Op.and]: [
+                { startDate: { [Op.lte]: todayDate } },
+                {
+                    [Op.or]: [
+                        { endDate: null },
+                        { endDate: { [Op.gte]: todayDate } }
+                    ]
+                }
+            ]
+        },
+        attributes: ['divisionId'],
+        raw: true
+    });
+
+    const divisionIds = [...new Set(studentDivisions.map((studentDivision) => studentDivision.divisionId))];
+
+    if (divisionIds.length === 0) {
+        return res.status(httpStatus.OK).json(new ApiResponse(httpStatus.OK, 'Upcoming classes retrieved successfully.', {
+            classes: [],
+            totalCount: 0
+        }));
+    }
+
+    const studentBatches = await StudentBatch.findAll({
+        where: {
+            studentId,
+            [Op.and]: [
+                { startDate: { [Op.lte]: todayDate } },
+                {
+                    [Op.or]: [
+                        { endDate: null },
+                        { endDate: { [Op.gte]: todayDate } }
+                    ]
+                }
+            ]
+        },
+        attributes: ['batchId'],
+        raw: true
+    });
+
+    const batchIds = [...new Set(studentBatches.map((studentBatch) => studentBatch.batchId))];
+
+    const timetables = await Timetable.findAll({
+        where: {
+            divisionId: {
+                [Op.in]: divisionIds
+            }
+        },
+        attributes: ['id'],
+        raw: true
+    });
+
+    const timetableIds = [...new Set(timetables.map((timetable) => timetable.id))];
+
+    if (timetableIds.length === 0) {
+        return res.status(httpStatus.OK).json(new ApiResponse(httpStatus.OK, 'Upcoming classes retrieved successfully.', {
+            classes: [],
+            totalCount: 0
+        }));
+    }
+
+    const classes = await Class.findAll({
+        where: {
+            [Op.and]: [
+                {
+                    timetableId: {
+                        [Op.in]: timetableIds
+                    }
+                },
+                {
+                    activeTill: {
+                        [Op.gte]: todayDate
+                    }
+                },
+                {
+                    [Op.or]: [
+                        { batchId: null },
+                        ...(batchIds.length > 0 ? [{ batchId: { [Op.in]: batchIds } }] : [])
+                    ]
+                }
+            ]
+        },
+        include: [
+            {
+                model: Course,
+                required: true,
+                duplicating: false
+            },
+            {
+                model: Timetable,
+                required: true,
+                duplicating: false,
+                include: [
+                    {
+                        model: Division,
+                        required: true,
+                        duplicating: false,
+                        include: [
+                            {
+                                model: Semester,
+                                required: true,
+                                duplicating: false,
+                                include: [
+                                    {
+                                        model: Branch,
+                                        required: true,
+                                        duplicating: false
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                model: Room,
+                required: true,
+                duplicating: false
+            },
+            {
+                model: Batch,
+                required: false,
+                duplicating: false
+            },
+            {
+                model: Teacher,
+                required: true,
+                duplicating: false
+            }
+        ]
+    });
+
+    const upcomingClasses = classes
+        .map((classObj) => {
+            const nextClassDate = getNextOccurrenceDate({
+                classDayOfWeek: classObj.dayOfWeek,
+                classStartTime: classObj.startTime,
+                activeFrom: classObj.activeFrom,
+                activeTill: classObj.activeTill,
+                todayDate,
+                currentTime
+            });
+
+            if (!nextClassDate) {
+                return null;
+            }
+
+            return {
+                ...classObj.toJSON(),
+                nextClassDate
+            };
+        })
+        .filter(Boolean)
+        .sort((firstClass, secondClass) => {
+            if (firstClass.nextClassDate !== secondClass.nextClassDate) {
+                return firstClass.nextClassDate.localeCompare(secondClass.nextClassDate);
+            }
+
+            return firstClass.startTime.localeCompare(secondClass.startTime);
+        });
+
+    res.status(httpStatus.OK).json(new ApiResponse(httpStatus.OK, 'Upcoming classes retrieved successfully.', {
+        classes: upcomingClasses,
+        totalCount: upcomingClasses.length
     }));
 });
 
@@ -1413,6 +1643,7 @@ const bulkCreateClassesFromCSV = asyncHandler(async (req, res) => {
 export {
     addClass,
     getClasses,
+    getMyUpcomingClasses,
     getClassById,
     editActiveDatesOfClass,
     removeClass,

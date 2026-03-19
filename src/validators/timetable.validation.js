@@ -16,6 +16,10 @@ const getTimetableById = {
 	params: Joi.object().keys({ id: uuid.required().messages({ 'any.required': 'Timetable ID is required', 'string.guid': 'Timetable ID must be a valid UUID' }) })
 };
 
+const getMyTimetables = {
+	query: Joi.object().max(0)
+};
+
 const addTimetable = {
 	body: Joi.object().keys({
 		divisionId: uuid.required().messages({ 'any.required': 'Division ID is required', 'string.guid': 'Division ID must be a valid UUID' }),
@@ -37,6 +41,7 @@ const removeTimetable = {
 export default {
 	getTimetables,
 	getTimetableById,
+	getMyTimetables,
 	addTimetable,
 	updateTimetable,
 	removeTimetable

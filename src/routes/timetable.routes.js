@@ -2,6 +2,7 @@ import express from 'express';
 import {
     getTimetables,
     getTimetableById,
+    getMyTimetables,
     addTimetable,
     updateTimetable,
     removeTimetable
@@ -24,6 +25,13 @@ router.route('/')
         validate(timetableValidation.addTimetable),
         verifyJWT([ROLES.ADMIN]),
         addTimetable
+    );
+
+router.route('/me')
+    .get(
+        validate(timetableValidation.getMyTimetables),
+        verifyJWT([ROLES.STUDENT]),
+        getMyTimetables
     );
 
 router.route('/:id')

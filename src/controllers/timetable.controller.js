@@ -7,6 +7,7 @@ import { Op } from 'sequelize';
 import Branch from '../db/models/branch.model.js';
 import Semester from '../db/models/semester.model.js';
 import Scheme from '../db/models/scheme.model.js';
+import StudentDivision from '../db/models/studentDivision.model.js';
 import httpStatus from 'http-status';
 
 //! Get all timetables
@@ -132,6 +133,70 @@ const getTimetableById = asyncHandler(async (req, res) => {
         );
 });
 
+//! Get timetables for logged-in student
+const getMyTimetables = asyncHandler(async (req, res) => {
+    const studentId = req.student?.id;
+
+    if (!studentId) {
+        throw new ApiError(httpStatus.UNAUTHORIZED, 'Student authentication required');
+    }
+
+    const studentDivisions = await StudentDivision.findAll({
+        where: { studentId },
+        attributes: ['divisionId'],
+        raw: true
+    });
+
+    const divisionIds = [...new Set(studentDivisions.map((studentDivision) => studentDivision.divisionId))];
+
+    if (divisionIds.length === 0) {
+        return res.status(httpStatus.OK).json(new ApiResponse(httpStatus.OK, 'Timetables retrieved successfully.', {
+            timetables: [],
+            totalCount: 0
+        }));
+    }
+
+    const timetables = await Timetable.findAndCountAll({
+        where: {
+            divisionId: {
+                [Op.in]: divisionIds
+            }
+        },
+        include: [
+            {
+                model: Division,
+                required: true,
+                duplicating: false,
+                include: [
+                    {
+                        model: Semester,
+                        required: true,
+                        duplicating: false,
+                        include: [
+                            {
+                                model: Branch,
+                                required: true,
+                                duplicating: false
+                            },
+                            {
+                                model: Scheme,
+                                required: true,
+                                duplicating: false
+                            }
+                        ]
+                    }
+                ]
+            }
+        ],
+        order: [['updatedAt', 'DESC']]
+    });
+
+    res.status(httpStatus.OK).json(new ApiResponse(httpStatus.OK, 'Timetables retrieved successfully.', {
+        timetables: timetables.rows,
+        totalCount: timetables.count
+    }));
+});
+
 //* Add a timetable
 const addTimetable = asyncHandler(async (req, res) => {
     const {
@@ -193,6 +258,7 @@ const removeTimetable = asyncHandler(async (req, res) => {
 export {
     getTimetables,
     getTimetableById,
+    getMyTimetables,
     addTimetable,
     updateTimetable,
     removeTimetable

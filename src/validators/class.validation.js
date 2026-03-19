@@ -45,6 +45,10 @@ const getClasses = {
 	})
 };
 
+const getMyUpcomingClasses = {
+	query: Joi.object().max(0)
+};
+
 const getClassById = {
 	params: Joi.object().keys({ id: uuid.required().messages({ 'any.required': 'Class ID is required', 'string.guid': 'Class ID must be a valid UUID' }) })
 };
@@ -139,6 +143,7 @@ const bulkCreateClassesFromCSV = {
 export default {
 	addClass,
 	getClasses,
+	getMyUpcomingClasses,
 	getClassById,
 	editActiveDatesOfClass,
 	removeClass,

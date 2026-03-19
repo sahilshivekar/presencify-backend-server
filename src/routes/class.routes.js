@@ -2,6 +2,7 @@ import express from 'express';
 import {
     addClass,
     getClasses,
+    getMyUpcomingClasses,
     getClassById,
     editActiveDatesOfClass,
     removeClass,
@@ -44,6 +45,13 @@ router.route('/cancelled')
         validate(classValidation.cancelClass),
         verifyJWT([ROLES.ADMIN, ROLES.TEACHER]),
         cancelClass
+    );
+
+router.route('/me/upcoming')
+    .get(
+        validate(classValidation.getMyUpcomingClasses),
+        verifyJWT([ROLES.STUDENT]),
+        getMyUpcomingClasses
     );
 
 router.route('/:id')
