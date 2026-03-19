@@ -317,7 +317,7 @@ const verifyCode = asyncHandler(async (req, res) => {
                 httpStatus.OK,
                 "Verification successful!",
                 {
-                    accessToken: newAccessToken, refreshToken: newRefreshToken
+                    student: student, accessToken: newAccessToken, refreshToken: newRefreshToken
                 }
             )
         )
