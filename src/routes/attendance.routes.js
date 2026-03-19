@@ -20,7 +20,7 @@ const router = express.Router();
 
 // Basic CRUD operations for attendance sheets
 router.route('/')
-    .get(validate(attendanceValidation.getAttendances), verifyJWT([ROLES.ADMIN, ROLES.TEACHER]), getAttendances)
+    .get(validate(attendanceValidation.getAttendances), verifyJWT([ROLES.ADMIN, ROLES.TEACHER, ROLES.STUDENT]), getAttendances)
     .post(validate(attendanceValidation.createAttendance), verifyJWT([ROLES.ADMIN, ROLES.TEACHER]), createAttendance)
     .delete(validate(attendanceValidation.removeAttendance), verifyJWT([ROLES.ADMIN, ROLES.TEACHER]), removeAttendance);
 
