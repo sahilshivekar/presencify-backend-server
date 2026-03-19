@@ -43,7 +43,7 @@ module.exports = {
             first_name: teacher.firstName,
             last_name: teacher.lastName,
             middle_name: null,
-            teacher_email: `${teacher.firstName.toLowerCase()}.${teacher.lastName.toLowerCase()}124@gmail.com`,
+            teacher_email: `${teacher.firstName.toLowerCase()}${teacher.lastName.toLowerCase()}124@gmail.com`,
             teacher_phone_number: `+91${9000000000 + teacherCounter++}`,
             teacher_gender: teacher.gender,
             teacher_highest_qualification: "M.Tech",
