@@ -40,7 +40,6 @@ const verifyJWT = (allowedRoles) =>
         let decodedToken;
         try {
             decodedToken = jwt.verify(token, process.env.JWT_ACCESS_TOKEN_SECRET);
-            logger.info(`JWT verified for userId: ${decodedToken?.id}, role: ${decodedToken?.role}`);
         } catch (error) {   
             logger.error(`JWT verification failed: ${error}`);
             throw new ApiError(StatusCodes.UNAUTHORIZED, "Unauthorized request: Invalid token");
@@ -65,8 +64,10 @@ const verifyJWT = (allowedRoles) =>
         });
 
         if (!user) {
-            //logger.error(`User not found for id: ${decodedToken.id}, role: ${decodedToken.role}`);
+            logger.error(`User not found for id: ${decodedToken.id}, role: ${decodedToken.role}`);
             throw new ApiError(StatusCodes.UNAUTHORIZED, "Invalid Access Token: User not found");
+        } else {
+            logger.info(`JWT verified for userId: ${decodedToken?.id}, role: ${decodedToken?.role}`);
         }
 
         // Optional: auto-assign user id to req.body or req.query based on role and method:
