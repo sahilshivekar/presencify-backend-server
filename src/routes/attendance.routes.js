@@ -2,6 +2,7 @@ import express from 'express';
 import {
     removeAttendance,
     updateStudentAttendance,
+    markMyAttendance,
     bulkUpdateStudentAttendance,
     createAttendance,
     getAttendanceOfStudentForSpecificCourseInSemester,
@@ -36,6 +37,13 @@ router.route('/student')
 
 router.route('/me')
     .get(validate(attendanceValidation.getAttendanceOfSelfForSpecificCourseInSemester), verifyJWT([ROLES.STUDENT]), getAttendanceOfStudentForSpecificCourseInSemester);
+
+router.route('/me/mark')
+    .post(
+        validate(attendanceValidation.markMyAttendance),
+        verifyJWT([ROLES.STUDENT]),
+        markMyAttendance
+    );
 
 // Bulk attendance queries (all students)
 router.route('/all')

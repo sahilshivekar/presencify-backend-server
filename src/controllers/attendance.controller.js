@@ -186,6 +186,36 @@ const updateStudentAttendance = asyncHandler(async (req, res) => {
     res.status(httpStatus.OK).json(new ApiResponse(httpStatus.OK, "Students attendance status updated successfully", attendanceStudent));
 })
 
+// used by student to mark own attendance for a specific attendance sheet
+const markMyAttendance = asyncHandler(async (req, res) => {
+    const { attendanceId, studentId } = req.body;
+
+    const attendance = await Attendance.findByPk(attendanceId);
+    if (!attendance) {
+        throw new ApiError(httpStatus.NOT_FOUND, "Attendance not found");
+    }
+
+    const attendanceStudent = await AttendanceStudent.findOne({
+        where: {
+            attendanceId,
+            studentId
+        }
+    });
+
+    if (!attendanceStudent) {
+        throw new ApiError(httpStatus.NOT_FOUND, "Attendance entry for this student not found");
+    }
+
+    if (attendanceStudent.attendanceStatus !== true) {
+        attendanceStudent.attendanceStatus = true;
+        await attendanceStudent.save();
+    }
+
+    res
+        .status(httpStatus.OK)
+        .json(new ApiResponse(httpStatus.OK, "Attendance marked successfully", attendanceStudent));
+});
+
 //* bulk update attendance status for multiple students
 const bulkUpdateStudentAttendance = asyncHandler(async (req, res) => {
     const { attendanceUpdates } = req.body;
@@ -1312,6 +1342,7 @@ const verifyClassroomAttendance = asyncHandler(async (req, res) => {
 export {
     removeAttendance,
     updateStudentAttendance,
+    markMyAttendance,
     bulkUpdateStudentAttendance,
     createAttendance,
     getAttendanceOfStudentForSpecificCourseInSemester,

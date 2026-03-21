@@ -62,6 +62,19 @@ const updateStudentAttendance = {
     })
 };
 
+const markMyAttendance = {
+    body: Joi.object().keys({
+        attendanceId: Joi.string()
+            .uuid()
+            .required()
+            .messages({
+                'string.guid': 'Attendance ID must be a valid UUID',
+                'any.required': 'Attendance ID is required',
+                'string.base': 'Attendance ID must be a string'
+            })
+    })
+};
+
 const bulkUpdateStudentAttendance = {
     body: Joi.object().keys({
         attendanceUpdates: Joi.array().items(
@@ -665,6 +678,7 @@ const verifyClassroomAttendance = {
 export default {
     createAttendance,
     updateStudentAttendance,
+    markMyAttendance,
     bulkUpdateStudentAttendance,
     removeAttendance,
     getAttendanceOfAnyStudentForSpecificCourseInSemester,
