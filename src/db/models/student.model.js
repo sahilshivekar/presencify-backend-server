@@ -253,7 +253,19 @@ Student.init(
                     msg: 'Invalid admission type, Must be DSE or FE'
                 }
             }
-        }
+        },
+        faceDescriptor: {
+            type: Sequelize.ARRAY(Sequelize.FLOAT),
+            allowNull: true,
+            field: 'face_descriptor',
+            validate: {
+                isValidLength(value) {
+                    if (value && value.length !== 128) {
+                        throw new Error('Face descriptor must be exactly 128 dimensions');
+                    }
+                }
+            }
+        },
     },
     {
         sequelize,

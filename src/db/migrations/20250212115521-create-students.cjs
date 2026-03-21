@@ -114,6 +114,11 @@ module.exports = {
                     onDelete: 'CASCADE',
                     field: 'branch_id',
                 },
+                faceDescriptor: {
+                    type: Sequelize.ARRAY(Sequelize.FLOAT),
+                    allowNull: true,
+                    field: 'face_descriptor',
+                },
                 createdAt: {
                     type: Sequelize.DATE,
                     allowNull: false,
