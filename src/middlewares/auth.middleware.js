@@ -76,7 +76,9 @@ const verifyJWT = (allowedRoles) =>
                 req.body.studentId = user.id;
                 //logger.debug(`Assigned studentId to req.body: ${user.id}`);
             } else if (decodedToken.role === ROLES.TEACHER) {
-                req.body.teacherId = user.id;
+                // injecting teacherId is commented for temporary time, since the it's automatically applying itself as id for 
+                // getClass filter criteria if user role is teacher on client side
+                // req.body.teacherId = user.id;
                 //logger.debug(`Assigned teacherId to req.body: ${user.id}`);
             } else if (decodedToken.role === ROLES.ADMIN) {
                 req.body.adminId = user.id;
@@ -89,8 +91,8 @@ const verifyJWT = (allowedRoles) =>
             req.student = user;
             //logger.debug(`Assigned studentId to req.query and req.student: ${user.id}`);
         } else if (decodedToken.role === ROLES.TEACHER) {
-            req.query.teacherId = user.id;
-            req.teacher = user;
+            // req.query.teacherId = user.id;
+            // req.teacher = user;
             //logger.debug(`Assigned teacherId to req.query and req.teacher: ${user.id}`);
         } else if (decodedToken.role === ROLES.ADMIN) {
             req.query.adminId = user.id;
