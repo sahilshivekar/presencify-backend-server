@@ -22,6 +22,24 @@ import { getDateStringFromObj } from "../utils/date.js";
 import Dropout from '../db/models/dropout.model.js'
 import httpStatus from 'http-status';
 import studentValidation from '../validators/student.validation.js';
+import { generateSingleDescriptor } from '../utils/faceRecognition.js';
+
+const getUploadedFilePaths = (files) => {
+    if (!files) return [];
+
+    if (Array.isArray(files)) {
+        return files.map((file) => file?.path).filter(Boolean);
+    }
+
+    if (typeof files === 'object') {
+        return Object.values(files)
+            .flat()
+            .map((file) => file?.path)
+            .filter(Boolean);
+    }
+
+    return [];
+};
 
 //* Get all students
 const getStudents = asyncHandler(async (req, res) => {
@@ -2232,6 +2250,66 @@ const bulkCreateStudentsFromCSV = asyncHandler(async (req, res) => {
     }
 });
 
+const enrollStudentFace = asyncHandler(async (req, res) => {
+    const studentId = req.body?.studentId || req.params?.studentId || req.query?.studentId;
+    const imagePaths = getUploadedFilePaths(req.files);
+
+    if (!imagePaths.length) {
+        throw new ApiError(httpStatus.BAD_REQUEST, "At least one face image is required");
+    }
+
+    try {
+        const student = await Student.findByPk(studentId);
+        if (!student) {
+            throw new ApiError(httpStatus.NOT_FOUND, "Student not found");
+        }
+
+        const descriptors = [];
+        for (const imagePath of imagePaths) {
+            const descriptor = await generateSingleDescriptor(imagePath);
+            if (!descriptor || descriptor.length !== 128) {
+                throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, "Invalid face descriptor generated");
+            }
+            descriptors.push(descriptor);
+        }
+
+        const centroidDescriptor = new Array(128).fill(0);
+        for (const descriptor of descriptors) {
+            for (let i = 0; i < 128; i += 1) {
+                centroidDescriptor[i] += descriptor[i];
+            }
+        }
+
+        for (let i = 0; i < 128; i += 1) {
+            centroidDescriptor[i] /= descriptors.length;
+        }
+
+        student.faceDescriptor = centroidDescriptor;
+        await student.save();
+
+        res
+            .status(httpStatus.OK)
+            .json(
+                new ApiResponse(
+                    httpStatus.OK,
+                    "Student face enrolled successfully",
+                    {
+                        studentId: student.id,
+                        descriptorLength: centroidDescriptor.length,
+                    }
+                )
+            );
+    } finally {
+        for (const imagePath of imagePaths) {
+            try {
+                fs.unlinkSync(imagePath);
+            } catch {
+                // Ignore cleanup failures to avoid masking operational errors.
+            }
+        }
+    }
+});
+
 
 export {
     getStudents,
@@ -2260,5 +2338,6 @@ export {
     bulkAddStudentsToSemester,
     bulkAddStudentsToDivision,
     bulkAddStudentsToBatch,
-    bulkCreateStudentsFromCSV
+    bulkCreateStudentsFromCSV,
+    enrollStudentFace
 }

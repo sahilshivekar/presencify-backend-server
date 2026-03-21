@@ -26,7 +26,8 @@ import {
     bulkAddStudentsToSemester,
     bulkAddStudentsToDivision,
     bulkAddStudentsToBatch,
-    bulkCreateStudentsFromCSV
+    bulkCreateStudentsFromCSV,
+    enrollStudentFace
 } from '../controllers/student.controller.js';
 import { verifyJWT } from '../middlewares/auth.middleware.js';
 import { ROLES } from '../config/roles.js';
@@ -71,6 +72,14 @@ router.route('/image')
         validate(studentValidation.removeStudentImage),
         verifyJWT([ROLES.ADMIN, ROLES.STUDENT]),
         removeStudentImage
+    );
+
+router.route('/face/enroll')
+    .post(
+        upload.array('faceImages'),
+        validate(studentValidation.enrollStudentFace),
+        verifyJWT([ROLES.ADMIN, ROLES.TEACHER]),
+        enrollStudentFace
     );
     
 

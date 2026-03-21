@@ -9,12 +9,14 @@ import {
     sendAttendanceReport,
     getAttendanceById,
     getAttendances,
-    getActiveAttendanceSheet
+    getActiveAttendanceSheet,
+    verifyClassroomAttendance
 } from '../controllers/attendance.controller.js';
 import { verifyJWT } from '../middlewares/auth.middleware.js';
 import { ROLES } from '../config/roles.js';
 import validate from '../middlewares/validate.js';
 import attendanceValidation from '../validators/attendance.validation.js';
+import { upload } from '../middlewares/multer.middleware.js';
 
 const router = express.Router();
 
@@ -42,6 +44,14 @@ router.route('/all')
 // Active attendance sheet operations
 router.route('/active')
     .get(validate(attendanceValidation.getActiveAttendanceSheet), verifyJWT([ROLES.ADMIN, ROLES.TEACHER, ROLES.STUDENT]), getActiveAttendanceSheet);
+
+router.route('/verify-classroom')
+    .post(
+        upload.array('classroomPhotos'),
+        validate(attendanceValidation.verifyClassroomAttendance),
+        verifyJWT([ROLES.ADMIN, ROLES.TEACHER]),
+        verifyClassroomAttendance
+    );
 
 // Reporting functionality
 router.route('/report')

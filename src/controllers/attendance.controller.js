@@ -2,6 +2,7 @@ import { Op } from 'sequelize';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { ApiResponse } from '../utils/ApiResponse.js';
 import { ApiError } from '../utils/ApiError.js';
+import fs from 'fs';
 import Class from '../db/models/class.model.js';
 import Room from '../db/models/room.model.js';
 import Course from '../db/models/course.model.js';
@@ -24,7 +25,34 @@ import { sendNotification } from "../utils/firebaseCloudMessaging.js";
 import StudentFCMToken from "../db/models/studentFCMToken.model.js";
 import StudentBatch from '../db/models/studentBatch.model.js';
 import httpStatus from 'http-status';
+import { generateGroupDescriptors } from '../utils/faceRecognition.js';
 // removed logger import as per request to remove logs
+
+const getUploadedFilePaths = (files) => {
+    if (!files) return [];
+
+    if (Array.isArray(files)) {
+        return files.map((file) => file?.path).filter(Boolean);
+    }
+
+    if (typeof files === 'object') {
+        return Object.values(files)
+            .flat()
+            .map((file) => file?.path)
+            .filter(Boolean);
+    }
+
+    return [];
+};
+
+const calculateEuclideanDistance = (vectorA, vectorB) => {
+    let sum = 0;
+    for (let i = 0; i < 128; i += 1) {
+        const delta = Number(vectorA[i]) - Number(vectorB[i]);
+        sum += delta * delta;
+    }
+    return Math.sqrt(sum);
+};
 
 
 //* Creates attendance record and automatically marks all students in the class as absent
@@ -1176,6 +1204,111 @@ const getActiveAttendanceSheet = asyncHandler(async (req, res) => {
 
 })
 
+const verifyClassroomAttendance = asyncHandler(async (req, res) => {
+    const attendanceId = req.body?.attendanceId || req.params?.attendanceId || req.query?.attendanceId;
+    const photoPaths = getUploadedFilePaths(req.files);
+
+    if (!photoPaths.length) {
+        throw new ApiError(httpStatus.BAD_REQUEST, "At least one classroom photo is required");
+    }
+
+    try {
+        const attendance = await Attendance.findByPk(attendanceId);
+        if (!attendance) {
+            throw new ApiError(httpStatus.NOT_FOUND, "Attendance not found");
+        }
+
+        const attendanceStudents = await AttendanceStudent.findAll({
+            where: { attendanceId },
+            include: [
+                {
+                    model: Student,
+                    required: true,
+                    attributes: ['id', 'faceDescriptor']
+                }
+            ]
+        });
+
+        const liveDescriptors = [];
+        for (const photoPath of photoPaths) {
+            const descriptorsFromPhoto = await generateGroupDescriptors(photoPath);
+            if (descriptorsFromPhoto?.length) {
+                liveDescriptors.push(...descriptorsFromPhoto);
+            }
+        }
+
+        const identifiedStudentIds = new Set();
+
+        if (liveDescriptors.length) {
+            for (const attendanceStudent of attendanceStudents) {
+                const studentDescriptor = attendanceStudent.Student?.faceDescriptor;
+                if (!Array.isArray(studentDescriptor) || studentDescriptor.length !== 128) {
+                    continue;
+                }
+
+                const isPresent = liveDescriptors.some((liveDescriptor) => {
+                    if (!Array.isArray(liveDescriptor) || liveDescriptor.length !== 128) {
+                        return false;
+                    }
+                    return calculateEuclideanDistance(studentDescriptor, liveDescriptor) < 0.6;
+                });
+
+                if (isPresent) {
+                    identifiedStudentIds.add(attendanceStudent.studentId);
+                }
+            }
+        }
+
+        const transaction = await sequelize.transaction();
+        try {
+            const identifiedIds = Array.from(identifiedStudentIds);
+
+            if (identifiedIds.length) {
+                await AttendanceStudent.update(
+                    { attendanceStatus: true },
+                    {
+                        where: {
+                            attendanceId,
+                            studentId: {
+                                [Op.in]: identifiedIds
+                            }
+                        },
+                        transaction
+                    }
+                );
+            }
+
+            await transaction.commit();
+
+            res
+                .status(httpStatus.OK)
+                .json(
+                    new ApiResponse(
+                        httpStatus.OK,
+                        "Classroom attendance verified successfully",
+                        {
+                            attendanceId,
+                            identifiedStudentIds: identifiedIds
+                        }
+                    )
+                );
+        } catch (error) {
+            if (!transaction.finished) {
+                await transaction.rollback();
+            }
+            throw error;
+        }
+    } finally {
+        for (const photoPath of photoPaths) {
+            try {
+                fs.unlinkSync(photoPath);
+            } catch {
+                // Ignore cleanup failures to avoid masking operational errors.
+            }
+        }
+    }
+});
+
 export {
     removeAttendance,
     updateStudentAttendance,
@@ -1186,5 +1319,6 @@ export {
     sendAttendanceReport,
     getAttendanceById,
     getAttendances,
-    getActiveAttendanceSheet
+    getActiveAttendanceSheet,
+    verifyClassroomAttendance
 }

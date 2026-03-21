@@ -240,6 +240,15 @@ const bulkCreateStudentsFromCSV = {
 	// Validation happens per row inside the controller
 };
 
+const enrollStudentFace = {
+	body: Joi.object().keys({
+		studentId: uuid.required().messages({
+			'any.required': 'studentId is required',
+			'string.guid': 'studentId must be a valid UUID'
+		})
+	})
+};
+
 export default {
 	getStudents,
 	addStudent,
@@ -268,6 +277,7 @@ export default {
 	bulkAddStudentsToDivision,
 	bulkAddStudentsToBatch,
 	bulkCreateStudentsFromCSV,
+	enrollStudentFace,
 	csvStudentRowSchema
 };
 
