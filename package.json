@@ -7,7 +7,7 @@
   "scripts": {
     "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
     "start": "node src/server.js",
-    "dev": "nodemon src/server.js",
+    "dev": "nodemon -r ./src/polyfill.cjs src/server.js",
     "seq-mig": "npx sequelize-cli db:migrate",
     "seq-undo": "npx sequelize-cli db:migrate:undo",
     "seq-undo-name": "npx sequelize-cli db:migrate:undo --name",
@@ -36,6 +36,11 @@
   },
   "dependencies": {
     "@faker-js/faker": "^10.0.0",
+    "@tensorflow-models/blazeface": "^0.1.0",
+    "@tensorflow-models/face-landmarks-detection": "^1.0.6",
+    "@tensorflow/tfjs": "^4.22.0",
+    "@tensorflow/tfjs-backend-wasm": "^4.22.0",
+    "@vladmandic/face-api": "^1.7.12",
     "bcrypt": "^5.1.1",
     "cloudinary": "^2.5.1",
     "compression": "^1.8.1",
@@ -53,6 +58,7 @@
     "http-status": "^2.1.0",
     "http-status-codes": "^2.3.0",
     "joi": "^17.13.3",
+    "jpeg-js": "^0.4.4",
     "jsonwebtoken": "^9.0.2",
     "libphonenumber-js": "^1.11.20",
     "moment": "^2.30.1",

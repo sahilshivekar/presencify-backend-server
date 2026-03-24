@@ -1,5 +1,10 @@
 import admin from 'firebase-admin';
-import serviceAccount from '../config/presencify-FCM-sdk-private-key.json' with { type: 'json' };
+import fs from 'fs';
+const serviceAccount = JSON.parse(
+  fs.readFileSync(
+    new URL('../config/presencify-FCM-sdk-private-key.json', import.meta.url)
+  )
+);
 import StudentFCMToken from '../db/models/studentFCMToken.model.js';
 
 admin.initializeApp({
