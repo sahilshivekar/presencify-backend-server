@@ -23,45 +23,64 @@ const initializeModels = async () => {
 };
 
 // 🔹 Image → Tensor (BlazeFace expects RGB normalized, NCHW)
-const imageToTensor = (image) => {
+// 🔹 1. BlazeFace Expects: RGB Order, Normalized to [-1.0, 1.0]
+const imageToBlazeTensor = (image) => {
     const { width, height, data } = image.bitmap;
-
     const size = width * height;
-
     const floatData = new Float32Array(3 * size);
 
-    let rOffset = 0;
-    let gOffset = size;
-    let bOffset = size * 2;
+    for (let i = 0; i < data.length; i += 4) {
+        // Normalize to [-1, 1]
+        const r = (data[i] / 127.5) - 1.0;
+        const g = (data[i + 1] / 127.5) - 1.0;
+        const b = (data[i + 2] / 127.5) - 1.0;
 
-    let pixelIndex = 0;
+        const pixelIndex = i / 4;
+        floatData[pixelIndex] = r;
+        floatData[size + pixelIndex] = g;
+        floatData[size * 2 + pixelIndex] = b;
+    }
+    return new Tensor('float32', floatData, [1, 3, height, width]);
+};
+
+// 🔹 2. SFace Expects: BGR Order, Raw Pixels [0.0, 255.0] (NO DIVISION)
+const imageToSFaceTensor = (image) => {
+    const { width, height, data } = image.bitmap;
+    const size = width * height;
+    const floatData = new Float32Array(3 * size);
 
     for (let i = 0; i < data.length; i += 4) {
-        const r = data[i] / 255;
-        const g = data[i + 1] / 255;
-        const b = data[i + 2] / 255;
+        const r = data[i];     // DO NOT DIVIDE BY 255
+        const g = data[i + 1];
+        const b = data[i + 2];
 
-        floatData[rOffset + pixelIndex] = r;
-        floatData[gOffset + pixelIndex] = g;
-        floatData[bOffset + pixelIndex] = b;
-
-        pixelIndex++;
+        const pixelIndex = i / 4;
+        // BGR ORDER: Blue first, Green second, Red third
+        floatData[pixelIndex] = b;
+        floatData[size + pixelIndex] = g;
+        floatData[size * 2 + pixelIndex] = r;
     }
-
     return new Tensor('float32', floatData, [1, 3, height, width]);
 };
 
 // 🔹 Decode BlazeFace output (simple + stable)
 const extractFace = (outputs) => {
     const boxes = outputs[0].data;
-
     if (boxes.length === 0) return null;
 
-    // first detection
-    const x1 = boxes[0];
-    const y1 = boxes[1];
-    const x2 = boxes[2];
-    const y2 = boxes[3];
+    let x1 = boxes[0];
+    let y1 = boxes[1];
+    let x2 = boxes[2];
+    let y2 = boxes[3];
+
+    // FIX: If BlazeFace gives pixels (e.g., 45.0) instead of decimals (0.45)
+    // divide by the detection size (128) to normalize them to 0.0 - 1.0
+    if (x2 > 1.0 || y2 > 1.0) {
+        x1 /= 128.0;
+        y1 /= 128.0;
+        x2 /= 128.0;
+        y2 /= 128.0;
+    }
 
     const w = x2 - x1;
     const h = y2 - y1;
@@ -122,7 +141,7 @@ const generateSingleDescriptor = async (imagePath) => {
         h: DETECT_SIZE
     });
 
-    const inputTensor = imageToTensor(resized);
+    const inputTensor = imageToBlazeTensor(resized);
 
 
     // 🔹 4. Run detection
@@ -149,7 +168,7 @@ const generateSingleDescriptor = async (imagePath) => {
     const cropped = await alignAndCrop(image, face);
 
     // 🔹 7. Recognition
-    const recognizerTensor = imageToTensor(cropped);
+    const recognizerTensor = imageToSFaceTensor(cropped);
 
 
     const recognizerFeeds = {
