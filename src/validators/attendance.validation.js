@@ -668,7 +668,7 @@ const getActiveAttendanceSheet = {
     })
 };
 
-const verifyClassroomAttendance = {
+const groupPhotoScan = {
     body: Joi.object().keys({
         attendanceId: Joi.string()
             .uuid()
@@ -696,5 +696,5 @@ export default {
     getAttendanceById,
     getAttendances,
     getActiveAttendanceSheet,
-    verifyClassroomAttendance
+    groupPhotoScan
 };

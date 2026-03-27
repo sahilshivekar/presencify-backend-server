@@ -11,7 +11,7 @@ import {
     getAttendanceById,
     getAttendances,
     getActiveAttendanceSheet,
-    verifyClassroomAttendance
+    groupPhotoScan
 } from '../controllers/attendance.controller.js';
 import { verifyJWT } from '../middlewares/auth.middleware.js';
 import { ROLES } from '../config/roles.js';
@@ -53,12 +53,12 @@ router.route('/all')
 router.route('/active')
     .get(validate(attendanceValidation.getActiveAttendanceSheet), verifyJWT([ROLES.ADMIN, ROLES.TEACHER, ROLES.STUDENT]), getActiveAttendanceSheet);
 
-router.route('/verify-classroom')
+router.route('/group-photo-scan')
     .post(
-        upload.array('classroomPhotos'),
-        validate(attendanceValidation.verifyClassroomAttendance),
+        upload.array('studentsGroupPhotos'),
+        validate(attendanceValidation.groupPhotoScan),
         verifyJWT([ROLES.ADMIN, ROLES.TEACHER]),
-        verifyClassroomAttendance
+        groupPhotoScan
     );
 
 // Reporting functionality

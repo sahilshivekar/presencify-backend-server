@@ -2,7 +2,7 @@ import { Op } from 'sequelize';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { ApiResponse } from '../utils/ApiResponse.js';
 import { ApiError } from '../utils/ApiError.js';
-import fs from 'fs';
+import fs, { truncate } from 'fs';
 import Class from '../db/models/class.model.js';
 import Room from '../db/models/room.model.js';
 import Course from '../db/models/course.model.js';
@@ -25,9 +25,21 @@ import { sendNotification } from "../utils/firebaseCloudMessaging.js";
 import StudentFCMToken from "../db/models/studentFCMToken.model.js";
 import StudentBatch from '../db/models/studentBatch.model.js';
 import httpStatus from 'http-status';
+import { extractGroupEmbeddings } from '../utils/faceRecognition.js';
 // removed logger import as per request to remove logs
 
 const FACE_DESCRIPTOR_DIMENSION = 128;
+
+// Helper for Cosine Similarity
+const cosineSimilarity = (a, b) => {
+    let dotProduct = 0, normA = 0, normB = 0;
+    for (let i = 0; i < a.length; i++) {
+        dotProduct += a[i] * b[i];
+        normA += a[i] * a[i];
+        normB += b[i] * b[i];
+    }
+    return (normA === 0 || normB === 0) ? 0 : dotProduct / (Math.sqrt(normA) * Math.sqrt(normB));
+};
 
 const getUploadedFilePaths = (files) => {
     if (!files) return [];
@@ -1239,12 +1251,9 @@ const getActiveAttendanceSheet = asyncHandler(async (req, res) => {
                 activeAttendanceSheets
             )
         );
-
-
 })
 
-// will be implemented in future
-const verifyClassroomAttendance = asyncHandler(async (req, res) => {
+const groupPhotoScan = asyncHandler(async (req, res) => {
     const attendanceId = req.body?.attendanceId || req.params?.attendanceId || req.query?.attendanceId;
     const photoPaths = getUploadedFilePaths(req.files);
 
@@ -1252,29 +1261,116 @@ const verifyClassroomAttendance = asyncHandler(async (req, res) => {
         throw new ApiError(httpStatus.BAD_REQUEST, "At least one classroom photo is required");
     }
 
+    // 1. Fetch Attendance and linked Class
     const attendance = await Attendance.findByPk(attendanceId);
-    if (!attendance) {
-        throw new ApiError(httpStatus.NOT_FOUND, "Attendance not found");
+    if (!attendance) throw new ApiError(httpStatus.NOT_FOUND, "Attendance not found");
+
+    const classObj = await Class.findByPk(attendance.classId);
+    if (!classObj) throw new ApiError(httpStatus.NOT_FOUND, "Linked class not found for this attendance");
+
+    let targetStudents = [];
+
+    // 2. Fetch required students based on Batch OR Division logic
+    if (classObj.batchId) {
+        const studentBatches = await StudentBatch.findAll({
+            where: { batchId: classObj.batchId, endDate: null },
+            include: [{ model: Student }]
+        });
+        targetStudents = studentBatches.map(sb => sb.Student);
+    } else {
+        const timetable = await Timetable.findByPk(classObj.timetableId);
+        const studentDivisions = await StudentDivision.findAll({
+            where: { divisionId: timetable.divisionId, endDate: null },
+            include: [{ model: Student}]
+        });
+        targetStudents = studentDivisions.map(sd => sd.Student);
     }
 
-    res
-        .status(httpStatus.OK)
-        .json(
-            new ApiResponse(
-                httpStatus.OK,
-                "Classroom attendance verified successfully",
-                null
-            )
-        );
+    targetStudents = targetStudents.filter(s => {
+        if (!s.faceDescriptor) return false;
+        
+        let arr = s.faceDescriptor;
+        if (typeof arr === 'string') {
+            try { arr = JSON.parse(arr); } catch (e) { return false; }
+        }
+        return Array.isArray(arr) && arr.length === 128;
+    });
 
+
+    if (targetStudents.length === 0) {
+        photoPaths.forEach(p => { try { fs.unlinkSync(p); } catch (err) { } });
+        return res.status(httpStatus.OK).json(new ApiResponse(httpStatus.OK, "No students with registered faces found for this class.", { presentCount: 0, presentStudentIds: [] }));
+    }
+
+    let presentStudentIds = new Set();
+
+    // 3. Process each group photo
     for (const photoPath of photoPaths) {
         try {
-            fs.unlinkSync(photoPath);
-        } catch {
-            // Ignore cleanup failures to avoid masking operational errors.
+            // Run YuNet to crop crowd and SFace to generate embeddings
+            const crowdEmbeddings = await extractGroupEmbeddings(photoPath);
+
+
+            // 4. Compare every face in the crowd to our Target Students
+            for (let i = 0; i < crowdEmbeddings.length; i++) {
+                const detectedEmbedding = crowdEmbeddings[i];
+                let bestMatchId = null;
+                let bestSimilarity = -1;
+
+
+                for (const student of targetStudents) {
+                    // Ensure the DB descriptor is an array before math
+                    let dbDescriptor = student.faceDescriptor;
+                    if (typeof dbDescriptor === 'string') {
+                        dbDescriptor = JSON.parse(dbDescriptor);
+                    }
+
+                    const similarity = cosineSimilarity(detectedEmbedding, dbDescriptor);
+
+                    // 0.363 is the official SFace Cosine Similarity Threshold
+                    if (similarity > bestSimilarity && similarity > 0.363) {
+                        bestSimilarity = similarity;
+                        bestMatchId = student.id;
+                    }
+                }
+
+                if (bestMatchId) {
+                    presentStudentIds.add(bestMatchId); // Using a Set prevents double-marking
+                }
+            }
+        } catch (error) {
+            console.error(`💥 Error processing group photo ${photoPath}:`, error);
+        } finally {
+            try { fs.unlinkSync(photoPath); } catch { }
         }
     }
-})
+
+    const presentIdsArray = Array.from(presentStudentIds);
+
+    // 5. Update Attendance Records for matched students
+    // 5. Update Attendance Records for matched students
+    if (presentIdsArray.length > 0) {
+        console.log(`💾 Updating attendance status to 'true' for ${presentIdsArray.length} students...`);
+        
+        await AttendanceStudent.update(
+            { status: true },
+            {
+                where: {
+                    attendanceId: attendanceId,
+                    studentId: presentIdsArray 
+                }
+            }
+        );
+    }
+    
+    // 6. Return the success response
+    res.status(httpStatus.OK).json(
+        new ApiResponse(httpStatus.OK, `Classroom attendance verified. Marked ${presentIdsArray.length} students as present.`, {
+            presentCount: presentIdsArray.length,
+            presentStudentIds: presentIdsArray
+        })
+    );
+});
 
 export {
     removeAttendance,
@@ -1288,5 +1384,5 @@ export {
     getAttendanceById,
     getAttendances,
     getActiveAttendanceSheet,
-    verifyClassroomAttendance
+    groupPhotoScan
 }
