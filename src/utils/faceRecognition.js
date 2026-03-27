@@ -1,181 +1,172 @@
-import fs from 'fs/promises';
+import { InferenceSession, Tensor } from 'onnxruntime-node';
+import { Jimp } from 'jimp';
 import path from 'path';
 import { fileURLToPath } from 'url';
-
-import * as blazeface from '@tensorflow-models/blazeface';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-let initPromise;
-let tf;
-let detector;
+// 👉 Models
+const detectorModelPath = path.join(__dirname, '../assets/models/blaze.onnx');
+const recognizerModelPath = path.join(__dirname, '../assets/models/face_recognition_sface_2021dec.onnx');
 
-const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
+let detectorSession = null;
+let recognizerSession = null;
 
-const loadTfNamespace = async () => {
-    if (tf) return tf;
-
-    const tfNamespace = await import('@tensorflow/tfjs');
-    await import('@tensorflow/tfjs-backend-wasm');
-
-    tf = tfNamespace;
-
-    await tf.setBackend('wasm');
-    await tf.ready();
-
-    console.log('Using TensorFlow backend:', tf.getBackend());
-
-    return tf;
+const initializeModels = async () => {
+    if (!detectorSession) {
+        detectorSession = await InferenceSession.create(detectorModelPath);
+    }
+    if (!recognizerSession) {
+        recognizerSession = await InferenceSession.create(recognizerModelPath);
+    }
 };
 
-const loadDetector = async () => {
-    if (detector) return detector;
-    detector = await blazeface.load();
-    return detector;
+// 🔹 Image → Tensor (BlazeFace expects RGB normalized, NCHW)
+const imageToTensor = (image) => {
+    const { width, height, data } = image.bitmap;
+
+    const size = width * height;
+
+    const floatData = new Float32Array(3 * size);
+
+    let rOffset = 0;
+    let gOffset = size;
+    let bOffset = size * 2;
+
+    let pixelIndex = 0;
+
+    for (let i = 0; i < data.length; i += 4) {
+        const r = data[i] / 255;
+        const g = data[i + 1] / 255;
+        const b = data[i + 2] / 255;
+
+        floatData[rOffset + pixelIndex] = r;
+        floatData[gOffset + pixelIndex] = g;
+        floatData[bOffset + pixelIndex] = b;
+
+        pixelIndex++;
+    }
+
+    return new Tensor('float32', floatData, [1, 3, height, width]);
 };
 
-const ensureModelsLoaded = async () => {
-    if (initPromise) return initPromise;
+// 🔹 Decode BlazeFace output (simple + stable)
+const extractFace = (outputs) => {
+    const boxes = outputs[0].data;
 
-    initPromise = (async () => {
-        await loadTfNamespace();
-        await loadDetector();
-    })();
+    if (boxes.length === 0) return null;
 
-    return initPromise;
+    // first detection
+    const x1 = boxes[0];
+    const y1 = boxes[1];
+    const x2 = boxes[2];
+    const y2 = boxes[3];
+
+    const w = x2 - x1;
+    const h = y2 - y1;
+
+    return { x: x1, y: y1, w, h };
 };
 
-const decodeImage = async (imageBuffer) => {
-    const { decode } = await import('jpeg-js');
+// 🔹 Crop (consistent across all platforms)
+const alignAndCrop = async (image, face) => {
+    const imgW = image.bitmap.width;
+    const imgH = image.bitmap.height;
 
-    const raw = decode(imageBuffer, { useTArray: true });
+    let { x, y, w, h } = face;
 
-    return tf.tensor3d(raw.data, [raw.height, raw.width, 4])
-        .slice([0, 0, 0], [-1, -1, 3]);
-};
+    x *= imgW;
+    y *= imgH;
+    w *= imgW;
+    h *= imgH;
 
-const detectFaces = async (imageTensor) => {
-    const model = await loadDetector();
-    const predictions = await model.estimateFaces(imageTensor, false);
+    let cx = x + w / 2;
+    let cy = y + h / 2;
 
-    return predictions.map((p) => ({
-        x: p.topLeft[0],
-        y: p.topLeft[1],
-        width: p.bottomRight[0] - p.topLeft[0],
-        height: p.bottomRight[1] - p.topLeft[1],
-    }));
-};
+    let size = Math.max(w, h);
+    size *= 1.4;
 
-const normalizeBox = (box, imageHeight, imageWidth) => {
-    const padX = box.width * 0.15;
-    const padY = box.height * 0.15;
+    let newX = Math.max(0, cx - size / 2);
+    let newY = Math.max(0, cy - size / 2);
 
-    const x1 = clamp(box.x - padX, 0, imageWidth - 1);
-    const y1 = clamp(box.y - padY, 0, imageHeight - 1);
-    const x2 = clamp(box.x + box.width + padX, 1, imageWidth);
-    const y2 = clamp(box.y + box.height + padY, 1, imageHeight);
+    size = Math.min(size, imgW - newX, imgH - newY);
 
-    return [
-        y1 / imageHeight,
-        x1 / imageWidth,
-        y2 / imageHeight,
-        x2 / imageWidth,
-    ];
-};
+    const cropped = image.clone();
 
-const preprocessFaces = (imageTensor, boxes) => {
-    const [imageHeight, imageWidth] = imageTensor.shape;
-
-    const normalizedBoxes = boxes.map((box) =>
-        normalizeBox(box, imageHeight, imageWidth)
-    );
-
-    return tf.tidy(() => {
-        const boxesTensor = tf.tensor2d(normalizedBoxes);
-        const batchImage = imageTensor.expandDims(0).toFloat();
-        const boxIndices = tf.zeros([normalizedBoxes.length], 'int32');
-
-        const cropped = tf.image.cropAndResize(
-            batchImage,
-            boxesTensor,
-            boxIndices,
-            [112, 112]
-        );
-
-        return cropped.div(255); // normalize
+    await cropped.crop({
+        x: Math.round(newX),
+        y: Math.round(newY),
+        w: Math.round(size),
+        h: Math.round(size)
     });
-};
 
-const generateEmbedding = (faceTensor) => {
-    return tf.tidy(() => {
-        const resized = tf.image.resizeBilinear(faceTensor, [64, 64]);
-        const flattened = resized.flatten();
-
-        const embedding = flattened.slice([0], [128]);
-
-        return Array.from(embedding.dataSync());
+    await cropped.resize({
+        w: 112,
+        h: 112
     });
+
+    return cropped;
 };
 
 const generateSingleDescriptor = async (imagePath) => {
-    await ensureModelsLoaded();
+    await initializeModels();
 
-    const imageBuffer = await fs.readFile(imagePath);
-    const imageTensor = await decodeImage(imageBuffer);
+    // 🔹 1. Read image
+    const image = await Jimp.read(imagePath);
 
-    try {
-        const faces = await detectFaces(imageTensor);
+    // 🔹 2. Resize
+    const DETECT_SIZE = 128;
+    const resized = image.clone().resize({
+        w: DETECT_SIZE,
+        h: DETECT_SIZE
+    });
 
-        if (!faces.length) {
-            throw new Error('No face detected');
-        }
+    const inputTensor = imageToTensor(resized);
 
-        const preprocessed = preprocessFaces(imageTensor, [faces[0]]);
-        const face = tf.squeeze(preprocessed);
 
-        const descriptor = generateEmbedding(face);
+    // 🔹 4. Run detection
+    const detectorFeeds = {
+        image: inputTensor,
+        conf_threshold: new Tensor('float32', Float32Array.from([0.75]), [1]),
+        iou_threshold: new Tensor('float32', Float32Array.from([0.3]), [1]),
+        max_detections: new Tensor('int64', BigInt64Array.from([1n]), [1])
+    };
 
-        preprocessed.dispose();
-        face.dispose();
+    const detectorResults = await detectorSession.run(detectorFeeds);
 
-        return descriptor;
 
-    } finally {
-        imageTensor.dispose();
+    const outputs = Object.values(detectorResults);
+
+    // 🔹 5. Extract face
+    const face = extractFace(outputs);
+
+    if (!face) {
+        throw new Error("No face detected");
     }
+
+    // 🔹 6. Crop
+    const cropped = await alignAndCrop(image, face);
+
+    // 🔹 7. Recognition
+    const recognizerTensor = imageToTensor(cropped);
+
+
+    const recognizerFeeds = {
+        [recognizerSession.inputNames[0]]: recognizerTensor
+    };
+
+    const recognizerResults = await recognizerSession.run(recognizerFeeds);
+
+    const embedding = recognizerResults[recognizerSession.outputNames[0]].data;
+
+
+    // 🔹 8. Normalize
+    const norm = Math.sqrt(embedding.reduce((sum, v) => sum + v * v, 0));
+    const normalized = Array.from(embedding).map(v => v / norm);
+
+
+    return normalized;
 };
 
-const generateGroupDescriptors = async (imagePath) => {
-    await ensureModelsLoaded();
-
-    const imageBuffer = await fs.readFile(imagePath);
-    const imageTensor = await decodeImage(imageBuffer);
-
-    try {
-        const faces = await detectFaces(imageTensor);
-        if (!faces.length) return [];
-
-        const preprocessedBatch = preprocessFaces(imageTensor, faces);
-        const individualFaces = tf.unstack(preprocessedBatch);
-
-        const descriptors = [];
-
-        for (const face of individualFaces) {
-            const descriptor = generateEmbedding(face);
-            descriptors.push(descriptor);
-            face.dispose();
-        }
-
-        preprocessedBatch.dispose();
-        return descriptors;
-
-    } finally {
-        imageTensor.dispose();
-    }
-};
-
-export {
-    generateSingleDescriptor,
-    generateGroupDescriptors,
-};
+export { generateSingleDescriptor };

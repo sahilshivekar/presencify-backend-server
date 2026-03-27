@@ -25,10 +25,9 @@ import { sendNotification } from "../utils/firebaseCloudMessaging.js";
 import StudentFCMToken from "../db/models/studentFCMToken.model.js";
 import StudentBatch from '../db/models/studentBatch.model.js';
 import httpStatus from 'http-status';
-import { generateGroupDescriptors } from '../utils/faceRecognition.js';
 // removed logger import as per request to remove logs
 
-const FACE_DESCRIPTOR_DIMENSION = 192;
+const FACE_DESCRIPTOR_DIMENSION = 128;
 
 const getUploadedFilePaths = (files) => {
     if (!files) return [];
@@ -1244,6 +1243,7 @@ const getActiveAttendanceSheet = asyncHandler(async (req, res) => {
 
 })
 
+// will be implemented in future
 const verifyClassroomAttendance = asyncHandler(async (req, res) => {
     const attendanceId = req.body?.attendanceId || req.params?.attendanceId || req.query?.attendanceId;
     const photoPaths = getUploadedFilePaths(req.files);
@@ -1252,102 +1252,29 @@ const verifyClassroomAttendance = asyncHandler(async (req, res) => {
         throw new ApiError(httpStatus.BAD_REQUEST, "At least one classroom photo is required");
     }
 
-    try {
-        const attendance = await Attendance.findByPk(attendanceId);
-        if (!attendance) {
-            throw new ApiError(httpStatus.NOT_FOUND, "Attendance not found");
-        }
+    const attendance = await Attendance.findByPk(attendanceId);
+    if (!attendance) {
+        throw new ApiError(httpStatus.NOT_FOUND, "Attendance not found");
+    }
 
-        const attendanceStudents = await AttendanceStudent.findAll({
-            where: { attendanceId },
-            include: [
-                {
-                    model: Student,
-                    required: true,
-                    attributes: ['id', 'faceDescriptor']
-                }
-            ]
-        });
+    res
+        .status(httpStatus.OK)
+        .json(
+            new ApiResponse(
+                httpStatus.OK,
+                "Classroom attendance verified successfully",
+                null
+            )
+        );
 
-        const liveDescriptors = [];
-        for (const photoPath of photoPaths) {
-            const descriptorsFromPhoto = await generateGroupDescriptors(photoPath);
-            if (descriptorsFromPhoto?.length) {
-                liveDescriptors.push(...descriptorsFromPhoto);
-            }
-        }
-
-        const identifiedStudentIds = new Set();
-
-        if (liveDescriptors.length) {
-            for (const attendanceStudent of attendanceStudents) {
-                const studentDescriptor = attendanceStudent.Student?.faceDescriptor;
-                if (!Array.isArray(studentDescriptor) || studentDescriptor.length !== FACE_DESCRIPTOR_DIMENSION) {
-                    continue;
-                }
-
-                const isPresent = liveDescriptors.some((liveDescriptor) => {
-                    if (!Array.isArray(liveDescriptor) || liveDescriptor.length !== FACE_DESCRIPTOR_DIMENSION) {
-                        return false;
-                    }
-                    return calculateEuclideanDistance(studentDescriptor, liveDescriptor) < 0.6;
-                });
-
-                if (isPresent) {
-                    identifiedStudentIds.add(attendanceStudent.studentId);
-                }
-            }
-        }
-
-        const transaction = await sequelize.transaction();
+    for (const photoPath of photoPaths) {
         try {
-            const identifiedIds = Array.from(identifiedStudentIds);
-
-            if (identifiedIds.length) {
-                await AttendanceStudent.update(
-                    { attendanceStatus: true },
-                    {
-                        where: {
-                            attendanceId,
-                            studentId: {
-                                [Op.in]: identifiedIds
-                            }
-                        },
-                        transaction
-                    }
-                );
-            }
-
-            await transaction.commit();
-
-            res
-                .status(httpStatus.OK)
-                .json(
-                    new ApiResponse(
-                        httpStatus.OK,
-                        "Classroom attendance verified successfully",
-                        {
-                            attendanceId,
-                            identifiedStudentIds: identifiedIds
-                        }
-                    )
-                );
-        } catch (error) {
-            if (!transaction.finished) {
-                await transaction.rollback();
-            }
-            throw error;
-        }
-    } finally {
-        for (const photoPath of photoPaths) {
-            try {
-                fs.unlinkSync(photoPath);
-            } catch {
-                // Ignore cleanup failures to avoid masking operational errors.
-            }
+            fs.unlinkSync(photoPath);
+        } catch {
+            // Ignore cleanup failures to avoid masking operational errors.
         }
     }
-});
+})
 
 export {
     removeAttendance,

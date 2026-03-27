@@ -22,7 +22,9 @@ import { getDateStringFromObj } from "../utils/date.js";
 import Dropout from '../db/models/dropout.model.js'
 import httpStatus from 'http-status';
 import studentValidation from '../validators/student.validation.js';
-// import { generateSingleDescriptor } from '../utils/faceRecognition.js';
+import { generateSingleDescriptor } from '../utils/faceRecognition.js';
+import fs from "fs";
+import path from "path";
 
 const getUploadedFilePaths = (files) => {
     if (!files) return [];
@@ -2244,20 +2246,13 @@ const bulkCreateStudentsFromCSV = asyncHandler(async (req, res) => {
 const enrollStudentFace = asyncHandler(async (req, res) => {
     const studentId = req.body?.studentId || req.params?.studentId || req.query?.studentId;
     const imagePaths = getUploadedFilePaths(req.files);
-    let faceDescriptor = req.body?.faceDescriptor;
-    if (typeof faceDescriptor === 'string') {
-        try {
-            faceDescriptor = JSON.parse(faceDescriptor);
-        } catch {
-            throw new ApiError(httpStatus.BAD_REQUEST, "faceDescriptor must be a valid JSON array");
-        }
-    }
 
     if (!studentId) {
         throw new ApiError(httpStatus.BAD_REQUEST, "studentId is required");
     }
-    if (!faceDescriptor || !Array.isArray(faceDescriptor) || faceDescriptor.length !== 192) {
-        throw new ApiError(httpStatus.BAD_REQUEST, "A valid 192-length faceDescriptor array is required");
+
+    if (imagePaths.length === 0) {
+        throw new ApiError(httpStatus.BAD_REQUEST, "At least one face image is required");
     }
 
     const student = await Student.findByPk(studentId);
@@ -2265,28 +2260,59 @@ const enrollStudentFace = asyncHandler(async (req, res) => {
         throw new ApiError(httpStatus.NOT_FOUND, "Student not found");
     }
 
-    student.faceDescriptor = faceDescriptor;
-    await student.save();
+    try {
+        // Array to hold the sum of all embeddings for averaging
+        let totalDescriptor = new Array(128).fill(0);
+        let validFacesCount = 0;
 
-    res.status(httpStatus.OK).json(
-        new ApiResponse(
-            httpStatus.OK,
-            "Student face descriptor enrolled successfully",
-            null
-        )
-    );
+        // Process each uploaded image
+        for (const imagePath of imagePaths) {
+            try {
+                const descriptor = await generateSingleDescriptor(imagePath);
 
-    // Clean up uploaded images after response
-    if (imagePaths.length > 0) {
-        setImmediate(() => {
-            for (const imagePath of imagePaths) {
-                try {
-                    fs.unlinkSync(imagePath);
-                } catch {
-                    // Ignore cleanup failures
+                if (descriptor && descriptor.length === 128) {
+                    for (let i = 0; i < 128; i++) {
+                        totalDescriptor[i] += descriptor[i];
+                    }
+                    validFacesCount++;
                 }
+            } catch (error) {
+                console.warn(`Could not process face for image ${imagePath}:`, error.message);
             }
-        });
+        }
+
+        if (validFacesCount === 0) {
+            throw new ApiError(httpStatus.BAD_REQUEST, "No valid faces detected in any of the uploaded images. Please try again with clear photos.");
+        }
+
+        // Calculate the centroid (average) to create the final 128-D descriptor
+        const finalFaceDescriptor = totalDescriptor.map(val => val / validFacesCount);
+
+        // Save to Database
+        student.faceDescriptor = finalFaceDescriptor;
+        await student.save();
+
+        res.status(httpStatus.OK).json(
+            new ApiResponse(
+                httpStatus.OK,
+                "Student face descriptor enrolled successfully",
+                null
+            )
+        );
+
+    } finally {
+        // Clean up uploaded images after processing
+        if (imagePaths.length > 0) {
+            setImmediate(() => {
+                for (const imagePath of imagePaths) {
+                    try {
+                        fs.unlinkSync(imagePath);
+                    } catch {
+                        // Ignore cleanup failures
+                    }
+                }
+            });
+        }
     }
 });
 
