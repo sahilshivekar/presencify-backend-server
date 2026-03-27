@@ -245,6 +245,9 @@ const enrollStudentFace = {
 		studentId: uuid.required().messages({
 			'any.required': 'studentId is required',
 			'string.guid': 'studentId must be a valid UUID'
+		}),
+		faceDescriptor: Joi.required().messages({
+			'any.required': 'faceDescriptor is required',
 		})
 	})
 };

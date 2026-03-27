@@ -28,6 +28,8 @@ import httpStatus from 'http-status';
 import { generateGroupDescriptors } from '../utils/faceRecognition.js';
 // removed logger import as per request to remove logs
 
+const FACE_DESCRIPTOR_DIMENSION = 192;
+
 const getUploadedFilePaths = (files) => {
     if (!files) return [];
 
@@ -46,8 +48,16 @@ const getUploadedFilePaths = (files) => {
 };
 
 const calculateEuclideanDistance = (vectorA, vectorB) => {
+    if (!Array.isArray(vectorA) || !Array.isArray(vectorB)) {
+        throw new Error('Both vectors must be arrays');
+    }
+
+    if (vectorA.length !== vectorB.length) {
+        throw new Error('Vectors must have the same length');
+    }
+
     let sum = 0;
-    for (let i = 0; i < 128; i += 1) {
+    for (let i = 0; i < vectorA.length; i += 1) {
         const delta = Number(vectorA[i]) - Number(vectorB[i]);
         sum += delta * delta;
     }
@@ -1095,7 +1105,7 @@ const getAttendances = asyncHandler(async (req, res) => {
 
     // STEP 2: Fetch full records with all includes using the paginated IDs
     const attendanceIds = paginatedIds.map(a => a.id);
-    
+
     const attendances = await Attendance.findAll({
         where: {
             id: {
@@ -1272,12 +1282,12 @@ const verifyClassroomAttendance = asyncHandler(async (req, res) => {
         if (liveDescriptors.length) {
             for (const attendanceStudent of attendanceStudents) {
                 const studentDescriptor = attendanceStudent.Student?.faceDescriptor;
-                if (!Array.isArray(studentDescriptor) || studentDescriptor.length !== 128) {
+                if (!Array.isArray(studentDescriptor) || studentDescriptor.length !== FACE_DESCRIPTOR_DIMENSION) {
                     continue;
                 }
 
                 const isPresent = liveDescriptors.some((liveDescriptor) => {
-                    if (!Array.isArray(liveDescriptor) || liveDescriptor.length !== 128) {
+                    if (!Array.isArray(liveDescriptor) || liveDescriptor.length !== FACE_DESCRIPTOR_DIMENSION) {
                         return false;
                     }
                     return calculateEuclideanDistance(studentDescriptor, liveDescriptor) < 0.6;

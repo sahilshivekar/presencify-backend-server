@@ -64,6 +64,14 @@ const updateStudentAttendance = {
 
 const markMyAttendance = {
     body: Joi.object().keys({
+        studentId: Joi.string()
+            .uuid()
+            .required()
+            .messages({
+                'string.guid': 'Student ID must be a valid UUID',
+                'any.required': 'Student ID is required',
+                'string.base': 'Student ID must be a string'
+            }),
         attendanceId: Joi.string()
             .uuid()
             .required()
@@ -103,11 +111,11 @@ const bulkUpdateStudentAttendance = {
                     })
             })
         ).min(1).max(200).required()
-        .messages({
-            'any.required': 'Attendance updates array is required',
-            'array.min': 'At least 1 attendance update is required',
-            'array.max': 'Cannot update more than 200 attendance records at once'
-        })
+            .messages({
+                'any.required': 'Attendance updates array is required',
+                'array.min': 'At least 1 attendance update is required',
+                'array.max': 'Cannot update more than 200 attendance records at once'
+            })
     })
 };
 
@@ -181,7 +189,7 @@ const getAttendanceOfAnyStudentForSpecificCourseInSemester = {
                     throw new Error('Invalid date provided');
                 }
                 return value;
-                
+
             })
             .messages({
                 'string.base': 'Start date must be a string'

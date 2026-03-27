@@ -260,8 +260,8 @@ Student.init(
             field: 'face_descriptor',
             validate: {
                 isValidLength(value) {
-                    if (value && value.length !== 128) {
-                        throw new Error('Face descriptor must be exactly 128 dimensions');
+                    if (value && value.length !== 192) {
+                        throw new Error('Face descriptor must be exactly 192 dimensions');
                     }
                 }
             }

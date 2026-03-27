@@ -78,7 +78,7 @@ router.route('/face/enroll')
     .post(
         upload.array('faceImages'),
         validate(studentValidation.enrollStudentFace),
-        verifyJWT([ROLES.ADMIN]),
+        verifyJWT([ROLES.ADMIN, ROLES.TEACHER]),
         enrollStudentFace
     );
     

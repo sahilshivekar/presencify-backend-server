@@ -22,7 +22,7 @@ import { getDateStringFromObj } from "../utils/date.js";
 import Dropout from '../db/models/dropout.model.js'
 import httpStatus from 'http-status';
 import studentValidation from '../validators/student.validation.js';
-import { generateSingleDescriptor } from '../utils/faceRecognition.js';
+// import { generateSingleDescriptor } from '../utils/faceRecognition.js';
 
 const getUploadedFilePaths = (files) => {
     if (!files) return [];
@@ -2228,16 +2228,7 @@ const bulkCreateStudentsFromCSV = asyncHandler(async (req, res) => {
             new ApiResponse(
                 httpStatus.CREATED,
                 `Successfully created ${createdStudents.length} students from CSV`,
-                {
-                    createdCount: createdStudents.length,
-                    students: createdStudents.map(s => ({
-                        id: s.id,
-                        prn: s.prn,
-                        firstName: s.firstName,
-                        lastName: s.lastName,
-                        email: s.email
-                    }))
-                }
+                null
             )
         );
 
@@ -2253,60 +2244,49 @@ const bulkCreateStudentsFromCSV = asyncHandler(async (req, res) => {
 const enrollStudentFace = asyncHandler(async (req, res) => {
     const studentId = req.body?.studentId || req.params?.studentId || req.query?.studentId;
     const imagePaths = getUploadedFilePaths(req.files);
-
-    if (!imagePaths.length) {
-        throw new ApiError(httpStatus.BAD_REQUEST, "At least one face image is required");
+    let faceDescriptor = req.body?.faceDescriptor;
+    if (typeof faceDescriptor === 'string') {
+        try {
+            faceDescriptor = JSON.parse(faceDescriptor);
+        } catch {
+            throw new ApiError(httpStatus.BAD_REQUEST, "faceDescriptor must be a valid JSON array");
+        }
     }
 
-    try {
-        const student = await Student.findByPk(studentId);
-        if (!student) {
-            throw new ApiError(httpStatus.NOT_FOUND, "Student not found");
-        }
+    if (!studentId) {
+        throw new ApiError(httpStatus.BAD_REQUEST, "studentId is required");
+    }
+    if (!faceDescriptor || !Array.isArray(faceDescriptor) || faceDescriptor.length !== 192) {
+        throw new ApiError(httpStatus.BAD_REQUEST, "A valid 192-length faceDescriptor array is required");
+    }
 
-        const descriptors = [];
-        for (const imagePath of imagePaths) {
-            const descriptor = await generateSingleDescriptor(imagePath);
-            if (!descriptor || descriptor.length !== 128) {
-                throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, "Invalid face descriptor generated");
+    const student = await Student.findByPk(studentId);
+    if (!student) {
+        throw new ApiError(httpStatus.NOT_FOUND, "Student not found");
+    }
+
+    student.faceDescriptor = faceDescriptor;
+    await student.save();
+
+    res.status(httpStatus.OK).json(
+        new ApiResponse(
+            httpStatus.OK,
+            "Student face descriptor enrolled successfully",
+            null
+        )
+    );
+
+    // Clean up uploaded images after response
+    if (imagePaths.length > 0) {
+        setImmediate(() => {
+            for (const imagePath of imagePaths) {
+                try {
+                    fs.unlinkSync(imagePath);
+                } catch {
+                    // Ignore cleanup failures
+                }
             }
-            descriptors.push(descriptor);
-        }
-
-        const centroidDescriptor = new Array(128).fill(0);
-        for (const descriptor of descriptors) {
-            for (let i = 0; i < 128; i += 1) {
-                centroidDescriptor[i] += descriptor[i];
-            }
-        }
-
-        for (let i = 0; i < 128; i += 1) {
-            centroidDescriptor[i] /= descriptors.length;
-        }
-
-        student.faceDescriptor = centroidDescriptor;
-        await student.save();
-
-        res
-            .status(httpStatus.OK)
-            .json(
-                new ApiResponse(
-                    httpStatus.OK,
-                    "Student face enrolled successfully",
-                    {
-                        studentId: student.id,
-                        descriptorLength: centroidDescriptor.length,
-                    }
-                )
-            );
-    } finally {
-        for (const imagePath of imagePaths) {
-            try {
-                fs.unlinkSync(imagePath);
-            } catch {
-                // Ignore cleanup failures to avoid masking operational errors.
-            }
-        }
+        });
     }
 });
 

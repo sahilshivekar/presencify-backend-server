@@ -801,15 +801,11 @@ const bulkCreateTeachersFromCSV = asyncHandler(async (req, res) => {
         await transaction.commit();
         committed = true;
         cleanupFile();
-
         res.status(httpStatus.CREATED).json(
             new ApiResponse(
                 httpStatus.CREATED,
                 `Successfully created ${created.length} teachers from CSV`,
-                {
-                    createdCount: created.length,
-                    teachers: created.map(t => ({ id: t.id, email: t.email, firstName: t.firstName, lastName: t.lastName }))
-                }
+                null
             )
         );
     } catch (error) {
