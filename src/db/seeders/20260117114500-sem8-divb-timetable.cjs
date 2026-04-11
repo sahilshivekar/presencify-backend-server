@@ -31,6 +31,7 @@ module.exports = {
             `SELECT division_id, division_code FROM divisions WHERE semester_id = '${semester8.semester_id}';`,
             { type: queryInterface.sequelize.QueryTypes.SELECT }
         );
+
         const divisionB = divisions.find(d => d.division_code === 'B');
         if (!divisionB) throw new Error('Division B of Semester 8 not found.');
 
@@ -39,6 +40,7 @@ module.exports = {
             `SELECT batch_id, batch_code FROM batches WHERE division_id = '${divisionB.division_id}';`,
             { type: queryInterface.sequelize.QueryTypes.SELECT }
         );
+
         const bb1 = batches.find(b => b.batch_code === 'BB1');
         const bb2 = batches.find(b => b.batch_code === 'BB2');
         if (!bb1 || !bb2) throw new Error('Batches BB1 / BB2 not found for Division B.');
@@ -59,14 +61,35 @@ module.exports = {
         const missingCourses = courseNames.filter(n => !courseMap[n]);
         if (missingCourses.length > 0) throw new Error(`Courses not found: ${missingCourses.join(', ')}`);
 
-        // ── 5. Assign one random teacher per course ───────────────────────────
-        const teachers = await queryInterface.sequelize.query(
-            `SELECT teacher_id FROM teacher ORDER BY RANDOM() LIMIT ${courseNames.length};`,
+        // ── 5. Resolve specific teachers for each course ──────────────────────
+        const teacherRows = await queryInterface.sequelize.query(
+            `SELECT teacher_id, first_name, last_name FROM teacher
+             WHERE (first_name = 'Nilesh'        AND last_name = 'Meheta')
+                OR (first_name = 'Chandrashekhar' AND last_name = 'Chougule')
+                OR (first_name = 'Renuka'        AND last_name = 'Sanga')
+                OR (first_name = 'Sandeep'       AND last_name = 'More');`,
             { type: queryInterface.sequelize.QueryTypes.SELECT }
         );
-        if (teachers.length < courseNames.length) throw new Error('Not enough teachers in the database.');
-        const teacherMap = {};
-        courseNames.forEach((name, idx) => { teacherMap[name] = teachers[idx].teacher_id; });
+
+        const teacherByName = (firstName, lastName) => {
+            const teacher = teacherRows.find(
+                t => t.first_name === firstName && t.last_name === lastName
+            );
+            if (!teacher) {
+                throw new Error(`Teacher not found: ${firstName} ${lastName}`);
+            }
+            return teacher.teacher_id;
+        };
+
+        const teacherMap = {
+            'Digital Forensic': teacherByName('Nilesh', 'Meheta'),
+            'Digital Forensic Lab': teacherByName('Nilesh', 'Meheta'),
+            'Environmental Management': teacherByName('Chandrashekhar', 'Chougule'),
+            'Social Media Analytics': teacherByName('Renuka', 'Sanga'),
+            'Social Media Analytics Lab': teacherByName('Renuka', 'Sanga'),
+            'Distributed Computing': teacherByName('Sandeep', 'More'),
+            'Distributed Computing Lab': teacherByName('Sandeep', 'More')
+        };
 
         // ── 5a. Register teacher–course assignments in teacher_teaches_course ─
         // Required by addClass controller: teacher must have the course assigned.
@@ -95,21 +118,31 @@ module.exports = {
 
         // ── 6. Resolve rooms ──────────────────────────────────────────────────
         const classroomsRaw = await queryInterface.sequelize.query(
-            `SELECT room_id FROM rooms WHERE room_type = 'Classroom' LIMIT 1;`,
+            `SELECT room_id FROM rooms WHERE room_type = 'Classroom' AND room_number = '404' LIMIT 1;`,
             { type: queryInterface.sequelize.QueryTypes.SELECT }
         );
         const labRoomsRaw = await queryInterface.sequelize.query(
-            `SELECT room_id FROM rooms WHERE room_type = 'Lab' LIMIT 3;`,
+            `SELECT room_id, room_number FROM rooms 
+             WHERE room_type = 'Lab' AND room_number IN ('201', '108', '501');`,
             { type: queryInterface.sequelize.QueryTypes.SELECT }
         );
-        if (classroomsRaw.length === 0) throw new Error('No Classroom room found.');
-        if (labRoomsRaw.length < 3) throw new Error('Not enough Lab rooms found (need 3).');
+        if (classroomsRaw.length === 0) throw new Error('No Classroom room with number 404 found.');
+        if (labRoomsRaw.length < 3) throw new Error('Not enough Lab rooms found (need 201, 108, 501).');
 
         const lectureRoomId = classroomsRaw[0].room_id;
+
+        const getLabRoomId = (roomNumber) => {
+            const room = labRoomsRaw.find(r => r.room_number === roomNumber);
+            if (!room) {
+                throw new Error(`Lab room with number ${roomNumber} not found.`);
+            }
+            return room.room_id;
+        };
+
         const labRoomMap = {
-            'Digital Forensic Lab':       labRoomsRaw[0].room_id,
-            'Social Media Analytics Lab': labRoomsRaw[1].room_id,
-            'Distributed Computing Lab':  labRoomsRaw[2].room_id
+            'Distributed Computing Lab': getLabRoomId('201'),
+            'Digital Forensic Lab': getLabRoomId('108'),
+            'Social Media Analytics Lab': getLabRoomId('501')
         };
 
         // ── 7. Ensure a timetable exists for Division B ───────────────────────
@@ -133,82 +166,113 @@ module.exports = {
 
         // ── 8. Build class records ────────────────────────────────────────────
         const classes = [];
-        const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
         // Lecture schedule: same course at same slot every day Mon-Sat
-        const lectureSlots = [
-            { courseName: 'Digital Forensic',         start: '10:00:00', end: '11:00:00' },
-            { courseName: 'Social Media Analytics',   start: '11:00:00', end: '12:00:00' },
-            { courseName: 'Environmental Management', start: '12:30:00', end: '13:30:00' },
-            { courseName: 'Distributed Computing',    start: '13:30:00', end: '14:30:00' }
+        const lectures = [
+            // MONDAY
+            { day: "Monday", courseName: "Environmental Management", start: "10:00:00", end: "11:00:00" },
+            { day: "Monday", courseName: "Digital Forensic", start: "11:00:00", end: "12:00:00" },
+            { day: "Monday", courseName: "Social Media Analytics", start: "12:30:00", end: "13:30:00" },
+
+            // TUESDAY
+            { day: "Tuesday", courseName: "Distributed Computing", start: "10:00:00", end: "11:00:00" },
+            { day: "Tuesday", courseName: "Digital Forensic", start: "11:00:00", end: "12:00:00" },
+            { day: "Tuesday", courseName: "Environmental Management", start: "12:30:00", end: "13:30:00" },
+            { day: "Tuesday", courseName: "Social Media Analytics", start: "13:30:00", end: "14:30:00" },
+
+            // WEDNESDAY
+            { day: "Wednesday", courseName: "Environmental Management", start: "10:00:00", end: "11:00:00" },
+            { day: "Wednesday", courseName: "Digital Forensic", start: "11:00:00", end: "12:00:00" },
+
+            // THURSDAY
+            { day: "Thursday", courseName: "Social Media Analytics", start: "10:00:00", end: "11:00:00" },
+            { day: "Thursday", courseName: "Distributed Computing", start: "11:00:00", end: "12:00:00" },
+
+            // FRIDAY
+            { day: "Friday", courseName: "Distributed Computing", start: "14:45:00", end: "15:45:00" },
         ];
 
-        for (const day of days) {
-            for (const slot of lectureSlots) {
-                classes.push({
-                    class_id: uuidv4(),
-                    teacher_id: teacherMap[slot.courseName],
-                    course_id: courseMap[slot.courseName],
-                    room_id: lectureRoomId,
-                    timetable_id: timetableId,
-                    batch_id: null,
-                    day_of_week: day,
-                    start_time: slot.start,
-                    end_time: slot.end,
-                    class_type: 'Lecture',
-                    is_extra_class: false,
-                    active_from: activeFrom,
-                    active_till: activeTill,
-                    created_at: new Date(),
-                    updated_at: new Date()
-                });
+        const labs = [
+            // WEDNESDAY LAB
+            {
+                day: "Wednesday",
+                courseName: "Social Media Analytics Lab",
+                batch: bb1.batch_id,
+                start: "12:30:00",
+                end: "14:30:00"
+            },
+
+            // THURSDAY LABS
+            {
+                day: "Thursday",
+                courseName: "Distributed Computing Lab",
+                batch: bb1.batch_id,
+                start: "12:30:00",
+                end: "14:30:00"
+            },
+            {
+                day: "Thursday",
+                courseName: "Digital Forensic Lab",
+                batch: bb2.batch_id,
+                start: "12:30:00",
+                end: "14:30:00"
+            },
+
+            // FRIDAY LABS
+            {
+                day: "Friday",
+                courseName: "Social Media Analytics Lab",
+                batch: bb2.batch_id,
+                start: "10:00:00",
+                end: "12:00:00"
+            },
+            {
+                day: "Friday",
+                courseName: "Distributed Computing Lab",
+                batch: bb2.batch_id,
+                start: "12:30:00",
+                end: "14:30:00"
+            },
+            {
+                day: "Friday",
+                courseName: "Digital Forensic Lab",
+                batch: bb1.batch_id,
+                start: "12:30:00",
+                end: "14:30:00"
             }
-        }
-
-        // Lab schedule: 2:45-4:45, both batches in parallel, each lab 2x/week per batch
-        // Each batch gets each lab exactly twice per week, and no teacher teaches two batches simultaneously
-        // Mon & Thu: BB1=Digital Forensic Lab,       BB2=Social Media Analytics Lab
-        // Tue & Fri: BB1=Social Media Analytics Lab, BB2=Distributed Computing Lab
-        // Wed & Sat: BB1=Distributed Computing Lab,  BB2=Digital Forensic Lab
-        const labSchedule = [
-            { day: 'Monday',    bb1: 'Digital Forensic Lab',       bb2: 'Social Media Analytics Lab' },
-            { day: 'Tuesday',   bb1: 'Social Media Analytics Lab', bb2: 'Distributed Computing Lab'  },
-            { day: 'Wednesday', bb1: 'Distributed Computing Lab',  bb2: 'Digital Forensic Lab'       },
-            { day: 'Thursday',  bb1: 'Digital Forensic Lab',       bb2: 'Social Media Analytics Lab' },
-            { day: 'Friday',    bb1: 'Social Media Analytics Lab', bb2: 'Distributed Computing Lab'  },
-            { day: 'Saturday',  bb1: 'Distributed Computing Lab',  bb2: 'Digital Forensic Lab'       }
         ];
 
-        for (const entry of labSchedule) {
-            // BB1 lab
+        for (const lecture of lectures) {
             classes.push({
                 class_id: uuidv4(),
-                teacher_id: teacherMap[entry.bb1],
-                course_id: courseMap[entry.bb1],
-                room_id: labRoomMap[entry.bb1],
+                teacher_id: teacherMap[lecture.courseName],
+                course_id: courseMap[lecture.courseName],
+                room_id: lectureRoomId,
                 timetable_id: timetableId,
-                batch_id: bb1.batch_id,
-                day_of_week: entry.day,
-                start_time: '14:45:00',
-                end_time: '16:45:00',
-                class_type: 'Practical',
+                batch_id: null,
+                day_of_week: lecture.day,
+                start_time: lecture.start,
+                end_time: lecture.end,
+                class_type: 'Lecture',
                 is_extra_class: false,
                 active_from: activeFrom,
                 active_till: activeTill,
                 created_at: new Date(),
                 updated_at: new Date()
             });
-            // BB2 lab
+        }
+
+        for (const lab of labs) {
             classes.push({
                 class_id: uuidv4(),
-                teacher_id: teacherMap[entry.bb2],
-                course_id: courseMap[entry.bb2],
-                room_id: labRoomMap[entry.bb2],
+                teacher_id: teacherMap[lab.courseName],
+                course_id: courseMap[lab.courseName],
+                room_id: labRoomMap[lab.courseName],
                 timetable_id: timetableId,
-                batch_id: bb2.batch_id,
-                day_of_week: entry.day,
-                start_time: '14:45:00',
-                end_time: '16:45:00',
+                batch_id: lab.batch,
+                day_of_week: lab.day,
+                start_time: lab.start,
+                end_time: lab.end,
                 class_type: 'Practical',
                 is_extra_class: false,
                 active_from: activeFrom,

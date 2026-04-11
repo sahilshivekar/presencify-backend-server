@@ -161,6 +161,10 @@ const updateTeacherPassword = asyncHandler(async (req, res) => {
         throw new ApiError(httpStatus.BAD_REQUEST, "New password can't be same as old password.")
     }
 
+    if (password !== confirmPassword) {
+        throw new ApiError(httpStatus.BAD_REQUEST, "Password and confirm password didn't match.")
+    }
+
     teacher.password = password;
 
     await teacher.save();

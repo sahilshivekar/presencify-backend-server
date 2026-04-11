@@ -40,11 +40,11 @@ const verifyJWT = (allowedRoles) =>
         let decodedToken;
         try {
             decodedToken = jwt.verify(token, process.env.JWT_ACCESS_TOKEN_SECRET);
-        } catch (error) {   
+        } catch (error) {
             logger.error(`JWT verification failed: ${error}`);
             throw new ApiError(StatusCodes.UNAUTHORIZED, "Unauthorized request: Invalid token");
         }
-        
+
         if (!decodedToken || !decodedToken.id || !decodedToken.role) {
             //logger.warn(`Decoded token missing required fields: ${JSON.stringify(decodedToken)}`);
             throw new ApiError(StatusCodes.UNAUTHORIZED, "Invalid token");
@@ -70,37 +70,25 @@ const verifyJWT = (allowedRoles) =>
             logger.info(`JWT verified for userId: ${decodedToken?.id}, role: ${decodedToken?.role}`);
         }
 
-        // Optional: auto-assign user id to req.body or req.query based on role and method:
+        // Optional: auto-assign user id to req.body based on role
         if (req.method !== "GET") {
             if (decodedToken.role === ROLES.STUDENT) {
                 req.body.studentId = user.id;
-                //logger.debug(`Assigned studentId to req.body: ${user.id}`);
             } else if (decodedToken.role === ROLES.TEACHER) {
-                // injecting teacherId is commented for temporary time, since the it's automatically applying itself as id for 
-                // getClass filter criteria if user role is teacher on client side
-                // req.body.teacherId = user.id;
-                //logger.debug(`Assigned teacherId to req.body: ${user.id}`);
+                req.body.teacherId = user.id;
             } else if (decodedToken.role === ROLES.ADMIN) {
                 req.body.adminId = user.id;
-                //logger.debug(`Assigned adminId to req.body: ${user.id}`);
             }
         }
 
         if (decodedToken.role === ROLES.STUDENT) {
-            req.query.studentId = user.id;
             req.student = user;
-            //logger.debug(`Assigned studentId to req.query and req.student: ${user.id}`);
         } else if (decodedToken.role === ROLES.TEACHER) {
-            // req.query.teacherId = user.id;
-            // req.teacher = user;
-            //logger.debug(`Assigned teacherId to req.query and req.teacher: ${user.id}`);
+            req.teacher = user;
         } else if (decodedToken.role === ROLES.ADMIN) {
-            req.query.adminId = user.id;
             req.admin = user;
-            //logger.debug(`Assigned adminId to req.query and req.admin: ${user.id}`);
         }
 
-        //logger.info(`JWT auth successful for userId: ${user.id}, role: ${decodedToken.role}`);
         next();
     });
 

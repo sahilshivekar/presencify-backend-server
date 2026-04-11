@@ -150,7 +150,7 @@ module.exports = {
                 middle_name: null,
                 dob: new Date(2000 + (index % 5), 0, 1),
                 gender: index % 2 === 0 ? 'Male' : 'Female',
-                email: `${firstName.toLowerCase()}.${lastName.toLowerCase()}${studentCounter}@gmail.com`,
+                email: `${firstName.toLowerCase()}${lastName.toLowerCase()}@gmail.com`,
                 phone_number: `+91${9000000000 + studentCounter++}`,
                 password: password,
                 refresh_token: null,
