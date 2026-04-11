@@ -52,7 +52,7 @@ const applyNMS = (boxes, iouThreshold = 0.4) => {
 
     for (let i = 0; i < boxes.length; i++) {
         if (!active[i]) continue;
-        
+
         const bestBox = boxes[i];
         selectedBoxes.push(bestBox);
 
@@ -60,7 +60,7 @@ const applyNMS = (boxes, iouThreshold = 0.4) => {
         for (let j = i + 1; j < boxes.length; j++) {
             if (!active[j]) continue;
             if (computeIoU(bestBox, boxes[j]) > iouThreshold) {
-                active[j] = false; 
+                active[j] = false;
             }
         }
     }
@@ -113,13 +113,11 @@ const extractFace = (outputs) => {
     const boxes = outputs[0].data;
     if (boxes.length === 0) return null;
 
-    let x1 = boxes[0];
-    let y1 = boxes[1];
-    let x2 = boxes[2];
-    let y2 = boxes[3];
+    let x1 = boxes[0]; // xmin
+    let y1 = boxes[1]; // ymin
+    let x2 = boxes[2]; // xmax
+    let y2 = boxes[3]; // ymax
 
-    // FIX: If BlazeFace gives pixels (e.g., 45.0) instead of decimals (0.45)
-    // divide by the detection size (128) to normalize them to 0.0 - 1.0
     if (x2 > 1.0 || y2 > 1.0) {
         x1 /= 128.0;
         y1 /= 128.0;
@@ -127,10 +125,7 @@ const extractFace = (outputs) => {
         y2 /= 128.0;
     }
 
-    const w = x2 - x1;
-    const h = y2 - y1;
-
-    return { x: x1, y: y1, w, h };
+    return { x: x1, y: y1, w: x2 - x1, h: y2 - y1 };
 };
 
 // 🔹 Crop (consistent across all platforms)
@@ -148,13 +143,19 @@ const alignAndCrop = async (image, face) => {
     let cx = x + w / 2;
     let cy = y + h / 2;
 
-    let size = Math.max(w, h);
-    size *= 1.4;
+    let size = Math.max(w, h) * 1.1;
 
-    let newX = Math.max(0, cx - size / 2);
-    let newY = Math.max(0, cy - size / 2);
+    // 1. Guarantee the crop box is never larger than the image itself
+    size = Math.min(size, imgW, imgH);
 
-    size = Math.min(size, imgW - newX, imgH - newY);
+    let newX = cx - size / 2;
+    let newY = cy - size / 2;
+
+    // 2. Shift the bounding box back into frame
+    if (newX < 0) newX = 0;
+    if (newY < 0) newY = 0;
+    if (newX + size > imgW) newX = imgW - size;
+    if (newY + size > imgH) newY = imgH - size;
 
     const cropped = image.clone();
 
@@ -245,10 +246,10 @@ const extractGroupEmbeddings = async (imagePath) => {
 
     console.log(`   🤖 Running YuNet Crowd Detector...`);
     const yuNetResults = await yuNetSession.run(yuNetFeeds);
-    
-    const outputs = Object.values(yuNetResults)[0]; 
+
+    const outputs = Object.values(yuNetResults)[0];
     const boxesData = outputs.data;
-    
+
     let numFaces = outputs.dims.length === 3 ? outputs.dims[1] : outputs.dims[0];
     const candidateBoxes = [];
 
@@ -281,7 +282,7 @@ const extractGroupEmbeddings = async (imagePath) => {
     // 3. Loop through the actual, distinct faces in the crowd
     for (let i = 0; i < finalBoxes.length; i++) {
         const box = finalBoxes[i];
-        
+
         // Convert absolute YuNet pixels to percentages for our cropping tool
         const face = {
             x: box.x / DETECT_SIZE,
@@ -303,7 +304,7 @@ const extractGroupEmbeddings = async (imagePath) => {
 
             embeddings.push(normalized);
         } catch (err) {
-            console.error(`      -> ⚠️ Failed to extract embedding for face ${i+1}:`, err.message);
+            console.error(`      -> ⚠️ Failed to extract embedding for face ${i + 1}:`, err.message);
         }
     }
 

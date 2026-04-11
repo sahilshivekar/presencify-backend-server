@@ -184,6 +184,7 @@ module.exports = {
             // THURSDAY
             { day: "Thursday", courseName: "Digital Forensic", start: "10:00:00", end: "11:00:00" },
             { day: "Thursday", courseName: "Environmental Management", start: "11:00:00", end: "12:00:00" },
+            { day: "Thursday", courseName: "Social Media Analytics", start: "12:30:00", end: "13:30:00" },
 
             // FRIDAY
             { day: "Friday", courseName: "Digital Forensic", start: "10:00:00", end: "11:00:00" },
