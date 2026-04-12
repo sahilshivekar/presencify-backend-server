@@ -217,7 +217,7 @@ const generateSingleDescriptor = async (imagePath) => {
         }
     }
 
-    if (!bestBox || bestScore < 0.5) {
+    if (!bestBox || bestScore < 0.75) {
         throw new Error("No confident face detected");
     }
 
@@ -260,11 +260,13 @@ const generateSingleDescriptor = async (imagePath) => {
     return normalized;
 };
 
+
 const extractGroupEmbeddings = async (imagePath) => {
     await initializeModels();
 
     const image = await Jimp.read(imagePath);
     const DETECT_SIZE = 640;
+
     const resized = image.clone().resize({ w: DETECT_SIZE, h: DETECT_SIZE });
 
     const yuNetTensor = imageToSFaceTensor(resized);
@@ -272,64 +274,155 @@ const extractGroupEmbeddings = async (imagePath) => {
 
     const yuNetResults = await yuNetSession.run(yuNetFeeds);
 
-    const outputs = Object.values(yuNetResults)[0];
-    const boxesData = outputs.data;
+    const outputs = yuNetResults;
+    const get = (name) => outputs[name];
 
-    let numFaces = outputs.dims.length === 3 ? outputs.dims[1] : outputs.dims[0];
+    const scales = [8, 16, 32];
     const candidateBoxes = [];
 
-    // 1. First Pass: Throw away all the empty grid squares
-    for (let i = 0; i < numFaces; i++) {
-        const offset = i * 15;
-        const conf = boxesData[offset + 14];
+    // 🔥 STEP 1 — Collect ALL candidate boxes (NO grid logic)
+    for (const s of scales) {
 
-        // Only look at boxes that are 65% sure they contain a face
-        if (conf > 0.65) {
-            candidateBoxes.push({
-                x: boxesData[offset + 0],
-                y: boxesData[offset + 1],
-                w: boxesData[offset + 2],
-                h: boxesData[offset + 3],
-                conf: conf
-            });
+        const cls = get(`cls_${s}`).data;
+        const obj = get(`obj_${s}`).data;
+        const bbox = get(`bbox_${s}`).data;
+        const kps = get(`kps_${s}`).data;
+
+        const count = cls.length;
+
+        for (let i = 0; i < count; i++) {
+
+            const score = cls[i] * obj[i];
+
+            // 🔥 threshold tuned
+            if (score < 0.75) continue;
+
+            const bOffset = i * 4;
+            const kOffset = i * 10;
+
+            // ✅ SIMPLE decoding (same as single face)
+            const cx = bbox[bOffset + 0];
+            const cy = bbox[bOffset + 1];
+            const w = bbox[bOffset + 2];
+            const h = bbox[bOffset + 3];
+
+            const landmarks = [
+                [kps[kOffset + 0], kps[kOffset + 1]],
+                [kps[kOffset + 2], kps[kOffset + 3]],
+                [kps[kOffset + 4], kps[kOffset + 5]],
+                [kps[kOffset + 6], kps[kOffset + 7]],
+                [kps[kOffset + 8], kps[kOffset + 9]]
+            ];
+
+            const x = cx - w / 2;
+            const y = cy - h / 2;
+
+            candidateBoxes.push({ x, y, w, h, landmarks, conf: score });
         }
     }
 
-    // 2. Second Pass: Run NMS to merge overlapping boxes into a single face
-    const finalBoxes = applyNMS(candidateBoxes, 0.4);
+    // 🔥 STEP 2 — Apply NMS (VERY IMPORTANT)
+    const finalBoxes = applyNMS(candidateBoxes, 0.2);
+
+    let filteredBoxes = finalBoxes.filter(box => {
+        const area = box.w * box.h;
+        return area > 0.01;
+    });
+
+    filteredBoxes.sort((a, b) => b.conf - a.conf);
+    filteredBoxes = suppressDuplicates(filteredBoxes);
 
     const embeddings = [];
 
-    // 3. Loop through the actual, distinct faces in the crowd
-    for (let i = 0; i < finalBoxes.length; i++) {
-        const box = finalBoxes[i];
-
-        // Convert absolute YuNet pixels to percentages for our cropping tool
-        const face = {
-            x: box.x / DETECT_SIZE,
-            y: box.y / DETECT_SIZE,
-            w: box.w / DETECT_SIZE,
-            h: box.h / DETECT_SIZE
-        };
+    // 🔥 STEP 3 — Extract embeddings
+    for (const box of filteredBoxes) {
 
         try {
+            // Convert to image coordinates (same logic as single)
+            const x = box.x * DETECT_SIZE;
+            const y = box.y * DETECT_SIZE;
+            const width = box.w * DETECT_SIZE;
+            const height = box.h * DETECT_SIZE;
+
+            const face = {
+                x: x / image.bitmap.width,
+                y: y / image.bitmap.height,
+                w: width / image.bitmap.width,
+                h: height / image.bitmap.height,
+                landmarks: box.landmarks
+            };
+
             const cropped = await alignAndCrop(image, face);
-            const recognizerTensor = imageToSFaceTensor(cropped);
 
-            const recognizerFeeds = { [recognizerSession.inputNames[0]]: recognizerTensor };
-            const recognizerResults = await recognizerSession.run(recognizerFeeds);
-            const embedding = recognizerResults[recognizerSession.outputNames[0]].data;
+            const tensor = imageToSFaceTensor(cropped);
 
+            const feeds = {
+                [recognizerSession.inputNames[0]]: tensor
+            };
+
+            const results = await recognizerSession.run(feeds);
+
+            const embedding = results[recognizerSession.outputNames[0]].data;
+
+            // Normalize
             const norm = Math.sqrt(embedding.reduce((sum, v) => sum + v * v, 0));
             const normalized = Array.from(embedding).map(v => v / norm);
 
             embeddings.push(normalized);
+
         } catch (err) {
-            console.error(`      -> ⚠️ Failed to extract embedding for face ${i + 1}:`, err.message);
+            console.error("Face failed:", err.message);
         }
     }
 
     return embeddings;
+};
+const suppressDuplicates = (boxes) => {
+    if (boxes.length === 0) return [];
+
+    // Sort by confidence (highest first)
+    boxes.sort((a, b) => b.conf - a.conf);
+
+    const result = [];
+
+    for (const box of boxes) {
+
+        let isDuplicate = false;
+
+        for (const kept of result) {
+
+            // centers
+            const cx1 = box.x + box.w / 2;
+            const cy1 = box.y + box.h / 2;
+
+            const cx2 = kept.x + kept.w / 2;
+            const cy2 = kept.y + kept.h / 2;
+
+            const dx = cx1 - cx2;
+            const dy = cy1 - cy2;
+
+            const dist = Math.sqrt(dx * dx + dy * dy);
+
+            // 🔥 normalize distance by face size
+            const size = Math.max(kept.w, kept.h);
+
+            const normalizedDist = dist / size;
+
+            // 🔥 size similarity
+            const sizeRatio = Math.min(box.w, kept.w) / Math.max(box.w, kept.w);
+
+            if (normalizedDist < 0.5 && sizeRatio > 0.6) {
+                isDuplicate = true;
+                break;
+            }
+        }
+
+        if (!isDuplicate) {
+            result.push(box);
+        }
+    }
+
+    return result;
 };
 // Export the new function
 export { generateSingleDescriptor, extractGroupEmbeddings };

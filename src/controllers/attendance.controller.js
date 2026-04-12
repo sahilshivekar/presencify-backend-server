@@ -1254,6 +1254,7 @@ const getActiveAttendanceSheet = asyncHandler(async (req, res) => {
 })
 
 const groupPhotoScan = asyncHandler(async (req, res) => {
+
     const attendanceId = req.body?.attendanceId || req.params?.attendanceId || req.query?.attendanceId;
     const photoPaths = getUploadedFilePaths(req.files);
 
@@ -1270,7 +1271,7 @@ const groupPhotoScan = asyncHandler(async (req, res) => {
 
     let targetStudents = [];
 
-    // 2. Fetch required students based on Batch OR Division logic
+    // 2. Fetch students
     if (classObj.batchId) {
         const studentBatches = await StudentBatch.findAll({
             where: { batchId: classObj.batchId, endDate: null },
@@ -1281,45 +1282,55 @@ const groupPhotoScan = asyncHandler(async (req, res) => {
         const timetable = await Timetable.findByPk(classObj.timetableId);
         const studentDivisions = await StudentDivision.findAll({
             where: { divisionId: timetable.divisionId, endDate: null },
-            include: [{ model: Student}]
+            include: [{ model: Student }]
         });
         targetStudents = studentDivisions.map(sd => sd.Student);
     }
 
+    // Filter valid face descriptors
     targetStudents = targetStudents.filter(s => {
         if (!s.faceDescriptor) return false;
-        
+
         let arr = s.faceDescriptor;
         if (typeof arr === 'string') {
-            try { arr = JSON.parse(arr); } catch (e) { return false; }
+            try { arr = JSON.parse(arr); } catch { return false; }
         }
         return Array.isArray(arr) && arr.length === 128;
     });
 
-
     if (targetStudents.length === 0) {
-        photoPaths.forEach(p => { try { fs.unlinkSync(p); } catch (err) { } });
-        return res.status(httpStatus.OK).json(new ApiResponse(httpStatus.OK, "No students with registered faces found for this class.", { presentCount: 0, presentStudentIds: [] }));
+        photoPaths.forEach(p => { try { fs.unlinkSync(p); } catch { } });
+        return res.status(httpStatus.OK).json(
+            new ApiResponse(httpStatus.OK, "No students with registered faces found.", {
+                presentCount: 0,
+                unknownFacesCount: 0,
+                totalFacesDetected: 0,
+                presentStudentIds: []
+            })
+        );
     }
 
     let presentStudentIds = new Set();
+    let unknownFacesCount = 0;
+    let totalFacesDetected = 0;
 
-    // 3. Process each group photo
+    // 🔥 3. Process each photo (THIS WAS MISSING)
     for (const photoPath of photoPaths) {
         try {
-            // Run YuNet to crop crowd and SFace to generate embeddings
             const crowdEmbeddings = await extractGroupEmbeddings(photoPath);
 
+            totalFacesDetected += crowdEmbeddings.length;
 
-            // 4. Compare every face in the crowd to our Target Students
+            // 🔥 4. Match each detected face
             for (let i = 0; i < crowdEmbeddings.length; i++) {
+
                 const detectedEmbedding = crowdEmbeddings[i];
+
                 let bestMatchId = null;
                 let bestSimilarity = -1;
 
-
                 for (const student of targetStudents) {
-                    // Ensure the DB descriptor is an array before math
+
                     let dbDescriptor = student.faceDescriptor;
                     if (typeof dbDescriptor === 'string') {
                         dbDescriptor = JSON.parse(dbDescriptor);
@@ -1327,19 +1338,24 @@ const groupPhotoScan = asyncHandler(async (req, res) => {
 
                     const similarity = cosineSimilarity(detectedEmbedding, dbDescriptor);
 
-                    // 0.363 is the official SFace Cosine Similarity Threshold
-                    if (similarity > bestSimilarity && similarity > 0.363) {
+                    if (similarity > bestSimilarity) {
                         bestSimilarity = similarity;
                         bestMatchId = student.id;
                     }
                 }
 
-                if (bestMatchId) {
-                    presentStudentIds.add(bestMatchId); // Using a Set prevents double-marking
+                // 🔥 Apply threshold AFTER best match
+                if (bestSimilarity > 0.40) {
+                    presentStudentIds.add(bestMatchId);
+                } else {
+                    unknownFacesCount++;
                 }
+
+                console.log(`Face ${i}: bestSim=${bestSimilarity}`);
             }
+
         } catch (error) {
-            console.error(`💥 Error processing group photo ${photoPath}:`, error);
+            console.error(`Error processing photo ${photoPath}:`, error);
         } finally {
             try { fs.unlinkSync(photoPath); } catch { }
         }
@@ -1347,28 +1363,33 @@ const groupPhotoScan = asyncHandler(async (req, res) => {
 
     const presentIdsArray = Array.from(presentStudentIds);
 
-    // 5. Update Attendance Records for matched students
-    // 5. Update Attendance Records for matched students
+    // 🔥 5. Update DB
     if (presentIdsArray.length > 0) {
-        console.log(`💾 Updating attendance status to 'true' for ${presentIdsArray.length} students...`);
-        
         await AttendanceStudent.update(
-            { status: true },
+            { status: true }, // ⚠️ use correct column name (not attendanceStatus unless your DB uses that)
             {
                 where: {
                     attendanceId: attendanceId,
-                    studentId: presentIdsArray 
+                    studentId: {
+                        [Op.in]: presentIdsArray
+                    }
                 }
             }
         );
     }
-    
-    // 6. Return the success response
+
+    // 🔥 6. Response
     res.status(httpStatus.OK).json(
-        new ApiResponse(httpStatus.OK, `Classroom attendance verified. Marked ${presentIdsArray.length} students as present.`, {
-            presentCount: presentIdsArray.length,
-            presentStudentIds: presentIdsArray
-        })
+        new ApiResponse(
+            httpStatus.OK,
+            "Classroom attendance verified.",
+            {
+                presentCount: presentIdsArray.length,
+                unknownFacesCount: unknownFacesCount,
+                totalFacesDetected: totalFacesDetected,
+                presentStudentIds: presentIdsArray
+            }
+        )
     );
 });
 
