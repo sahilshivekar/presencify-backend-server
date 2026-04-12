@@ -7,18 +7,13 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // 👉 Models
-const detectorModelPath = path.join(__dirname, '../assets/models/blaze.onnx');
 const recognizerModelPath = path.join(__dirname, '../assets/models/face_recognition_sface_2021dec.onnx');
 const yuNetModelPath = path.join(__dirname, '../assets/models/face_detection_yunet_2023mar.onnx');
 
-let detectorSession = null;
 let recognizerSession = null;
 let yuNetSession = null;
 
 const initializeModels = async () => {
-    if (!detectorSession) {
-        detectorSession = await InferenceSession.create(detectorModelPath);
-    }
     if (!recognizerSession) {
         recognizerSession = await InferenceSession.create(recognizerModelPath);
     }
@@ -67,26 +62,6 @@ const applyNMS = (boxes, iouThreshold = 0.4) => {
     return selectedBoxes;
 };
 
-// 🔹 Image → Tensor (BlazeFace expects RGB normalized, NCHW)
-// 🔹 1. BlazeFace Expects: RGB Order, Normalized to [-1.0, 1.0]
-const imageToBlazeTensor = (image) => {
-    const { width, height, data } = image.bitmap;
-    const size = width * height;
-    const floatData = new Float32Array(3 * size);
-
-    for (let i = 0; i < data.length; i += 4) {
-        // Normalize to [-1, 1]
-        const r = (data[i] / 127.5) - 1.0;
-        const g = (data[i + 1] / 127.5) - 1.0;
-        const b = (data[i + 2] / 127.5) - 1.0;
-
-        const pixelIndex = i / 4;
-        floatData[pixelIndex] = r;
-        floatData[size + pixelIndex] = g;
-        floatData[size * 2 + pixelIndex] = b;
-    }
-    return new Tensor('float32', floatData, [1, 3, height, width]);
-};
 
 // 🔹 2. SFace Expects: BGR Order, Raw Pixels [0.0, 255.0] (NO DIVISION)
 const imageToSFaceTensor = (image) => {
@@ -108,33 +83,14 @@ const imageToSFaceTensor = (image) => {
     return new Tensor('float32', floatData, [1, 3, height, width]);
 };
 
-// 🔹 Decode BlazeFace output (simple + stable)
-const extractFace = (outputs) => {
-    const boxes = outputs[0].data;
-    if (boxes.length === 0) return null;
+const cropFromFace = async (image, face) => {
 
-    let x1 = boxes[0]; // xmin
-    let y1 = boxes[1]; // ymin
-    let x2 = boxes[2]; // xmax
-    let y2 = boxes[3]; // ymax
-
-    if (x2 > 1.0 || y2 > 1.0) {
-        x1 /= 128.0;
-        y1 /= 128.0;
-        x2 /= 128.0;
-        y2 /= 128.0;
-    }
-
-    return { x: x1, y: y1, w: x2 - x1, h: y2 - y1 };
-};
-
-// 🔹 Crop (consistent across all platforms)
-const alignAndCrop = async (image, face) => {
     const imgW = image.bitmap.width;
     const imgH = image.bitmap.height;
 
     let { x, y, w, h } = face;
 
+    // Convert normalized → absolute
     x *= imgW;
     y *= imgH;
     w *= imgW;
@@ -145,13 +101,12 @@ const alignAndCrop = async (image, face) => {
 
     let size = Math.max(w, h) * 1.1;
 
-    // 1. Guarantee the crop box is never larger than the image itself
+    // Keep inside bounds
     size = Math.min(size, imgW, imgH);
 
     let newX = cx - size / 2;
     let newY = cy - size / 2;
 
-    // 2. Shift the bounding box back into frame
     if (newX < 0) newX = 0;
     if (newY < 0) newY = 0;
     if (newX + size > imgW) newX = imgW - size;
@@ -174,48 +129,121 @@ const alignAndCrop = async (image, face) => {
     return cropped;
 };
 
+const alignAndCrop = async (image, face) => {
+
+    const { landmarks } = face;
+
+    const leftEye = landmarks[0];
+    const rightEye = landmarks[1];
+
+    const dx = rightEye[0] - leftEye[0];
+    const dy = rightEye[1] - leftEye[1];
+
+    const angle = Math.atan2(dy, dx) * (180 / Math.PI);
+
+    // 🔥 Rotate image
+    const rotated = image.clone().rotate(-angle);
+
+    // Now crop normally (reuse your logic)
+    return await cropFromFace(rotated, face);
+};
+
 const generateSingleDescriptor = async (imagePath) => {
     await initializeModels();
 
-    // 🔹 1. Read image
+    // 1. Read image
     const image = await Jimp.read(imagePath);
 
-    // 🔹 2. Resize
-    const DETECT_SIZE = 128;
+    const DETECT_SIZE = 640;
+
+    // 2. Resize for YuNet
     const resized = image.clone().resize({
         w: DETECT_SIZE,
         h: DETECT_SIZE
     });
 
-    const inputTensor = imageToBlazeTensor(resized);
+    // 3. Tensor (BGR)
+    const yuNetTensor = imageToSFaceTensor(resized);
 
-
-    // 🔹 4. Run detection
-    const detectorFeeds = {
-        image: inputTensor,
-        conf_threshold: new Tensor('float32', Float32Array.from([0.75]), [1]),
-        iou_threshold: new Tensor('float32', Float32Array.from([0.3]), [1]),
-        max_detections: new Tensor('int64', BigInt64Array.from([1n]), [1])
+    const yuNetFeeds = {
+        [yuNetSession.inputNames[0]]: yuNetTensor
     };
 
-    const detectorResults = await detectorSession.run(detectorFeeds);
+    const yuNetResults = await yuNetSession.run(yuNetFeeds);
+    const outputs = yuNetResults;
 
+    const get = (name) => outputs[name];
 
-    const outputs = Object.values(detectorResults);
+    const scales = [8, 16, 32];
 
-    // 🔹 5. Extract face
-    const face = extractFace(outputs);
+    let bestBox = null;
+    let bestScore = 0;
 
-    if (!face) {
-        throw new Error("No face detected");
+    // 🔥 4. Multi-scale decode + landmarks
+    for (const s of scales) {
+
+        const cls = get(`cls_${s}`).data;
+        const obj = get(`obj_${s}`).data;
+        const bbox = get(`bbox_${s}`).data;
+        const kps = get(`kps_${s}`).data;
+
+        const count = cls.length;
+
+        for (let i = 0; i < count; i++) {
+
+            const score = cls[i] * obj[i];
+
+            if (score > bestScore) {
+                bestScore = score;
+
+                const bOffset = i * 4;
+                const kOffset = i * 10;
+
+                const cx = bbox[bOffset + 0];
+                const cy = bbox[bOffset + 1];
+                const w = bbox[bOffset + 2];
+                const h = bbox[bOffset + 3];
+
+                const landmarks = [
+                    [kps[kOffset + 0], kps[kOffset + 1]], // left eye
+                    [kps[kOffset + 2], kps[kOffset + 3]], // right eye
+                    [kps[kOffset + 4], kps[kOffset + 5]], // nose
+                    [kps[kOffset + 6], kps[kOffset + 7]], // mouth left
+                    [kps[kOffset + 8], kps[kOffset + 9]]  // mouth right
+                ];
+
+                bestBox = { cx, cy, w, h, landmarks };
+            }
+        }
     }
 
-    // 🔹 6. Crop
+    if (!bestBox || bestScore < 0.5) {
+        throw new Error("No confident face detected");
+    }
+
+    // 🔥 5. SCALE FIX (VERY IMPORTANT)
+    const scaleFactor = DETECT_SIZE;
+
+    const x = (bestBox.cx - bestBox.w / 2) * scaleFactor;
+    const y = (bestBox.cy - bestBox.h / 2) * scaleFactor;
+    const width = bestBox.w * scaleFactor;
+    const height = bestBox.h * scaleFactor;
+
+    const face = {
+        x: x / image.bitmap.width,
+        y: y / image.bitmap.height,
+        w: width / image.bitmap.width,
+        h: height / image.bitmap.height,
+        landmarks: bestBox.landmarks
+    };
+
+    console.log("Best score:", bestScore);
+
+    // 🔥 6. ALIGN + CROP (uses your updated function)
     const cropped = await alignAndCrop(image, face);
 
     // 🔹 7. Recognition
     const recognizerTensor = imageToSFaceTensor(cropped);
-
 
     const recognizerFeeds = {
         [recognizerSession.inputNames[0]]: recognizerTensor
@@ -225,11 +253,9 @@ const generateSingleDescriptor = async (imagePath) => {
 
     const embedding = recognizerResults[recognizerSession.outputNames[0]].data;
 
-
     // 🔹 8. Normalize
     const norm = Math.sqrt(embedding.reduce((sum, v) => sum + v * v, 0));
     const normalized = Array.from(embedding).map(v => v / norm);
-
 
     return normalized;
 };
@@ -244,7 +270,6 @@ const extractGroupEmbeddings = async (imagePath) => {
     const yuNetTensor = imageToSFaceTensor(resized);
     const yuNetFeeds = { [yuNetSession.inputNames[0]]: yuNetTensor };
 
-    console.log(`   🤖 Running YuNet Crowd Detector...`);
     const yuNetResults = await yuNetSession.run(yuNetFeeds);
 
     const outputs = Object.values(yuNetResults)[0];
@@ -270,12 +295,8 @@ const extractGroupEmbeddings = async (imagePath) => {
         }
     }
 
-    console.log(`   🔎 Found ${candidateBoxes.length} raw overlapping boxes. Running NMS...`);
-
     // 2. Second Pass: Run NMS to merge overlapping boxes into a single face
     const finalBoxes = applyNMS(candidateBoxes, 0.4);
-
-    console.log(`   ✅ Kept ${finalBoxes.length} unique, distinct faces!`);
 
     const embeddings = [];
 
