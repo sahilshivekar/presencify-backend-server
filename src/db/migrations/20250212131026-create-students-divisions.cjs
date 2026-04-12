@@ -30,6 +30,11 @@ module.exports = {
                 },
                 onDelete: 'CASCADE'
             },
+            rollNo: {
+                type: Sequelize.INTEGER,
+                allowNull: false,
+                field: 'roll_no',
+            },
             startDate: {
                 type: Sequelize.DATEONLY,
                 allowNull: false,

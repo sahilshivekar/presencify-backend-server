@@ -41,6 +41,20 @@ StudentDivision.init(
                 }
             }
         },
+        rollNo: {
+            type: Sequelize.INTEGER,
+            allowNull: false,
+            field: 'roll_no',
+            validate: {
+                notNull: {
+                    msg: 'Roll number cannot be null'
+                },
+                min: {
+                    args: [1],
+                    msg: 'Roll number must be at least 1'
+                }
+            }
+        },
         startDate: {
             type: Sequelize.DATEONLY,
             allowNull: false,

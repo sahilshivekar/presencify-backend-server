@@ -112,11 +112,30 @@ module.exports = {
             updated_at: new Date()
         }], {});
 
-        // 6. Assign to division
+        // 6. Assign to division with correct semester-wide roll_no
+        const semesterDivisions = divisions.filter(d => d.semester_id === semester.semester_id);
+        if (!semesterDivisions.length) {
+            throw new Error('No divisions found for the target semester when assigning roll_no.');
+        }
+
+        const divisionIdListSql = semesterDivisions
+            .map(d => `'${d.division_id}'`)
+            .join(', ');
+
+        const maxRollRows = await queryInterface.sequelize.query(
+            `SELECT COALESCE(MAX(roll_no), 0) AS max_roll_no
+             FROM students_divisions
+             WHERE division_id IN (${divisionIdListSql});`,
+            { type: queryInterface.sequelize.QueryTypes.SELECT }
+        );
+
+        const maxRollNo = maxRollRows?.[0]?.max_roll_no || 0;
+
         await queryInterface.bulkInsert('students_divisions', [{
             student_division_id: uuidv4(),
             student_id: studentId,
             division_id: division.division_id,
+            roll_no: maxRollNo + 1,
             start_date: '2026-01-08',
             end_date: null,
             created_at: new Date(),

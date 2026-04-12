@@ -237,8 +237,6 @@ const generateSingleDescriptor = async (imagePath) => {
         landmarks: bestBox.landmarks
     };
 
-    console.log("Best score:", bestScore);
-
     // 🔥 6. ALIGN + CROP (uses your updated function)
     const cropped = await alignAndCrop(image, face);
 

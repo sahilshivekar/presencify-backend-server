@@ -959,10 +959,24 @@ const addStudentToDivision = asyncHandler(async (req, res) => {
         throw new ApiError(httpStatus.BAD_REQUEST, "Student is already present in other division of the same semester. Please use the change division feature for moving student to different divsion.")
     }
 
+    const allSemesterDivisionIds = [
+        divisionId,
+        ...divisionsOfTheSemester.map((d) => d.id),
+    ];
+
+    const maxRollNo = await StudentDivision.max('rollNo', {
+        where: {
+            divisionId: {
+                [Op.in]: allSemesterDivisionIds,
+            },
+        },
+    });
+
     const studentDivisionEntry = await StudentDivision.create({
         studentId: studentId,
         divisionId: divisionId,
         startDate: semester.startDate,
+        rollNo: (maxRollNo || 0) + 1,
     });
 
 
@@ -1088,10 +1102,29 @@ const changeStudentDivision = asyncHandler(async (req, res) => {
         studentDivision.endDate = endDateOfPrevDivision;
         await studentDivision.save({ transaction });
 
+        const semesterDivisions = await Division.findAll({
+            where: {
+                semesterId: division.semesterId,
+            },
+            transaction,
+        });
+
+        const semesterDivisionIds = semesterDivisions.map((d) => d.id);
+
+        const maxRollNoNewDivision = await StudentDivision.max('rollNo', {
+            where: {
+                divisionId: {
+                    [Op.in]: semesterDivisionIds,
+                },
+            },
+            transaction,
+        });
+
         const newStudentDivision = await StudentDivision.create({
             studentId: studentDivision.studentId,
             divisionId: divisionId,
-            startDate: startDateOfNewDivision
+            startDate: startDateOfNewDivision,
+            rollNo: (maxRollNoNewDivision || 0) + 1
         }, { transaction });
 
         if (!newStudentDivision) {

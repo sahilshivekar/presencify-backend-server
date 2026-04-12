@@ -386,7 +386,7 @@ const removeAttendance = asyncHandler(async (req, res) => {
 
 const getAttendanceOfStudentForSpecificCourseInSemester = asyncHandler(async (req, res) => {
 
-    const {
+    let {
         studentId,
         courseId,
         semesterId,
@@ -400,7 +400,7 @@ const getAttendanceOfStudentForSpecificCourseInSemester = asyncHandler(async (re
         branchId,
         schemeId
     } = req.query;
-
+    studentId = studentId || req.student.id;
     // courseid, semesterid, studentId
     if (studentId) {
         const student = await Student.findByPk(studentId);
