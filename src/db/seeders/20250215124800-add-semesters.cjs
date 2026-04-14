@@ -17,7 +17,7 @@ module.exports = {
 
         const compBranchId = branches.find(b => b.branch_name === 'Computer Engineering')?.branch_id;
         const civilBranchId = branches.find(b => b.branch_name === 'Civil Engineering')?.branch_id;
-        const rev2019SchemeId = schemes.find(s => s.scheme_name === 'REV-2019 ‘C’ Scheme')?.scheme_id;
+        const rev2019SchemeId = schemes.find(s => s.scheme_name === "REV-2019 'C' Scheme")?.scheme_id;
         const nep2020SchemeId = schemes.find(s => s.scheme_name === 'NEP-2020 Scheme')?.scheme_id;
 
         if (!compBranchId || !civilBranchId || !rev2019SchemeId || !nep2020SchemeId) {

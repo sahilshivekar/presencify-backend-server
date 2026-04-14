@@ -228,10 +228,10 @@ const csvStudentRowSchema = Joi.object().keys({
 	phoneNumber: Joi.string().trim().required().messages({ 'any.required': 'Phone number is required' }),
 	gender: Joi.string().valid('Male', 'Female', 'Other').required().messages({ 'any.required': 'Gender is required', 'any.only': "Gender must be one of 'Male', 'Female', or 'Other'" }),
 	dob: Joi.string().allow('', null).messages({ 'string.base': 'DOB must be a string' }),
-	schemeId: uuid.required().messages({ 'any.required': 'Scheme ID is required', 'string.guid': 'Scheme ID must be a valid UUID' }),
+	scheme: Joi.string().trim().required().messages({ 'any.required': 'Scheme is required' }),
 	admissionYear: Joi.number().integer().min(1900).max(3000).required().messages({ 'any.required': 'Admission year is required', 'number.base': 'Admission year must be a number' }),
 	admissionType: Joi.string().valid('DSE', 'FE').required().messages({ 'any.required': 'Admission type is required', 'any.only': "Admission type must be 'DSE' or 'FE'" }),
-	branchId: uuid.required().messages({ 'any.required': 'Branch ID is required', 'string.guid': 'Branch ID must be a valid UUID' }),
+	branch: Joi.string().trim().required().messages({ 'any.required': 'Branch is required' }),
 	parentEmail: Joi.string().email().allow('', null).messages({ 'string.email': 'Parent email must be a valid email' })
 });
 

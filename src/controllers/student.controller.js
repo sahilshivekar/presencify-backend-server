@@ -2065,42 +2065,57 @@ const bulkCreateStudentsFromCSV = asyncHandler(async (req, res) => {
         throw new ApiError(httpStatus.BAD_REQUEST, "CSV file is empty or contains no valid data");
     }
 
-    const validationErrors = [];
+    const globalErrors = [];
+    const rowErrorsMap = new Map();
+
+    // Validate if the CSV headers include all required columns
+    const requiredColumns = [
+        'prn', 'firstName', 'lastName', 'email', 'phoneNumber', 
+        'gender', 'scheme', 'admissionYear', 'admissionType', 'branch'
+    ];
+    const actualColumns = Object.keys(rows[0] || {});
+    const missingColumns = requiredColumns.filter(col => !actualColumns.includes(col));
+
+    if (missingColumns.length > 0) {
+        globalErrors.push(`Required columns are missing from the CSV header: ${missingColumns.join(', ')}`);
+    }
+
+    const addRowError = (rowNumber, prn, field, message, value) => {
+        if (!rowErrorsMap.has(rowNumber)) {
+            rowErrorsMap.set(rowNumber, {
+                rowNumber,
+                prn: prn || 'N/A',
+                issues: []
+            });
+        }
+        rowErrorsMap.get(rowNumber).issues.push({ field, message, value });
+    };
+
     const validatedStudents = [];
 
     // Validate each row using Joi schema
     for (let i = 0; i < rows.length; i++) {
         const row = rows[i];
-        const rowNumber = i + 2; // +2 because row 1 is header, and arrays are 0-indexed
+        const rowNumber = i + 2; // +2 because row 1 is header
 
         // Convert admissionYear to number if present
         if (row.admissionYear) {
-            row.admissionYear = parseInt(row.admissionYear, 10);
+            const parsedYear = parseInt(row.admissionYear, 10);
+            if (!isNaN(parsedYear)) {
+                row.admissionYear = parsedYear;
+            }
         }
 
         // Validate row against schema
         const { error, value } = studentValidation.csvStudentRowSchema.validate(row, { abortEarly: false });
-
         if (error) {
-            const errorMessages = error.details.map(detail => detail.message).join('; ');
-            validationErrors.push({
-                row: rowNumber,
-                prn: row.prn || 'N/A',
-                errors: errorMessages
+            error.details.forEach(detail => {
+                const field = detail.context?.key || 'unknown';
+                addRowError(rowNumber, row.prn, field, detail.message, row[field] !== undefined ? row[field] : null);
             });
         } else {
             validatedStudents.push({ ...value, rowNumber });
         }
-    }
-
-    // If any validation errors, rollback and return errors
-    if (validationErrors.length > 0) {
-        cleanupFile();
-        throw new ApiError(
-            httpStatus.BAD_REQUEST,
-            `Validation failed for ${validationErrors.length} row(s). No students were added.`,
-            validationErrors
-        );
     }
 
     // Start transaction for database operations
@@ -2108,126 +2123,134 @@ const bulkCreateStudentsFromCSV = asyncHandler(async (req, res) => {
     let transactionCommitted = false;
 
     try {
-        // Collect all unique schemeIds and branchIds to validate
-        const schemeIds = [...new Set(validatedStudents.map(s => s.schemeId))];
-        const branchIds = [...new Set(validatedStudents.map(s => s.branchId))];
-        const emails = validatedStudents.map(s => s.email.toLowerCase());
-        const prns = validatedStudents.map(s => s.prn);
-        const phoneNumbers = validatedStudents.map(s => s.phoneNumber);
+        let schemeMap = new Map();
+        let branchMap = new Map();
 
-        // Check for duplicate emails within CSV
-        const emailSet = new Set();
-        const duplicateEmails = [];
-        for (const student of validatedStudents) {
-            const lowerEmail = student.email.toLowerCase();
-            if (emailSet.has(lowerEmail)) {
-                duplicateEmails.push({ row: student.rowNumber, email: student.email });
-            }
-            emailSet.add(lowerEmail);
-        }
-        if (duplicateEmails.length > 0) {
-            throw new ApiError(
-                httpStatus.BAD_REQUEST,
-                `Duplicate emails found within CSV file`,
-                duplicateEmails
-            );
-        }
-
-        // Check for duplicate PRNs within CSV
-        const prnSet = new Set();
-        const duplicatePrns = [];
-        for (const student of validatedStudents) {
-            if (prnSet.has(student.prn)) {
-                duplicatePrns.push({ row: student.rowNumber, prn: student.prn });
-            }
-            prnSet.add(student.prn);
-        }
-        if (duplicatePrns.length > 0) {
-            throw new ApiError(
-                httpStatus.BAD_REQUEST,
-                `Duplicate PRNs found within CSV file`,
-                duplicatePrns
-            );
-        }
-
-        // Validate all schemes exist
-        const schemes = await Scheme.findAll({
-            where: {},
-            transaction
-        });
-        console.log(schemes)
-        const foundSchemeIds = schemes.map(s => s.id);
-        const missingSchemeIds = schemeIds.filter(id => !foundSchemeIds.includes(id));
-        if (missingSchemeIds.length > 0) {
-            throw new ApiError(
-                httpStatus.NOT_FOUND,
-                `The following scheme IDs do not exist: ${missingSchemeIds.join(', ')}`
-            );
-        }
-
-        // Validate all branches exist
-        const branches = await Branch.findAll({
-            where: { id: { [Op.in]: branchIds } },
-            transaction
-        });
-        const foundBranchIds = branches.map(b => b.id);
-        const missingBranchIds = branchIds.filter(id => !foundBranchIds.includes(id));
-        if (missingBranchIds.length > 0) {
-            throw new ApiError(
-                httpStatus.NOT_FOUND,
-                `The following branch IDs do not exist: ${missingBranchIds.join(', ')}`
-            );
-        }
-
-        // Check for existing emails in database
-        const existingStudentsByEmail = await Student.findAll({
-            where: { email: { [Op.in]: emails } },
-            transaction
-        });
-        if (existingStudentsByEmail.length > 0) {
-            const existingEmails = existingStudentsByEmail.map(s => s.email);
-            throw new ApiError(
-                httpStatus.BAD_REQUEST,
-                `The following emails already exist in the database: ${existingEmails.join(', ')}`
-            );
-        }
-
-        // Check for existing PRNs in database
-        const existingStudentsByPrn = await Student.findAll({
-            where: { prn: { [Op.in]: prns } },
-            transaction
-        });
-        if (existingStudentsByPrn.length > 0) {
-            const existingPrns = existingStudentsByPrn.map(s => s.prn);
-            throw new ApiError(
-                httpStatus.BAD_REQUEST,
-                `The following PRNs already exist in the database: ${existingPrns.join(', ')}`
-            );
-        }
-
-        // Check for existing phone numbers in database
-        const existingStudentsByPhone = await Student.findAll({
-            where: { phoneNumber: { [Op.in]: phoneNumbers } },
-            transaction
-        });
-        if (existingStudentsByPhone.length > 0) {
-            const existingPhones = existingStudentsByPhone.map(s => s.phoneNumber);
-            throw new ApiError(
-                httpStatus.BAD_REQUEST,
-                `The following phone numbers already exist in the database: ${existingPhones.join(', ')}`
-            );
-        }
-
-        // Prepare student data for bulk create
-        const studentsToCreate = validatedStudents.map(student => {
-            let dobForDB = null;
-            if (student.dob) {
-                dobForDB = moment(student.dob, "YYYY/MM/DD").toDate();
-                if (new Date() < dobForDB) {
-                    throw new ApiError(httpStatus.BAD_REQUEST, `Row ${student.rowNumber}: Date of birth cannot be in the future`);
+        if (validatedStudents.length > 0) {
+            // Collect all unique schemes and branches to validate
+            const schemeNames = [...new Set(validatedStudents.map(s => s.scheme))];
+            const branchNames = [...new Set(validatedStudents.map(s => s.branch))];
+            const emails = validatedStudents.map(s => s.email.toLowerCase());
+            const prns = validatedStudents.map(s => s.prn);
+            const phoneNumbers = validatedStudents.map(s => s.phoneNumber);
+    
+            // Check for duplicate emails within CSV
+            const emailSet = new Map();
+            for (const student of validatedStudents) {
+                const lowerEmail = student.email.toLowerCase();
+                if (emailSet.has(lowerEmail)) {
+                    addRowError(student.rowNumber, student.prn, "email", "Duplicate email found within the CSV file", student.email);
+                } else {
+                    emailSet.set(lowerEmail, student.rowNumber);
                 }
             }
+    
+            // Check for duplicate PRNs within CSV
+            const prnSet = new Map();
+            for (const student of validatedStudents) {
+                if (prnSet.has(student.prn)) {
+                    addRowError(student.rowNumber, student.prn, "prn", "Duplicate PRN found within the CSV file", student.prn);
+                } else {
+                    prnSet.set(student.prn, student.rowNumber);
+                }
+            }
+    
+            // Validate all schemes exist
+            const schemes = await Scheme.findAll({
+                where: { name: { [Op.in]: schemeNames } },
+                transaction
+            });
+            schemeMap = new Map(schemes.map(s => [s.name, s.id]));
+    
+            // Validate all branches exist
+            const branches = await Branch.findAll({
+                where: { name: { [Op.in]: branchNames } },
+                transaction
+            });
+            branchMap = new Map(branches.map(b => [b.name, b.id]));
+    
+            // Check for existing emails in database
+            const existingStudentsByEmail = await Student.findAll({
+                where: { email: { [Op.in]: emails } },
+                transaction
+            });
+            const existingEmailSet = new Set(existingStudentsByEmail.map(s => s.email.toLowerCase()));
+    
+            // Check for existing PRNs in database
+            const existingStudentsByPrn = await Student.findAll({
+                where: { prn: { [Op.in]: prns } },
+                transaction
+            });
+            const existingPrnSet = new Set(existingStudentsByPrn.map(s => s.prn));
+    
+            // Check for existing phone numbers in database
+            const existingStudentsByPhone = await Student.findAll({
+                where: { phoneNumber: { [Op.in]: phoneNumbers } },
+                transaction
+            });
+            const existingPhoneSet = new Set(existingStudentsByPhone.map(s => s.phoneNumber));
 
+            // Run through validated students to map errors
+            for (const student of validatedStudents) {
+                // DOB check
+                if (student.dob) {
+                    const dobForDB = moment(student.dob, "YYYY/MM/DD").toDate();
+                    if (new Date() < dobForDB) {
+                        addRowError(student.rowNumber, student.prn, "dob", "Date of birth cannot be in the future", student.dob);
+                    }
+                }
+
+                if (!schemeMap.has(student.scheme)) {
+                    addRowError(student.rowNumber, student.prn, "scheme", `Scheme '${student.scheme}' does not exist in the database`, student.scheme);
+                }
+
+                if (!branchMap.has(student.branch)) {
+                    addRowError(student.rowNumber, student.prn, "branch", `Branch '${student.branch}' does not exist in the database`, student.branch);
+                }
+
+                if (existingEmailSet.has(student.email.toLowerCase())) {
+                    addRowError(student.rowNumber, student.prn, "email", "Email already exists in the database", student.email);
+                }
+
+                if (existingPrnSet.has(student.prn)) {
+                    addRowError(student.rowNumber, student.prn, "prn", "PRN already exists in the database", student.prn);
+                }
+
+                if (existingPhoneSet.has(student.phoneNumber)) {
+                    addRowError(student.rowNumber, student.prn, "phoneNumber", "Phone number already exists in the database", student.phoneNumber);
+                }
+            }
+        }
+
+        // If any errors were encountered at all, rollback and return structured errors
+        if (globalErrors.length > 0 || rowErrorsMap.size > 0) {
+            let errorMessage = "CSV processing failed due to validation errors:\n\n";
+
+            if (globalErrors.length > 0) {
+                errorMessage += "Global Errors:\n";
+                globalErrors.forEach(err => {
+                    errorMessage += `- ${err}\n`;
+                });
+                errorMessage += "\n";
+            }
+
+            if (rowErrorsMap.size > 0) {
+                errorMessage += "Row Errors:\n";
+                const sortedRowErrors = Array.from(rowErrorsMap.values()).sort((a, b) => a.rowNumber - b.rowNumber);
+                sortedRowErrors.forEach(rowError => {
+                    errorMessage += `Row ${rowError.rowNumber} (PRN: ${rowError.prn || 'N/A'}):\n`;
+                    rowError.issues.forEach(issue => {
+                        const providedValue = issue.value !== null && issue.value !== undefined && issue.value !== "" ? issue.value : "Empty/Null";
+                        errorMessage += `  - [${issue.field}]: ${issue.message} (Value provided: ${providedValue})\n`;
+                    });
+                });
+            }
+
+            throw new ApiError(httpStatus.BAD_REQUEST, errorMessage.trim());
+        }
+    
+        // Prepare student data for bulk create
+        const studentsToCreate = validatedStudents.map(student => {
             return {
                 prn: student.prn,
                 firstName: student.firstName,
@@ -2237,13 +2260,13 @@ const bulkCreateStudentsFromCSV = asyncHandler(async (req, res) => {
                 phoneNumber: student.phoneNumber,
                 parentEmail: student.parentEmail || null,
                 gender: student.gender,
-                dob: dobForDB,
+                dob: student.dob ? moment(student.dob, "YYYY/MM/DD").toDate() : null,
                 studentImgUrl: null,
                 studentImgPublicId: null,
-                schemeId: student.schemeId,
+                schemeId: schemeMap.get(student.scheme),
                 admissionYear: student.admissionYear,
                 admissionType: student.admissionType,
-                branchId: student.branchId
+                branchId: branchMap.get(student.branch)
             };
         });
 

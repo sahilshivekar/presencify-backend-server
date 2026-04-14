@@ -20,14 +20,14 @@ module.exports = {
         await queryInterface.bulkInsert('schemes', [
             {
                 scheme_id: uuidv4(),
-                scheme_name: 'REV-2019 ‘C’ Scheme',
+                scheme_name: "REV-2019 'C' Scheme",
                 university_id: universityOfMumbaiId, // Use the fetched UUID
                 created_at: new Date(),
                 updated_at: new Date()
             },
             {
                 scheme_id: uuidv4(),
-                scheme_name: 'NEP-2020 Scheme',
+                scheme_name: "NEP-2020 Scheme",
                 university_id: universityOfMumbaiId, // Use the fetched UUID
                 created_at: new Date(),
                 updated_at: new Date()
@@ -38,7 +38,7 @@ module.exports = {
     async down(queryInterface, Sequelize) {
         await queryInterface.bulkDelete('schemes', {
             scheme_name: {
-                [Sequelize.Op.in]: ['REV-2019 ‘C’ Scheme', 'NEP-2020 Scheme']
+                [Sequelize.Op.in]: ["REV-2019 'C' Scheme", "NEP-2020 Scheme"]
             }
         });
     }

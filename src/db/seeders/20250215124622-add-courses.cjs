@@ -7,12 +7,12 @@ module.exports = {
     async up(queryInterface, Sequelize) {
         // First, fetch the schemes to get their UUIDs
         const schemes = await queryInterface.sequelize.query(
-            `SELECT scheme_id, scheme_name FROM schemes WHERE scheme_name IN ('REV-2019 ‘C’ Scheme', 'NEP-2020 Scheme');`,
+            `SELECT scheme_id, scheme_name FROM schemes WHERE scheme_name IN ('REV-2019 ''C'' Scheme', 'NEP-2020 Scheme');`,
             { type: queryInterface.sequelize.QueryTypes.SELECT }
         );
 
-        const rev2019SchemeId = schemes.find(s => s.scheme_name === 'REV-2019 ‘C’ Scheme')?.scheme_id;
-        const nep2020SchemeId = schemes.find(s => s.scheme_name === 'NEP-2020 Scheme')?.scheme_id;
+        const rev2019SchemeId = schemes.find(s => s.scheme_name === "REV-2019 'C' Scheme")?.scheme_id;
+        const nep2020SchemeId = schemes.find(s => s.scheme_name === "NEP-2020 Scheme")?.scheme_id;
 
         if (!rev2019SchemeId || !nep2020SchemeId) {
             throw new Error('Could not find the required schemes to link courses to.');

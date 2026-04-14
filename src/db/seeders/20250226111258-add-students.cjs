@@ -27,7 +27,7 @@ module.exports = {
             return map;
         }, {});
 
-        if (!branchIdMap['Computer Engineering'] || !branchIdMap['Civil Engineering'] || !schemeIdMap['REV-2019 ‘C’ Scheme'] || !schemeIdMap['NEP-2020 Scheme']) {
+        if (!branchIdMap['Computer Engineering'] || !branchIdMap['Civil Engineering'] || !schemeIdMap["REV-2019 'C' Scheme"] || !schemeIdMap['NEP-2020 Scheme']) {
             throw new Error('Required branches or schemes not found for student seeding.');
         }
 
@@ -168,7 +168,7 @@ module.exports = {
         // 4. Generate student data using the new dynamic UUIDs
         ['SE', 'TE', 'BE'].forEach((year) => {
             for (let i = 0; i < 60; i++) {
-                students.push(generateStudent(i, year, 'FE', schemeIdMap['REV-2019 ‘C’ Scheme'], branchIdMap['Computer Engineering']));
+                students.push(generateStudent(i, year, 'FE', schemeIdMap["REV-2019 'C' Scheme"], branchIdMap['Computer Engineering']));
             }
         });
 
