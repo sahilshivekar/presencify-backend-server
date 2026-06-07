@@ -2240,7 +2240,7 @@ const bulkCreateStudentsFromCSV = asyncHandler(async (req, res) => {
                 sortedRowErrors.forEach(rowError => {
                     errorMessage += `Row ${rowError.rowNumber} (PRN: ${rowError.prn || 'N/A'}):\n`;
                     rowError.issues.forEach(issue => {
-                        const providedValue = issue.value !== null && issue.value !== undefined && issue.value !== "" ? issue.value : "Empty/Null";
+                        const providedValue = issue.value !== null && issue.value !== undefined && issue.value !== "" ? issue.value : "Empty";
                         errorMessage += `  - [${issue.field}]: ${issue.message} (Value provided: ${providedValue})\n`;
                     });
                 });
