@@ -54,6 +54,20 @@ Course.init(
                 }
             }
         },
+        type: {
+            type: Sequelize.ENUM('Lecture', 'Practical'),
+            allowNull: false,
+            field: 'course_type',
+            validate: {
+                notNull: {
+                    msg: 'Course type cannot be null'
+                },
+                isIn: {
+                    args: [['Lecture', 'Practical']],
+                    msg: 'Course type must be either Lecture or Practical'
+                }
+            }
+        },
         optionalCourse: {
             type: Sequelize.STRING(255),
             allowNull: true,

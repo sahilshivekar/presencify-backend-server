@@ -12,7 +12,6 @@ const addClass = {
 		batchId: uuid.allow(null).messages({ 'string.guid': 'Batch ID must be a valid UUID' }),
 		activeFrom: Joi.required().messages({ 'any.required': 'Active from date is required' }),
 		activeTill: Joi.required().messages({ 'any.required': 'Active till date is required' }),
-		classType: Joi.string().valid('Lecture', 'Tutorial', 'Practical').required().messages({ 'any.only': "Class type must be 'Lecture', 'Tutorial' or 'Practical'", 'any.required': 'Class type is required' }),
 		courseId: uuid.required().messages({ 'any.required': 'Course ID is required', 'string.guid': 'Course ID must be a valid UUID' }),
 		timetableId: uuid.required().messages({ 'any.required': 'Timetable ID is required', 'string.guid': 'Timetable ID must be a valid UUID' })
 	})
@@ -31,7 +30,6 @@ const getClasses = {
 		dayOfWeek: Joi.string().trim().allow(null).messages({ 'string.base': 'Day of week must be a string' }),
 		roomId: uuid.allow(null).messages({ 'string.guid': 'Room ID must be a valid UUID' }),
 		batchId: uuid.allow(null).messages({ 'string.guid': 'Batch ID must be a valid UUID' }),
-		classType: Joi.string().valid('Lecture', 'Tutorial', 'Practical').allow(null).messages({ 'any.only': "Class type must be 'Lecture', 'Tutorial' or 'Practical'" }),
 		courseId: uuid.allow(null).messages({ 'string.guid': 'Course ID must be a valid UUID' }),
 		semesterId: uuid.allow(null).messages({ 'string.guid': 'Semester ID must be a valid UUID' }),
 		semesterNumber: Joi.number().integer().min(1).max(8).allow(null).messages({ 'number.base': 'Semester number must be a number', 'number.min': 'Semester number must be at least 1', 'number.max': 'Semester number cannot exceed 8' }),
@@ -75,7 +73,6 @@ const addExtraClass = {
 		batchId: uuid.allow(null).messages({ 'string.guid': 'Batch ID must be a valid UUID' }),
 		activeFrom: Joi.required().messages({ 'any.required': 'Active from date is required' }),
 		activeTill: Joi.required().messages({ 'any.required': 'Active till date is required' }),
-		classType: Joi.string().valid('Lecture', 'Tutorial', 'Practical').required().messages({ 'any.only': "Class type must be 'Lecture', 'Tutorial' or 'Practical'", 'any.required': 'Class type is required' }),
 		courseId: uuid.required().messages({ 'any.required': 'Course ID is required', 'string.guid': 'Course ID must be a valid UUID' }),
 		timetableId: uuid.required().messages({ 'any.required': 'Timetable ID is required', 'string.guid': 'Timetable ID must be a valid UUID' })
 	})
@@ -112,7 +109,6 @@ const bulkCreateClasses = {
 				batchId: Joi.string().guid().allow(null).messages({ 'string.guid': 'Batch ID must be a valid UUID' }),
 				activeFrom: Joi.date().required().messages({ 'any.required': 'Active from date is required' }),
 				activeTill: Joi.date().required().messages({ 'any.required': 'Active till date is required' }),
-				classType: Joi.string().valid('Lecture', 'Practical', 'Tutorial').required().messages({ 'any.required': 'Class type is required', 'any.only': 'Class type must be Lecture, Practical, or Tutorial' }),
 				courseId: Joi.string().guid().required().messages({ 'any.required': 'Course ID is required', 'string.guid': 'Course ID must be a valid UUID' }),
 				timetableId: Joi.string().guid().required().messages({ 'any.required': 'Timetable ID is required', 'string.guid': 'Timetable ID must be a valid UUID' }),
 				isExtraClass: Joi.boolean().default(false).messages({ 'boolean.base': 'isExtraClass must be a boolean' })

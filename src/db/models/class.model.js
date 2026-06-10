@@ -107,16 +107,6 @@ Class.init(
                 }
             }
         },
-        classType: {
-            type: Sequelize.ENUM('Lecture', 'Tutorial', 'Practical'),
-            allowNull: false,
-            field: 'class_type',
-            validate: {
-                notNull: {
-                    msg: 'Class type is required'
-                }
-            }
-        },
         courseId: {
             type: Sequelize.UUID,
             allowNull: false,

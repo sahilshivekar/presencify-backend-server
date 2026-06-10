@@ -90,7 +90,7 @@ const getThrowableConflictMessage = async (conflictType, conflictName) => {
     const conflictTeacher = await Teacher.findByPk(conflictType.teacherId)
 
     let conflictBatch = null;
-    if (conflictType.classType != 'Lecture') {
+    if (conflictType.batchId != null) {
         conflictBatch = await Batch.findByPk(conflictType.batchId)
     }
 
@@ -98,7 +98,7 @@ const getThrowableConflictMessage = async (conflictType, conflictName) => {
     const conflictSemester = await Semester.findByPk(conflictDivision.semesterId)
     const conflictRoom = await Room.findByPk(conflictType.roomId)
 
-    return `${conflictName} Prof. ${conflictTeacher.firstName} ${conflictTeacher.lastName} is already taking ${conflictType.classType.toLowerCase()} of '${conflitCourse.name}' on ${getYearFromSemesterNumber(conflictSemester.semesterNumber)} ${conflictBatch == null ? "Division" : "Batch"} ${conflictBatch == null ? conflictDivision.divisionCode : conflictBatch.batchCode} in room ${conflictRoom.roomNumber} between ${conflictType.startTime}-${conflictType.endTime} on ${conflictType.dayOfWeek}. (from ${conflictType.activeFrom} to ${conflictType.activeTill})`
+    return `${conflictName} Prof. ${conflictTeacher.firstName} ${conflictTeacher.lastName} is already taking class of '${conflitCourse.name}' on ${getYearFromSemesterNumber(conflictSemester.semesterNumber)} ${conflictBatch == null ? "Division" : "Batch"} ${conflictBatch == null ? conflictDivision.divisionCode : conflictBatch.batchCode} in room ${conflictRoom.roomNumber} between ${conflictType.startTime}-${conflictType.endTime} on ${conflictType.dayOfWeek}. (from ${conflictType.activeFrom} to ${conflictType.activeTill})`
 }
 
 // Input validation for required fields, types, and formats is handled by @class.validation.js
@@ -113,7 +113,6 @@ const addClass = asyncHandler(async (req, res) => {
         batchId,
         activeFrom,
         activeTill,
-        classType,
         courseId,
         timetableId
     } = req.body;
@@ -138,7 +137,7 @@ const addClass = asyncHandler(async (req, res) => {
 
     // Check batch only for practical/tutorial
     let batch = null;
-    if (classType === "Tutorial" || classType === "Practical") {
+    if (batchId) {
         batch = await Batch.findByPk(batchId);
         if (!batch) throw new ApiError(httpStatus.NOT_FOUND, "Batch not found");
         if (batch.divisionId != timetable.divisionId) {
@@ -320,7 +319,6 @@ const addClass = asyncHandler(async (req, res) => {
             batchId: batchId || null,
             activeFrom: activeFrom || null,
             activeTill: activeTill || null,
-            classType: classType || null,
             courseId: courseId || null,
             timetableId: timetableId || null
         }
@@ -342,7 +340,6 @@ const getClasses = asyncHandler(async (req, res) => {
         dayOfWeek,
         roomId,
         batchId,
-        classType,
         courseId,
         semesterId,
         semesterNumber,
@@ -371,7 +368,6 @@ const getClasses = asyncHandler(async (req, res) => {
                 ...(dayOfWeek ? [{ dayOfWeek: dayOfWeek }] : []),
                 ...(roomId ? [{ roomId: roomId }] : []),
                 ...(batchId ? [{ batchId: batchId }] : []),
-                ...(classType ? [{ classType: classType }] : []),
                 ...(isExtraClass === true ? [{ isExtraClass: true }] : []),
             ]
         },
@@ -872,7 +868,6 @@ const addExtraClass = asyncHandler(async (req, res) => {
         batchId,
         activeFrom,
         activeTill,
-        classType,
         courseId,
         timetableId
     } = req.body;
@@ -894,7 +889,7 @@ const addExtraClass = asyncHandler(async (req, res) => {
 
     // Check batch only for practical/tutorial
     let batch = null;
-    if (classType === "Tutorial" || classType === "Practical") {
+    if (batchId) {
         batch = await Batch.findByPk(batchId);
         if (!batch) throw new ApiError(httpStatus.NOT_FOUND, "Batch not found");
         if (batch.divisionId != timetable.divisionId) {
@@ -1065,7 +1060,6 @@ const addExtraClass = asyncHandler(async (req, res) => {
             batchId: batchId || null,
             activeFrom: activeFrom || null,
             activeTill: activeTill || null,
-            classType: classType || null,
             courseId: courseId || null,
             timetableId: timetableId || null,
             isExtraClass: true
@@ -1354,7 +1348,6 @@ const bulkCreateClasses = asyncHandler(async (req, res) => {
                 batchId: classData.batchId || null,
                 activeFrom: classData.activeFrom,
                 activeTill: classData.activeTill,
-                classType: classData.classType,
                 courseId: classData.courseId,
                 timetableId: classData.timetableId,
                 isExtraClass: classData.isExtraClass || false
@@ -1506,7 +1499,6 @@ const bulkCreateClassesFromCSV = asyncHandler(async (req, res) => {
                             batchId: row.batchId || null,
                             activeFrom: row.activeFrom,
                             activeTill: row.activeTill,
-                            classType: row.classType,
                             courseId: row.courseId,
                             timetableId: row.timetableId,
                             isExtraClass: row.isExtraClass === 'true' || false
@@ -1535,7 +1527,7 @@ const bulkCreateClassesFromCSV = asyncHandler(async (req, res) => {
                     // Validate required fields
                     if (!classData.teacherId || !classData.startTime || !classData.endTime || 
                         !classData.dayOfWeek || !classData.roomId || !classData.activeFrom || 
-                        !classData.activeTill || !classData.classType || !classData.courseId || 
+                        !classData.activeTill || !classData.courseId || 
                         !classData.timetableId) {
                         errors.push({ row: i + 1, error: "Missing required fields" });
                         continue;
@@ -1584,7 +1576,6 @@ const bulkCreateClassesFromCSV = asyncHandler(async (req, res) => {
                         batchId: classData.batchId || null,
                         activeFrom: classData.activeFrom,
                         activeTill: classData.activeTill,
-                        classType: classData.classType,
                         courseId: classData.courseId,
                         timetableId: classData.timetableId,
                         isExtraClass: classData.isExtraClass || false

@@ -59,6 +59,11 @@ const addCourse = {
                 'string.min': 'Course name must be at least 1 character',
                 'string.max': 'Course name cannot exceed 200 characters'
             }),
+        type: Joi.string().valid('Lecture', 'Practical').required()
+            .messages({
+                'any.required': 'Course type is required',
+                'any.only': 'Course type must be either Lecture or Practical'
+            }),
         optionalCourse: Joi.string().trim().allow(null, '')
             .messages({ 'string.base': 'Optional course must be a string' }),
         schemeId: uuid.required()
@@ -75,6 +80,8 @@ const updateCourse = {
             .messages({ 'string.min': 'Code must be at least 1 character', 'string.max': 'Code cannot exceed 50 characters' }),
         name: Joi.string().trim().min(1).max(200)
             .messages({ 'string.min': 'Name must be at least 1 character', 'string.max': 'Name cannot exceed 200 characters' }),
+        type: Joi.string().valid('Lecture', 'Practical')
+            .messages({ 'any.only': 'Course type must be either Lecture or Practical' }),
         optionalCourse: Joi.string().trim().allow(null, '')
             .messages({ 'string.base': 'Optional course must be a string' }),
         schemeId: uuid.messages({ 'string.guid': 'Scheme ID must be a valid UUID' })
@@ -129,6 +136,11 @@ const bulkCreateCourses = {
                         'string.min': 'Course name must be at least 1 character',
                         'string.max': 'Course name cannot exceed 200 characters'
                     }),
+                type: Joi.string().valid('Lecture', 'Practical').required()
+                    .messages({
+                        'any.required': 'Course type is required',
+                        'any.only': 'Course type must be either Lecture or Practical'
+                    }),
                 optionalCourse: Joi.string().trim().allow(null, '').default(null)
                     .messages({ 'string.base': 'Optional course must be a string' }),
                 schemeId: uuid.required()
@@ -169,6 +181,11 @@ const csvCourseRowSchema = Joi.object().keys({
             'any.required': 'Course name is required',
             'string.min': 'Course name must be at least 1 character',
             'string.max': 'Course name cannot exceed 200 characters'
+        }),
+    type: Joi.string().valid('Lecture', 'Practical').required()
+        .messages({
+            'any.required': 'Course type is required',
+            'any.only': 'Course type must be either Lecture or Practical'
         }),
     optionalCourse: Joi.string().trim().allow(null, '').messages({ 'string.base': 'Optional course must be a string' }),
     schemeId: uuid.required().messages({ 'any.required': 'Scheme ID is required', 'string.guid': 'Scheme ID must be a valid UUID' })

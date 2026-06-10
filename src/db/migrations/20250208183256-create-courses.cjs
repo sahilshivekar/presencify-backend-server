@@ -32,6 +32,11 @@ module.exports = {
                     allowNull: false,
                     field: 'course_name',
                 },
+                courseType: {
+                    type: Sequelize.ENUM('Lecture', 'Practical'),
+                    allowNull: false,
+                    field: 'course_type',
+                },
                 optionalCourse: {
                     type: Sequelize.STRING(255),
                     allowNull: true,

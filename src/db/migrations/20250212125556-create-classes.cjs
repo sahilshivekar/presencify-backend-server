@@ -65,11 +65,6 @@ module.exports = {
                 allowNull: true,
                 field: 'active_till'
             },
-            classType: { // Added for the enum
-                type: Sequelize.ENUM('Lecture', 'Tutorial', 'Practical'),
-                allowNull: false,
-                field: 'class_type'
-            },
             courseId: {
                 type: Sequelize.UUID,
                 allowNull: false,
