@@ -195,7 +195,7 @@ const addCourse = asyncHandler(async (req, res) => {
     const {
         code,
         name,
-        type,
+        courseType,
         optionalCourse,
         schemeId
     } = req.body;
@@ -210,7 +210,7 @@ const addCourse = asyncHandler(async (req, res) => {
     const course = await Course.create({
         code: code || "",
         name: name || "",
-        type: type,
+        courseType: courseType,
         optionalCourse: optionalCourse || null,
         schemeId: schemeId || null,
     });
@@ -288,7 +288,7 @@ const removeCourseFromBranchWithSemesterNumber = asyncHandler(async (req, res) =
 //* update course
 const updateCourse = asyncHandler(async (req, res) => {
     const { id } = req.params;
-    const { code, name, type, optionalCourse, schemeId } = req.body;
+    const { code, name, courseType, optionalCourse, schemeId } = req.body;
 
     // Remove input validation for presence, handled by validator
 
@@ -299,7 +299,7 @@ const updateCourse = asyncHandler(async (req, res) => {
     }
 
     course.name = name || course.name;
-    course.type = type || course.type;
+    course.courseType = courseType || course.courseType;
     course.optionalCourse = optionalCourse || course.optionalCourse;
     course.schemeId = schemeId || course.schemeId;
     course.code = code || course.code;

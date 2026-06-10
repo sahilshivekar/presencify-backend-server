@@ -59,7 +59,7 @@ const addCourse = {
                 'string.min': 'Course name must be at least 1 character',
                 'string.max': 'Course name cannot exceed 200 characters'
             }),
-        type: Joi.string().valid('Lecture', 'Practical').required()
+        courseType: Joi.string().valid('Lecture', 'Practical').required()
             .messages({
                 'any.required': 'Course type is required',
                 'any.only': 'Course type must be either Lecture or Practical'
@@ -80,7 +80,7 @@ const updateCourse = {
             .messages({ 'string.min': 'Code must be at least 1 character', 'string.max': 'Code cannot exceed 50 characters' }),
         name: Joi.string().trim().min(1).max(200)
             .messages({ 'string.min': 'Name must be at least 1 character', 'string.max': 'Name cannot exceed 200 characters' }),
-        type: Joi.string().valid('Lecture', 'Practical')
+        courseType: Joi.string().valid('Lecture', 'Practical')
             .messages({ 'any.only': 'Course type must be either Lecture or Practical' }),
         optionalCourse: Joi.string().trim().allow(null, '')
             .messages({ 'string.base': 'Optional course must be a string' }),
@@ -136,7 +136,7 @@ const bulkCreateCourses = {
                         'string.min': 'Course name must be at least 1 character',
                         'string.max': 'Course name cannot exceed 200 characters'
                     }),
-                type: Joi.string().valid('Lecture', 'Practical').required()
+                courseType: Joi.string().valid('Lecture', 'Practical').required()
                     .messages({
                         'any.required': 'Course type is required',
                         'any.only': 'Course type must be either Lecture or Practical'
@@ -182,7 +182,7 @@ const csvCourseRowSchema = Joi.object().keys({
             'string.min': 'Course name must be at least 1 character',
             'string.max': 'Course name cannot exceed 200 characters'
         }),
-    type: Joi.string().valid('Lecture', 'Practical').required()
+    courseType: Joi.string().valid('Lecture', 'Practical').required()
         .messages({
             'any.required': 'Course type is required',
             'any.only': 'Course type must be either Lecture or Practical'

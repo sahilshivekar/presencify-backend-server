@@ -54,7 +54,7 @@ Course.init(
                 }
             }
         },
-        type: {
+        courseType: {
             type: Sequelize.ENUM('Lecture', 'Practical'),
             allowNull: false,
             field: 'course_type',
