@@ -19,7 +19,7 @@ import {
     revertAddStudentToBatch,
     revertChangeStudentBatch,
     getStudentSemestersById,
-    getStudentDivisionsById,    
+    getStudentDivisionsById,
     getStudentBatchesById,
     bulkCreateStudents,
     bulkDeleteStudents,
@@ -27,7 +27,10 @@ import {
     bulkAddStudentsToDivision,
     bulkAddStudentsToBatch,
     bulkCreateStudentsFromCSV,
-    enrollStudentFace
+    enrollStudentFace,
+    submitStudentBiometrics,
+    getStudentBiometrics,
+    verifyStudentBiometrics
 } from '../controllers/student.controller.js';
 import { verifyJWT } from '../middlewares/auth.middleware.js';
 import { ROLES } from '../config/roles.js';
@@ -72,6 +75,29 @@ router.route('/image')
         validate(studentValidation.removeStudentImage),
         verifyJWT([ROLES.ADMIN, ROLES.STUDENT]),
         removeStudentImage
+    );
+
+// Biometric endpoints — must be before /:id routes
+router.route('/biometrics/submit')
+    .post(
+        upload.array('biometricImages', 10),
+        validate(studentValidation.submitStudentBiometrics),
+        verifyJWT([ROLES.STUDENT]),
+        submitStudentBiometrics
+    );
+
+router.route('/:studentId/biometrics')
+    .get(
+        validate(studentValidation.getStudentBiometrics),
+        verifyJWT([ROLES.ADMIN, ROLES.TEACHER]),
+        getStudentBiometrics
+    );
+
+router.route('/:studentId/biometrics/verify')
+    .patch(
+        validate(studentValidation.verifyStudentBiometrics),
+        verifyJWT([ROLES.ADMIN, ROLES.TEACHER]),
+        verifyStudentBiometrics
     );
 
 router.route('/face/enroll')

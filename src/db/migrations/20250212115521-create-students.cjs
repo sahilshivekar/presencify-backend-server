@@ -6,6 +6,11 @@ module.exports = {
         // await queryInterface.sequelize.query(`
         //     CREATE TYPE public.enum_students_admission_type AS ENUM ('DSE', 'FE');
         //   `);
+        // Create the ENUM type for biometric verification status
+        await queryInterface.sequelize.query(`
+            CREATE TYPE "enum_students_biometric_verification_status" AS ENUM ('not_submitted', 'pending_review', 'approved');
+        `);
+
         await queryInterface.createTable(
             'students',
             {
@@ -119,6 +124,18 @@ module.exports = {
                     allowNull: true,
                     field: 'face_descriptor',
                 },
+                biometricVerificationStatus: {
+                    type: Sequelize.ENUM('not_submitted', 'pending_review', 'approved'),
+                    allowNull: false,
+                    defaultValue: 'not_submitted',
+                    field: 'biometric_verification_status',
+                },
+                faceImageKeys: {
+                    type: Sequelize.ARRAY(Sequelize.TEXT),
+                    allowNull: true,
+                    defaultValue: [],
+                    field: 'face_image_keys',
+                },
                 createdAt: {
                     type: Sequelize.DATE,
                     allowNull: false,
@@ -141,5 +158,10 @@ module.exports = {
 
     async down(queryInterface, Sequelize) {
         await queryInterface.dropTable('students');
+
+        // Drop the ENUM type
+        await queryInterface.sequelize.query(`
+            DROP TYPE IF EXISTS "enum_students_biometric_verification_status";
+        `);
     },
 };
