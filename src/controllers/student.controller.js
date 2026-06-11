@@ -1,6 +1,7 @@
 import { Op } from 'sequelize';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import fs from 'fs';
+import { randomUUID } from 'crypto';
 import csvParser from 'csv-parser';
 import Student from '../db/models/student.model.js'
 import { ApiResponse } from '../utils/ApiResponse.js';
@@ -23,6 +24,7 @@ import Dropout from '../db/models/dropout.model.js'
 import httpStatus from 'http-status';
 import studentValidation from '../validators/student.validation.js';
 import { generateSingleDescriptor } from '../utils/faceRecognition.js';
+import { uploadToS3, deleteMultipleFromS3, getStudentPresignedUrls } from '../utils/s3.js';
 
 const getUploadedFilePaths = (files) => {
     if (!files) return [];
@@ -2297,6 +2299,122 @@ const bulkCreateStudentsFromCSV = asyncHandler(async (req, res) => {
     }
 });
 
+const submitStudentBiometrics = asyncHandler(async (req, res) => {
+    const imagePaths = getUploadedFilePaths(req.files);
+    const { faceDescriptor } = req.body;
+    const studentId = req.student.id;
+
+    if (imagePaths.length === 0) {
+        throw new ApiError(httpStatus.BAD_REQUEST, "At least one biometric image is required");
+    }
+
+    if (!faceDescriptor || !Array.isArray(faceDescriptor) || faceDescriptor.length !== 128) {
+        throw new ApiError(httpStatus.BAD_REQUEST, "Valid face descriptor (128-dimensional array) is required");
+    }
+
+    const student = await Student.findByPk(studentId);
+    if (!student) {
+        throw new ApiError(httpStatus.NOT_FOUND, "Student not found");
+    }
+
+    const transaction = await sequelize.transaction();
+
+    try {
+        if (student.faceImageKeys && student.faceImageKeys.length > 0) {
+            await deleteMultipleFromS3(student.faceImageKeys);
+        }
+
+        const s3Keys = [];
+        for (const imagePath of imagePaths) {
+            const originalFilename = imagePath.split(/[\\\/]/).pop();
+            const s3Key = `student/${studentId}/${randomUUID()}-${originalFilename}`;
+            const uploadResult = await uploadToS3(imagePath, s3Key);
+            s3Keys.push(uploadResult.key);
+        }
+
+        student.faceDescriptor = faceDescriptor;
+        student.faceImageKeys = s3Keys;
+        student.biometricVerificationStatus = 'pending_review';
+        await student.save({ transaction });
+
+        await transaction.commit();
+
+        res.status(httpStatus.OK).json(
+            new ApiResponse(
+                httpStatus.OK,
+                "Biometrics submitted successfully",
+                null
+            )
+        );
+    } catch (error) {
+        await transaction.rollback();
+        throw error;
+    } finally {
+        if (imagePaths.length > 0) {
+            setImmediate(() => {
+                for (const imagePath of imagePaths) {
+                    try {
+                        fs.unlinkSync(imagePath);
+                    } catch {
+                        // Ignore cleanup failures
+                    }
+                }
+            });
+        }
+    }
+});
+
+const getStudentBiometrics = asyncHandler(async (req, res) => {
+    const { studentId } = req.params;
+
+    const student = await Student.findByPk(studentId, {
+        attributes: ['id', 'biometricVerificationStatus', 'faceImageKeys'],
+    });
+
+    if (!student) {
+        throw new ApiError(httpStatus.NOT_FOUND, "Student not found");
+    }
+
+    const presignedUrls = student.faceImageKeys && student.faceImageKeys.length > 0
+        ? await getStudentPresignedUrls(student.faceImageKeys)
+        : [];
+
+    res.status(httpStatus.OK).json(
+        new ApiResponse(
+            httpStatus.OK,
+            "Biometrics retrieved successfully",
+            {
+                biometricVerificationStatus: student.biometricVerificationStatus,
+                presignedUrls,
+            }
+        )
+    );
+});
+
+const verifyStudentBiometrics = asyncHandler(async (req, res) => {
+    const { studentId } = req.params;
+
+    const student = await Student.findByPk(studentId);
+    if (!student) {
+        throw new ApiError(httpStatus.NOT_FOUND, "Student not found");
+    }
+
+    if (student.biometricVerificationStatus !== 'pending_review') {
+        throw new ApiError(httpStatus.BAD_REQUEST, "Student biometrics are not pending review");
+    }
+
+    student.biometricVerificationStatus = 'approved';
+    await student.save();
+
+    res.status(httpStatus.OK).json(
+        new ApiResponse(
+            httpStatus.OK,
+            "Biometrics verified successfully",
+            null
+        )
+    );
+});
+
 const enrollStudentFace = asyncHandler(async (req, res) => {
     const studentId = req.body?.studentId || req.params?.studentId || req.query?.studentId;
     const imagePaths = getUploadedFilePaths(req.files);
@@ -2399,5 +2517,8 @@ export {
     bulkAddStudentsToDivision,
     bulkAddStudentsToBatch,
     bulkCreateStudentsFromCSV,
-    enrollStudentFace
+    enrollStudentFace,
+    submitStudentBiometrics,
+    getStudentBiometrics,
+    verifyStudentBiometrics
 }

@@ -266,6 +266,18 @@ Student.init(
                 }
             }
         },
+        biometricVerificationStatus: {
+            type: Sequelize.ENUM('not_submitted', 'pending_review', 'approved'),
+            allowNull: false,
+            defaultValue: 'not_submitted',
+            field: 'biometric_verification_status',
+        },
+        faceImageKeys: {
+            type: Sequelize.ARRAY(Sequelize.TEXT),
+            allowNull: true,
+            defaultValue: [],
+            field: 'face_image_keys',
+        },
     },
     {
         sequelize,
