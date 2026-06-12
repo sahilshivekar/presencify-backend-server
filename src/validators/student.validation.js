@@ -289,41 +289,8 @@ const getStudentBiometrics = {
     })
 };
 
-const submitStudentBiometrics = {
-	body: Joi.object().keys({
-		faceDescriptor: Joi.array()
-			.items(Joi.number())
-			.length(128)
-			.required()
-			.messages({
-				'any.required': 'Face descriptor is required',
-				'array.length': 'Face descriptor must be exactly 128-dimensional',
-				'array.base': 'Face descriptor must be an array',
-				'array.includes': 'All elements in face descriptor must be numbers'
-			})
-	})
-};
-
-const verifyStudentBiometrics = {
-	params: Joi.object().keys({
-		studentId: uuid.required().messages({
-			'any.required': 'Student ID is required',
-			'string.guid': 'Student ID must be a valid UUID'
-		})
-	})
-};
-
-const getStudentBiometrics = {
-	params: Joi.object().keys({
-		studentId: uuid.required().messages({
-			'any.required': 'Student ID is required',
-			'string.guid': 'Student ID must be a valid UUID'
-		})
-	})
-};
 
 export default {
-<<<<<<< HEAD
     getStudents,
     addStudent,
     updateStudentDetails,
@@ -356,40 +323,6 @@ export default {
     verifyStudentBiometrics,
     getStudentBiometrics,
     csvStudentRowSchema
-=======
-	getStudents,
-	addStudent,
-	updateStudentDetails,
-	updateStudentPassword,
-	updateStudentImage,
-	removeStudentImage,
-	removeStudent,
-	getStudentDetailsById,
-	getStudentSemestersById,
-	getStudentDivisionsById,
-	getStudentBatchesById,
-	addStudentToSemester,
-	removeStudentFromSemester,
-	addStudentToDivision,
-	changeStudentDivision,
-	revertAddStudentToDivision,
-	revertChangeStudentDivision,
-	addStudentToBatch,
-	changeStudentBatch,
-	revertAddStudentToBatch,
-	revertChangeStudentBatch,
-	bulkCreateStudents,
-	bulkDeleteStudents,
-	bulkAddStudentsToSemester,
-	bulkAddStudentsToDivision,
-	bulkAddStudentsToBatch,
-	bulkCreateStudentsFromCSV,
-	enrollStudentFace,
-	submitStudentBiometrics,
-	verifyStudentBiometrics,
-	getStudentBiometrics,
-	csvStudentRowSchema
->>>>>>> d3826a8da6ec099e853be3a0d7b7bcaa69b83dc3
 };
 
 

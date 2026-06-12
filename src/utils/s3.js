@@ -2,11 +2,8 @@ import { S3Client, PutObjectCommand, DeleteObjectCommand, DeleteObjectsCommand, 
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import fs from 'fs';
 import path from 'path';
-<<<<<<< HEAD
 import {ApiError} from './ApiError.js';
-=======
-import ApiError from './ApiError.js';
->>>>>>> d3826a8da6ec099e853be3a0d7b7bcaa69b83dc3
+
 
 const s3Client = new S3Client({
     region: process.env.AWS_REGION,
