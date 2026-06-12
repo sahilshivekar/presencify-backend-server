@@ -2375,11 +2375,18 @@ const getStudentBiometrics = asyncHandler(async (req, res) => {
         throw new ApiError(httpStatus.NOT_FOUND, "Student not found");
     }
 
+<<<<<<< HEAD
     let presignedUrls = student.faceImageKeys && student.faceImageKeys.length > 0
         ? await getStudentPresignedUrls(student.faceImageKeys)
         : [];
     presignedUrls = presignedUrls.map(urlObj => urlObj.url)
     
+=======
+    const presignedUrls = student.faceImageKeys && student.faceImageKeys.length > 0
+        ? await getStudentPresignedUrls(student.faceImageKeys)
+        : [];
+
+>>>>>>> d3826a8da6ec099e853be3a0d7b7bcaa69b83dc3
     res.status(httpStatus.OK).json(
         new ApiResponse(
             httpStatus.OK,
