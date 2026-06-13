@@ -30,7 +30,7 @@ const getClasses = {
 		dayOfWeek: Joi.string().trim().allow(null).messages({ 'string.base': 'Day of week must be a string' }),
 		roomId: uuid.allow(null).messages({ 'string.guid': 'Room ID must be a valid UUID' }),
 		batchId: uuid.allow(null).messages({ 'string.guid': 'Batch ID must be a valid UUID' }),
-		courseId: uuid.allow(null).messages({ 'string.guid': 'Course ID must be a valid UUID' }),
+		courseType: Joi.string().allow(null).messages({ 'string.base': 'Course type must be a string' }),
 		semesterId: uuid.allow(null).messages({ 'string.guid': 'Semester ID must be a valid UUID' }),
 		semesterNumber: Joi.number().integer().min(1).max(8).allow(null).messages({ 'number.base': 'Semester number must be a number', 'number.min': 'Semester number must be at least 1', 'number.max': 'Semester number cannot exceed 8' }),
 		academicStartYearOfSemester: Joi.number().integer().min(2000).max(2100).allow(null).messages({ 'number.base': 'Academic start year must be a number', 'number.min': 'Academic start year must be at least 2000', 'number.max': 'Academic start year cannot exceed 2100' }),

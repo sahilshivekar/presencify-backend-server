@@ -340,7 +340,7 @@ const getClasses = asyncHandler(async (req, res) => {
         dayOfWeek,
         roomId,
         batchId,
-        courseId,
+        courseType,
         semesterId,
         semesterNumber,
         academicStartYearOfSemester,
@@ -379,7 +379,7 @@ const getClasses = asyncHandler(async (req, res) => {
                 where: {
                     [Op.and]: [
                         ...(searchQuery ? [{ name: { [Op.iLike]: `%${searchQuery}%` } }] : []),
-                        ...(courseId ? [{ id: courseId }] : [])
+                        ...(courseType ? [{ courseType: courseType }] : [])
                     ]
                 }
             },
