@@ -30,7 +30,8 @@ import {
     enrollStudentFace,
     submitStudentBiometrics,
     getStudentBiometrics,
-    verifyStudentBiometrics
+    verifyStudentBiometrics,
+    rejectStudentBiometrics
 } from '../controllers/student.controller.js';
 import { verifyJWT } from '../middlewares/auth.middleware.js';
 import { ROLES } from '../config/roles.js';
@@ -98,6 +99,13 @@ router.route('/:studentId/biometrics/verify')
         validate(studentValidation.verifyStudentBiometrics),
         verifyJWT([ROLES.ADMIN, ROLES.TEACHER]),
         verifyStudentBiometrics
+    );
+
+router.route('/:studentId/biometrics/reject')
+    .patch(
+        validate(studentValidation.rejectStudentBiometrics),
+        verifyJWT([ROLES.ADMIN]),
+        rejectStudentBiometrics
     );
 
 router.route('/face/enroll')

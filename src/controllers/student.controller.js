@@ -2416,6 +2416,30 @@ const verifyStudentBiometrics = asyncHandler(async (req, res) => {
     );
 });
 
+const rejectStudentBiometrics = asyncHandler(async (req, res) => {
+    const { studentId } = req.params;
+
+    const student = await Student.findByPk(studentId);
+    if (!student) {
+        throw new ApiError(httpStatus.NOT_FOUND, "Student not found");
+    }
+
+    if (student.biometricVerificationStatus !== 'pending_review' && student.biometricVerificationStatus !== 'approved') {
+        throw new ApiError(httpStatus.BAD_REQUEST, "Student biometrics cannot be rejected. Current status must be pending_review or approved");
+    }
+
+    student.biometricVerificationStatus = 'rejected';
+    await student.save();
+
+    res.status(httpStatus.OK).json(
+        new ApiResponse(
+            httpStatus.OK,
+            "Biometrics rejected successfully",
+            null
+        )
+    );
+});
+
 const enrollStudentFace = asyncHandler(async (req, res) => {
     const studentId = req.body?.studentId || req.params?.studentId || req.query?.studentId;
     const imagePaths = getUploadedFilePaths(req.files);
@@ -2521,5 +2545,6 @@ export {
     enrollStudentFace,
     submitStudentBiometrics,
     getStudentBiometrics,
-    verifyStudentBiometrics
+    verifyStudentBiometrics,
+    rejectStudentBiometrics
 }

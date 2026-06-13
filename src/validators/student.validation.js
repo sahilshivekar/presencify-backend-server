@@ -280,6 +280,15 @@ const verifyStudentBiometrics = {
     })
 };
 
+const rejectStudentBiometrics = {
+    params: Joi.object().keys({
+        studentId: uuid.required().messages({
+            'any.required': 'Student ID is required',
+            'string.guid': 'Student ID must be a valid UUID'
+        })
+    })
+};
+
 const getStudentBiometrics = {
     params: Joi.object().keys({
         studentId: uuid.required().messages({
@@ -321,6 +330,7 @@ export default {
     enrollStudentFace,
     submitStudentBiometrics,
     verifyStudentBiometrics,
+    rejectStudentBiometrics,
     getStudentBiometrics,
     csvStudentRowSchema
 };

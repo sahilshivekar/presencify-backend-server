@@ -8,7 +8,7 @@ module.exports = {
         //   `);
         // Create the ENUM type for biometric verification status
         await queryInterface.sequelize.query(`
-            CREATE TYPE "enum_students_biometric_verification_status" AS ENUM ('not_submitted', 'pending_review', 'approved');
+            CREATE TYPE "enum_students_biometric_verification_status" AS ENUM ('not_submitted', 'pending_review', 'approved', 'rejected');
         `);
 
         await queryInterface.createTable(
@@ -125,7 +125,7 @@ module.exports = {
                     field: 'face_descriptor',
                 },
                 biometricVerificationStatus: {
-                    type: Sequelize.ENUM('not_submitted', 'pending_review', 'approved'),
+                    type: Sequelize.ENUM('not_submitted', 'pending_review', 'approved', 'rejected'),
                     allowNull: false,
                     defaultValue: 'not_submitted',
                     field: 'biometric_verification_status',
