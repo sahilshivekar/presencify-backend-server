@@ -2308,10 +2308,6 @@ const submitStudentBiometrics = asyncHandler(async (req, res) => {
         throw new ApiError(httpStatus.BAD_REQUEST, "At least one biometric image is required");
     }
 
-    if (!faceDescriptor || !Array.isArray(faceDescriptor) || faceDescriptor.length !== 128) {
-        throw new ApiError(httpStatus.BAD_REQUEST, "Valid face descriptor (128-dimensional array) is required");
-    }
-
     const student = await Student.findByPk(studentId);
     if (!student) {
         throw new ApiError(httpStatus.NOT_FOUND, "Student not found");
@@ -2320,9 +2316,7 @@ const submitStudentBiometrics = asyncHandler(async (req, res) => {
     const transaction = await sequelize.transaction();
 
     try {
-        if (student.faceImageKeys && student.faceImageKeys.length > 0) {
-            await deleteMultipleFromS3(student.faceImageKeys);
-        }
+        const oldKeys = student.faceImageKeys || [];
 
         const s3Keys = [];
         for (const imagePath of imagePaths) {
@@ -2338,6 +2332,10 @@ const submitStudentBiometrics = asyncHandler(async (req, res) => {
         await student.save({ transaction });
 
         await transaction.commit();
+
+        if (oldKeys.length > 0) {
+            await deleteMultipleFromS3(oldKeys);
+        }
 
         res.status(httpStatus.OK).json(
             new ApiResponse(
@@ -2425,9 +2423,9 @@ const rejectStudentBiometrics = asyncHandler(async (req, res) => {
     }
 
     if (student.biometricVerificationStatus !== 'pending_review' && student.biometricVerificationStatus !== 'approved') {
-        throw new ApiError(httpStatus.BAD_REQUEST, "Student biometrics cannot be rejected. Current status must be pending_review or approved");
+        throw new ApiError(httpStatus.BAD_REQUEST, "Student biometrics cannot be rejected. Current status must be Pending review or approved");
     }
-
+    await deleteMultipleFromS3(student.faceImageKeys);
     student.biometricVerificationStatus = 'rejected';
     await student.save();
 

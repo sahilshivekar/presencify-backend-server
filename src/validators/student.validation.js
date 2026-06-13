@@ -268,6 +268,10 @@ const submitStudentBiometrics = {
                     }
                 })
             )
+            .required()
+            .messages({
+                'any.required': 'Face descriptor is required',
+            })
     })
 };
 

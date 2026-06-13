@@ -39,10 +39,8 @@ export const uploadToS3 = async (localFilePath, s3Key) => {
             ContentType: contentType,
         };
 
-        await s3Client.send(new PutObjectCommand(params));
-
-        fs.unlink(localFilePath, (err) => {
-            if (err) console.error(`Failed to delete temp file: ${localFilePath}`, err);
+        await s3Client.send(new PutObjectCommand(params), {
+            abortSignal: AbortSignal.timeout(60000),
         });
 
         const presignedUrl = await getSignedUrl(s3Client, new GetObjectCommand({
@@ -87,7 +85,9 @@ export const deleteMultipleFromS3 = async (s3Keys) => {
             },
         };
 
-        await s3Client.send(new DeleteObjectsCommand(params));
+        await s3Client.send(new DeleteObjectsCommand(params), {
+            abortSignal: AbortSignal.timeout(15000),
+        });
     } catch (error) {
         throw new ApiError(500, `Failed to delete multiple files from S3: ${error.message}`);
     }
