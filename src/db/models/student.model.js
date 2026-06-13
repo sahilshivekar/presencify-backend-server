@@ -267,9 +267,9 @@ Student.init(
             }
         },
         biometricVerificationStatus: {
-            type: Sequelize.ENUM('not_submitted', 'pending_review', 'approved', 'rejected'),
+            type: Sequelize.ENUM('Not Submitted', 'Pending Review', 'Approved', 'Rejected'),
             allowNull: false,
-            defaultValue: 'not_submitted',
+            defaultValue: 'Not Submitted',
             field: 'biometric_verification_status',
         },
         faceImageKeys: {

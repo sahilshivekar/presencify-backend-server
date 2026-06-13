@@ -59,6 +59,7 @@ const getStudents = asyncHandler(async (req, res) => {
         dropoutAcademicEndYear,
         admissionTypes,
         admissionYear,
+        biometricVerificationStatus,
         currentBatch = false,
         currentDivision = false,
         currentSemester = false,
@@ -104,6 +105,7 @@ const getStudents = asyncHandler(async (req, res) => {
     let admissionTypeFilterClause = {};
     let schemeFilterClause = {};
     let branchFilterClause = {};
+    let biometricVerificationStatusFilterClause = {};
 
     if (admissionYear) {
         admissionYearFilterClause.admissionYear = {
@@ -124,6 +126,12 @@ const getStudents = asyncHandler(async (req, res) => {
     if (branchIds) {
         branchFilterClause.branchId = {
             [Op.in]: branchIds
+        };
+    }
+
+    if (biometricVerificationStatus) {
+        biometricVerificationStatusFilterClause.biometricVerificationStatus = {
+            [Op.eq]: biometricVerificationStatus
         };
     }
 
@@ -151,7 +159,8 @@ const getStudents = asyncHandler(async (req, res) => {
                 searchClause,
                 admissionTypeFilterClause,
                 admissionYearFilterClause,
-                branchFilterClause
+                branchFilterClause,
+                biometricVerificationStatusFilterClause
             ]
         },
         distinct: true,
@@ -2328,7 +2337,7 @@ const submitStudentBiometrics = asyncHandler(async (req, res) => {
 
         student.faceDescriptor = faceDescriptor;
         student.faceImageKeys = s3Keys;
-        student.biometricVerificationStatus = 'pending_review';
+        student.biometricVerificationStatus = 'Pending Review';
         await student.save({ transaction });
 
         await transaction.commit();
@@ -2398,11 +2407,11 @@ const verifyStudentBiometrics = asyncHandler(async (req, res) => {
         throw new ApiError(httpStatus.NOT_FOUND, "Student not found");
     }
 
-    if (student.biometricVerificationStatus !== 'pending_review') {
+    if (student.biometricVerificationStatus !== 'Pending Review') {
         throw new ApiError(httpStatus.BAD_REQUEST, "Student biometrics are not pending review");
     }
 
-    student.biometricVerificationStatus = 'approved';
+    student.biometricVerificationStatus = 'Approved';
     await student.save();
 
     res.status(httpStatus.OK).json(
@@ -2422,11 +2431,11 @@ const rejectStudentBiometrics = asyncHandler(async (req, res) => {
         throw new ApiError(httpStatus.NOT_FOUND, "Student not found");
     }
 
-    if (student.biometricVerificationStatus !== 'pending_review' && student.biometricVerificationStatus !== 'approved') {
-        throw new ApiError(httpStatus.BAD_REQUEST, "Student biometrics cannot be rejected. Current status must be Pending review or approved");
+    if (student.biometricVerificationStatus !== 'Pending Review' && student.biometricVerificationStatus !== 'Approved') {
+        throw new ApiError(httpStatus.BAD_REQUEST, "Student biometrics cannot be rejected. Current status must be Pending Review or Approved");
     }
     await deleteMultipleFromS3(student.faceImageKeys);
-    student.biometricVerificationStatus = 'rejected';
+    student.biometricVerificationStatus = 'Rejected';
     await student.save();
 
     res.status(httpStatus.OK).json(

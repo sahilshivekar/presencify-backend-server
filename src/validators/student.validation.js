@@ -17,6 +17,7 @@ const getStudents = {
         dropoutAcademicEndYear: Joi.number().integer().min(1900).max(3000).allow(null).messages({ 'number.base': 'Dropout academic end year must be a number' }),
         admissionTypes: Joi.alternatives().try(Joi.array().items(Joi.string()), Joi.string()).allow(null).messages({ 'alternatives.types': 'admissionTypes must be a string or array of strings' }),
         admissionYear: Joi.number().integer().min(1900).max(3000).allow(null).messages({ 'number.base': 'Admission year must be a number' }),
+        biometricVerificationStatus: Joi.string().valid('Not Submitted', 'Pending Review', 'Approved', 'Rejected').allow(null).messages({ 'any.only': "biometricVerificationStatus must be one of 'Not Submitted', 'Pending Review', 'Approved', or 'Rejected'" }),
         currentBatch: Joi.boolean().default(false).messages({ 'boolean.base': 'currentBatch must be a boolean' }),
         currentDivision: Joi.boolean().default(false).messages({ 'boolean.base': 'currentDivision must be a boolean' }),
         currentSemester: Joi.boolean().default(false).messages({ 'boolean.base': 'currentSemester must be a boolean' }),
