@@ -1,9 +1,5 @@
-// MUST be first thing executed
-
+// Browser globals needed by some libraries
 global.navigator = {
     userAgent: 'node',
     platform: 'node'
 };
-
-global.window = {};
-global.document = {};
