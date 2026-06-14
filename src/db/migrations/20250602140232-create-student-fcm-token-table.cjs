@@ -35,8 +35,33 @@ module.exports = {
                         model: 'students',
                         key: "student_id"
                     },
-                    
+
                     onDelete: 'CASCADE'
+                },
+                deviceId: {
+                    type: Sequelize.STRING,
+                    allowNull: false,
+                    field: 'device_id'
+                },
+                deviceModel: {
+                    type: Sequelize.STRING,
+                    allowNull: true,
+                    field: 'device_model'
+                },
+                osVersion: {
+                    type: Sequelize.STRING,
+                    allowNull: true,
+                    field: 'os_version'
+                },
+                appVersion: {
+                    type: Sequelize.STRING,
+                    allowNull: true,
+                    field: 'app_version'
+                },
+                deviceType: {
+                    type: Sequelize.ENUM('ANDROID', 'IOS'),
+                    allowNull: false,
+                    field: 'device_type'
                 },
                 createdAt: {
                     type: Sequelize.DATE,
@@ -50,6 +75,14 @@ module.exports = {
                     field: 'updated_at',
                     defaultValue: Sequelize.literal('CURRENT_TIMESTAMP')
                 }
+            },
+            {
+                indexes: [
+                    {
+                        unique: true,
+                        fields: ['student_id', 'device_id']
+                    }
+                ]
             }
         )
     },

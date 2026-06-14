@@ -18,6 +18,7 @@ import { sendNotification } from '../utils/firebaseCloudMessaging.js';
 import StudentFCMToken from '../db/models/studentFCMToken.model.js';
 import { getTimeInTwelveHourFormat } from '../utils/time.js';
 import { fromYYYYMMDDToDDMMYYYY } from '../utils/date.js';
+import { fromYYYYMMDDToDDMMYYYY as formatDateReadable } from '../utils/date.js';
 import StudentBatch from '../db/models/studentBatch.model.js';
 import TeacherTeachesCourse from '../db/models/teacherTeachesCourse.model.js';
 import httpStatus from 'http-status';
@@ -98,7 +99,7 @@ const getThrowableConflictMessage = async (conflictType, conflictName) => {
     const conflictSemester = await Semester.findByPk(conflictDivision.semesterId)
     const conflictRoom = await Room.findByPk(conflictType.roomId)
 
-    return `${conflictName} Prof. ${conflictTeacher.firstName} ${conflictTeacher.lastName} is already taking class of '${conflitCourse.name}' on ${getYearFromSemesterNumber(conflictSemester.semesterNumber)} ${conflictBatch == null ? "Division" : "Batch"} ${conflictBatch == null ? conflictDivision.divisionCode : conflictBatch.batchCode} in room ${conflictRoom.roomNumber} between ${conflictType.startTime}-${conflictType.endTime} on ${conflictType.dayOfWeek}. (from ${conflictType.activeFrom} to ${conflictType.activeTill})`
+    return `${conflictName} Prof. ${conflictTeacher.firstName} ${conflictTeacher.lastName} is already taking class of '${conflitCourse.name}' on ${getYearFromSemesterNumber(conflictSemester.semesterNumber)} ${conflictBatch == null ? "Division" : "Batch"} ${conflictBatch == null ? conflictDivision.divisionCode : conflictBatch.batchCode} in room ${conflictRoom.roomNumber} between ${getTimeInTwelveHourFormat(conflictType.startTime)} - ${getTimeInTwelveHourFormat(conflictType.endTime)} on ${conflictType.dayOfWeek}. (from ${fromYYYYMMDDToDDMMYYYY(conflictType.activeFrom)} to ${fromYYYYMMDDToDDMMYYYY(conflictType.activeTill)})`
 }
 
 // Input validation for required fields, types, and formats is handled by @class.validation.js
@@ -1096,8 +1097,8 @@ const addExtraClass = asyncHandler(async (req, res) => {
     studentsWithFCMToken.forEach(studentWithFCMToken => {
         sendNotification(
             studentWithFCMToken.fcmToken,
-            "Extra lecture added",
-            `Extra lecture from ${getTimeInTwelveHourFormat(classObj.startTime)} to ${getTimeInTwelveHourFormat(classObj.endTime)} on ${classObj.dayOfWeek} of ${course.name} is sheduled`,
+            "Extra lecture scheduled",
+            `Extra lecture from ${getTimeInTwelveHourFormat(classObj.startTime)} to ${getTimeInTwelveHourFormat(classObj.endTime)} on ${classObj.dayOfWeek} of ${course.name} is scheduled`,
             {
                 type: "ExtraLectureAdded",
                 classId: classObj.id,
@@ -1185,12 +1186,12 @@ const cancelClass = asyncHandler(async (req, res) => {
     studentsWithFCMToken.forEach(studentWithFCMToken => {
         sendNotification(
             studentWithFCMToken.fcmToken,
-            "Lecture cancelled",
-            `Lecture of ${course.name} from ${classObj.startTime} to ${classObj.endTime} on ${fromYYYYMMDDToDDMMYYYY(normalizedDate)} is cancelled`,
+            "Class cancelled",
+            `Class of ${course.name} from ${getTimeInTwelveHourFormat(classObj.startTime)} to ${getTimeInTwelveHourFormat(classObj.endTime)} on ${formatDateReadable(normalizedDate)} is cancelled`,
             {
-                type: "LectureCancelled",
+                type: "ClassCancelled",
                 classId: classObj.id,
-                cancelDate: fromYYYYMMDDToDDMMYYYY(normalizedDate)
+                cancelDate: formatDateReadable(normalizedDate)
             }
         )
     })

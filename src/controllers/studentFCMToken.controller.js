@@ -6,8 +6,8 @@ import { ApiError } from '../utils/ApiError.js';
 import StudentFCMToken from '../db/models/studentFCMToken.model.js';
 import httpStatus from 'http-status';
 
-const addStudentFCMTokens = asyncHandler(async (req, res) => {
-    const { studentId, fcmToken } = req.body;
+const upsertStudentFCMToken = asyncHandler(async (req, res) => {
+    const { studentId, fcmToken, deviceId, deviceModel, osVersion, appVersion, deviceType } = req.body;
 
     // Input validation is handled by @studentFCMToken.validation.js
 
@@ -17,36 +17,44 @@ const addStudentFCMTokens = asyncHandler(async (req, res) => {
         throw new ApiError(httpStatus.NOT_FOUND, "Student not found");
     }
 
-    const studentFCMToken = await StudentFCMToken.findOne({
+    const [studentFCMTokenEntry, created] = await StudentFCMToken.findOrCreate({
         where: {
             studentId: studentId,
-            fcmToken: fcmToken
+            deviceId: deviceId
+        },
+        defaults: {
+            studentId: studentId,
+            deviceId: deviceId,
+            fcmToken: fcmToken,
+            deviceModel: deviceModel,
+            osVersion: osVersion,
+            appVersion: appVersion,
+            deviceType: deviceType
         }
-    })
-
-    if (studentFCMToken) {
-        throw new ApiError(httpStatus.CONFLICT, "FCM token is already added for this student");
-    }
-
-    const studentFCMTokenEntry = await StudentFCMToken.create({
-        studentId: studentId,
-        fcmToken: fcmToken
     });
 
+    if (!created) {
+        studentFCMTokenEntry.fcmToken = fcmToken;
+        studentFCMTokenEntry.deviceModel = deviceModel;
+        studentFCMTokenEntry.osVersion = osVersion;
+        studentFCMTokenEntry.appVersion = appVersion;
+        studentFCMTokenEntry.deviceType = deviceType;
+        await studentFCMTokenEntry.save();
+    }
+
     res
-        .status(httpStatus.CREATED)
+        .status(created ? httpStatus.CREATED : httpStatus.OK)
         .json(
             new ApiResponse(
-                httpStatus.CREATED,
-                "FCM token added successfully",
+                created ? httpStatus.CREATED : httpStatus.OK,
+                created ? "FCM token added successfully" : "FCM token updated successfully",
                 studentFCMTokenEntry
             )
         );
 })
 
-
-const updateStudentFCMTokens = asyncHandler(async (req, res) => {
-    const { studentId, fcmToken } = req.body;
+const removeStudentFCMTokens = asyncHandler(async (req, res) => {
+    const { studentId, deviceId } = req.query;
 
     // Input validation is handled by @studentFCMToken.validation.js
 
@@ -59,48 +67,12 @@ const updateStudentFCMTokens = asyncHandler(async (req, res) => {
     const studentFCMToken = await StudentFCMToken.findOne({
         where: {
             studentId: studentId,
-            fcmToken: fcmToken
+            deviceId: deviceId
         }
     })
 
     if (!studentFCMToken) {
-        throw new ApiError(httpStatus.NOT_FOUND, "FCM token is not added for this student");
-    }
-
-    studentFCMToken.fcmToken = fcmToken;
-
-    await studentFCMToken.save();
-
-    res
-        .status(httpStatus.OK)
-        .json(
-            new ApiResponse(
-                httpStatus.OK,
-                "FCM token updated successfully",
-                studentFCMToken
-            )
-        );
-})
-
-const removeStudentFCMTokens = asyncHandler(async (req, res) => {
-    const { studentId } = req.query;
-
-    // Input validation is handled by @studentFCMToken.validation.js
-
-    const student = await Student.findByPk(studentId);
-
-    if (!student) {
-        throw new ApiError(httpStatus.NOT_FOUND, "Student not found");
-    }
-
-    const studentFCMToken = await StudentFCMToken.findOne({
-        where: {
-            studentId: studentId
-        }
-    })
-
-    if (!studentFCMToken) {
-        throw new ApiError(httpStatus.NOT_FOUND, "FCM token is not added for this student");
+        throw new ApiError(httpStatus.NOT_FOUND, "FCM token is not added for this device");
     }
 
     await studentFCMToken.destroy();
@@ -117,7 +89,6 @@ const removeStudentFCMTokens = asyncHandler(async (req, res) => {
 })
 
 export {
-    addStudentFCMTokens,
-    updateStudentFCMTokens,
+    upsertStudentFCMToken,
     removeStudentFCMTokens
 }

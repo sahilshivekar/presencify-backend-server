@@ -1,7 +1,6 @@
 import { Router } from 'express';
 import {
-    addStudentFCMTokens,
-    updateStudentFCMTokens,
+    upsertStudentFCMToken,
     removeStudentFCMTokens
 } from '../controllers/studentFCMToken.controller.js';
 import { verifyJWT } from '../middlewares/auth.middleware.js';
@@ -13,8 +12,7 @@ const router = Router();
 
 // FCM Token management operations
 router.route('/')
-    .post(validate(studentFCMValidation.addStudentFCMTokens), verifyJWT([ROLES.ADMIN, ROLES.STUDENT]), addStudentFCMTokens)
-    .put(validate(studentFCMValidation.updateStudentFCMTokens), verifyJWT([ROLES.ADMIN, ROLES.STUDENT]), updateStudentFCMTokens)
+    .post(validate(studentFCMValidation.upsertStudentFCMToken), verifyJWT([ROLES.ADMIN, ROLES.STUDENT]), upsertStudentFCMToken)
     .delete(validate(studentFCMValidation.removeStudentFCMTokens), verifyJWT([ROLES.ADMIN, ROLES.STUDENT]), removeStudentFCMTokens);
 
 export default router;

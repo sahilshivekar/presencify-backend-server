@@ -22,10 +22,10 @@ StudentFCMToken.init(
             },
             validate: {
                 notNull: {
-                    msg: 'Token is not provided', // Validation message for notNull
+                    msg: 'Token is not provided',
                 },
                 notEmpty: {
-                    msg: 'Token cannot be empty', // Validation message for notEmpty
+                    msg: 'Token cannot be empty',
                 }
             },
         },
@@ -40,10 +40,52 @@ StudentFCMToken.init(
             onDelete: 'CASCADE',
             validate: {
                 notNull: {
-                    msg: 'StudentId is not provided', // Validation message for notNull
+                    msg: 'StudentId is not provided',
                 },
                 notEmpty: {
-                    msg: 'StudentId cannot be empty', // Validation message for notEmpty
+                    msg: 'StudentId cannot be empty',
+                }
+            },
+        },
+        deviceId: {
+            type: Sequelize.STRING,
+            allowNull: false,
+            field: 'device_id',
+            validate: {
+                notNull: {
+                    msg: 'DeviceId is not provided',
+                },
+                notEmpty: {
+                    msg: 'DeviceId cannot be empty',
+                }
+            },
+        },
+        deviceModel: {
+            type: Sequelize.STRING,
+            allowNull: true,
+            field: 'device_model',
+        },
+        osVersion: {
+            type: Sequelize.STRING,
+            allowNull: true,
+            field: 'os_version',
+        },
+        appVersion: {
+            type: Sequelize.STRING,
+            allowNull: true,
+            field: 'app_version',
+        },
+        deviceType: {
+            type: Sequelize.ENUM('ANDROID', 'IOS'),
+            allowNull: false,
+            field: 'device_type',
+            validate: {
+                notNull: {
+                    msg: 'DeviceType is not provided',
+                },
+                isIn: {
+                    args: [['ANDROID', 'IOS']],
+                    msg: 'DeviceType must be either ANDROID or IOS',
                 }
             },
         },
@@ -65,6 +107,12 @@ StudentFCMToken.init(
         tableName: 'student_fcm_tokens',
         sequelize,
         timestamps: false,
+        indexes: [
+            {
+                unique: true,
+                fields: ['student_id', 'device_id']
+            }
+        ]
     }
 )
 
