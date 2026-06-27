@@ -455,7 +455,7 @@ const getClasses = asyncHandler(async (req, res) => {
     }));
 });
 
-const getMyUpcomingClasses = asyncHandler(async (req, res) => {
+const getStudentsUpcomingClasses = asyncHandler(async (req, res) => {
     const studentId = req.student?.id;
 
     if (!studentId) {
@@ -548,6 +548,113 @@ const getMyUpcomingClasses = asyncHandler(async (req, res) => {
                         { batchId: null },
                         ...(batchIds.length > 0 ? [{ batchId: { [Op.in]: batchIds } }] : [])
                     ]
+                }
+            ]
+        },
+        include: [
+            {
+                model: Course,
+                required: true,
+                duplicating: false
+            },
+            {
+                model: Timetable,
+                required: true,
+                duplicating: false,
+                include: [
+                    {
+                        model: Division,
+                        required: true,
+                        duplicating: false,
+                        include: [
+                            {
+                                model: Semester,
+                                required: true,
+                                duplicating: false,
+                                include: [
+                                    {
+                                        model: Branch,
+                                        required: true,
+                                        duplicating: false
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                model: Room,
+                required: true,
+                duplicating: false
+            },
+            {
+                model: Batch,
+                required: false,
+                duplicating: false
+            },
+            {
+                model: Teacher,
+                required: true,
+                duplicating: false
+            }
+        ]
+    });
+
+    const upcomingClasses = classes
+        .map((classObj) => {
+            const nextClassDate = getNextOccurrenceDate({
+                classDayOfWeek: classObj.dayOfWeek,
+                classStartTime: classObj.startTime,
+                activeFrom: classObj.activeFrom,
+                activeTill: classObj.activeTill,
+                todayDate,
+                currentTime
+            });
+
+            if (!nextClassDate) {
+                return null;
+            }
+
+            return {
+                ...classObj.toJSON(),
+                nextClassDate
+            };
+        })
+        .filter(Boolean)
+        .sort((firstClass, secondClass) => {
+            if (firstClass.nextClassDate !== secondClass.nextClassDate) {
+                return firstClass.nextClassDate.localeCompare(secondClass.nextClassDate);
+            }
+
+            return firstClass.startTime.localeCompare(secondClass.startTime);
+        });
+
+    res.status(httpStatus.OK).json(new ApiResponse(httpStatus.OK, 'Upcoming classes retrieved successfully.', {
+        classes: upcomingClasses,
+        totalCount: upcomingClasses.length
+    }));
+});
+
+const getTeachersUpcomingClasses = asyncHandler(async (req, res) => {
+    const teacherId = req.teacher?.id;
+
+    if (!teacherId) {
+        throw new ApiError(httpStatus.UNAUTHORIZED, 'Teacher authentication required');
+    }
+
+    const now = new Date();
+    const todayDate = getDateStringFromObj(now);
+    const currentTime = now.toTimeString().slice(0, 8);
+
+    const classes = await Class.findAll({
+        where: {
+            [Op.and]: [
+                { teacherId },
+                {
+                    activeTill: {
+                        [Op.gte]: todayDate
+                    }
                 }
             ]
         },
@@ -1635,7 +1742,8 @@ const bulkCreateClassesFromCSV = asyncHandler(async (req, res) => {
 export {
     addClass,
     getClasses,
-    getMyUpcomingClasses,
+    getStudentsUpcomingClasses,
+    getTeachersUpcomingClasses,
     getClassById,
     editActiveDatesOfClass,
     removeClass,

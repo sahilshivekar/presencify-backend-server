@@ -43,7 +43,11 @@ const getClasses = {
 	})
 };
 
-const getMyUpcomingClasses = {
+const getStudentsUpcomingClasses = {
+	query: Joi.object().max(0)
+};
+
+const getTeachersUpcomingClasses = {
 	query: Joi.object().max(0)
 };
 
@@ -139,7 +143,8 @@ const bulkCreateClassesFromCSV = {
 export default {
 	addClass,
 	getClasses,
-	getMyUpcomingClasses,
+	getStudentsUpcomingClasses,
+	getTeachersUpcomingClasses,
 	getClassById,
 	editActiveDatesOfClass,
 	removeClass,
